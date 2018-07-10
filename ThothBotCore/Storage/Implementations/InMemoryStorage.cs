@@ -5,11 +5,6 @@ namespace ThothBotCore.Storage.Implementations
 {
     public class InMemoryStorage : IDataStorage
     {
-        public InMemoryStorage()
-        {
-
-        }
-
         private readonly Dictionary<string, object> _dictionary = new Dictionary<string, object>();
 
         public void StoreObject(object obj, string key)
@@ -24,6 +19,11 @@ namespace ThothBotCore.Storage.Implementations
                 throw new ArgumentException($"The provided key '{key}' wasn't found.");
 
             return (T)_dictionary[key];
+        }
+
+        public void Hello()
+        {
+            Console.WriteLine("Hi!");
         }
     }
 }
