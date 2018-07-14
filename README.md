@@ -1,12 +1,11 @@
 # ThothBotCore
 Cooler bot for SMITE stats for Discord
 
-## Built With
+## Built With :green_heart:
 
 * [.NET Core 2.0](https://docs.microsoft.com/en-us/dotnet/core/)
 * [Discord .NET](https://github.com/RogueException/Discord.Net)
 * SMITE API
-* :heart: Love :green_heart:
 
 ## Acknowledgments
 
