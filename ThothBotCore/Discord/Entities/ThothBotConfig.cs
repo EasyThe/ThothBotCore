@@ -1,5 +1,4 @@
-﻿using Discord.WebSocket;
-
+﻿
 namespace ThothBotCore.Discord.Entities
 {
     public class ThothBotConfig

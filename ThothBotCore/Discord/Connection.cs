@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using System;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 

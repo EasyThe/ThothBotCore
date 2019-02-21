@@ -4,7 +4,6 @@ using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using Unity;
 using Unity.Injection;
-using Unity.Lifetime;
 using Unity.Resolution;
 
 namespace ThothBotCore
@@ -30,7 +29,7 @@ namespace ThothBotCore
             _container.RegisterSingleton<ILogger, Logger>();
             _container.RegisterType<DiscordSocketConfig>(new InjectionFactory(i => SocketConfig.GetDefault()));
             _container.RegisterSingleton<DiscordSocketClient>(new InjectionConstructor(typeof(DiscordSocketConfig)));
-            _container.RegisterSingleton<Discord.Connection>();
+            _container.RegisterSingleton<Connection>();
         }
 
         public static T Resolve<T>()

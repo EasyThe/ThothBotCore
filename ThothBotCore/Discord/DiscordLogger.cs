@@ -1,5 +1,4 @@
-﻿
-using Discord;
+﻿using Discord;
 using System.Threading.Tasks;
 
 namespace ThothBotCore.Discord

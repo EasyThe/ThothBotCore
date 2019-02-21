@@ -1,5 +1,4 @@
-﻿using Discord.WebSocket;
-using ThothBotCore.Discord;
+﻿using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
 using System;
@@ -15,6 +14,14 @@ namespace ThothBotCore
             Console.WriteLine("Hello, Discord!");
 
             var storage = Unity.Resolve<IDataStorage>();
+
+            //var token = "YOUR-TOKEN-HERE";
+            //storage.StoreObject(token, "Config/BotToken");
+
+            //Console.WriteLine("Done");
+
+            //Console.ReadKey();
+            //return;
 
             var connection = Unity.Resolve<Connection>();
             await connection.ConnectAsync(new ThothBotConfig
