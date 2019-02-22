@@ -1,4 +1,6 @@
 # ThothBotCore
+[![Build status](https://ci.appveyor.com/api/projects/status/rx5r7wrfvd3iv5x8?svg=true)](https://ci.appveyor.com/project/EasyThe/thothbotcore)
+
 Cooler bot for SMITE stats for Discord
 
 ## Built With :green_heart:

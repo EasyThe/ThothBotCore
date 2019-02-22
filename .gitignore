@@ -12,6 +12,12 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+# ThothBotCore 
+Config.json
+
+# VSCode
+.vscode/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -327,6 +333,3 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder
 .mfractor/
-
-# ThothBotCore 
-Config/

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 
@@ -16,11 +17,11 @@ namespace ThothBotCore.Discord
             _client = client;
         }
 
-        internal async Task ConnectAsync(ThothBotConfig config)
+        internal async Task ConnectAsync()
         {
             _client.Log += _logger.Log;
 
-            await _client.LoginAsync(TokenType.Bot, config.Token);
+            await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
             await _client.StartAsync();
 
             await Task.Delay(-1);
