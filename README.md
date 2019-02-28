@@ -1,5 +1,6 @@
 # ThothBotCore
 [![Build status](https://ci.appveyor.com/api/projects/status/rx5r7wrfvd3iv5x8?svg=true)](https://ci.appveyor.com/project/EasyThe/thothbotcore)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/42ec505e9dcc4d0fbe686e93bf9109bd)](https://www.codacy.com/app/EasyThe/ThothBotCore?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=EasyThe/ThothBotCore&amp;utm_campaign=Badge_Grade)
 
 Cooler bot for SMITE stats for Discord
 
