@@ -34,5 +34,6 @@ namespace ThothBotCore.Discord.Entities
         public string Token { get; set; }
         public string devId { get; set; }
         public string authKey { get; set; }
+        public string prefix { get; set; }
     }
 }

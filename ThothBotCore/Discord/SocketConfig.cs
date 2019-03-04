@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
 
 namespace ThothBotCore.Discord
@@ -11,7 +10,7 @@ namespace ThothBotCore.Discord
             return new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Verbose,
-                WebSocketProvider = WS4NetProvider.Instance
+                DefaultRetryMode = RetryMode.AlwaysRetry
             };
         }
 
