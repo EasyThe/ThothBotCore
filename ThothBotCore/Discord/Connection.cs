@@ -9,6 +9,9 @@ namespace ThothBotCore.Discord
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordLogger _logger;
+        CommandHandler _handler;
+
+        public static DiscordSocketClient Client;
 
         public Connection(DiscordLogger logger, DiscordSocketClient client)
         {
@@ -24,6 +27,9 @@ namespace ThothBotCore.Discord
 
             await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
             await _client.StartAsync();
+            Client = _client;
+            _handler = new CommandHandler();
+            await _handler.InitializeAsync(_client);
 
             _client.JoinedGuild += JoinedGuildMessage; // Send message to default channel of joined guild
 

@@ -13,8 +13,10 @@ namespace ThothBotCore.Discord.Entities
         static Credentials()
         {
             if (!Directory.Exists(configFolder))
+            {
                 Directory.CreateDirectory(configFolder);
-
+            }
+            
             if (!File.Exists(configFolder + "/" + configFile))
             {
                 botConfig = new BotConfig();
