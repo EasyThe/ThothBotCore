@@ -22,7 +22,11 @@ namespace ThothBotCore.Discord
 
         private async Task HandleCommandAsync(SocketMessage s)
         {
-            if (!(s is SocketUserMessage msg)) return;
+            if (!(s is SocketUserMessage msg))
+            {
+                return;
+            }
+
             var context = new SocketCommandContext(_client, msg);
             int argPos = 0;
             if (msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)

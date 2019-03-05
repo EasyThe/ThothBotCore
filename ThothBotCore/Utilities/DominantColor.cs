@@ -6,6 +6,7 @@ using System.Globalization;
 using ThothBotCore.Storage.Models;
 using ThothBotCore.Storage;
 using System.Drawing;
+using System.IO;
 
 namespace ThothBotCore.Utilities
 {
@@ -17,11 +18,16 @@ namespace ThothBotCore.Utilities
         {
             string[] splitLink = link.Split('/');
 
+            if (!Directory.Exists("Storage/Gods"))
+            {
+                Directory.CreateDirectory("Storage/Gods");
+            }
+
             using (WebClient client = new WebClient())
             {
-                client.DownloadFile(new Uri(link), $@".\Resources\Gods\{splitLink[5]}");
+                client.DownloadFile(new Uri(link), $@".\Storage\Gods\{splitLink[5]}");
             }
-            string image = $@".\Resources\Gods\{splitLink[5]}";
+            string image = $@".\Storage\Gods\{splitLink[5]}";
             var colorThief = new ColorThief();
             img = new Bitmap(image);
 

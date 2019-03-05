@@ -10,7 +10,7 @@ namespace ThothBotCore.Storage
 {
     public class Database
     {
-        private const string DbPath = "Data Source = Storage/Database/ThothDb.db";
+        private const string DbPath = "Data Source=.\\Storage\\ThothDb.db;Version=3;";
 
         public static List<Gods.God> LoadGod(string godname) // Get god by godname
         {

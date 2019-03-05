@@ -17,7 +17,10 @@ namespace ThothBotCore
             get
             {
                 if (_container == null)
+                {
                     RegisterTypes();
+                }
+
                 return _container;
             }
         }

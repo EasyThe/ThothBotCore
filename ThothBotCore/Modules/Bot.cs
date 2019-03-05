@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
 {
@@ -16,7 +17,8 @@ namespace ThothBotCore.Modules
         readonly string prefix = Credentials.botConfig.prefix;
         readonly string botIcon = "https://i.imgur.com/AgNocjS.png";
 
-        HiRezAPI hirezAPI = new HiRezAPI();
+        readonly HiRezAPI hirezAPI = new HiRezAPI();
+        readonly DominantColor domColor = new DominantColor();
 
         [Command("help")] // Help command
         [Alias("commands", "command", "cmd", "comamands", "h")]
@@ -180,7 +182,7 @@ namespace ThothBotCore.Modules
         [RequireOwner]
         public async Task UpdateGodsColors()
         {
-            // TO DO domColor.DoAllGodColors();
+            domColor.DoAllGodColors();
 
             await ReplyAsync("Done!:shrug:");
         }

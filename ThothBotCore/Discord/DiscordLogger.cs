@@ -5,7 +5,7 @@ namespace ThothBotCore.Discord
 {
     public class DiscordLogger
     {
-        ILogger _logger;
+        readonly ILogger _logger;
 
         public DiscordLogger(ILogger logger)
         {
