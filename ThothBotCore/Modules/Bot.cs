@@ -49,7 +49,7 @@ namespace ThothBotCore.Modules
             {
                 field.IsInline = true;
                 field.Name = $"{prefix}status";
-                field.Value = $"Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\n**Alias**: `{prefix}s` `{prefix}статус` `{prefix}statis`";
+                field.Value = $"Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\n**Alias**: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`";
             });
             embed.AddField(field =>
             {

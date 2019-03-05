@@ -34,28 +34,27 @@ namespace ThothBotCore.Modules
             await hirezAPI.GetPlayer(username);
             if (hirezAPI.playerResult == "[]")
             {
-                await Context.Channel.SendMessageAsync($":exclamation:*{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(username)}* is hidden or not found!");
+                await Context.Channel.SendMessageAsync($":exclamation:*{Text.ToTitleCase(username)}* is hidden or not found!");
             }
             else
             {
                 List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(hirezAPI.playerResult);
 
                 string rPlayerName = "";
-                string rPlayerNameLink = "";
 
                 if (playerStats[0].Name.Contains("]"))
                 {
-                    rPlayerName = $"{playerStats[0].Name}, {playerStats[0].Team_Name}";
-                    string[] splitPlayerName = playerStats[0].Name.Split(']');
-                    rPlayerNameLink = splitPlayerName[1];
+                    string[] splitName = playerStats[0].Name.Split(']');
+                    rPlayerName = $"{playerStats[0].hz_player_name}";
+                    rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
                 }
                 else
                 {
-                    rPlayerName = playerStats[0].Name;
-                    rPlayerNameLink = playerStats[0].Name;
+                    rPlayerName = playerStats[0].hz_player_name;
                 }
-                string rPlayerCreated = playerStats[0].Created_Datetime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture);
+                string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
                 string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
+                int rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
                 string rConquestTier = "";
                 string rConquestTierImg = "";
                 string rJoustTier = "";
@@ -418,55 +417,75 @@ namespace ThothBotCore.Modules
                 }
 
                 var embed = new EmbedBuilder();
-                embed.WithDescription($"<:level:529719212017451008>Level: {playerStats[0].Level} **|** <:mastery:529719212076433418>Mastery Level: {playerStats[0].MasteryLevel}");
                 embed.WithAuthor(author =>
                 {
                     author
                         .WithName($"{rPlayerName}")
-                        .WithUrl($"http://smite.guru/profile/pc/{rPlayerNameLink}")
+                        .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}-{playerStats[0].hz_player_name}")
                         .WithIconUrl(botIcon);
                 });
                 embed.WithColor(new Color(0, 255, 0));
+                embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
+                //embed.WithTitle(embedDesc);  \u200b
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":trophy:Wins");
+                    field.Name = ($"<:level:529719212017451008>**Level**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Level}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:mastery:529719212076433418>**Mastery Level**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].MasteryLevel}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:wp:552579445475508229>**Total Worshippers**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Total_Worshippers}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":trophy:**Wins** [{rWinRate}%]");
                     field.Value = ($":small_blue_diamond:{playerStats[0].Wins}");
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":flag_white:Losses");
+                    field.Name = ($":flag_white:**Losses**");
                     field.Value = ($":small_blue_diamond:{playerStats[0].Losses}");
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":runner:Leaves");
+                    field.Name = ($":runner:**Leaves**");
                     field.Value = ($":small_blue_diamond:{playerStats[0].Leaves}");
                 });
+                // Ranked Conquest
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($"<:conquesticon:528673820060418061>Ranked Conquest");
-                    field.Value = ($"{rConquestTierImg}**{rConquestTier}**");
+                    field.Name = ($"<:conquesticon:528673820060418061>**Ranked Conquest**");
+                    field.Value = ($"{rConquestTierImg}**{rConquestTier}** [{playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}]");
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($"<:jousticon:528673820018737163>Ranked Joust");
-                    field.Value = ($"{rJoustTierImg}**{rJoustTier}**");
+                    field.Name = ($"<:jousticon:528673820018737163>**Ranked Joust**");
+                    field.Value = ($"{rJoustTierImg}**{rJoustTier}** [{playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}]");
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($"<:jousticon:528673820018737163>Ranked Duel");
-                    field.Value = ($"{rDuelTierImg}**{rDuelTier}**");
+                    field.Name = ($"<:jousticon:528673820018737163>**Ranked Duel**");
+                    field.Value = ($"{rDuelTierImg}**{rDuelTier}** [{playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}]");
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":video_game:Playing SMITE since");
+                    field.Name = ($":video_game:**Playing SMITE since**");
                     field.Value = ($":small_blue_diamond:{rPlayerCreated}");
                 });
                 switch (playerStats[0].Region)
@@ -475,7 +494,7 @@ namespace ThothBotCore.Modules
                         embed.AddField(field =>
                         {
                             field.IsInline = true;
-                            field.Name = ($":globe_with_meridians:Region");
+                            field.Name = ($":globe_with_meridians:**Region**");
                             field.Value = ($":flag_eu: {playerStats[0].Region}");
                         });
                         break;
@@ -483,15 +502,31 @@ namespace ThothBotCore.Modules
                         embed.AddField(field =>
                         {
                             field.IsInline = true;
-                            field.Name = ($":globe_with_meridians:Region");
+                            field.Name = ($":globe_with_meridians:**Region**");
                             field.Value = ($":flag_us: {playerStats[0].Region}");
+                        });
+                        break;
+                    case "Brazil":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":flag_br: {playerStats[0].Region}");
+                        });
+                        break;
+                    case "Australia":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":flag_au: {playerStats[0].Region}");
                         });
                         break;
                     default:
                         embed.AddField(field =>
                         {
                             field.IsInline = true;
-                            field.Name = ($":globe_with_meridians:Region");
+                            field.Name = ($":globe_with_meridians:**Region**");
                             field.Value = ($":small_blue_diamond:{playerStats[0].Region}");
                         });
                         break;
@@ -499,7 +534,7 @@ namespace ThothBotCore.Modules
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":hourglass:Playtime");
+                    field.Name = ($":hourglass:**Playtime**");
                     field.Value = ($":small_blue_diamond:{rHoursPlayed}");
                 });
                 embed.WithFooter(footer =>
@@ -512,7 +547,6 @@ namespace ThothBotCore.Modules
 
                 // Saving the player in the database
                 // TO DO...
-                //UserAccounts.GetAccount(responseFromServer); // Get or create
             }
         }
 
@@ -1007,17 +1041,17 @@ namespace ThothBotCore.Modules
                     {
                         Directory.CreateDirectory("Storage/PlayerImages");
                     }
-                    File.WriteAllBytes($"Storage/PlayerImages/{playerStats[0].Id}.jpg", jpegbytes);
+                    File.WriteAllBytes($"Storage/PlayerImages/{playerStats[0].ActivePlayerId}.jpg", jpegbytes);
 
                     var embed = new EmbedBuilder();
-                    var fileName = $"Storage/PlayerImages/{playerStats[0].Id}.jpg";
+                    var fileName = $"Storage/PlayerImages/{playerStats[0].ActivePlayerId}.jpg";
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
                         field.Name = ($":hourglass:Playtime");
                         field.Value = ($":small_blue_diamond:{rHoursPlayed}");
                     });
-                    embed.WithImageUrl($"attachment://{playerStats[0].Id}.jpg");
+                    embed.WithImageUrl($"attachment://{playerStats[0].ActivePlayerId}.jpg");
                     embed.WithFooter(footer =>
                     {
                         footer
@@ -1137,7 +1171,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("status")] // SMITE Server Status 
-        [Alias("статус", "statis", "s", "с")]
+        [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се")]
         public async Task ServerStatusCheck()
         {
             string result;
