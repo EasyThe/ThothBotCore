@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
@@ -110,7 +111,14 @@ namespace ThothBotCore.Modules
             {
                 field.IsInline = true;
                 field.Name = ("Servers");
-                field.Value = ($"{Connection.Client.Guilds.Count}");
+                field.Value = (Connection.Client.Guilds.Count);
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ("Uptime");
+                field.Value = (GetUptime());
 
             });
             embed.AddField(field =>
@@ -123,49 +131,49 @@ namespace ThothBotCore.Modules
             {
                 field.IsInline = true;
                 field.Name = ("Active Sessions");
-                field.Value = ($"{dataUsed[0].Active_Sessions}");
+                field.Value = (dataUsed[0].Active_Sessions);
 
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = ("Total Requests Today");
-                field.Value = ($"{dataUsed[0].Total_Requests_Today}");
+                field.Value = (dataUsed[0].Total_Requests_Today);
 
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = ("Total Sessions Today");
-                field.Value = ($"{dataUsed[0].Total_Sessions_Today}");
+                field.Value = (dataUsed[0].Total_Sessions_Today);
 
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = ("Concurrent Sessions");
-                field.Value = ($"{dataUsed[0].Concurrent_Sessions}");
+                field.Value = (dataUsed[0].Concurrent_Sessions);
 
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = ("Request Limit Daily");
-                field.Value = ($"{dataUsed[0].Request_Limit_Daily}");
+                field.Value = (dataUsed[0].Request_Limit_Daily);
 
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = ("Session Cap");
-                field.Value = ($"{dataUsed[0].Session_Cap}");
+                field.Value = (dataUsed[0].Session_Cap);
 
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = ("Session Time Limit");
-                field.Value = ($"{dataUsed[0].Session_Time_Limit}");
+                field.Value = (dataUsed[0].Session_Time_Limit);
 
             });
             embed.WithFooter(footer =>
@@ -187,11 +195,38 @@ namespace ThothBotCore.Modules
             await ReplyAsync("Done!:shrug:");
         }
 
+        [Command("ping")]
+        [Alias("p")]
+        public async Task Ping()
+        {
+            await ReplyAsync(Context.Client.Latency.ToString() + " ms");
+        }
+
         [Command("invite")]
         [RequireOwner]
         public async Task InviteLink()
         {
             await Context.Channel.SendMessageAsync("https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=262144&scope=bot");
+        }
+
+        private string GetUptime()
+        {
+            var time = DateTime.Now.Subtract(Process.GetCurrentProcess().StartTime);
+            var str = "";
+
+            if (time.Days != 0)
+                str += $"**{time.Days}** days, ";
+
+            if (time.Hours != 0)
+                str += $"**{time.Hours}** hours, ";
+
+            if (time.Minutes != 0)
+                str += $"**{time.Minutes}** minutes, ";
+
+            if (time.Seconds != 0)
+                str += $"**{time.Seconds}** seconds.";
+
+            return str;
         }
 
         private class DataUsed

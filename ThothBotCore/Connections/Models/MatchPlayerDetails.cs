@@ -1,0 +1,26 @@
+﻿using System;
+
+namespace ThothBotCore.Connections.Models
+{
+    public class MatchPlayerDetails
+    {
+        public class PlayerMatchDetails
+        {
+            public int Account_Level { get; set; }
+            public int GodId { get; set; }
+            public string GodName { get; set; }
+            public int Mastery_Level { get; set; }
+            public int Match { get; set; }
+            public int Queue { get; set; }
+            public int SkinId { get; set; }
+            public int Tier { get; set; }
+            public DateTime playerCreated { get; set; }
+            public int playerId { get; set; }
+            public string playerName { get; set; }
+            public object ret_msg { get; set; }
+            public int taskForce { get; set; }
+            public int tierLosses { get; set; }
+            public int tierWins { get; set; }
+        }
+    }
+}

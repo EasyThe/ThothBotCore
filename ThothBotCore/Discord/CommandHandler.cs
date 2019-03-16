@@ -36,7 +36,6 @@ namespace ThothBotCore.Discord
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                 {
                     Console.WriteLine(result.ErrorReason);
-                    await context.Channel.SendMessageAsync(result.ErrorReason);
                 }
             }
         }

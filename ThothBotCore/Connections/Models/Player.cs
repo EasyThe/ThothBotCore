@@ -137,5 +137,14 @@ namespace ThothBotCore.Connections.Models
             public object player_id { get; set; }
             public object ret_msg { get; set; }
         }
+
+        public class PlayerStatus
+        {
+            public int Match { get; set; }
+            public string personal_statusmessage { get; set; }
+            public object ret_msg { get; set; }
+            public int status { get; set; }
+            public string status_string { get; set; }
+        }
     }
 }

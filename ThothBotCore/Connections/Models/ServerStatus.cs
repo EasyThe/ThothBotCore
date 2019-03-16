@@ -37,8 +37,8 @@ namespace ThothBotCore.Connections.Models
     {
         public string status { get; set; }
         public string name { get; set; }
-        public string created_at { get; set; }
-        public string updated_at { get; set; }
+        public DateTime created_at { get; set; }
+        public DateTime updated_at { get; set; }
         public int position { get; set; }
         public object description { get; set; }
         public bool showcase { get; set; }

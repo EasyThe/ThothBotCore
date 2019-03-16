@@ -31,7 +31,9 @@ namespace ThothBotCore.Connections
         }
 
         internal string playerResult;
+        internal string playerStatus;
         internal string matchResult;
+        internal string matchPlayerDetails;
         internal string pingAPI;
         internal string dataUsed;
         internal string testing;
@@ -105,7 +107,24 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetMatchDetails(int matchid)
+        public async Task GetPlayerStatus(int playerID)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getplayerstatus" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayerstatusjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{playerID}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    playerStatus = await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task GetMatchDetails(int matchID)
         {
             await CheckSession();
 
@@ -114,10 +133,27 @@ namespace ThothBotCore.Connections
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
             {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchid}"))
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchID}"))
                 {
                     var response = await httpClient.SendAsync(request);
                     matchResult = await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task GetMatchPlayerDetails(int matchID)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getmatchplayerdetails" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchplayerdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchID}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    matchPlayerDetails = await response.Content.ReadAsStringAsync();
                 }
             }
         }

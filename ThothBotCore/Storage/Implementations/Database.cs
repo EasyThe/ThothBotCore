@@ -5,12 +5,47 @@ using System.Data;
 using System.Data.SQLite;
 using System.Linq;
 using ThothBotCore.Storage.Models;
+using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Storage
 {
     public class Database
     {
-        private const string DbPath = "Data Source=.\\Storage\\ThothDb.db;Version=3;";
+        public static void AddPlayerToDb(List<PlayerStats> playerStats)
+        {
+            string sql = "INSERT INTO players(active_player_id, id, hz_player_name, name, team_id, team__name, " +
+                "level, mastery_level, hours_played, wins, losses, leaves, region, personal__status__message)" +
+                    "VALUES(@activeID, @ID, @hz_player_name, @name, @teamID, @teamName, @level, @mastery, @hoursPlayed, " +
+                    "@wins, @losses, @leaves, @region, @statusMess)" +
+                    "ON CONFLICT(active_player_id) " +
+                    "DO UPDATE SET " +
+                    "id = @ID, hz_player_name = @hz_player_name, team_id = @teamID, " +
+                    "team__name = @teamName, level = @level, mastery_level = @mastery, " +
+                    "hours_played = @hoursPlayed, wins = @wins, losses = @losses, leaves = @leaves, " +
+                    "region = @region, personal__status__message = @statusMess";
+            SQLiteConnection connection = new SQLiteConnection(LoadConnectionString());
+            SQLiteCommand command = new SQLiteCommand(sql, connection);
+            connection.Open();
+
+            command.Parameters.AddWithValue("activeID", playerStats[0].ActivePlayerId);
+            command.Parameters.AddWithValue("ID", playerStats[0].Id);
+            command.Parameters.AddWithValue("hz_player_name", playerStats[0].hz_player_name);
+            command.Parameters.AddWithValue("name", playerStats[0].Name);
+            command.Parameters.AddWithValue("teamID", playerStats[0].TeamId);
+            command.Parameters.AddWithValue("teamName", playerStats[0].Team_Name);
+            command.Parameters.AddWithValue("level", playerStats[0].Level);
+            command.Parameters.AddWithValue("mastery", playerStats[0].MasteryLevel);
+            command.Parameters.AddWithValue("hoursPlayed", playerStats[0].HoursPlayed);
+            command.Parameters.AddWithValue("wins", playerStats[0].Wins);
+            command.Parameters.AddWithValue("losses", playerStats[0].Losses);
+            command.Parameters.AddWithValue("leaves", playerStats[0].Leaves);
+            command.Parameters.AddWithValue("region", playerStats[0].Region);
+            command.Parameters.AddWithValue("statusMess", playerStats[0].Personal_Status_Message);
+
+            command.ExecuteNonQuery();
+            connection.Close();
+
+        }
 
         public static List<Gods.God> LoadGod(string godname) // Get god by godname
         {

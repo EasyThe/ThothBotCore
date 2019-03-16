@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
@@ -14,6 +13,7 @@ using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
+using static ThothBotCore.Connections.Models.MatchPlayerDetails;
 using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Modules
@@ -26,6 +26,7 @@ namespace ThothBotCore.Modules
         
         HiRezAPI hirezAPI = new HiRezAPI();
         DominantColor domColor = new DominantColor();
+        StatusPage statusPage = new StatusPage();
 
         [Command("stats")]
         [Alias("stat", "pc", "st", "stata", "ст", "статс")]
@@ -39,6 +40,9 @@ namespace ThothBotCore.Modules
             else
             {
                 List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(hirezAPI.playerResult);
+
+                await hirezAPI.GetPlayerStatus(playerStats[0].ActivePlayerId);
+                List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(hirezAPI.playerStatus);
 
                 string rPlayerName = "";
 
@@ -54,7 +58,11 @@ namespace ThothBotCore.Modules
                 }
                 string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
                 string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
-                int rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
+                int rWinRate = 0;
+                if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
+                {
+                    rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
+                }
                 string rConquestTier = "";
                 string rConquestTierImg = "";
                 string rJoustTier = "";
@@ -424,9 +432,38 @@ namespace ThothBotCore.Modules
                         .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}-{playerStats[0].hz_player_name}")
                         .WithIconUrl(botIcon);
                 });
-                embed.WithColor(new Color(0, 255, 0));
-                embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
-                //embed.WithTitle(embedDesc);  \u200b
+                if (playerStatus[0].status == 0)
+                {
+                    embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
+                    embed.WithColor(new Color(0, 0, 0));
+                }
+                else
+                {
+                    embed.WithColor(new Color(0, 255, 0));
+                    if (playerStatus[0].Match != 0)
+                    {
+                        await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
+
+                        List<PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(hirezAPI.matchPlayerDetails);
+
+                        for (int s = 0; s < matchPlayerDetails.Count; s++)
+                        {
+                            if (matchPlayerDetails[s].playerId == playerStats[0].ActivePlayerId)
+                            {
+                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(matchPlayerDetails[0].Queue)}**, playing as {matchPlayerDetails[s].GodName}");
+                            }
+                        }
+                    }
+                    else if (playerStatus[0].status == 2)
+                    {
+                        embed.WithDescription($":eyes: In {playerStatus[0].status_string}");
+                    }
+                    else
+                    {
+                        embed.WithDescription($":eyes: {playerStatus[0].status_string}");
+                    }
+                }
+                // invisible character \u200b
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
@@ -540,13 +577,14 @@ namespace ThothBotCore.Modules
                 embed.WithFooter(footer =>
                 {
                     footer
-                        .WithText($"{playerStats[0].Personal_Status_Message}")
+                        .WithText(playerStats[0].Personal_Status_Message)
                         .WithIconUrl(botIcon);
                 });
                 await Context.Channel.SendMessageAsync("", false, embed.Build());
 
                 // Saving the player in the database
                 // TO DO...
+                Database.AddPlayerToDb(playerStats);
             }
         }
 
@@ -558,7 +596,7 @@ namespace ThothBotCore.Modules
             await hirezAPI.GetPlayer(username);
             if (hirezAPI.playerResult == "[]")
             {
-                await Context.Channel.SendMessageAsync($":exclamation:*{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(username)}* is hidden or not found!");
+                await Context.Channel.SendMessageAsync($":exclamation:*{Text.ToTitleCase(username)}* is hidden or not found!");
             }
             else
             {
@@ -1072,7 +1110,7 @@ namespace ThothBotCore.Modules
         [Alias("g", "gods")]
         public async Task GodInfo([Remainder] string god)
         {
-            string titleCaseGod = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(god);
+            string titleCaseGod = Text.ToTitleCase(god);
 
             List<Gods.God> gods = Database.LoadGod(titleCaseGod);
 
@@ -1174,22 +1212,14 @@ namespace ThothBotCore.Modules
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се")]
         public async Task ServerStatusCheck()
         {
-            string result;
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, "http://stk4xr7r1y0r.statuspage.io/api/v2/summary.json"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    result = await response.Content.ReadAsStringAsync();
-                }
-            }
+            await statusPage.GetStatusSummary();
 
-            ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(result);
+            ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(statusPage.statusSummary);
 
             var foundPC = ServerStatus.components.Find(x => x.name == "Smite PC");
             var foundXBO = ServerStatus.components.Find(x => x.name == "Smite Xbox");
             var foundPS4 = ServerStatus.components.Find(x => x.name.Contains("Smite PS4"));
+            var foundSwi = ServerStatus.components.Find(x => x.name.Contains("Smite Switch"));
             var foundAPI = ServerStatus.components.Find(x => x.name.Contains("API"));
 
             var embed = new EmbedBuilder();
@@ -1200,53 +1230,63 @@ namespace ThothBotCore.Modules
                 author.WithIconUrl(botIcon);
             });
 
-            if (foundPC.status.Contains("operational") && foundPS4.status.Contains("operational") && foundXBO.status.Contains("operational"))
+            if (foundPC.status.Contains("operational") && 
+                foundPS4.status.Contains("operational") && 
+                foundXBO.status.Contains("operational") &&
+                foundSwi.status.Contains("operational"))
             {
                 embed.WithColor(new Color(0, 255, 0));
             }
             else if (ServerStatus.incidents.Count >= 1)
             {
-                // Incident
+                // Incident color
                 embed.WithColor(new Color(239, 167, 32));
             }
             else if (ServerStatus.scheduled_maintenances.Count >= 1)
             {
-                // Maintenance
+                // Maintenance color
                 embed.WithColor(new Color(52, 152, 219));
             }
-            string pcValue = foundPC.status.Contains("_") ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundPC.status.Replace("_", " ")) : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundPC.status);
+            string pcValue = foundPC.status.Contains("_") ? Text.ToTitleCase(foundPC.status.Replace("_", " ")) : Text.ToTitleCase(foundPC.status);
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = "<:pcicon:537746891610259467> " + foundPC.name; // PC
                 field.Value = $"{pcValue}";
             });
-            string ps4Value = foundPS4.status.Contains("_") ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundPS4.status.Replace("_", " ")) : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundPS4.status);
+            string ps4Value = foundPS4.status.Contains("_") ? Text.ToTitleCase(foundPS4.status.Replace("_", " ")) : Text.ToTitleCase(foundPS4.status);
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = "<:playstationicon:537745670518472714> " + foundPS4.name; // PS4
                 field.Value = $"{ps4Value}";
             });
-            string xbValue = foundXBO.status.Contains("_") ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundXBO.status.Replace("_", " ")) : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundXBO.status);
+            string xbValue = foundXBO.status.Contains("_") ? Text.ToTitleCase(foundXBO.status.Replace("_", " ")) : Text.ToTitleCase(foundXBO.status);
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = "<:xboxicon:537749895029850112> " + foundXBO.name; // Xbox
                 field.Value = $"{xbValue}";
             });
+            string swValue = foundSwi.status.Contains("_") ? Text.ToTitleCase(foundSwi.status.Replace("_", " ")) : Text.ToTitleCase(foundSwi.status);
             embed.AddField(field =>
             {
-                field.IsInline = false;
-                field.Name = foundAPI.name; // Hi-Rez API
-                field.Value = foundAPI.status.Contains("_") ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundAPI.status.Replace("_", " ")) : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(foundAPI.status);
+                field.IsInline = true;
+                field.Name = "<:switchicon:537752006719176714> " + foundSwi.name; // Switch
+                field.Value = $"{swValue}";
             });
-            //embed.AddField(field =>
-            //{
-            //    field.IsInline = true;
-            //    field.Name = "<:switchicon:537752006719176714> Smite Switch";
-            //    field.Value = "n/a";
-            //});
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = foundAPI.name; // Hi-Rez API
+                field.Value = foundAPI.status.Contains("_") ? Text.ToTitleCase(foundAPI.status.Replace("_", " ")) : Text.ToTitleCase(foundAPI.status);
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "\u200b"; // Status page link
+                field.Value = "[Status Page](http://status.hirezstudios.com/)";
+            });
 
             await ReplyAsync("", false, embed.Build()); // Server Status POST
 
@@ -1268,7 +1308,7 @@ namespace ThothBotCore.Modules
                         string incidentValue = "";
                         for (int c = 0; c < ServerStatus.incidents[n].incident_updates.Count; c++)
                         {
-                            incidentValue += $"**[{CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ServerStatus.incidents[n].incident_updates[c].status)}]({ServerStatus.incidents[n].shortlink})** - " +
+                            incidentValue += $"**[{Text.ToTitleCase(ServerStatus.incidents[n].incident_updates[c].status)}]({ServerStatus.incidents[n].shortlink})** - " +
                                 $"{ServerStatus.incidents[n].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
                                 $"{ServerStatus.incidents[n].incident_updates[c].body}\n";
                         }
@@ -1345,7 +1385,7 @@ namespace ThothBotCore.Modules
                             author.WithIconUrl("https://i.imgur.com/qGjA3nY.png");
                         });
 
-                        string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Contains("_") ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Replace("_", " ")) : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status);
+                        string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status);
                         TimeSpan expDwntime = ServerStatus.scheduled_maintenances[i].scheduled_until - ServerStatus.scheduled_maintenances[i].scheduled_for;
                         scheduledEmbed.AddField(field =>
                         {
@@ -1359,6 +1399,75 @@ namespace ThothBotCore.Modules
                 {
                     await ReplyAsync("", false, scheduledEmbed.Build());
                 }
+            }
+        }
+
+        // test
+
+        [Command("test")] // Get specific God information
+        public async Task TestAbilities()
+        {
+            await hirezAPI.GetGods();
+
+            List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(hirezAPI.testing);
+
+            if (gods.Count == 0)
+            {
+                //await ReplyAsync($"{titleCaseGod} was not found");
+            }
+            else
+            {
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(author =>
+                {
+                    author.WithName(gods[63].Name);
+                    author.WithIconUrl(gods[63].godIcon_URL);
+                });
+                embed.WithTitle(gods[63].Ability1);
+                embed.WithDescription(gods[63].abilityDescription1.itemDescription.description);
+                for (int z = 0; z < gods[63].abilityDescription1.itemDescription.menuitems.Count; z++)
+                {
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = (gods[63].abilityDescription1.itemDescription.menuitems[z].description);
+                        field.Value = (gods[63].abilityDescription1.itemDescription.menuitems[z].value);
+                    });
+                }
+                for (int a = 0; a < gods[63].abilityDescription1.itemDescription.rankitems.Count; a++)
+                {
+                    //gods[0].abilityDescription1.itemDescription.rankitems.Count
+
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = (gods[63].abilityDescription1.itemDescription.rankitems[a].description);
+                        field.Value = (gods[63].abilityDescription1.itemDescription.rankitems[a].value);
+                    });
+                }
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"Cooldown");
+                    field.Value = (gods[63].abilityDescription1.itemDescription.cooldown);
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"Cost");
+                    field.Value = (gods[63].abilityDescription1.itemDescription.cost);
+                });
+
+                // gods[0].abilityDescription1.itemDescription.cooldown
+
+                embed.WithThumbnailUrl(gods[63].godAbility1_URL);
+                if (gods[63].DomColor != 0)
+                {
+                    domColor.DoAllGodColors();
+                    embed.WithColor(new Color((uint)gods[63].DomColor));
+                }
+
+                await ReplyAsync("", false, embed.Build());
             }
         }
     }
