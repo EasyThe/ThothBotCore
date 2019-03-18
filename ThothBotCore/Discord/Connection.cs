@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Storage;
 
 namespace ThothBotCore.Discord
 {
@@ -30,14 +31,14 @@ namespace ThothBotCore.Discord
             CommandHandler _handler = new CommandHandler();
             await _handler.InitializeAsync(_client);
 
-            _client.JoinedGuild += JoinedGuildMessage; // Send message to default channel of joined guild
+            _client.JoinedGuild += JoinedNewGuildActions; // Send message to default channel of joined guild and add to DB.
 
             await Task.Delay(-1).ConfigureAwait(false);
         }
 
-        private async Task JoinedGuildMessage(SocketGuild arg)
+        private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            var channel = arg.DefaultChannel;
+            var channel = guild.DefaultChannel;
 
             await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +

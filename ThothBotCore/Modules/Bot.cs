@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
@@ -71,6 +72,15 @@ namespace ThothBotCore.Modules
                 field.Value = $"Information about all available commands for the bot.\n**Alias**: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`";
             });
             await ReplyAsync("", false, embed.Build());
+        }
+
+        [Command("prefix")] // Custom Prefix
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetPrefix([Remainder] string prefix)
+        {
+            Database.SetPrefix(Context.Guild.Id, prefix);
+
+            await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to \'{prefix}\'!");
         }
 
         [Command("SetGame")]

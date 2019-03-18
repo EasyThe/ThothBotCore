@@ -435,7 +435,7 @@ namespace ThothBotCore.Modules
                 if (playerStatus[0].status == 0)
                 {
                     embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
-                    embed.WithColor(new Color(0, 0, 0));
+                    embed.WithColor(new Color(220, 147, 4));
                 }
                 else
                 {
@@ -583,8 +583,7 @@ namespace ThothBotCore.Modules
                 await Context.Channel.SendMessageAsync("", false, embed.Build());
 
                 // Saving the player in the database
-                // TO DO...
-                Database.AddPlayerToDb(playerStats);
+                await Database.AddPlayerToDb(playerStats);
             }
         }
 

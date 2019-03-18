@@ -4,6 +4,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Storage;
 
 namespace ThothBotCore.Discord
 {
@@ -29,8 +30,10 @@ namespace ThothBotCore.Discord
 
             var context = new SocketCommandContext(_client, msg);
             int argPos = 0;
+
             if (msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
-                || msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+                || msg.HasStringPrefix(Database.GetPrefix(context.Guild)[0].prefix, ref argPos)
+                || msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && msg.Author.IsBot == false)
             {
                 var result = await _service.ExecuteAsync(context, argPos, null);
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
