@@ -8,7 +8,7 @@ namespace ThothBotCore.Discord.Entities
         private const string configFolder = "Config";
         private const string configFile = "Config.json";
 
-        public static readonly BotConfig botConfig;
+        public static BotConfig botConfig;
 
         static Credentials()
         {
@@ -29,13 +29,23 @@ namespace ThothBotCore.Discord.Entities
                 botConfig = JsonConvert.DeserializeObject<BotConfig>(json);
             }
         }
+
+        public static void SaveConfig()
+        {
+            botConfig = new BotConfig();
+            string json = JsonConvert.SerializeObject(botConfig, Formatting.Indented);
+            File.WriteAllText(configFolder + "/" + configFile, json);
+        }
     }
 
-    public struct BotConfig
+    public class BotConfig
     {
-        public string Token { get; set; }
-        public string devId { get; set; }
-        public string authKey { get; set; }
-        public string prefix { get; set; }
+        public string Token { get; set; } = "TOKEN-HERE";
+        public string devId { get; set; } = "HiRezDevID";
+        public string authKey { get; set; } = "HiRezAuthKey";
+        public string challongeKey { get; set; } = "ChallongeKey";
+        public string prefix { get; set; } = "!!";
+        public string setGame { get; set; } = "!!help";
+        public string botsAPI { get; set; } = "DiscordBotsAPIkey";
     }
 }

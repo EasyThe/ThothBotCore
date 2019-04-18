@@ -12,11 +12,11 @@ namespace ThothBotCore.Connections
 {
     public class HiRezAPI
     {
-        private string devID = Credentials.botConfig.devId;
-        private string authKey = Credentials.botConfig.authKey;
-        string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        private readonly string devID = Credentials.botConfig.devId;
+        private readonly string authKey = Credentials.botConfig.authKey;
+        readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         private SessionResult sessionResult;
-        private string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
+        private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
         private static string GetMD5Hash(string input)
         {
             var md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
@@ -32,7 +32,7 @@ namespace ThothBotCore.Connections
 
         internal string playerResult;
         internal string playerStatus;
-        internal string matchResult;
+        internal string matchDetails;
         internal string matchPlayerDetails;
         internal string pingAPI;
         internal string dataUsed;
@@ -63,14 +63,7 @@ namespace ThothBotCore.Connections
             sessionResult.sessionTime = timestamp;
 
             string json = JsonConvert.SerializeObject(sessionResult, Formatting.Indented);
-            if (!File.Exists("Config/hirezapi.json"))
-            {
-                File.WriteAllText("Config/hirezapi.json", json);
-            }
-            else
-            {
-                File.WriteAllText("Config/hirezapi.json", json);
-            }
+            File.WriteAllText("Config/hirezapi.json", json);
         }
 
         private async Task CheckSession()
@@ -107,6 +100,74 @@ namespace ThothBotCore.Connections
             }
         }
 
+        public async Task<string> GetPlayerIdByName(string username)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getplayeridbyname" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayeridbynamejson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<string> GetGodRanks(int id)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getgodranks" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getgodranksjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{id}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<string> GetQueueStats(int id, int queue)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getqueuestats" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getqueuestatsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{id}/{queue}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<string> GetTeamDetails(int id)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getteamdetails" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getteamdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{id}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
         public async Task GetPlayerStatus(int playerID)
         {
             await CheckSession();
@@ -136,7 +197,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchID}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    matchResult = await response.Content.ReadAsStringAsync();
+                    matchDetails = await response.Content.ReadAsStringAsync();
                 }
             }
         }
@@ -158,7 +219,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetGods()
+        public async Task<string> GetGods()
         {
             await CheckSession();
 
@@ -170,7 +231,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getgodsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/1"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    testing = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }
@@ -239,7 +300,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public struct SessionResult
+        public class SessionResult
         {
             public string sessionTime;
             public string sessionID;

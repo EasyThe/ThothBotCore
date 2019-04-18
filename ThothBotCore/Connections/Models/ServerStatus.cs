@@ -5,10 +5,20 @@ namespace ThothBotCore.Connections.Models
 {
     public class ServerStatus
     {
+        public Page page { get; set; }
         public List<Component> components { get; set; }
         public List<Incident> incidents { get; set; }
         public List<ScheduledMaintenances> scheduled_maintenances { get; set; }
         public Status status { get; set; }
+    }
+
+    public class Page
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string url { get; set; }
+        public string time_zone { get; set; }
+        public DateTime updated_at { get; set; }
     }
 
     public class Status

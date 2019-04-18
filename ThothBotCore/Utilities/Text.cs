@@ -93,7 +93,7 @@ namespace ThothBotCore.Utilities
                 case 438:
                     return "Custom Arena";
                 case 440:
-                    return "Ranked Duel(1v1)";
+                    return "Ranked Duel";
                 case 441:
                     return "Custom Joust";
                 case 443:
@@ -103,9 +103,9 @@ namespace ThothBotCore.Utilities
                 case 446:
                     return "Custom Assault";
                 case 448:
-                    return "Joust(3v3)";
+                    return "Joust";
                 case 450:
-                    return "Ranked Joust(3v3)";
+                    return "Ranked Joust";
                 case 451:
                     return "Ranked Conquest";
                 case 454:
@@ -117,7 +117,7 @@ namespace ThothBotCore.Utilities
                 case 458:
                     return "Conquest Practice (Easy)";
                 case 459:
-                    return "Siege(4v4)";
+                    return "Siege";
                 case 460:
                     return "Custom Siege";
                 case 461:
@@ -159,9 +159,9 @@ namespace ThothBotCore.Utilities
                 case 481:
                     return "Assault(Co-Op) Easy";
                 case 502:
-                    return "Ranked Duel(1v1) Console";
+                    return "Ranked Duel(Console)";
                 case 503:
-                    return "Ranked Joust(3v3) Console";
+                    return "Ranked Joust(Console)";
                 case 504:
                     return "Ranked Conquest(Console)";
                 default:

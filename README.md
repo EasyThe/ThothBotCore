@@ -11,8 +11,8 @@ Cooler bot for SMITE stats for Discord
 
 * [.NET Core 2.1](https://docs.microsoft.com/en-us/dotnet/core/)
 * [Discord .NET](https://github.com/RogueException/Discord.Net)
-* Hi-Rez API
+* SMITE Data provided by the Hi-Rez Public API
 
-## Acknowledgments
+## Acknowledgements
 
 * This bot exists thanks to [Peter](https://www.youtube.com/channel/UCmfZ6FWTHZjPrPP3dWQ1bHg)'s Discord BOT tutorials :heart:

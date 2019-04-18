@@ -21,9 +21,9 @@ namespace ThothBotCore.Connections.Models
             public object MergedPlayers { get; set; }
             public string Name { get; set; }
             public string Personal_Status_Message { get; set; }
-            public int Rank_Stat_Conquest { get; set; }
-            public int Rank_Stat_Duel { get; set; }
-            public int Rank_Stat_Joust { get; set; }
+            public double Rank_Stat_Conquest { get; set; }
+            public double Rank_Stat_Duel { get; set; }
+            public double Rank_Stat_Joust { get; set; }
             public RankedConquest RankedConquest { get; set; }
             public RankedConquestController RankedConquestController { get; set; }
             public RankedDuel RankedDuel { get; set; }

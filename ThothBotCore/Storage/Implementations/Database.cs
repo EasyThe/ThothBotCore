@@ -7,7 +7,6 @@ using System.Data;
 using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
-using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage.Models;
 using static ThothBotCore.Connections.Models.Player;
 
@@ -15,24 +14,62 @@ namespace ThothBotCore.Storage
 {
     public class Database
     {
-        public static async Task RegisterNewGuild(SocketGuild guild)
+        public static async Task InsertServerStatusUpdates(string id, string inciID, string name, string createdAt)
         {
-            string sql = $"INSERT INTO serverConfig(serverID, prefix) VALUES({guild.Id}, \"{Credentials.botConfig.prefix}\")";
-
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                await cnn.ExecuteAsync(sql);
+                await cnn.ExecuteAsync($"INSERT OR IGNORE INTO ServerStatusUpdates(id, inciID, name, createdAt) " +
+                    $"VALUES(\"{id}\", \"{inciID}\", \"{name}\", \"{createdAt}\")");
             }
         }
 
-        public static async void SetPrefix(ulong serverID, string prefix)
+        public static List<string> GetServerStatusUpdates(string id)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                await cnn.ExecuteAsync($"INSERT INTO serverConfig(serverID, prefix) " +
-                    $"VALUES({serverID}, \"{prefix}\") " +
+                var output = cnn.Query<string>($"SELECT EXISTS(SELECT 1 FROM ServerStatusUpdates WHERE id LIKE '%{id}%')", new DynamicParameters());
+                return output.ToList();// THIS IS NOT WORKIIING
+            }
+        }
+
+        public static List<ServerConfig> GetNotifChannels()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<ServerConfig>($"SELECT * FROM serverConfig WHERE statusBool LIKE '%1%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task StopNotifs(ulong serverID)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"UPDATE serverConfig " +
+                    $"SET statusBool = 0 " +
+                    $"WHERE serverID = {serverID}");
+            }
+        }
+
+        public static async Task SetNotifChannel(ulong serverID, string serverName, ulong statusChannel)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"INSERT INTO serverConfig(serverID, serverName, statusBool, statusChannel) " +
+                    $"VALUES({serverID}, \"{serverName}\", 1, {statusChannel}) " +
                     $"ON CONFLICT(serverID) " +
-                    $"DO UPDATE SET prefix = \"{prefix}\"");
+                    $"DO UPDATE SET statusChannel = \"{statusChannel}\", statusBool = 1");
+            }
+        }
+
+        public static async Task SetPrefix(ulong serverID, string serverName, string prefix)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"INSERT INTO serverConfig(serverID, serverName, prefix) " +
+                    $"VALUES({serverID}, \"{serverName}\", \"{prefix}\") " +
+                    $"ON CONFLICT(serverID) " +
+                    $"DO UPDATE SET prefix = \"{prefix}\", serverName = \"{serverName}\"");
             }
         }
 
@@ -210,6 +247,15 @@ namespace ThothBotCore.Storage
             connection.Close();
         }
 
+        public static List<PlayerStats> GetAllPlayers()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<PlayerStats>($"SELECT * FROM players", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public static List<Gods.God> LoadGod(string godname) // Get god by godname
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
@@ -264,6 +310,9 @@ namespace ThothBotCore.Storage
         {
             public ulong serverID { get; set; }
             public string prefix { get; set; }
+            public string serverName { get; set; }
+            public bool statusBool { get; set; }
+            public ulong statusChannel { get; set; } 
         }
     }
 }

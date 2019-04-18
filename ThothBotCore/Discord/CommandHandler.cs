@@ -11,13 +11,13 @@ namespace ThothBotCore.Discord
     class CommandHandler
     {
         DiscordSocketClient _client;
-        CommandService _service;
+        CommandService _commands;
 
         public async Task InitializeAsync(DiscordSocketClient client)
         {
             _client = client;
-            _service = new CommandService();
-            await _service.AddModulesAsync(Assembly.GetEntryAssembly(), null);
+            _commands = new CommandService();
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
             _client.MessageReceived += HandleCommandAsync;
         }
 
@@ -35,10 +35,14 @@ namespace ThothBotCore.Discord
                 || msg.HasStringPrefix(Database.GetPrefix(context.Guild)[0].prefix, ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && msg.Author.IsBot == false)
             {
-                var result = await _service.ExecuteAsync(context, argPos, null);
+                var result = await _commands.ExecuteAsync(context, argPos, null);
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                 {
-                    Console.WriteLine(result.ErrorReason);
+                    Console.WriteLine(result.Error + " " + result.ErrorReason);
+                    if (result.ErrorReason.Contains("few parameters"))
+                    {
+                        await context.Channel.SendMessageAsync("Please check the command usage in **!!help**");
+                    }
                 }
             }
         }

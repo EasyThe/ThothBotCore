@@ -4,11 +4,11 @@ using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
+using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Models;
@@ -21,12 +21,11 @@ namespace ThothBotCore.Modules
     public class Smite : ModuleBase<SocketCommandContext>
     {
         readonly string prefix = Credentials.botConfig.prefix;
-        readonly string botIcon = "https://i.imgur.com/AgNocjS.png";
+        readonly string botIcon = "https://i.imgur.com/8qNdxse.png"; // https://i.imgur.com/AgNocjS.png
         static Random rnd = new Random();
         
         HiRezAPI hirezAPI = new HiRezAPI();
         DominantColor domColor = new DominantColor();
-        StatusPage statusPage = new StatusPage();
 
         [Command("stats")]
         [Alias("stat", "pc", "st", "stata", "ст", "статс")]
@@ -35,33 +34,36 @@ namespace ThothBotCore.Modules
             await hirezAPI.GetPlayer(username);
             if (hirezAPI.playerResult == "[]")
             {
-                await Context.Channel.SendMessageAsync($":exclamation:*{Text.ToTitleCase(username)}* is hidden or not found!");
+                await ReplyAsync($":x:*{Text.ToTitleCase(username)}* is hidden or not found!");
             }
             else
             {
                 List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(hirezAPI.playerResult);
+                List<GodRanks> godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(await hirezAPI.GetGodRanks(playerStats[0].ActivePlayerId));
 
                 await hirezAPI.GetPlayerStatus(playerStats[0].ActivePlayerId);
                 List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(hirezAPI.playerStatus);
 
+                string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
+
                 string rPlayerName = "";
 
-                if (playerStats[0].Name.Contains("]"))
+                if (checkedPlayerName.Contains("]"))
                 {
-                    string[] splitName = playerStats[0].Name.Split(']');
-                    rPlayerName = $"{playerStats[0].hz_player_name}";
+                    string[] splitName = checkedPlayerName.Split(']');
+                    rPlayerName = splitName[1];
                     rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
                 }
                 else
                 {
-                    rPlayerName = playerStats[0].hz_player_name;
+                    rPlayerName = checkedPlayerName;
                 }
                 string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
                 string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
-                int rWinRate = 0;
+                double rWinRate = 0;
                 if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
                 {
-                    rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
+                    rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
                 }
                 string rConquestTier = "";
                 string rConquestTierImg = "";
@@ -429,7 +431,7 @@ namespace ThothBotCore.Modules
                 {
                     author
                         .WithName($"{rPlayerName}")
-                        .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}-{playerStats[0].hz_player_name}")
+                        .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
                         .WithIconUrl(botIcon);
                 });
                 if (playerStatus[0].status == 0)
@@ -443,7 +445,6 @@ namespace ThothBotCore.Modules
                     if (playerStatus[0].Match != 0)
                     {
                         await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
-
                         List<PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(hirezAPI.matchPlayerDetails);
 
                         for (int s = 0; s < matchPlayerDetails.Count; s++)
@@ -485,7 +486,7 @@ namespace ThothBotCore.Modules
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":trophy:**Wins** [{rWinRate}%]");
+                    field.Name = ($":trophy:**Wins** [{Math.Round(rWinRate, 1)}%]");
                     field.Value = ($":small_blue_diamond:{playerStats[0].Wins}");
                 });
                 embed.AddField(field =>
@@ -559,6 +560,14 @@ namespace ThothBotCore.Modules
                             field.Value = ($":flag_au: {playerStats[0].Region}");
                         });
                         break;
+                    case "":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":small_blue_diamond:n/a");
+                        });
+                        break;
                     default:
                         embed.AddField(field =>
                         {
@@ -567,13 +576,46 @@ namespace ThothBotCore.Modules
                             field.Value = ($":small_blue_diamond:{playerStats[0].Region}");
                         });
                         break;
-                }
+                } // Region
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
                     field.Name = ($":hourglass:**Playtime**");
                     field.Value = ($":small_blue_diamond:{rHoursPlayed}");
                 });
+                if (godRanks.Count != 0)
+                {
+                    switch (godRanks.Count)
+                    {
+                        case 1:
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = "<:Gods:567146088985919498>Top Gods";
+                                field.Value = $":small_blue_diamond:{godRanks[0].god} [{godRanks[0].Worshippers}]\n";
+                            });
+                            break;
+                        case 2:
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = "<:Gods:567146088985919498>Top Gods";
+                                field.Value = $":small_blue_diamond:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                                $":small_blue_diamond:{godRanks[1].god} [{godRanks[1].Worshippers}]\n";
+                            });
+                            break;
+                        default:
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = "<:Gods:567146088985919498>Top Gods";
+                                field.Value = $":small_blue_diamond:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                                $":small_blue_diamond:{godRanks[1].god} [{godRanks[1].Worshippers}]\n" +
+                                $":small_blue_diamond:{godRanks[2].god} [{godRanks[2].Worshippers}]";
+                            });
+                            break;
+                    }
+                } // Top Gods
                 embed.WithFooter(footer =>
                 {
                     footer
@@ -582,13 +624,14 @@ namespace ThothBotCore.Modules
                 });
                 await Context.Channel.SendMessageAsync("", false, embed.Build());
 
-                // Saving the player in the database
+                // Saving the player to the database
                 await Database.AddPlayerToDb(playerStats);
             }
         }
 
         [Command("istats", RunMode = RunMode.Async)]
         [Alias("istat", "ipc", "ist", "istata", "ист", "истатс")]
+        [RequireOwner] // vremenno
         public async Task ImageStats([Remainder] string username)
         {
             var converter = new HtmlConverter();
@@ -1115,7 +1158,7 @@ namespace ThothBotCore.Modules
 
             if (gods.Count == 0)
             {
-                await ReplyAsync($"{titleCaseGod} was not found");
+                await ReplyAsync($"{titleCaseGod} was not found.");
             }
             else
             {
@@ -1164,7 +1207,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("rgod")] // Random God
+        [Command("rgod", true)] // Random God
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod()
         {
@@ -1207,208 +1250,91 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
         }
 
-        [Command("status")] // SMITE Server Status 
+        [Command("status", true)] // SMITE Server Status 
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се")]
         public async Task ServerStatusCheck()
         {
-            await statusPage.GetStatusSummary();
+            await StatusPage.GetStatusSummary();
+            ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
+            //ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(File.ReadAllText("test.json"));
 
-            ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(statusPage.statusSummary);
-
-            var foundPC = ServerStatus.components.Find(x => x.name == "Smite PC");
-            var foundXBO = ServerStatus.components.Find(x => x.name == "Smite Xbox");
-            var foundPS4 = ServerStatus.components.Find(x => x.name.Contains("Smite PS4"));
-            var foundSwi = ServerStatus.components.Find(x => x.name.Contains("Smite Switch"));
-            var foundAPI = ServerStatus.components.Find(x => x.name.Contains("API"));
-
-            var embed = new EmbedBuilder();
-            embed.WithAuthor(author =>
+            await ReplyAsync("", false, EmbedHandler.ServerStatusEmbed(ServerStatus).Build()); // Server Status POST
+            bool maint = false;
+            bool inci = false;
+            // Incidents
+            if (ServerStatus.incidents.Count >= 1)
             {
-                author.WithName("Server Status");
-                author.WithUrl("http://status.hirezstudios.com/");
-                author.WithIconUrl(botIcon);
-            });
-
-            if (foundPC.status.Contains("operational") && 
-                foundPS4.status.Contains("operational") && 
-                foundXBO.status.Contains("operational") &&
-                foundSwi.status.Contains("operational"))
-            {
-                embed.WithColor(new Color(0, 255, 0));
-            }
-            else if (ServerStatus.incidents.Count >= 1)
-            {
-                // Incident color
-                embed.WithColor(new Color(239, 167, 32));
-            }
-            else if (ServerStatus.scheduled_maintenances.Count >= 1)
-            {
-                // Maintenance color
-                embed.WithColor(new Color(52, 152, 219));
-            }
-            string pcValue = foundPC.status.Contains("_") ? Text.ToTitleCase(foundPC.status.Replace("_", " ")) : Text.ToTitleCase(foundPC.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:pcicon:537746891610259467> " + foundPC.name; // PC
-                field.Value = $"{pcValue}";
-            });
-            string ps4Value = foundPS4.status.Contains("_") ? Text.ToTitleCase(foundPS4.status.Replace("_", " ")) : Text.ToTitleCase(foundPS4.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:playstationicon:537745670518472714> " + foundPS4.name; // PS4
-                field.Value = $"{ps4Value}";
-            });
-            string xbValue = foundXBO.status.Contains("_") ? Text.ToTitleCase(foundXBO.status.Replace("_", " ")) : Text.ToTitleCase(foundXBO.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:xboxicon:537749895029850112> " + foundXBO.name; // Xbox
-                field.Value = $"{xbValue}";
-            });
-            string swValue = foundSwi.status.Contains("_") ? Text.ToTitleCase(foundSwi.status.Replace("_", " ")) : Text.ToTitleCase(foundSwi.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:switchicon:537752006719176714> " + foundSwi.name; // Switch
-                field.Value = $"{swValue}";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = foundAPI.name; // Hi-Rez API
-                field.Value = foundAPI.status.Contains("_") ? Text.ToTitleCase(foundAPI.status.Replace("_", " ")) : Text.ToTitleCase(foundAPI.status);
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "\u200b"; // Status page link
-                field.Value = "[Status Page](http://status.hirezstudios.com/)";
-            });
-
-            await ReplyAsync("", false, embed.Build()); // Server Status POST
-
-            if (ServerStatus.incidents.Count >= 1) // Check for incidents
-            {
-                var incidentEmbed = new EmbedBuilder();
-                bool inci = false;
-
-                for (int n = 0; n < ServerStatus.incidents.Count; n++)
+                for (int i = 0; i < ServerStatus.incidents.Count; i++)
                 {
-                    if (ServerStatus.incidents[n].name.Contains("Smite"))
+                    if (ServerStatus.incidents[i].name.Contains("Smite"))
                     {
-                        incidentEmbed.WithColor(new Color(239, 167, 32));
-                        incidentEmbed.WithAuthor(author =>
-                        {
-                            author.WithName("Incidents");
-                            author.WithIconUrl("https://i.imgur.com/oTHjKkE.png");
-                        });
-                        string incidentValue = "";
-                        for (int c = 0; c < ServerStatus.incidents[n].incident_updates.Count; c++)
-                        {
-                            incidentValue += $"**[{Text.ToTitleCase(ServerStatus.incidents[n].incident_updates[c].status)}]({ServerStatus.incidents[n].shortlink})** - " +
-                                $"{ServerStatus.incidents[n].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
-                                $"{ServerStatus.incidents[n].incident_updates[c].body}\n";
-                        }
-                        string incidentPlatIcons = "";
-
-                        if (ServerStatus.incidents[n].name.Contains("PC"))
-                        {
-                            incidentPlatIcons += "<:pcicon:537746891610259467> ";
-                        }
-                        if (ServerStatus.incidents[n].name.Contains("PS4"))
-                        {
-                            incidentPlatIcons += "<:playstationicon:537745670518472714> ";
-                        }
-                        if (ServerStatus.incidents[n].name.Contains("Switch"))
-                        {
-                            incidentPlatIcons += "<:switchicon:537752006719176714> ";
-                        }
-                        if (ServerStatus.incidents[n].name.Contains("Xbox"))
-                        {
-                            incidentPlatIcons += "<:xboxicon:537749895029850112> ";
-                        }
-
-                        incidentEmbed.AddField(field =>
-                        {
-                            field.IsInline = false;
-                            field.Name = $"{incidentPlatIcons} {ServerStatus.incidents[n].name}";
-                            field.Value = incidentValue;
-                        });
+                        inci = true;
                     }
                 }
-
-                if (inci == true)
-                {
-                    await ReplyAsync("", false, incidentEmbed.Build());
-                }
             }
-
-            if (ServerStatus.scheduled_maintenances.Count >= 1) // Check for maintenances
+            if (inci == true)
             {
-                var scheduledEmbed = new EmbedBuilder();
-                bool maint = false;
-                for (int i = 0; i < ServerStatus.scheduled_maintenances.Count; i++)
+                await ReplyAsync("", false, EmbedHandler.StatusIncidentEmbed(ServerStatus).Build());
+            }
+            // Scheduled Maintenances
+            if (ServerStatus.scheduled_maintenances.Count >= 1)
+            {
+                for (int c = 0; c < ServerStatus.scheduled_maintenances.Count; c++)
                 {
-                    if (ServerStatus.scheduled_maintenances[i].name.Contains("Smite"))
+                    if (ServerStatus.scheduled_maintenances[c].name.Contains("Smite"))
                     {
                         maint = true;
-                        scheduledEmbed.WithColor(new Color(52, 152, 219));
-                        string platIcon = "";
-
-                        for (int k = 0; k < ServerStatus.scheduled_maintenances[i].components.Count; k++)
-                        {
-                            if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("PC"))
-                            {
-                                platIcon += "<:pcicon:537746891610259467> ";
-                            }
-                            if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("PS4"))
-                            {
-                                platIcon += "<:playstationicon:537745670518472714> ";
-                            }
-                            if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Xbox"))
-                            {
-                                platIcon += "<:xboxicon:537749895029850112> ";
-                            }
-                        }
-
-                        if (ServerStatus.scheduled_maintenances[i].incident_updates[0].body.Contains("Switch") || ServerStatus.scheduled_maintenances[i].name.Contains("Switch"))
-                        {
-                            platIcon += "<:switchicon:537752006719176714> ";
-                        }
-
-                        scheduledEmbed.WithAuthor(author =>
-                        {
-                            author.WithName("Scheduled Maintenances");
-                            author.WithIconUrl("https://i.imgur.com/qGjA3nY.png");
-                        });
-
-                        string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status);
-                        TimeSpan expDwntime = ServerStatus.scheduled_maintenances[i].scheduled_until - ServerStatus.scheduled_maintenances[i].scheduled_for;
-                        scheduledEmbed.AddField(field =>
-                        {
-                            field.IsInline = false;
-                            field.Name = $"{platIcon}{ServerStatus.scheduled_maintenances[i].name}";
-                            field.Value = $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})**\n__**Expected downtime: ~{expDwntime.Hours} hours**__, {ServerStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n{ServerStatus.scheduled_maintenances[i].incident_updates[0].body}";
-                        });
                     }
                 }
-                if (maint == true)
-                {
-                    await ReplyAsync("", false, scheduledEmbed.Build());
-                }
+            }
+            if (maint == true)
+            {
+                await ReplyAsync("", false, EmbedHandler.StatusMaintenanceEmbed(ServerStatus).Build());
             }
         }
 
-        // test
+        [Command("claninfo")]
+        [Alias("clan", "c")]
+        [RequireOwner] // vremenno
+        public async Task ClanInfoCommand(int id)
+        {
+            string json = await hirezAPI.GetTeamDetails(id);
+            List<ClanInfo> clanList = JsonConvert.DeserializeObject<List<ClanInfo>>(json);
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(author =>
+            {
+                author.WithName(clanList[0].Name);
+                author.WithIconUrl(botIcon);
+            });
+            embed.WithColor(0, 255, 0);
+            embed.AddField(field =>
+            {
+                field.WithIsInline(true);
+                field.WithName("Tag");
+                field.WithValue(clanList[0].Tag == "" ? "n/a" : clanList[0].Tag);
+            });
+            embed.AddField(field =>
+            {
+                field.WithIsInline(true);
+                field.WithName("Founder");
+                field.WithValue(clanList[0].Founder == "" ? "n/a" : clanList[0].Founder);
+            });
+            embed.AddField(field =>
+            {
+                field.WithIsInline(true);
+                field.WithName("Players");
+                field.WithValue(clanList[0].Players.ToString());
+            });
 
+            await ReplyAsync("", false, embed.Build());
+        }
+
+        // test
         [Command("test")] // Get specific God information
+        [RequireOwner]
         public async Task TestAbilities()
         {
-            await hirezAPI.GetGods();
-
-            List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(hirezAPI.testing);
+            List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(await hirezAPI.GetGods());
 
             if (gods.Count == 0)
             {
@@ -1467,6 +1393,140 @@ namespace ThothBotCore.Modules
                 }
 
                 await ReplyAsync("", false, embed.Build());
+            }
+        }
+
+        [Command("matchdetails")]
+        [RequireOwner]
+        public async Task MatchDetailsCommand(int id)
+        {
+            await hirezAPI.GetMatchDetails(id);
+
+            List<MatchDetails.MatchDetailsPlayer> matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(hirezAPI.matchDetails);
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(author =>
+            {
+                author.WithName(Text.GetQueueName(matchDetails[0].match_queue_id));
+                author.WithIconUrl(botIcon);
+            });
+            embed.WithThumbnailUrl(botIcon);
+
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[0].hz_player_name;// win
+                field.Value = "<:level:529719212017451008>" + matchDetails[0].Account_Level + "\n:small_blue_diamond:" + matchDetails[0].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[5].hz_player_name;// loss
+                field.Value = "<:level:529719212017451008>" + matchDetails[5].Account_Level + "\n:small_blue_diamond:" + matchDetails[5].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[1].hz_player_name;// win
+                field.Value = "<:level:529719212017451008>" + matchDetails[1].Account_Level + "\n:small_blue_diamond:" + matchDetails[1].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[6].hz_player_name;
+                field.Value = "<:level:529719212017451008>" + matchDetails[6].Account_Level + "\n:small_blue_diamond:" + matchDetails[6].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[2].hz_player_name;// win
+                field.Value = "<:level:529719212017451008>" + matchDetails[2].Account_Level + "\n:small_blue_diamond:" + matchDetails[2].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[7].hz_player_name;
+                field.Value = "<:level:529719212017451008>" + matchDetails[7].Account_Level + "\n:small_blue_diamond:" + matchDetails[7].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[3].hz_player_name;// win
+                field.Value = "<:level:529719212017451008>" + matchDetails[3].Account_Level + "\n:small_blue_diamond:" + matchDetails[3].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[8].hz_player_name;
+                field.Value = "<:level:529719212017451008>" + matchDetails[8].Account_Level + "\n:small_blue_diamond:" + matchDetails[8].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[4].hz_player_name;// win
+                field.Value = "<:level:529719212017451008>" + matchDetails[4].Account_Level + "\n:small_blue_diamond:" + matchDetails[4].Reference_Name;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = matchDetails[9].hz_player_name;
+                field.Value = "<:level:529719212017451008>" + matchDetails[9].Account_Level + "\n:small_blue_diamond:" + matchDetails[9].Reference_Name;
+            });
+
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        [Command("getplayer")]
+        [RequireOwner]
+        public async Task TestGetPlayer([Remainder] string player)
+        {
+            string test = await hirezAPI.GetPlayerIdByName(player);
+            await ReplyAsync(test);
+        }
+
+        [Command("getgods")]
+        [RequireOwner]
+        public async Task GetGodsCommand(int id)
+        {
+            int totalMatches = 0;
+            int conq = 0; //426
+            int joust = 0; //448
+            int arena = 0; //435
+            int siege = 0; //459
+            int clash = 0; //466
+            int assault = 0; //445
+            int rankcq = 0; //451
+            int rankjs = 0; //450
+            int rankdu = 0; //440
+
+            List<QueueStats> cqList = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(id, 426));
+            for (int i = 0; i < cqList.Count; i++)
+            {
+                conq = conq + cqList[i].Matches;
+            }
+
+            await ReplyAsync($"Conquest: {conq}");
+
+            //string json = await hirezAPI.GetQueueStats(id);
+            //File.WriteAllText("queuestats.json", json);
+        }
+
+        // Owner Commands
+
+        [Command("updateplayers")]
+        [RequireOwner]
+        public async Task UpdatePlayers()
+        {
+            await ReplyAsync("do not use");
+
+            var playersList = new List<PlayerStats>(Database.GetAllPlayers());
+
+            for (int i = 0; i < playersList.Count; i++)
+            {
+                await hirezAPI.GetPlayer(playersList[i].ActivePlayerId.ToString());
+                List<PlayerStats> playerList = JsonConvert.DeserializeObject<List<PlayerStats>>(hirezAPI.playerResult);
+                Console.WriteLine(playersList[i].hz_player_name + " Updated!");
+                await Database.AddPlayerToDb(playerList);
             }
         }
     }
