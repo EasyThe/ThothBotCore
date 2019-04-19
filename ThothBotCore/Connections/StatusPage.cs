@@ -9,7 +9,6 @@ namespace ThothBotCore.Connections
     public static class StatusPage
     {
         internal static string statusSummary = "";
-        internal static string test = "";
 
         public static async Task GetStatusSummary()
         {
@@ -32,7 +31,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public static async Task CreateStatusWebhook()
+        public static async Task<string> CreateStatusWebhook()
         {
             using (var httpClient = new HttpClient())
             {
@@ -44,7 +43,7 @@ namespace ThothBotCore.Connections
                     request.Content = new StringContent(string.Join("&", contentList), Encoding.UTF8, "application/x-www-form-urlencoded");
 
                     var response = await httpClient.SendAsync(request);
-                    test = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }

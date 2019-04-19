@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using System;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Utilities;
@@ -48,7 +49,11 @@ namespace ThothBotCore.Discord
 
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            await ErrorTracker.SendDMtoOwner($":tada: I joined {guild.Name} :tada:\n**Owner**: {guild.Owner}");
+            await ErrorTracker.SendJoinedServers($"**Joined new server:** {guild.Name}\n" +
+                $"**Server ID:** {guild.Id}\n" +
+                $"**Owner:** {guild.Owner}\n" +
+                $"**Users:** {guild.Users.Count}\n" +
+                $"**Joined at:** {DateTime.UtcNow.ToString("HH:mm dd.MM.YYYY")}");
             var channel = guild.DefaultChannel;
 
             await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +

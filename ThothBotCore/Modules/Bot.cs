@@ -80,7 +80,8 @@ namespace ThothBotCore.Modules
             {
                 field.IsInline = true;
                 field.Name = $"{prefix}stopstatusupdates";
-                field.Value = $"Stops sending messages from the SMITE status page.\n" +
+                field.Value = $"Stops sending messages from the SMITE status page" +
+                $".\n" +
                 $"**Alias**: `{prefix}ssu`";
             });
             embed.AddField(field =>
@@ -105,6 +106,44 @@ namespace ThothBotCore.Modules
             {
                 footer.Text = "If something isn't working properly, its probably because the bot is still in development.";
             });
+            await ReplyAsync("", false, embed.Build());
+        }
+
+        [Command("botinfo", true)]
+        [Alias("bi", "botstats")]
+        public async Task BotInfoCommand()
+        {
+            //get patch version
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(author =>
+            {
+                author
+                    .WithName("Thoth Stats")
+                    .WithIconUrl(botIcon);
+            });
+            embed.WithTitle("Creator: EasyThe#2836");
+            embed.WithColor(new Color(0, 255, 0));
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Servers";
+                field.Value = Connection.Client.Guilds.Count;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Uptime";
+                field.Value = GetUptime();
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Smite Info";
+                field.Value = $"Patch version: \n" +
+                $"";
+            });
+
             await ReplyAsync("", false, embed.Build());
         }
 
@@ -170,8 +209,7 @@ namespace ThothBotCore.Modules
 
         // Owner Commands
 
-        [Command("SetGame")]
-        [Alias("sg")]
+        [Command("sg")]
         [Summary("Sets a'Game' for the bot :video_game: (Accessible only by the bot owner)")]
         [RequireOwner]
         public async Task SetGame([Remainder] string game)
@@ -181,8 +219,7 @@ namespace ThothBotCore.Modules
             Console.WriteLine($"{DateTime.UtcNow.ToString("[HH:mm, d.MM.yyyy]")}: Game was changed to {game}");
         }
 
-        [Command("botstats", true)]
-        [Alias("bs")]
+        [Command("bs", true)]
         [Summary("Information about the bot accessible only by the bot owner.")]
         [RequireOwner]
         public async Task BotStats()

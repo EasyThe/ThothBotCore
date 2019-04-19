@@ -31,14 +31,14 @@ namespace ThothBotCore.Modules
         [Alias("stat", "pc", "st", "stata", "ст", "статс")]
         public async Task Stats([Remainder] string username)
         {
-            await hirezAPI.GetPlayer(username);
-            if (hirezAPI.playerResult == "[]")
+            string json = await hirezAPI.GetPlayer(username);
+            if (json == "[]")
             {
                 await ReplyAsync($":x:*{Text.ToTitleCase(username)}* is hidden or not found!");
             }
             else
             {
-                List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(hirezAPI.playerResult);
+                List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(json);
                 List<GodRanks> godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(await hirezAPI.GetGodRanks(playerStats[0].ActivePlayerId));
 
                 await hirezAPI.GetPlayerStatus(playerStats[0].ActivePlayerId);
@@ -1329,6 +1329,634 @@ namespace ThothBotCore.Modules
             await ReplyAsync("", false, embed.Build());
         }
 
+        [Command("newstats")]
+        [Alias("ns")]
+        [RequireOwner]
+        public async Task NewStatsTest([Remainder] string username)
+        {
+            try
+            {
+                List<SearchPlayers> searchPlayer = await hirezAPI.SearchPlayer(username);
+                if (searchPlayer.Count == 0)
+                {
+                    await ReplyAsync($":x:*{username}* is hidden or not found!");
+                }
+                else if (searchPlayer.Count == 1 && searchPlayer[0].Name.ToLower() == username.ToLower())
+                {
+                    await hirezAPI.GetPlayer(username);
+                }
+                else if (true)
+                {
+
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Path"))
+                {
+                    await ReplyAsync($":x:*{username}* is hidden or not found!");
+                }
+            }
+
+            string json = await hirezAPI.GetPlayer(username);
+            if (hirezAPI.playerResult == "[]")
+            {
+                await ReplyAsync($":x:*{username}* is hidden or not found!");
+            }
+            else
+            {
+                List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(json);
+                //List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(hirezAPI.playerResult);
+                List<GodRanks> godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(await hirezAPI.GetGodRanks(playerStats[0].ActivePlayerId));
+
+                await hirezAPI.GetPlayerStatus(playerStats[0].ActivePlayerId);
+                List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(hirezAPI.playerStatus);
+
+                string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
+
+                string rPlayerName = "";
+
+                if (checkedPlayerName.Contains("]"))
+                {
+                    string[] splitName = checkedPlayerName.Split(']');
+                    rPlayerName = splitName[1];
+                    rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                }
+                else
+                {
+                    rPlayerName = checkedPlayerName;
+                }
+                string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
+                string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
+                double rWinRate = 0;
+                if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
+                {
+                    rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
+                }
+                string rConquestTier = "";
+                string rConquestTierImg = "";
+                string rJoustTier = "";
+                string rJoustTierImg = "";
+                string rDuelTier = "";
+                string rDuelTierImg = "";
+
+                switch (playerStats[0].Tier_Conquest)
+                {
+                    case 0:
+                        rConquestTier = "Qualifying";
+                        rConquestTierImg = "<:q_:528617317534269450>";
+                        break;
+                    case 1:
+                        rConquestTier = "Bronze V";
+                        rConquestTierImg = "<:cqbr:528617350027673620>";
+                        break;
+                    case 2:
+                        rConquestTier = "Bronze IV";
+                        rConquestTierImg = "<:cqbr:528617350027673620>";
+                        break;
+                    case 3:
+                        rConquestTier = "Bronze III";
+                        rConquestTierImg = "<:cqbr:528617350027673620>";
+                        break;
+                    case 4:
+                        rConquestTier = "Bronze II";
+                        rConquestTierImg = "<:cqbr:528617350027673620>";
+                        break;
+                    case 5:
+                        rConquestTier = "Bronze I";
+                        rConquestTierImg = "<:cqbr:528617350027673620>";
+                        break;
+                    case 6:
+                        rConquestTier = "Silver V";
+                        rConquestTierImg = "<:cqsi:528617356151488512>";
+                        break;
+                    case 7:
+                        rConquestTier = "Silver IV";
+                        rConquestTierImg = "<:cqsi:528617356151488512>";
+                        break;
+                    case 8:
+                        rConquestTier = "Silver II";
+                        rConquestTierImg = "<:cqsi:528617356151488512>";
+                        break;
+                    case 9:
+                        rConquestTier = "Silver II";
+                        rConquestTierImg = "<:cqsi:528617356151488512>";
+                        break;
+                    case 10:
+                        rConquestTier = "Silver I";
+                        rConquestTierImg = "<:cqsi:528617356151488512>";
+                        break;
+                    case 11:
+                        rConquestTier = "Gold V";
+                        rConquestTierImg = "<:cqgo:528617356491227136>";
+                        break;
+                    case 12:
+                        rConquestTier = "Gold IV";
+                        rConquestTierImg = "<:cqgo:528617356491227136>";
+                        break;
+                    case 13:
+                        rConquestTier = "Gold III";
+                        rConquestTierImg = "<:cqgo:528617356491227136>";
+                        break;
+                    case 14:
+                        rConquestTier = "Gold II";
+                        rConquestTierImg = "<:cqgo:528617356491227136>";
+                        break;
+                    case 15:
+                        rConquestTier = "Gold I";
+                        rConquestTierImg = "<:cqgo:528617356491227136>";
+                        break;
+                    case 16:
+                        rConquestTier = "Platinum V";
+                        rConquestTierImg = "<:cqpl:528617357485015041>";
+                        break;
+                    case 17:
+                        rConquestTier = "Platinum IV";
+                        rConquestTierImg = "<:cqpl:528617357485015041>";
+                        break;
+                    case 18:
+                        rConquestTier = "Platinum III";
+                        rConquestTierImg = "<:cqpl:528617357485015041>";
+                        break;
+                    case 19:
+                        rConquestTier = "Platinum II";
+                        rConquestTierImg = "<:cqpl:528617357485015041>";
+                        break;
+                    case 20:
+                        rConquestTier = "Platinum I";
+                        rConquestTierImg = "<:cqpl:528617357485015041>";
+                        break;
+                    case 21:
+                        rConquestTier = "Diamond V";
+                        rConquestTierImg = "<:cqdi:528617356625313792>";
+                        break;
+                    case 22:
+                        rConquestTier = "Diamond IV";
+                        rConquestTierImg = "<:cqdi:528617356625313792>";
+                        break;
+                    case 23:
+                        rConquestTier = "Diamond III";
+                        rConquestTierImg = "<:cqdi:528617356625313792>";
+                        break;
+                    case 24:
+                        rConquestTier = "Diamond II";
+                        rConquestTierImg = "<:cqdi:528617356625313792>";
+                        break;
+                    case 25:
+                        rConquestTier = "Diamond I";
+                        rConquestTierImg = "<:cqdi:528617356625313792>";
+                        break;
+                    case 26:
+                        rConquestTier = "Masters";
+                        rConquestTierImg = "<:cqma:528617357669826560>";
+                        break;
+                    case 27:
+                        rConquestTier = "Grandmaster";
+                        rConquestTierImg = "<:cqgm:528617358500298753>";
+                        break;
+                    default:
+                        break;
+                }
+
+                switch (playerStats[0].Tier_Joust)
+                {
+                    case 0:
+                        rJoustTier = "Qualifying";
+                        rJoustTierImg = "<:q_:528617317534269450>";
+                        break;
+                    case 1:
+                        rJoustTier = "Bronze V";
+                        rJoustTierImg = "<:jobr:528617414171164697>";
+                        break;
+                    case 2:
+                        rJoustTier = "Bronze IV";
+                        rJoustTierImg = "<:jobr:528617414171164697>";
+                        break;
+                    case 3:
+                        rJoustTier = "Bronze III";
+                        rJoustTierImg = "<:jobr:528617414171164697>";
+                        break;
+                    case 4:
+                        rJoustTier = "Bronze II";
+                        rJoustTierImg = "<:jobr:528617414171164697>";
+                        break;
+                    case 5:
+                        rJoustTier = "Bronze I";
+                        rJoustTierImg = "<:jobr:528617414171164697>";
+                        break;
+                    case 6:
+                        rJoustTier = "Silver V";
+                        rJoustTierImg = "<:josi:528617415903412244>";
+                        break;
+                    case 7:
+                        rJoustTier = "Silver IV";
+                        rJoustTierImg = "<:josi:528617415903412244>";
+                        break;
+                    case 8:
+                        rJoustTier = "Silver II";
+                        rJoustTierImg = "<:josi:528617415903412244>";
+                        break;
+                    case 9:
+                        rJoustTier = "Silver II";
+                        rJoustTierImg = "<:josi:528617415903412244>";
+                        break;
+                    case 10:
+                        rJoustTier = "Silver I";
+                        rJoustTierImg = "<:josi:528617415903412244>";
+                        break;
+                    case 11:
+                        rJoustTier = "Gold V";
+                        rJoustTierImg = "<:jogo:528617415500890112>";
+                        break;
+                    case 12:
+                        rJoustTier = "Gold IV";
+                        rJoustTierImg = "<:jogo:528617415500890112>";
+                        break;
+                    case 13:
+                        rJoustTier = "Gold III";
+                        rJoustTierImg = "<:jogo:528617415500890112>";
+                        break;
+                    case 14:
+                        rJoustTier = "Gold II";
+                        rJoustTierImg = "<:jogo:528617415500890112>";
+                        break;
+                    case 15:
+                        rJoustTier = "Gold I";
+                        rJoustTierImg = "<:jogo:528617415500890112>";
+                        break;
+                    case 16:
+                        rJoustTier = "Platinum V";
+                        rJoustTierImg = "<:jopl:528617415677050909>";
+                        break;
+                    case 17:
+                        rJoustTier = "Platinum IV";
+                        rJoustTierImg = "<:jopl:528617415677050909>";
+                        break;
+                    case 18:
+                        rJoustTier = "Platinum III";
+                        rJoustTierImg = "<:jopl:528617415677050909>";
+                        break;
+                    case 19:
+                        rJoustTier = "Platinum II";
+                        rJoustTierImg = "<:jopl:528617415677050909>";
+                        break;
+                    case 20:
+                        rJoustTier = "Platinum I";
+                        rJoustTierImg = "<:jopl:528617415677050909>";
+                        break;
+                    case 21:
+                        rJoustTier = "Diamond V";
+                        rJoustTierImg = "<:jodi:528617416452997120>";
+                        break;
+                    case 22:
+                        rJoustTier = "Diamond IV";
+                        rJoustTierImg = "<:jodi:528617416452997120>";
+                        break;
+                    case 23:
+                        rJoustTier = "Diamond III";
+                        rJoustTierImg = "<:jodi:528617416452997120>";
+                        break;
+                    case 24:
+                        rJoustTier = "Diamond II";
+                        rJoustTierImg = "<:jodi:528617416452997120>";
+                        break;
+                    case 25:
+                        rJoustTier = "Diamond I";
+                        rJoustTierImg = "<:jodi:528617416452997120>";
+                        break;
+                    case 26:
+                        rJoustTier = "Masters";
+                        rJoustTierImg = "<:joma:528617417170223144>";
+                        break;
+                    case 27:
+                        rJoustTier = "Grandmaster";
+                        rJoustTierImg = "<:jogm:528617416331362334>";
+                        break;
+                    default:
+                        break;
+                }
+
+                switch (playerStats[0].Tier_Duel)
+                {
+                    case 0:
+                        rDuelTier = "Qualifying";
+                        rDuelTierImg = "<:q_:528617317534269450>";
+                        break;
+                    case 1:
+                        rDuelTier = "Bronze V";
+                        rDuelTierImg = "<:dubr:528617383011549184>";
+                        break;
+                    case 2:
+                        rDuelTier = "Bronze IV";
+                        rDuelTierImg = "<:dubr:528617383011549184>";
+                        break;
+                    case 3:
+                        rDuelTier = "Bronze III";
+                        rDuelTierImg = "<:dubr:528617383011549184>";
+                        break;
+                    case 4:
+                        rDuelTier = "Bronze II";
+                        rDuelTierImg = "<:dubr:528617383011549184>";
+                        break;
+                    case 5:
+                        rDuelTier = "Bronze I";
+                        rDuelTierImg = "<:dubr:528617383011549184>";
+                        break;
+                    case 6:
+                        rDuelTier = "Silver V";
+                        rDuelTierImg = "<:dusi:528617384395931649>";
+                        break;
+                    case 7:
+                        rDuelTier = "Silver IV";
+                        rDuelTierImg = "<:dusi:528617384395931649>";
+                        break;
+                    case 8:
+                        rDuelTier = "Silver II";
+                        rDuelTierImg = "<:dusi:528617384395931649>";
+                        break;
+                    case 9:
+                        rDuelTier = "Silver II";
+                        rDuelTierImg = "<:dusi:528617384395931649>";
+                        break;
+                    case 10:
+                        rDuelTier = "Silver I";
+                        rDuelTierImg = "<:dusi:528617384395931649>";
+                        break;
+                    case 11:
+                        rDuelTier = "Gold V";
+                        rDuelTierImg = "<:dugo:528617384463040533>";
+                        break;
+                    case 12:
+                        rDuelTier = "Gold IV";
+                        rDuelTierImg = "<:dugo:528617384463040533>";
+                        break;
+                    case 13:
+                        rDuelTier = "Gold III";
+                        rDuelTierImg = "<:dugo:528617384463040533>";
+                        break;
+                    case 14:
+                        rDuelTier = "Gold II";
+                        rDuelTierImg = "<:dugo:528617384463040533>";
+                        break;
+                    case 15:
+                        rDuelTier = "Gold I";
+                        rDuelTierImg = "<:dugo:528617384463040533>";
+                        break;
+                    case 16:
+                        rDuelTier = "Platinum V";
+                        rDuelTierImg = "<:dupl:528617384848785446>";
+                        break;
+                    case 17:
+                        rDuelTier = "Platinum IV";
+                        rDuelTierImg = "<:dupl:528617384848785446>";
+                        break;
+                    case 18:
+                        rDuelTier = "Platinum III";
+                        rDuelTierImg = "<:dupl:528617384848785446>";
+                        break;
+                    case 19:
+                        rDuelTier = "Platinum II";
+                        rDuelTierImg = "<:dupl:528617384848785446>";
+                        break;
+                    case 20:
+                        rDuelTier = "Platinum I";
+                        rDuelTierImg = "<:dupl:528617384848785446>";
+                        break;
+                    case 21:
+                        rDuelTier = "Diamond V";
+                        rDuelTierImg = "<:dudi:528617385310289922>";
+                        break;
+                    case 22:
+                        rDuelTier = "Diamond IV";
+                        rDuelTierImg = "<:dudi:528617385310289922>";
+                        break;
+                    case 23:
+                        rDuelTier = "Diamond III";
+                        rDuelTierImg = "<:dudi:528617385310289922>";
+                        break;
+                    case 24:
+                        rDuelTier = "Diamond II";
+                        rDuelTierImg = "<:dudi:528617385310289922>";
+                        break;
+                    case 25:
+                        rDuelTier = "Diamond I";
+                        rDuelTierImg = "<:dudi:528617385310289922>";
+                        break;
+                    case 26:
+                        rDuelTier = "Masters";
+                        rDuelTierImg = "<:duma:528617385452634122>";
+                        break;
+                    case 27:
+                        rDuelTier = "Grandmaster";
+                        rDuelTierImg = "<:dugm:528617385410822154>";
+                        break;
+                    default:
+                        break;
+                }
+
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(author =>
+                {
+                    author
+                        .WithName($"{rPlayerName}")
+                        .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
+                        .WithIconUrl(botIcon);
+                });
+                if (playerStatus[0].status == 0)
+                {
+                    embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
+                    embed.WithColor(new Color(220, 147, 4));
+                }
+                else
+                {
+                    embed.WithColor(new Color(0, 255, 0));
+                    if (playerStatus[0].Match != 0)
+                    {
+                        await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
+                        List<PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(hirezAPI.matchPlayerDetails);
+
+                        for (int s = 0; s < matchPlayerDetails.Count; s++)
+                        {
+                            if (matchPlayerDetails[s].playerId == playerStats[0].ActivePlayerId)
+                            {
+                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(matchPlayerDetails[0].Queue)}**, playing as {matchPlayerDetails[s].GodName}");
+                            }
+                        }
+                    }
+                    else if (playerStatus[0].status == 2)
+                    {
+                        embed.WithDescription($":eyes: In {playerStatus[0].status_string}");
+                    }
+                    else
+                    {
+                        embed.WithDescription($":eyes: {playerStatus[0].status_string}");
+                    }
+                }
+                // invisible character \u200b
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:level:529719212017451008>**Level**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Level}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:mastery:529719212076433418>**Mastery Level**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].MasteryLevel}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:wp:552579445475508229>**Total Worshippers**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Total_Worshippers}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":trophy:**Wins** [{Math.Round(rWinRate, 1)}%]");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Wins}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":flag_white:**Losses**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Losses}");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":runner:**Leaves**");
+                    field.Value = ($":small_blue_diamond:{playerStats[0].Leaves}");
+                });
+                // Ranked Conquest
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:conquesticon:528673820060418061>**Ranked Conquest**");
+                    field.Value = ($"{rConquestTierImg}**{rConquestTier}** [{playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}]");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:jousticon:528673820018737163>**Ranked Joust**");
+                    field.Value = ($"{rJoustTierImg}**{rJoustTier}** [{playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}]");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($"<:jousticon:528673820018737163>**Ranked Duel**");
+                    field.Value = ($"{rDuelTierImg}**{rDuelTier}** [{playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}]");
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":video_game:**Playing SMITE since**");
+                    field.Value = ($":small_blue_diamond:{rPlayerCreated}");
+                });
+                switch (playerStats[0].Region)
+                {
+                    case "Europe":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":flag_eu: {playerStats[0].Region}");
+                        });
+                        break;
+                    case "North America":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":flag_us: {playerStats[0].Region}");
+                        });
+                        break;
+                    case "Brazil":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":flag_br: {playerStats[0].Region}");
+                        });
+                        break;
+                    case "Australia":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":flag_au: {playerStats[0].Region}");
+                        });
+                        break;
+                    case "":
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":small_blue_diamond:n/a");
+                        });
+                        break;
+                    default:
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = ($":globe_with_meridians:**Region**");
+                            field.Value = ($":small_blue_diamond:{playerStats[0].Region}");
+                        });
+                        break;
+                } // Region
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":hourglass:**Playtime**");
+                    field.Value = ($":small_blue_diamond:{rHoursPlayed}");
+                });
+                if (godRanks.Count != 0)
+                {
+                    switch (godRanks.Count)
+                    {
+                        case 1:
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = "<:Gods:567146088985919498>Top Gods";
+                                field.Value = $":small_blue_diamond:{godRanks[0].god} [{godRanks[0].Worshippers}]\n";
+                            });
+                            break;
+                        case 2:
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = "<:Gods:567146088985919498>Top Gods";
+                                field.Value = $":small_blue_diamond:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                                $":small_blue_diamond:{godRanks[1].god} [{godRanks[1].Worshippers}]\n";
+                            });
+                            break;
+                        default:
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = "<:Gods:567146088985919498>Top Gods";
+                                field.Value = $":small_blue_diamond:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                                $":small_blue_diamond:{godRanks[1].god} [{godRanks[1].Worshippers}]\n" +
+                                $":small_blue_diamond:{godRanks[2].god} [{godRanks[2].Worshippers}]";
+                            });
+                            break;
+                    }
+                } // Top Gods
+                embed.WithFooter(footer =>
+                {
+                    footer
+                        .WithText(playerStats[0].Personal_Status_Message)
+                        .WithIconUrl(botIcon);
+                });
+                await Context.Channel.SendMessageAsync("", false, embed.Build());
+
+                // Saving the player to the database
+                await Database.AddPlayerToDb(playerStats);
+            }
+        }
+
         // test
         [Command("test")] // Get specific God information
         [RequireOwner]
@@ -1478,10 +2106,10 @@ namespace ThothBotCore.Modules
 
         [Command("getplayer")]
         [RequireOwner]
-        public async Task TestGetPlayer([Remainder] string player)
+        public async Task TestGetPlayer(string username)
         {
-            string test = await hirezAPI.GetPlayerIdByName(player);
-            await ReplyAsync(test);
+            List<SearchPlayers> test = await hirezAPI.SearchPlayer(username);
+            await ReplyAsync(test[0].Name);
         }
 
         [Command("getgods")]

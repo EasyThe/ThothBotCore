@@ -1,4 +1,7 @@
-﻿using DiscordBotsList.Api;
+﻿using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using ThothBotCore.Discord;
@@ -9,7 +12,6 @@ namespace ThothBotCore.Utilities
     public class GuildsTimer
     {
         private static Timer GuildCountTimer;
-        AuthDiscordBotListApi DblApi = new AuthDiscordBotListApi(454145330347376651, "token");
         internal int joinedGuilds = 0;
 
         public Task StartGuildsCountTimer()
@@ -30,24 +32,24 @@ namespace ThothBotCore.Utilities
             {
                 joinedGuilds = Connection.Client.Guilds.Count;
                 await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
-                System.Console.WriteLine("done");
-            }
 
-            bool nz = false;
-            if (nz == true)
-            {
                 try
                 {
-                    var me = await DblApi.GetMeAsync();
-                    // Update stats           guildCount
-                    await me.UpdateStatsAsync(Connection.Client.Guilds.Count);
+                    using (var webclient = new HttpClient())
+                    using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
+                    {
+                        webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.botsAPI);
+                        HttpResponseMessage response = await webclient.PostAsync("https://discordbots.org/api/bots/454145330347376651/stats", content);
+                    }
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    await ErrorTracker.SendError($"Error from DiscordServersAPI thingy../n{ex.Message}");
+                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordBotsList.**/n" +
+                        $"Error Message: {ex.Message}");
                 }
-            }
 
+                Console.WriteLine($"{DateTime.UtcNow.ToString("[HH:mm, d.MM.yyyy]")} Guilds count updated! New count: {joinedGuilds}");
+            }
 
             GuildCountTimer.Interval = 60000;
             GuildCountTimer.AutoReset = true;

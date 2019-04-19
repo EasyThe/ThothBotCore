@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord.Entities;
+using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Connections
 {
@@ -83,7 +85,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetPlayer(string username)
+        public async Task<string> GetPlayer(string username)
         {
             await CheckSession();
 
@@ -95,7 +97,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayerjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    playerResult = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }
@@ -147,6 +149,24 @@ namespace ThothBotCore.Connections
                 {
                     var response = await httpClient.SendAsync(request);
                     return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<List<SearchPlayers>> SearchPlayer(string username)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}searchplayersjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    string json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<SearchPlayers>>(json);
                 }
             }
         }

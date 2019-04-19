@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
+using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Discord
 {
@@ -31,17 +32,36 @@ namespace ThothBotCore.Discord
             var context = new SocketCommandContext(_client, msg);
             int argPos = 0;
 
-            if (msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
+            if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
                 || msg.HasStringPrefix(Database.GetPrefix(context.Guild)[0].prefix, ref argPos)
-                || msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && msg.Author.IsBot == false)
+                || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
             {
                 var result = await _commands.ExecuteAsync(context, argPos, null);
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                 {
-                    Console.WriteLine(result.Error + " " + result.ErrorReason);
                     if (result.ErrorReason.Contains("few parameters"))
                     {
                         await context.Channel.SendMessageAsync("Please check the command usage in **!!help**");
+                    }
+                    else if (result.ErrorReason.ToLower().Contains("user requires guild permission administrator"))
+                    {
+                        await context.Channel.SendMessageAsync("You must to have **Administrator** permission in this server to use this command.");
+                    }
+                    else if (result.ErrorReason.ToLower().Contains("channel not found"))
+                    {
+                        await context.Channel.SendMessageAsync("Channel not found.");
+                    }
+                    else if (result.ErrorReason.Contains("Command must be used in a guild channel"))
+                    {
+                        await context.Channel.SendMessageAsync("Command must be used in a guild channel.");
+                    }
+                    else
+                    {
+                        Console.WriteLine(result.Error + " " + result.ErrorReason);
+                        await ErrorTracker.SendError($"**Message: **{context.Message.Content}\n" +
+                            $"**User: **{context.Message.Author}\n" +
+                            $"**Error: **{result.Error}\n" +
+                            $"**Error Reason: **{result.ErrorReason}");
                     }
                 }
             }
