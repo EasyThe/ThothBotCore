@@ -41,6 +41,7 @@ namespace ThothBotCore.Discord
 
         private Task ClientReadyTask()
         {
+            _client.DownloadUsersAsync(_client.Guilds);
             StatusTimer.StartServerStatusTimer();
             guildsTimer.StartGuildsCountTimer();
 
@@ -49,11 +50,7 @@ namespace ThothBotCore.Discord
 
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            await ErrorTracker.SendJoinedServers($"**Joined new server:** {guild.Name}\n" +
-                $"**Server ID:** {guild.Id}\n" +
-                $"**Owner:** {guild.Owner}\n" +
-                $"**Users:** {guild.Users.Count}\n" +
-                $"**Joined at:** {DateTime.UtcNow.ToString("HH:mm dd.MM.YYYY")}");
+            await ErrorTracker.SendJoinedServers(guild);
             var channel = guild.DefaultChannel;
 
             await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +

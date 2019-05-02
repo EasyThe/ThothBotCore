@@ -8,18 +8,26 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Storage.Models;
+using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Storage
 {
     public class Database
     {
-        public static async Task InsertServerStatusUpdates(string id, string inciID, string name, string createdAt)
+        public static async Task InsertServerStatusUpdates(string id, string inciID, string type, string status, string name, string body, string createdAt)
         {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            try
             {
-                await cnn.ExecuteAsync($"INSERT OR IGNORE INTO ServerStatusUpdates(id, inciID, name, createdAt) " +
-                    $"VALUES(\"{id}\", \"{inciID}\", \"{name}\", \"{createdAt}\")");
+                using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+                {
+                    await cnn.ExecuteAsync($"INSERT OR IGNORE INTO ServerStatusUpdates(id, inciID, type, status, name, body, createdAt) " +
+                        $"VALUES(\"{id}\", \"{inciID}\", \"{type}\", \"{status}\", \"{name}\", \"{body}\", \"{createdAt}\")");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ErrorTracker.SendError($"**Error in InsertServerStatusUpdates\n{ex.Message}");
             }
         }
 
@@ -28,20 +36,20 @@ namespace ThothBotCore.Storage
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = cnn.Query<string>($"SELECT EXISTS(SELECT 1 FROM ServerStatusUpdates WHERE id LIKE '%{id}%')", new DynamicParameters());
-                return output.ToList();// THIS IS NOT WORKIIING
+                return output.ToList();// is it tho? THIS IS NOT WORKIIING
             }
         }
 
-        public static List<ServerConfig> GetNotifChannels()
+        public static async Task<List<ServerConfig>> GetNotifChannels() // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                var output = cnn.Query<ServerConfig>($"SELECT * FROM serverConfig WHERE statusBool LIKE '%1%'", new DynamicParameters());
+                var output = await cnn.QueryAsync<ServerConfig>($"SELECT * FROM serverConfig WHERE statusBool LIKE '%1%'", new DynamicParameters());
                 return output.ToList();
             }
         }
 
-        public static async Task StopNotifs(ulong serverID)
+        public static async Task StopNotifs(ulong serverID) // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
@@ -51,7 +59,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task SetNotifChannel(ulong serverID, string serverName, ulong statusChannel)
+        public static async Task SetNotifChannel(ulong serverID, string serverName, ulong statusChannel) // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
@@ -62,7 +70,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task SetPrefix(ulong serverID, string serverName, string prefix)
+        public static async Task SetPrefix(ulong serverID, string serverName, string prefix) // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
@@ -73,7 +81,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static List<ServerConfig> GetPrefix(SocketGuild guild) // Get god by godname
+        public static List<ServerConfig> GetPrefix(SocketGuild guild) // Get prefix for guild. Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
@@ -247,11 +255,29 @@ namespace ThothBotCore.Storage
             connection.Close();
         }
 
+        public static async Task<List<PlayerSpecial>> GetPlayerSpecials(string id) // Working as intended
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<PlayerSpecial>($"SELECT * FROM playersSpecial WHERE active_player_id LIKE '%{id}%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public static List<PlayerStats> GetAllPlayers()
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = cnn.Query<PlayerStats>($"SELECT * FROM players", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static List<string> PlayersInDbCount() // Working as intended
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<string>($"SELECT count(*) FROM players", new DynamicParameters());
                 return output.ToList();
             }
         }

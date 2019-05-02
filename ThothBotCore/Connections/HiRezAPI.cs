@@ -256,23 +256,6 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetPatchInfo()
-        {
-            await CheckSession();
-
-            string signature = GetMD5Hash(devID + "getpatchinfo" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getpatchinfojson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    testing = await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
         public async Task EsportsProLeagueDetails()
         {
             await CheckSession();
@@ -320,10 +303,33 @@ namespace ThothBotCore.Connections
             }
         }
 
+        public async Task<string> GetPatchInfo()
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getpatchinfo" + authKey + timestamp);
+
+            var dataUsedHandler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(dataUsedHandler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, PCAPIurl + "getpatchinfojson/" + devID + "/" + signature + "/" + sessionResult.sessionID + "/" + timestamp))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
         public class SessionResult
         {
             public string sessionTime;
             public string sessionID;
+        }
+
+        public class PatchInfo
+        {
+            public object ret_msg { get; set; }
+            public string version_string { get; set; }
         }
     }
 }

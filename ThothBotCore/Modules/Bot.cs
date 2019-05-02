@@ -28,11 +28,11 @@ namespace ThothBotCore.Modules
         {
             string prefix = Credentials.botConfig.prefix;
             string desc = $"Default prefix: `{Credentials.botConfig.prefix}`";
-            if (Database.GetPrefix(Context.Guild).Count > 0)
+            if (GetPrefix(Context.Guild).Count > 0)
             {
-                if (Database.GetPrefix(Context.Guild)[0].prefix != "!!")
+                if (GetPrefix(Context.Guild)[0].prefix != "!!")
                 {
-                    prefix = Database.GetPrefix(Context.Guild)[0].prefix;
+                    prefix = GetPrefix(Context.Guild)[0].prefix;
                     desc = desc + $"\nCustom prefix: `{prefix}`";
                 }
             }
@@ -46,7 +46,7 @@ namespace ThothBotCore.Modules
             // Warning 
             embed.WithTitle(":bangbang:This bot is still in development. I try to keep it online for atleast 12 hours a day. I may stop developing it depending on what other bots offer for SMITE stats in the future. If I do so I will notify all servers the bot is in at that time.");
             embed.WithDescription("[Support server](http://discord.gg/hU6MTbQ)\n" + desc);
-            embed.WithColor(8190976);
+            embed.WithColor(new Color(85, 172, 238));
             embed.WithThumbnailUrl(botIcon);
             embed.AddField(field =>
             {
@@ -113,7 +113,18 @@ namespace ThothBotCore.Modules
         [Alias("bi", "botstats")]
         public async Task BotInfoCommand()
         {
-            //get patch version
+            string patch = "";
+            try
+            {
+                string json = await hirezAPI.GetPatchInfo();
+                HiRezAPI.PatchInfo patchInfo = JsonConvert.DeserializeObject<HiRezAPI.PatchInfo>(json);
+                patch = patchInfo.version_string;
+            }
+            catch (Exception ex)
+            {
+                patch = "n/a";
+                await ErrorTracker.SendError($"Error in PatchInfo from **botinfo** command.\n{ex.Message}");
+            }
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
@@ -123,7 +134,7 @@ namespace ThothBotCore.Modules
                     .WithIconUrl(botIcon);
             });
             embed.WithTitle("Creator: EasyThe#2836");
-            embed.WithColor(new Color(0, 255, 0));
+            embed.WithColor(new Color(85, 172, 238));
             embed.AddField(field =>
             {
                 field.IsInline = true;
@@ -139,9 +150,14 @@ namespace ThothBotCore.Modules
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "Smite Info";
-                field.Value = $"Patch version: \n" +
-                $"";
+                field.Name = "SMITE Players Processed";
+                field.Value = PlayersInDbCount()[0];
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = false;
+                field.Name = "Smite Patch Version";
+                field.Value = patch;
             });
 
             await ReplyAsync("", false, embed.Build());
@@ -172,12 +188,12 @@ namespace ThothBotCore.Modules
                 if (ex.Message.Contains("Missing Permissions"))
                 {
                     await Context.Channel.SendMessageAsync($":warning: I am missing **Send Messages** permission for {channel.Mention}\n" +
-                        $"Please make sure I have **Read Messages, Send Messages** and **Use External Emojis** permissions in {channel.Mention}.");
+                        $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}.");
                 }
                 else if (ex.Message.Contains("Missing Access"))
                 {
                     await Context.Channel.SendMessageAsync($":warning: I am missing **Access** to {channel.Mention}\n" +
-                        $"Please make sure I have **Read Messages, Send Messages** and **Use External Emojis** permissions in {channel.Mention}.");
+                        $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}.");
                 }
                 else
                 {
@@ -190,7 +206,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("stopstatusupdates")]
+        [Command("stopstatusupdates", true)]
         [Alias("ssu")]
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task StopStatusUpdates()
@@ -200,7 +216,7 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"**{Context.Guild.Name}** will no longer receive SMITE Server Status updates.");
         }
 
-        [Command("ping")]
+        [Command("ping", true)]
         [Alias("p")]
         public async Task Ping()
         {
@@ -216,7 +232,7 @@ namespace ThothBotCore.Modules
         {
             await (Context.Client as DiscordSocketClient).SetGameAsync(game);
             await Context.Channel.SendMessageAsync($"Successfully set the game to '**{game}**'");
-            Console.WriteLine($"{DateTime.UtcNow.ToString("[HH:mm, d.MM.yyyy]")}: Game was changed to {game}");
+            Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")}: Game was changed to {game}");
         }
 
         [Command("bs", true)]
@@ -330,10 +346,10 @@ namespace ThothBotCore.Modules
         }
 
         [Command("invite")]
-        [RequireOwner]
+        [Alias("inv")]
         public async Task InviteLink()
         {
-            await Context.Channel.SendMessageAsync("https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=262144&scope=bot");
+            await Context.Channel.SendMessageAsync("https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=278528&scope=bot");
         }
 
         [Command("testupdates")]

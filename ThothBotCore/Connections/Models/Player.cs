@@ -6,7 +6,6 @@ namespace ThothBotCore.Connections.Models
     {
         public class PlayerStats
         {
-            public int discordID { get; set; }
             public int ActivePlayerId { get; set; }
             public string Avatar_URL { get; set; }
             public DateTime Created_Datetime { get; set; }

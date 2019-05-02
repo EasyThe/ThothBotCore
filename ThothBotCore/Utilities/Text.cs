@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
+using System.Threading.Tasks;
+using ThothBotCore.Storage;
+using ThothBotCore.Storage.Models;
 
 namespace ThothBotCore.Utilities
 {
@@ -75,6 +80,29 @@ namespace ThothBotCore.Utilities
             return dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
         }
 
+        public static async Task<string> CheckSpecialsForPlayer(string id)
+        {
+            List<PlayerSpecial> playerSpecial = await Database.GetPlayerSpecials(id);
+            if (playerSpecial.Count != 0)
+            {
+                StringBuilder sb = new StringBuilder();
+                if (playerSpecial[0].pro_bool != 0)
+                {
+                    sb.Append(":mouse_three_button:Pro Player");
+                }
+                if (playerSpecial[0].streamer_bool != 0)
+                {
+                    sb.Append(":top:Streamer");
+                }
+                if (playerSpecial[0].special.Contains("dev"))
+                {
+                    sb.Append(":heart:Thoth Developer");
+                }
+                return sb.ToString();
+            }
+            return "";
+        }
+
         // SMITE Queue names
         public static string GetQueueName(int queueID)
         {
@@ -98,6 +126,9 @@ namespace ThothBotCore.Utilities
                     return "Custom Joust";
                 case 443:
                     return "Arena Practice (Easy)";
+                case 444:
+                    return "Jungle Practice" +
+                        "";
                 case 445:
                     return "Assault";
                 case 446:
@@ -166,6 +197,201 @@ namespace ThothBotCore.Utilities
                     return "Ranked Conquest(Console)";
                 default:
                     return "";
+            }
+        }
+
+        public static Tuple<string, string> GetRankedConquest(int tier)
+        {
+            switch (tier)
+            {
+                case 0:
+                    return Tuple.Create("Qualifying", "<:q_:528617317534269450>");
+                case 1:
+                    return Tuple.Create("Bronze V", "<:cqbr:528617350027673620>");
+                case 2:
+                    return Tuple.Create("Bronze IV", "<:cqbr:528617350027673620>");
+                case 3:
+                    return Tuple.Create("Bronze III", "<:cqbr:528617350027673620>");
+                case 4:
+                    return Tuple.Create("Bronze II", "<:cqbr:528617350027673620>");
+                case 5:
+                    return Tuple.Create("Bronze I", "<:cqbr:528617350027673620>");
+                case 6:
+                    return Tuple.Create("Silver V", "<:cqsi:528617356151488512>");
+                case 7:
+                    return Tuple.Create("Silver IV", "<:cqsi:528617356151488512>");
+                case 8:
+                    return Tuple.Create("Silver III", "<:cqsi:528617356151488512>");
+                case 9:
+                    return Tuple.Create("Silver II", "<:cqsi:528617356151488512>");
+                case 10:
+                    return Tuple.Create("Silver I", "<:cqsi:528617356151488512>");
+                case 11:
+                    return Tuple.Create("Gold V", "<:cqgo:528617356491227136>");
+                case 12:
+                    return Tuple.Create("Gold IV", "<:cqgo:528617356491227136>");
+                case 13:
+                    return Tuple.Create("Gold III", "<:cqgo:528617356491227136>");
+                case 14:
+                    return Tuple.Create("Gold II", "<:cqgo:528617356491227136>");
+                case 15:
+                    return Tuple.Create("Gold I", "<:cqgo:528617356491227136>");
+                case 16:
+                    return Tuple.Create("Platinum V", "<:cqpl:528617357485015041>");
+                case 17:
+                    return Tuple.Create("Platinum IV", "<:cqpl:528617357485015041>");
+                case 18:
+                    return Tuple.Create("Platinum III", "<:cqpl:528617357485015041>");
+                case 19:
+                    return Tuple.Create("Platinum II", "<:cqpl:528617357485015041>");
+                case 20:
+                    return Tuple.Create("Platinum I", "<:cqpl:528617357485015041>");
+                case 21:
+                    return Tuple.Create("Diamond V", "<:cqdi:528617356625313792>");
+                case 22:
+                    return Tuple.Create("Diamond IV", "<:cqdi:528617356625313792>");
+                case 23:
+                    return Tuple.Create("Diamond III", "<:cqdi:528617356625313792>");
+                case 24:
+                    return Tuple.Create("Diamond II", "<:cqdi:528617356625313792>");
+                case 25:
+                    return Tuple.Create("Diamond I", "<:cqdi:528617356625313792>");
+                case 26:
+                    return Tuple.Create("Masters", "<:cqma:528617357669826560>");
+                case 27:
+                    return Tuple.Create("Grandmaster", "<:cqgm:528617358500298753>");
+                default:
+                    return Tuple.Create("This", "Report");
+            }
+        }
+
+        public static Tuple<string, string> GetRankedJoust(int tier)
+        {
+            switch (tier)
+            {
+                case 0:
+                    return Tuple.Create("Qualifying", "<:q_:528617317534269450>");
+                case 1:
+                    return Tuple.Create("Bronze V", "<:jobr:528617414171164697>");
+                case 2:
+                    return Tuple.Create("Bronze IV", "<:jobr:528617414171164697>");
+                case 3:
+                    return Tuple.Create("Bronze III", "<:jobr:528617414171164697>");
+                case 4:
+                    return Tuple.Create("Bronze II", "<:jobr:528617414171164697>");
+                case 5:
+                    return Tuple.Create("Bronze I", "<:jobr:528617414171164697>");
+                case 6:
+                    return Tuple.Create("Silver V", "<:josi:528617415903412244>");
+                case 7:
+                    return Tuple.Create("Silver IV", "<:josi:528617415903412244>");
+                case 8:
+                    return Tuple.Create("Silver III", "<:josi:528617415903412244>");
+                case 9:
+                    return Tuple.Create("Silver II", "<:josi:528617415903412244>");
+                case 10:
+                    return Tuple.Create("Silver I", "<:josi:528617415903412244>");
+                case 11:
+                    return Tuple.Create("Gold V", "<:jogo:528617415500890112>");
+                case 12:
+                    return Tuple.Create("Gold IV", "<:jogo:528617415500890112>");
+                case 13:
+                    return Tuple.Create("Gold III", "<:jogo:528617415500890112>");
+                case 14:
+                    return Tuple.Create("Gold II", "<:jogo:528617415500890112>");
+                case 15:
+                    return Tuple.Create("Gold I", "<:jogo:528617415500890112>");
+                case 16:
+                    return Tuple.Create("Platinum V", "<:jopl:528617415677050909>");
+                case 17:
+                    return Tuple.Create("Platinum IV", "<:jopl:528617415677050909>");
+                case 18:
+                    return Tuple.Create("Platinum III", "<:jopl:528617415677050909>");
+                case 19:
+                    return Tuple.Create("Platinum II", "<:jopl:528617415677050909>");
+                case 20:
+                    return Tuple.Create("Platinum I", "<:jopl:528617415677050909>");
+                case 21:
+                    return Tuple.Create("Diamond V", "<:jodi:528617416452997120>");
+                case 22:
+                    return Tuple.Create("Diamond IV", "<:jodi:528617416452997120>");
+                case 23:
+                    return Tuple.Create("Diamond III", "<:jodi:528617416452997120>");
+                case 24:
+                    return Tuple.Create("Diamond II", "<:jodi:528617416452997120>");
+                case 25:
+                    return Tuple.Create("Diamond I", "<:jodi:528617416452997120>");
+                case 26:
+                    return Tuple.Create("Masters", "<:joma:528617417170223144>");
+                case 27:
+                    return Tuple.Create("Grandmaster", "<:jogm:528617416331362334>");
+                default:
+                    return Tuple.Create("Thot", "Begone");
+            }
+        }
+
+        public static Tuple<string, string> GetRankedDuel(int tier)
+        {
+            switch (tier)
+            {
+                case 0:
+                    return Tuple.Create("Qualifying", "<:q_:528617317534269450>");
+                case 1:
+                    return Tuple.Create("Bronze V", "<:dubr:528617383011549184>");
+                case 2:
+                    return Tuple.Create("Bronze IV", "<:dubr:528617383011549184>");
+                case 3:
+                    return Tuple.Create("Bronze III", "<:dubr:528617383011549184>");
+                case 4:
+                    return Tuple.Create("Bronze II", "<:dubr:528617383011549184>");
+                case 5:
+                    return Tuple.Create("Bronze I", "<:dubr:528617383011549184>");
+                case 6:
+                    return Tuple.Create("Silver V", "<:dusi:528617384395931649>");
+                case 7:
+                    return Tuple.Create("Silver IV", "<:dusi:528617384395931649>");
+                case 8:
+                    return Tuple.Create("Silver III", "<:dusi:528617384395931649>");
+                case 9:
+                    return Tuple.Create("Silver II", "<:dusi:528617384395931649>");
+                case 10:
+                    return Tuple.Create("Silver I", "<:dusi:528617384395931649>");
+                case 11:
+                    return Tuple.Create("Gold V", "<:dugo:528617384463040533>");
+                case 12:
+                    return Tuple.Create("Gold IV", "<:dugo:528617384463040533>");
+                case 13:
+                    return Tuple.Create("Gold III", "<:dugo:528617384463040533>");
+                case 14:
+                    return Tuple.Create("Gold II", "<:dugo:528617384463040533>");
+                case 15:
+                    return Tuple.Create("Gold I", "<:dugo:528617384463040533>");
+                case 16:
+                    return Tuple.Create("Platinum V", "<:dupl:528617384848785446>");
+                case 17:
+                    return Tuple.Create("Platinum IV", "<:dupl:528617384848785446>");
+                case 18:
+                    return Tuple.Create("Platinum III", "<:dupl:528617384848785446>");
+                case 19:
+                    return Tuple.Create("Platinum II", "<:dupl:528617384848785446>");
+                case 20:
+                    return Tuple.Create("Platinum I", "<:dupl:528617384848785446>");
+                case 21:
+                    return Tuple.Create("Diamond V", "<:dudi:528617385310289922>");
+                case 22:
+                    return Tuple.Create("Diamond IV", "<:dudi:528617385310289922>");
+                case 23:
+                    return Tuple.Create("Diamond III", "<:dudi:528617385310289922>");
+                case 24:
+                    return Tuple.Create("Diamond II", "<:dudi:528617385310289922>");
+                case 25:
+                    return Tuple.Create("Diamond I", "<:dudi:528617385310289922>");
+                case 26:
+                    return Tuple.Create("Masters", "<:duma:528617385452634122>");
+                case 27:
+                    return Tuple.Create("Grandmaster", "<:dugm:528617385410822154>");
+                default:
+                    return Tuple.Create("Thot", "Begone");
             }
         }
     }

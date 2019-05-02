@@ -2,8 +2,8 @@
 using Discord.WebSocket;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
+using ThothBotCore.Utilities;
 using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Notifications
@@ -12,41 +12,45 @@ namespace ThothBotCore.Notifications
     {
         private static SocketTextChannel channel;
 
-        public static Task SendNotifs(ServerStatus serverStatus)
+        public static async Task SendServerStatus(EmbedBuilder embed)
         {
-            //deprecated NOT USING THIS...
-
-            List<ServerConfig> notifChannels = GetNotifChannels();
+            List<ServerConfig> notifChannels = await GetNotifChannels();
 
             for (int i = 0; i < notifChannels.Count; i++)
             {
-                channel = Connection.Client.GetGuild(notifChannels[i].serverID).GetTextChannel(notifChannels[i].statusChannel);
-                if (serverStatus.scheduled_maintenances.Count >= 1 && serverStatus.scheduled_maintenances[0].name.Contains("Smite"))
+                try
                 {
-                    channel.SendMessageAsync("", false, EmbedHandler.StatusMaintenanceEmbed(serverStatus).Build());
+                    channel = Connection.Client.GetGuild(notifChannels[i].serverID).GetTextChannel(notifChannels[i].statusChannel);
+                    await channel.SendMessageAsync("", false, embed.Build());
+                    System.Console.WriteLine($"Sent Status Updates to: {notifChannels[i].serverName}[{notifChannels[i].serverID}]");
+                    //System.Threading.Thread.Sleep(100);
                 }
-                else if (serverStatus.incidents.Count >= 1 && serverStatus.incidents[0].name.Contains("Smite"))
+                catch (System.Exception ex)
                 {
-                    channel.SendMessageAsync("", false, EmbedHandler.StatusIncidentEmbed(serverStatus).Build());
+                    if (ex.Message.Contains("Missing"))
+                    {
+                        SocketGuild guild = Connection.Client.GetGuild(notifChannels[i].serverID);
+                        //SocketTextChannel defaultChannel = guild.DefaultChannel;
+                        IUser user = Connection.Client.GetUser(guild.OwnerId);
+                        await user.SendMessageAsync($":warning: I am missing **Access** to {channel.Mention}\n" +
+                        $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}." +
+                        $"You will get this message everytime I get an error by trying to send Server Status Updates in {channel.Mention}.\n" +
+                        $"If you don't want to receive Server Status Updates anymore, please use **!!stopstatusupdates** in one of your guilds channels.");
+                    }
+                    else if (ex.Message.Contains("Object reference not set to an instance of an object."))
+                    {
+                        await StopNotifs(notifChannels[i].serverID);
+                    }
+                    else
+                    {
+                        await ErrorTracker.SendError("Another StatusNotifier error:\n" +
+                            $"{ex.Message}\n" +
+                            $"{ex.TargetSite}\n" +
+                            $"{ex.Data}\n" +
+                            $"{notifChannels[i].serverName} [{notifChannels[i].serverID}]");
+                    }
                 }
             }
-
-            return Task.CompletedTask;
-        }
-
-        public static Task SendServerStatus(EmbedBuilder embed)
-        {
-            List<ServerConfig> notifChannels = GetNotifChannels();
-
-            for (int i = 0; i < notifChannels.Count; i++)
-            {
-                channel = Connection.Client.GetGuild(notifChannels[i].serverID).GetTextChannel(notifChannels[i].statusChannel);
-                channel.SendMessageAsync("", false, embed.Build());
-
-                System.Threading.Thread.Sleep(200);
-            }
-
-            return Task.CompletedTask;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Reflection;
@@ -37,6 +38,11 @@ namespace ThothBotCore.Discord
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
             {
                 var result = await _commands.ExecuteAsync(context, argPos, null);
+                if (result.IsSuccess || !result.IsSuccess)
+                {
+                    await ErrorTracker.SendSuccessCommands($"**Message: **{context.Message.Content}\n" +
+                            $"**User: **{context.Message.Author}");
+                }
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                 {
                     if (result.ErrorReason.Contains("few parameters"))
@@ -55,6 +61,18 @@ namespace ThothBotCore.Discord
                     {
                         await context.Channel.SendMessageAsync("Command must be used in a guild channel.");
                     }
+                    else if (result.ErrorReason.ToLower().Contains("50013"))
+                    {
+                        try
+                        {
+                            IUser user = Connection.Client.GetUser(context.User.Id);
+                            await user.SendMessageAsync($"I don't have **Send Messages** or **Embed Links** permissions in #{context.Channel.Name}");
+                        }
+                        catch (Exception ex)
+                        {
+                            await ErrorTracker.SendError($"Error./n{ex.Message}");
+                        }
+                    }
                     else
                     {
                         Console.WriteLine(result.Error + " " + result.ErrorReason);
@@ -62,6 +80,7 @@ namespace ThothBotCore.Discord
                             $"**User: **{context.Message.Author}\n" +
                             $"**Error: **{result.Error}\n" +
                             $"**Error Reason: **{result.ErrorReason}");
+                        await context.Channel.SendMessageAsync("Something went wrong. Bot owner was notified about this error and will take care of it as soon as possible. Sorry for the inconvenience caused.");
                     }
                 }
             }

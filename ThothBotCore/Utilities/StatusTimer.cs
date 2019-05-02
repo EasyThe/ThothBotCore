@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
+using System.IO;
 using System.Threading.Tasks;
 using System.Timers;
 using ThothBotCore.Connections;
@@ -33,38 +34,109 @@ namespace ThothBotCore.Utilities
             {
                 await StatusPage.GetStatusSummary();
                 ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
+                //ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(File.ReadAllText("test.json")); // Debugging
 
-                if (ServerStatus.incidents.Count >= 1)
+                if (ServerStatus.incidents.Count >= 1) // Incidents
                 {
                     for (int i = 0; i < ServerStatus.incidents.Count; i++)
                     {
                         if (ServerStatus.incidents[i].name.Contains("Smite") ||
                             ServerStatus.incidents[i].incident_updates[0].body.Contains("Smite"))
                         {
+                            var incidentEmbed = new EmbedBuilder();
                             for (int x = 0; x < ServerStatus.incidents[i].incident_updates.Count; x++)
                             {
                                 if (Database.GetServerStatusUpdates(ServerStatus.incidents[i].incident_updates[x].id)[0] == "0")
                                 {
-                                    await StatusNotifier.SendNotifs(ServerStatus);
-                                }
+                                    string json = JsonConvert.SerializeObject(ServerStatus, Formatting.Indented);
+                                    File.WriteAllText($"Status/{ServerStatus.scheduled_maintenances[i].id}.json", json);
 
-                                await Database.InsertServerStatusUpdates(ServerStatus.incidents[i].incident_updates[x].id,
-                                    ServerStatus.incidents[i].incident_updates[x].incident_id,
-                                    ServerStatus.incidents[i].name,
-                                    ServerStatus.incidents[i].incident_updates[x].created_at.ToString(CultureInfo.InvariantCulture));
+                                    incidentEmbed.WithColor(new Color(239, 167, 32));
+                                    incidentEmbed.WithAuthor(author =>
+                                    {
+                                        author.WithName("Incidents");
+                                        author.WithIconUrl("https://i.imgur.com/oTHjKkE.png");
+                                    });
+                                    string incidentValue = "";
+                                    for (int c = 0; c < ServerStatus.incidents[i].incident_updates.Count; c++)
+                                    {
+                                        incidentValue += $"**[{Text.ToTitleCase(ServerStatus.incidents[i].incident_updates[c].status)}]({ServerStatus.incidents[i].shortlink})** - " +
+                                            $"{ServerStatus.incidents[i].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
+                                            $"{ServerStatus.incidents[i].incident_updates[c].body}\n";
+                                    }
+                                    string incidentPlatIcons = "";
+
+                                    for (int z = 0; z < ServerStatus.incidents[i].components.Count; z++) // cycle for platform icons
+                                    {
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("Switch"))
+                                        {
+                                            incidentPlatIcons += "<:switchicon:537752006719176714> ";
+                                        }
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("Xbox"))
+                                        {
+                                            incidentPlatIcons += "<:xboxicon:537749895029850112> ";
+                                        }
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("PS4"))
+                                        {
+                                            incidentPlatIcons += "<:playstationicon:537745670518472714> ";
+                                        }
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("PC"))
+                                        {
+                                            incidentPlatIcons += "<:pcicon:537746891610259467> ";
+                                        }
+                                    }
+
+                                    if (incidentValue.Length > 1024)
+                                    {
+                                        incidentEmbed.WithTitle($"{incidentPlatIcons} {ServerStatus.incidents[i].name}");
+                                        incidentEmbed.WithDescription(incidentValue);
+                                    }
+                                    else
+                                    {
+                                        incidentEmbed.AddField(field =>
+                                        {
+                                            field.IsInline = false;
+                                            field.Name = $"{incidentPlatIcons} {ServerStatus.incidents[i].name}";
+                                            field.Value = incidentValue;
+                                        });
+                                    }
+
+                                    // Sending the Incident to the servers
+                                    await StatusNotifier.SendServerStatus(incidentEmbed);
+                                    //await ErrorTracker.SendEmbedError(incidentEmbed); // Debugging
+
+                                    // Saving to DB
+                                    try
+                                    {
+                                        await Database.InsertServerStatusUpdates(ServerStatus.incidents[i].incident_updates[x].id,
+                                        ServerStatus.incidents[i].incident_updates[x].incident_id,
+                                        ServerStatus.incidents[i].impact,
+                                        ServerStatus.incidents[i].status,
+                                        ServerStatus.incidents[i].name,
+                                        ServerStatus.incidents[i].incident_updates[x].body,
+                                        ServerStatus.incidents[i].incident_updates[x].created_at.ToString(CultureInfo.InvariantCulture));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        await ErrorTracker.SendError(":warning:**Exception in StatusTimer:** \n" +
+                                            $"**Message: **{ex.Message}\n" +
+                                            $"**StackTrace: **`{ex.StackTrace}`");
+                                        ServerStatusTimer.Enabled = false;
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                if (ServerStatus.scheduled_maintenances.Count >= 1)
+                if (ServerStatus.scheduled_maintenances.Count >= 1) // Maintenances
                 {
+                    var embed = new EmbedBuilder();
                     for (int i = 0; i < ServerStatus.scheduled_maintenances.Count; i++)
                     {
                         if (ServerStatus.scheduled_maintenances[i].name.Contains("Smite") ||
                             ServerStatus.scheduled_maintenances[i].incident_updates[0].body.Contains("Smite"))
                         {
-                            var embed = new EmbedBuilder();
                             embed.WithColor(new Color(52, 152, 219)); //maintenance color
                             embed.WithAuthor(author =>
                             {
@@ -79,6 +151,8 @@ namespace ThothBotCore.Utilities
                             if (ServerStatus.scheduled_maintenances[i].incident_updates.Count > 1 &&
                                 Database.GetServerStatusUpdates(ServerStatus.scheduled_maintenances[i].incident_updates[0].id)[0] == "0")
                             {
+                                string json = JsonConvert.SerializeObject(ServerStatus, Formatting.Indented);
+                                File.WriteAllText($"Status/{ServerStatus.scheduled_maintenances[i].id}.json", json);
                                 string platIcon = "";
                                 string maintValue = "";
                                 string expectedDtime = "";
@@ -145,15 +219,12 @@ namespace ThothBotCore.Utilities
                                     field.Name = $"{platIcon}{ServerStatus.scheduled_maintenances[i].name}";
                                     field.Value = $"**__Expected downtime: {expectedDtime}__**, {ServerStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue;
                                 });
-
-                                await StatusNotifier.SendServerStatus(embed);
-                                //await ErrorTracker.SendEmbedError(embed);
                             }
                             else if (Database.GetServerStatusUpdates(ServerStatus.scheduled_maintenances[i].incident_updates[0].id)[0] == "0")
                             {
                                 string platIcon = "";
 
-                                for (int k = 0; k < ServerStatus.scheduled_maintenances[i].components.Count; k++)
+                                for (int k = 0; k < ServerStatus.scheduled_maintenances[i].components.Count; k++) 
                                 {
                                     if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Switch"))
                                     {
@@ -213,9 +284,6 @@ namespace ThothBotCore.Utilities
                                         field.Value = $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})**\n__**Expected downtime: {expectedDtime}**__, {ServerStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n{ServerStatus.scheduled_maintenances[i].incident_updates[j].body}";
                                     });
                                 }
-
-                                await StatusNotifier.SendServerStatus(embed);
-                                //await ErrorTracker.SendEmbedError(embed);
                             }
 
                             // saving to DB
@@ -223,22 +291,27 @@ namespace ThothBotCore.Utilities
                             {
                                 await Database.InsertServerStatusUpdates(ServerStatus.scheduled_maintenances[i].incident_updates[c].id,
                                     ServerStatus.scheduled_maintenances[i].incident_updates[c].incident_id,
+                                    ServerStatus.scheduled_maintenances[i].impact,
+                                    ServerStatus.scheduled_maintenances[i].status,
                                     ServerStatus.scheduled_maintenances[i].name,
+                                    ServerStatus.scheduled_maintenances[i].incident_updates[c].body,
                                     ServerStatus.scheduled_maintenances[i].incident_updates[c].created_at.ToString(CultureInfo.InvariantCulture));
                             }
                         }
                     }
-                }
-                else if (ServerStatus.scheduled_maintenances.Count == 0)
-                {
-
+                    //Sending maintenance embed
+                    if (embed.Fields.Count != 0)
+                    {
+                        await StatusNotifier.SendServerStatus(embed);
+                        //await ErrorTracker.SendEmbedError(embed); // Debugging
+                    }
                 }
             }
             catch (Exception ex)
             {
                 await ErrorTracker.SendError(":warning:**Exception in StatusTimer:** \n" +
-                    $"{ex.Message}\n" +
-                    $"StackTrace: `{ex.StackTrace}`");
+                    $"**Message: **{ex.Message}\n" +
+                    $"**StackTrace: **`{ex.StackTrace}`");
             }
             //await channel.SendMessageAsync(result);
 

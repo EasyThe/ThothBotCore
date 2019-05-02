@@ -4,8 +4,21 @@
 <a href="https://discord.gg/hU6MTbQ">
   <img src="https://img.shields.io/discord/518408306415632384.svg?logo=discord" alt="chat on Discord">
 </a>
+<br>
+<a href="https://discordbots.org/bot/454145330347376651" >
+  <img src="https://discordbots.org/api/widget/status/454145330347376651.svg" alt="Thoth" />
+</a>
+<a href="https://discordbots.org/bot/454145330347376651" >
+  <img src="https://discordbots.org/api/widget/servers/454145330347376651.svg" alt="Thoth" />
+</a>
+<a href="https://discordbots.org/bot/454145330347376651" >
+  <img src="https://discordbots.org/api/widget/owner/454145330347376651.svg" alt="Thoth" />
+</a>
+
 
 Cooler bot for SMITE stats for Discord
+
+Currently I don't recommend hosting your own instance. Instead you can use the one I am hosting [here](https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=278528&scope=bot).
 
 ## Built With :green_heart:
 

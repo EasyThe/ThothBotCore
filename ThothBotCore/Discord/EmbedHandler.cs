@@ -1,15 +1,22 @@
 ﻿using Discord;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
+using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
+using static ThothBotCore.Connections.Models.MatchPlayerDetails;
+using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Discord
 {
     public static class EmbedHandler
     {
-        //readonly string botIcon = "https://i.imgur.com/AgNocjS.png";
+        static string botIcon = "https://i.imgur.com/8qNdxse.png";
+        static HiRezAPI hirezAPI = new HiRezAPI();
 
         public static EmbedBuilder ServerStatusEmbed(ServerStatus serverStatus)
         {
@@ -123,29 +130,40 @@ namespace ThothBotCore.Discord
                     }
                     string incidentPlatIcons = "";
 
-                    if (serverStatus.incidents[n].name.Contains("Switch"))
+                    for (int z = 0; z < serverStatus.incidents[n].components.Count; z++) // cycle for platform icons
                     {
-                        incidentPlatIcons += "<:switchicon:537752006719176714> ";
-                    }
-                    if (serverStatus.incidents[n].name.Contains("Xbox"))
-                    {
-                        incidentPlatIcons += "<:xboxicon:537749895029850112> ";
-                    }
-                    if (serverStatus.incidents[n].name.Contains("PS4"))
-                    {
-                        incidentPlatIcons += "<:playstationicon:537745670518472714> ";
-                    }
-                    if (serverStatus.incidents[n].name.Contains("PC"))
-                    {
-                        incidentPlatIcons += "<:pcicon:537746891610259467> ";
+                        if (serverStatus.incidents[n].components[z].name.Contains("Switch"))
+                        {
+                            incidentPlatIcons += "<:switchicon:537752006719176714> ";
+                        }
+                        if (serverStatus.incidents[n].components[z].name.Contains("Xbox"))
+                        {
+                            incidentPlatIcons += "<:xboxicon:537749895029850112> ";
+                        }
+                        if (serverStatus.incidents[n].components[z].name.Contains("PS4"))
+                        {
+                            incidentPlatIcons += "<:playstationicon:537745670518472714> ";
+                        }
+                        if (serverStatus.incidents[n].components[z].name.Contains("PC"))
+                        {
+                            incidentPlatIcons += "<:pcicon:537746891610259467> ";
+                        }
                     }
 
-                    incidentEmbed.AddField(field =>
+                    if (incidentValue.Length > 1024)
                     {
-                        field.IsInline = false;
-                        field.Name = $"{incidentPlatIcons} {serverStatus.incidents[n].name}";
-                        field.Value = incidentValue;
-                    });
+                        incidentEmbed.WithTitle($"{incidentPlatIcons} {serverStatus.incidents[n].name}");
+                        incidentEmbed.WithDescription(incidentValue);
+                    }
+                    else
+                    {
+                        incidentEmbed.AddField(field =>
+                        {
+                            field.IsInline = false;
+                            field.Name = $"{incidentPlatIcons} {serverStatus.incidents[n].name}";
+                            field.Value = incidentValue;
+                        });
+                    }
 
                     return incidentEmbed;
                 }
@@ -307,6 +325,249 @@ namespace ThothBotCore.Discord
                     }
                 }
             }
+
+            return embed;
+        }
+
+        public static async Task<EmbedBuilder> PlayerStatsEmbed(string json)
+        {
+            List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(json);
+            List<GodRanks> godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(await hirezAPI.GetGodRanks(playerStats[0].ActivePlayerId));
+
+            await hirezAPI.GetPlayerStatus(playerStats[0].ActivePlayerId);
+            List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(hirezAPI.playerStatus);
+
+            string defaultEmoji = ""; //:small_blue_diamond: <:gems:443919192748589087>
+            string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
+
+            string rPlayerName = "";
+
+            if (checkedPlayerName.Contains("]"))
+            {
+                string[] splitName = checkedPlayerName.Split(']');
+                rPlayerName = splitName[1];
+                rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
+            }
+            else
+            {
+                rPlayerName = checkedPlayerName;
+            }
+            string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
+            string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
+            double rWinRate = 0;
+            if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
+            {
+                rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
+            }
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(author =>
+            {
+                author
+                    .WithName($"{rPlayerName}")
+                    .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
+                    .WithIconUrl(botIcon);
+            });
+            if (playerStatus[0].status == 0)
+            {
+                embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
+                embed.WithColor(new Color(220, 147, 4));
+                defaultEmoji = ":small_orange_diamond:";
+            }
+            else
+            {
+                defaultEmoji = ":small_blue_diamond:"; // :small_blue_diamond: <:blank:570291209906552848>
+                embed.WithColor(new Color(85, 172, 238));
+                if (playerStatus[0].Match != 0)
+                {
+                    await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
+                    List<PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(hirezAPI.matchPlayerDetails);
+
+                    for (int s = 0; s < matchPlayerDetails.Count; s++)
+                    {
+                        if (matchPlayerDetails[s].playerId == playerStats[0].ActivePlayerId)
+                        {
+                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(matchPlayerDetails[0].Queue)}**, playing as {matchPlayerDetails[s].GodName}");
+                        }
+                    }
+                }
+                else if (playerStatus[0].status == 2)
+                {
+                    if (!playerStatus[0].status_string.ToLower().Contains("in game"))
+                    {
+                        embed.WithDescription($":eyes: In {playerStatus[0].status_string}");
+                    }
+                    else
+                    {
+                        embed.WithDescription($":eyes: {playerStatus[0].status_string}");
+                    }
+                }
+                else
+                {
+                    embed.WithDescription($":eyes: {playerStatus[0].status_string}");
+                }
+            }
+            // invisible character \u200b
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"<:level:529719212017451008>**Level**");
+                field.Value = ($"{defaultEmoji}{playerStats[0].Level}");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"<:mastery:529719212076433418>**Mastery Level**");
+                field.Value = ($"{defaultEmoji}{playerStats[0].MasteryLevel}");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"<:wp:552579445475508229>**Total Worshippers**");
+                field.Value = ($"{defaultEmoji}{playerStats[0].Total_Worshippers}");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($":trophy:**Wins** [{Math.Round(rWinRate, 1)}%]");
+                field.Value = ($"{defaultEmoji}{playerStats[0].Wins}");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($":flag_white:**Losses**");
+                field.Value = ($"{defaultEmoji}{playerStats[0].Losses}");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($":runner:**Leaves**");
+                field.Value = ($"{defaultEmoji}{playerStats[0].Leaves}");
+            });
+            // Ranked Conquest
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"<:conquesticon:528673820060418061>**Ranked Conquest**");
+                field.Value = ($"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}** [{playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}]");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"<:jousticon:528673820018737163>**Ranked Joust**");
+                field.Value = ($"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}** [{playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}]");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"<:jousticon:528673820018737163>**Ranked Duel**");
+                field.Value = ($"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}** [{playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}]");
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($":video_game:**Playing SMITE since**");
+                field.Value = ($"{defaultEmoji}{rPlayerCreated}");
+            });
+            switch (playerStats[0].Region)
+            {
+                case "Europe":
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($":globe_with_meridians:**Region**");
+                        field.Value = ($":flag_eu:{playerStats[0].Region}");
+                    });
+                    break;
+                case "North America":
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($":globe_with_meridians:**Region**");
+                        field.Value = ($":flag_us:{playerStats[0].Region}");
+                    });
+                    break;
+                case "Brazil":
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($":globe_with_meridians:**Region**");
+                        field.Value = ($":flag_br:{playerStats[0].Region}");
+                    });
+                    break;
+                case "Australia":
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($":globe_with_meridians:**Region**");
+                        field.Value = ($":flag_au:{playerStats[0].Region}");
+                    });
+                    break;
+                case "":
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($":globe_with_meridians:**Region**");
+                        field.Value = ($"{defaultEmoji}n/a");
+                    });
+                    break;
+                default:
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($":globe_with_meridians:**Region**");
+                        field.Value = ($"{defaultEmoji}{playerStats[0].Region}");
+                    });
+                    break;
+            } // Region
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($":hourglass:**Playtime**");
+                field.Value = ($"{defaultEmoji}{rHoursPlayed}");
+            });
+            if (godRanks.Count != 0)
+            {
+                switch (godRanks.Count)
+                {
+                    case 1:
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = "<:Gods:567146088985919498>Top Gods";
+                            field.Value = $"{defaultEmoji}{godRanks[0].god} [{godRanks[0].Worshippers}]\n";
+                        });
+                        break;
+                    case 2:
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = "<:Gods:567146088985919498>Top Gods";
+                            field.Value = $"{defaultEmoji}{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                            $"{defaultEmoji}{godRanks[1].god} [{godRanks[1].Worshippers}]\n";
+                        });
+                        break;
+                    default:
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = "<:Gods:567146088985919498>Top Gods";
+                            field.Value = $"{defaultEmoji}{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                            $"{defaultEmoji}{godRanks[1].god} [{godRanks[1].Worshippers}]\n" +
+                            $"{defaultEmoji}{godRanks[2].god} [{godRanks[2].Worshippers}]";
+                        });
+                        break;
+                }
+            } // Top Gods
+            embed.WithFooter(footer =>
+            {
+                footer
+                    .WithText(playerStats[0].Personal_Status_Message)
+                    .WithIconUrl(botIcon);
+            });
+
+            // Saving the player to the database
+            await Database.AddPlayerToDb(playerStats);
 
             return embed;
         }

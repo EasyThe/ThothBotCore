@@ -48,7 +48,7 @@ namespace ThothBotCore.Utilities
                         $"Error Message: {ex.Message}");
                 }
 
-                Console.WriteLine($"{DateTime.UtcNow.ToString("[HH:mm, d.MM.yyyy]")} Guilds count updated! New count: {joinedGuilds}");
+                Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")} Guilds count updated! New count: {joinedGuilds}");
             }
 
             GuildCountTimer.Interval = 60000;
