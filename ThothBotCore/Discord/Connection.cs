@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
+using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Discord
 {
@@ -25,8 +28,6 @@ namespace ThothBotCore.Discord
         {
             _client.Log += _logger.Log;
 
-            //await _client.SetGameAsync($"{Credentials.botConfig.prefix}help");
-
             await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
             await _client.StartAsync();
             Client = _client;
@@ -35,13 +36,19 @@ namespace ThothBotCore.Discord
 
             _client.Ready += ClientReadyTask;
             _client.JoinedGuild += JoinedNewGuildActions;
+            _client.LeftGuild += ClientLeftGuildTask;
 
             await Task.Delay(-1).ConfigureAwait(false);
         }
 
+        private async Task ClientLeftGuildTask(SocketGuild arg)
+        {
+            List<ServerConfig> serverConfig = GetServerConfig(arg).Result;
+            await ErrorTracker.SendLeftServers(arg);
+        }
+
         private Task ClientReadyTask()
         {
-            _client.DownloadUsersAsync(_client.Guilds);
             StatusTimer.StartServerStatusTimer();
             guildsTimer.StartGuildsCountTimer();
 
@@ -55,7 +62,7 @@ namespace ThothBotCore.Discord
 
             await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
-                $":small_orange_diamond:You can set a custom prefix for your server with !!prefix `your-prefix-here`\n" +
+                $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +
                 $":small_orange_diamond:You can check my commands by using `{Credentials.botConfig.prefix}help`");
         }
     }

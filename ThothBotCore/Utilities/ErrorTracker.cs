@@ -31,7 +31,11 @@ namespace ThothBotCore.Utilities
             {
                 var embed = new EmbedBuilder();
                 embed.WithColor(new Color(255, 255, 255));
-                embed.WithTitle($":new:**Server name:** {guild.Name}\n" +
+                embed.WithAuthor(x =>
+                {
+                    x.Name = $"Server #{Discord.Connection.Client.Guilds.Count}";
+                });
+                embed.WithTitle($":new:{guild.Name}\n" +
                 $":id:**Server ID:** {guild.Id}\n" +
                 $":bust_in_silhouette:**Owner:** {guild.Owner}\n" +
                 $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
@@ -50,6 +54,32 @@ namespace ThothBotCore.Utilities
             }
         }
 
+        public static async Task SendLeftServers(SocketGuild guild)
+        {
+            try
+            {
+                var embed = new EmbedBuilder();
+                embed.WithColor(new Color(255, 0, 0));
+                embed.WithTitle($":wave:{guild.Name}\n" +
+                $":id:**Server ID:** {guild.Id}\n" +
+                $":bust_in_silhouette:**Owner:** {guild.Owner}\n" +
+                $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
+                $":speech_balloon:**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}\n" +
+                $":alarm_clock:**Left at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}");
+                if (guild.IconUrl != null || guild.IconUrl == "")
+                {
+                    embed.ImageUrl = guild.IconUrl;
+                }
+                await joinsChannel.SendMessageAsync("", false, embed.Build());
+            }
+            catch (Exception ex)
+            {
+                await SendError($"Error in SendLeftServers\n" +
+                    $"**Message**: {ex.Message}\n" +
+                    $"**StackTrace: **`{ex.StackTrace}`");
+            }
+        }
+
         public static async Task SendSuccessCommands(string message)
         {
             try
@@ -59,7 +89,7 @@ namespace ThothBotCore.Utilities
             catch (Exception ex)
             {
 
-                await SendError($"Error in SendJoinedServers\n**Message**: {ex.Message}");
+                await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
             }
         }
 

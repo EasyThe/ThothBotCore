@@ -15,6 +15,7 @@ namespace ThothBotCore.Utilities
     public static class StatusTimer
     {
         private static Timer ServerStatusTimer;
+        private static Timer ActiveStatusTimer;
 
         public static Task StartServerStatusTimer()
         {
@@ -28,10 +29,23 @@ namespace ThothBotCore.Utilities
             return Task.CompletedTask;
         }
 
+        public static async Task StopServerStatusTimer(string message)
+        {
+            ServerStatusTimer.Enabled = false;
+            Console.WriteLine(message);
+            await ErrorTracker.SendError(message);
+        }
+
         private static async void ServerStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
+                //add check if the bot is connected or not
+                //if (Discord.Connection.Client.LoginState)
+                //{
+
+                //}
+
                 await StatusPage.GetStatusSummary();
                 ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
                 //ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(File.ReadAllText("test.json")); // Debugging
@@ -49,14 +63,9 @@ namespace ThothBotCore.Utilities
                                 if (Database.GetServerStatusUpdates(ServerStatus.incidents[i].incident_updates[x].id)[0] == "0")
                                 {
                                     string json = JsonConvert.SerializeObject(ServerStatus, Formatting.Indented);
-                                    File.WriteAllText($"Status/{ServerStatus.scheduled_maintenances[i].id}.json", json);
+                                    File.WriteAllText($"Status/{ServerStatus.incidents[i].id}.json", json);
 
                                     incidentEmbed.WithColor(new Color(239, 167, 32));
-                                    incidentEmbed.WithAuthor(author =>
-                                    {
-                                        author.WithName("Incidents");
-                                        author.WithIconUrl("https://i.imgur.com/oTHjKkE.png");
-                                    });
                                     string incidentValue = "";
                                     for (int c = 0; c < ServerStatus.incidents[i].incident_updates.Count; c++)
                                     {
@@ -138,11 +147,6 @@ namespace ThothBotCore.Utilities
                             ServerStatus.scheduled_maintenances[i].incident_updates[0].body.Contains("Smite"))
                         {
                             embed.WithColor(new Color(52, 152, 219)); //maintenance color
-                            embed.WithAuthor(author =>
-                            {
-                                author.WithName("Scheduled Maintenance");
-                                author.WithIconUrl("https://i.imgur.com/qGjA3nY.png");
-                            });
                             embed.WithFooter(footer =>
                             {
                                 footer.Text = $"Current UTC: " + DateTime.UtcNow.ToString("dd MMM, HH:mm:ss", CultureInfo.InvariantCulture);
@@ -206,13 +210,18 @@ namespace ThothBotCore.Utilities
                                 {
                                     expectedDtime = "n/a";
                                 }
+                                
+                                // this? 
+                                //for (int j = 0; j < ServerStatus.scheduled_maintenances[i].incident_updates.Count; j++)
+                                //{
+                                //    string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[j].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[j].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[j].status);
+                                //
+                                //    maintValue = maintValue + $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - {ServerStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{ServerStatus.scheduled_maintenances[i].incident_updates[j].body}\n";
+                                //}
 
-                                for (int j = 0; j < ServerStatus.scheduled_maintenances[i].incident_updates.Count; j++)
-                                {
-                                    string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[j].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[j].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[j].status);
+                                string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status);
+                                maintValue = maintValue + $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - {ServerStatus.scheduled_maintenances[i].incident_updates[0].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{ServerStatus.scheduled_maintenances[i].incident_updates[0].body}\n";
 
-                                    maintValue = maintValue + $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - {ServerStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{ServerStatus.scheduled_maintenances[i].incident_updates[j].body}\n";
-                                }
                                 embed.AddField(field =>
                                 {
                                     field.IsInline = false;
@@ -312,12 +321,19 @@ namespace ThothBotCore.Utilities
                 await ErrorTracker.SendError(":warning:**Exception in StatusTimer:** \n" +
                     $"**Message: **{ex.Message}\n" +
                     $"**StackTrace: **`{ex.StackTrace}`");
+                Console.WriteLine("StatusTimer\n" + ex.Message);
             }
             //await channel.SendMessageAsync(result);
 
             ServerStatusTimer.Interval = 60000;
             ServerStatusTimer.AutoReset = true;
             ServerStatusTimer.Enabled = true;
+        }
+
+        private static async void ActiveStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            await StatusPage.GetStatusSummary();
+            ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
         }
     }
 }

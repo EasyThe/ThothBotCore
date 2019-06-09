@@ -32,10 +32,7 @@ namespace ThothBotCore.Connections
             return sb.ToString();
         }
 
-        internal string playerResult;
-        internal string playerStatus;
         internal string matchDetails;
-        internal string matchPlayerDetails;
         internal string pingAPI;
         internal string dataUsed;
         internal string testing;
@@ -48,7 +45,7 @@ namespace ThothBotCore.Connections
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
             {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}createsessionjson/{Credentials.botConfig.devId}/{signature}/{timestamp}"))
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}createsessionjson/{devID}/{signature}/{timestamp}"))
                 {
                     var response = await httpClient.SendAsync(request);
                     result = await response.Content.ReadAsStringAsync();
@@ -95,6 +92,40 @@ namespace ThothBotCore.Connections
             using (var httpClient = new HttpClient(handler, false))
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayerjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<string> GetPlayerAchievements(int id)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getplayerachievements" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayerachievementsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{id}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<string> APITestMethod(string _endpoint, string value) // Testing Method
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + _endpoint.ToLowerInvariant() + authKey + timestamp);
+            
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}{_endpoint}json/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{value}"))
                 {
                     var response = await httpClient.SendAsync(request);
                     return await response.Content.ReadAsStringAsync();
@@ -188,7 +219,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetPlayerStatus(int playerID)
+        public async Task<string> GetPlayerStatus(int playerID)
         {
             await CheckSession();
 
@@ -200,7 +231,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayerstatusjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{playerID}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    playerStatus = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }
@@ -222,7 +253,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetMatchPlayerDetails(int matchID)
+        public async Task<string> GetMatchPlayerDetails(int matchID)
         {
             await CheckSession();
 
@@ -234,7 +265,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchplayerdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchID}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    matchPlayerDetails = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }

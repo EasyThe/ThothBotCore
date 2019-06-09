@@ -32,7 +32,7 @@ namespace ThothBotCore.Utilities
                 return dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
             }
 
-            if (daysDiff == 0)
+            else if (daysDiff == 0)
             {
                 if (secsDiff < 60)
                 {
@@ -57,21 +57,21 @@ namespace ThothBotCore.Utilities
                         Math.Floor((double)secsDiff / 3600), dateTime.ToString("HH:mm UTC", CultureInfo.InvariantCulture));
                 }
             }
-            if (daysDiff == 1)
+            else if (daysDiff == 1)
             {
-                return "Yesterday";
+                return string.Format("Yesterday [{0}]", dateTime.ToString("HH:mm UTC", CultureInfo.InvariantCulture));
             }
-            if (daysDiff == 7)
+            else if (daysDiff == 7)
             {
                 return string.Format("{0} week ago [{1}]",
                     Math.Ceiling((double)daysDiff / 7), dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture));
             }
-            if (daysDiff < 7)
+            else if (daysDiff < 7)
             {
                 return string.Format("{0} days ago [{1}]",
                     daysDiff, dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture));
             }
-            if (daysDiff < 31)
+            else if (daysDiff < 31)
             {
                 return string.Format("{0} weeks ago [{1}]",
                     Math.Ceiling((double)daysDiff / 7), dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture));
@@ -88,19 +88,105 @@ namespace ThothBotCore.Utilities
                 StringBuilder sb = new StringBuilder();
                 if (playerSpecial[0].pro_bool != 0)
                 {
-                    sb.Append(":mouse_three_button:Pro Player");
+                    sb.Append(":mouse_three_button: Pro Player");
                 }
                 if (playerSpecial[0].streamer_bool != 0)
                 {
-                    sb.Append(":top:Streamer");
+                    if (playerSpecial[0].streamer_link != null)
+                    {
+                        sb.Append($"<:streamer:579125715874742280> Streamer - {playerSpecial[0].streamer_link}");
+                    }
+                    else
+                    {
+                        sb.Append("<:streamer:579125715874742280> Streamer");
+                    }
                 }
                 if (playerSpecial[0].special.Contains("dev"))
                 {
-                    sb.Append(":heart:Thoth Developer");
+                    sb.Append(":star: Thoth Dev");
                 }
                 return sb.ToString();
             }
             return "";
+        }
+
+        public static string StatusEmoji(string status)
+        {
+            switch (status)
+            {
+                case "operational":
+                    return "<:operational:579125995618172929>"; //<:operational:579125995618172929>
+                case "degraded_performance":
+                    return "<:incident:579145224522301480>";
+                case "under_maintenance":
+                    return "<:maintenance:579145936396353586>";
+                default:
+                    return "<:incident:579145224522301480>";
+            }
+        }
+
+        public static DateTime TimezoneSpecific(DateTime utctime, string timezone)
+        {
+            TimeZoneInfo destionationTimeZone = TimeZoneInfo.FromSerializedString(timezone);
+            return TimeZoneInfo.ConvertTimeFromUtc(utctime, destionationTimeZone);
+        }
+
+        // SMITE Portals
+        public static string GetPortalName(int portal)
+        {
+            switch (portal)
+            {
+                case 1:
+                    return "Hi-Rez";
+                case 5:
+                    return "Steam";
+                case 9:
+                    return "PS4";
+                case 10:
+                    return "Xbox";
+                case 22:
+                    return "Switch";
+                default:
+                    return "n/a";
+            }
+        }
+
+        public static string GetPortalIcon(string portal)
+        {
+            switch (portal)
+            {
+                case "1":
+                    return "<:windows:587119127953670159>"; // PC
+                case "5":
+                    return "<:steam:581485150043373578>"; // Steam
+                case "9":
+                    return "<:playstationicon:537745670518472714>"; // PS4
+                case "10":
+                    return "<:xboxicon:537749895029850112>"; // Xbox
+                case "22":
+                    return "<:switchicon:537752006719176714>"; // Switch
+                default:
+                    return "<:blank:570291209906552848>";
+            }
+        }
+
+        public static string GetPortalIconLinks(string portal)
+        {
+            switch (portal)
+            {
+                case "1":
+                    return "https://i.imgur.com/0TWCr6X.png"; // PC
+                case "5":
+                    return "https://cdn.discordapp.com/emojis/581485150043373578.png"; // Steam
+                case "9":
+                    return "https://cdn.discordapp.com/emojis/537745670518472714.png"; // PS4
+                case "10":
+                    return "https://cdn.discordapp.com/emojis/537749895029850112.png"; // Xbox
+                case "22":
+                    return "https://cdn.discordapp.com/emojis/537752006719176714.png"; // Switch
+                default:
+                    return "https://i.imgur.com/8qNdxse.png";
+            }
         }
 
         // SMITE Queue names
@@ -127,8 +213,7 @@ namespace ThothBotCore.Utilities
                 case 443:
                     return "Arena Practice (Easy)";
                 case 444:
-                    return "Jungle Practice" +
-                        "";
+                    return "Jungle Practice";
                 case 445:
                     return "Assault";
                 case 446:
@@ -205,7 +290,7 @@ namespace ThothBotCore.Utilities
             switch (tier)
             {
                 case 0:
-                    return Tuple.Create("Qualifying", "<:q_:528617317534269450>");
+                    return Tuple.Create("Unranked", "<:q_:528617317534269450>");
                 case 1:
                     return Tuple.Create("Bronze V", "<:cqbr:528617350027673620>");
                 case 2:
@@ -270,7 +355,7 @@ namespace ThothBotCore.Utilities
             switch (tier)
             {
                 case 0:
-                    return Tuple.Create("Qualifying", "<:q_:528617317534269450>");
+                    return Tuple.Create("Unranked", "<:q_:528617317534269450>");
                 case 1:
                     return Tuple.Create("Bronze V", "<:jobr:528617414171164697>");
                 case 2:
@@ -335,7 +420,7 @@ namespace ThothBotCore.Utilities
             switch (tier)
             {
                 case 0:
-                    return Tuple.Create("Qualifying", "<:q_:528617317534269450>");
+                    return Tuple.Create("Unranked", "<:q_:528617317534269450>");
                 case 1:
                     return Tuple.Create("Bronze V", "<:dubr:528617383011549184>");
                 case 2:
@@ -393,6 +478,12 @@ namespace ThothBotCore.Utilities
                 default:
                     return Tuple.Create("Thot", "Begone");
             }
+        }
+
+        public static List<int> LegitQueueIDs()
+        {///////////////////////////////423, 426, 430, 433, 434, 435, 440, 445, 448, 451, 452, 459, 466, 450, 502, 503, 504
+            List<int> list = new List<int> { 426, 435, 440, 445, 448, 450, 451, 459, 466, 502, 503, 504 };
+            return list;
         }
     }
 }

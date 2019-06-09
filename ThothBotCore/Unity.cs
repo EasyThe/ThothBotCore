@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;

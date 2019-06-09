@@ -87,7 +87,7 @@ namespace ThothBotCore.Connections.Models
         public DateTime display_at { get; set; }
         public List<AffectedComponent> affected_components { get; set; }
         public bool deliver_notifications { get; set; }
-        public long tweet_id { get; set; }
+        public string tweet_id { get; set; }
         public string id { get; set; }
         public string incident_id { get; set; }
         public object custom_tweet { get; set; }

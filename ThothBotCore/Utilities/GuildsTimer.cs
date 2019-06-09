@@ -44,8 +44,23 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordBotsList.**/n" +
-                        $"Error Message: {ex.Message}");
+                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordBotsList.**\n" +
+                        $"**Error Message:** {ex.Message}");
+                }
+
+                try
+                {
+                    using (var webclient = new HttpClient())
+                    using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
+                    {
+                        webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.bfdAPI);
+                        HttpResponseMessage response = await webclient.PostAsync("https://botsfordiscord.com/api/bot/454145330347376651", content);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for BotsForDiscord.**\n" +
+                        $"**Error Message:** {ex.Message}");
                 }
 
                 Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")} Guilds count updated! New count: {joinedGuilds}");

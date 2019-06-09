@@ -10,7 +10,8 @@ namespace ThothBotCore.Discord
             return new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Verbose,
-                DefaultRetryMode = RetryMode.AlwaysRetry
+                DefaultRetryMode = RetryMode.AlwaysRetry,
+                ExclusiveBulkDelete = true
             };
         }
 

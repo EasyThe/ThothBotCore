@@ -10,13 +10,13 @@ namespace ThothBotCore.Connections.Models
         public int GodId { get; set; }
         public int Gold { get; set; }
         public int Kills { get; set; }
-        public DateTime LastPlayed { get; set; }
+        public string LastPlayed { get; set; }
         public int Losses { get; set; }
         public int Matches { get; set; }
         public int Minutes { get; set; }
         public string Queue { get; set; }
         public int Wins { get; set; }
-        public int player_id { get; set; }
+        public string player_id { get; set; }
         public object ret_msg { get; set; }
     }
 }

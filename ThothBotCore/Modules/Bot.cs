@@ -5,11 +5,13 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
+using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Storage.Database;
 
@@ -28,91 +30,69 @@ namespace ThothBotCore.Modules
         {
             string prefix = Credentials.botConfig.prefix;
             string desc = $"Default prefix: `{Credentials.botConfig.prefix}`";
-            if (GetPrefix(Context.Guild).Count > 0)
+            if (GetServerConfig(Context.Guild).Result.Count > 0)
             {
-                if (GetPrefix(Context.Guild)[0].prefix != "!!")
+                if (GetServerConfig(Context.Guild).Result[0].prefix != "!!")
                 {
-                    prefix = GetPrefix(Context.Guild)[0].prefix;
-                    desc = desc + $"\nCustom prefix: `{prefix}`";
+                    prefix = GetServerConfig(Context.Guild).Result[0].prefix;
+                    desc = desc + $"\nCustom prefix for this server: `{prefix}`";
                 }
             }
-            desc = desc + $"\nYou can also @tag the bot or set a custom prefix by using\n **{prefix}prefix `your-prefix-here`**\n";
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
             {
                 author.WithName("Available commands");
                 author.WithIconUrl(botIcon);
             });
-            // Warning 
-            embed.WithTitle(":bangbang:This bot is still in development. I try to keep it online for atleast 12 hours a day. I may stop developing it depending on what other bots offer for SMITE stats in the future. If I do so I will notify all servers the bot is in at that time.");
-            embed.WithDescription("[Support server](http://discord.gg/hU6MTbQ)\n" + desc);
             embed.WithColor(new Color(85, 172, 238));
-            embed.WithThumbnailUrl(botIcon);
-            embed.AddField(field =>
+            embed.WithTitle(":bangbang:Unfortunately on 4th June 2019 all custom prefixes and status channels were reset. Please set them again.");
+            embed.WithDescription("[Support server](http://discord.gg/hU6MTbQ)\n" + desc);
+            embed.AddField(x =>
             {
-                field.IsInline = true;
-                field.Name = $"{prefix}stats `username`";
-                field.Value = $"Checks the Hi-Rez API for `username` and sends his stats if found.\n**Alias**: `{prefix}stat` `{prefix}pc` `{prefix}st` `{prefix}stata` `{prefix}ст` `{prefix}статс`";
+                x.Name = ":zap:SMITE";
+                x.Value = $":white_small_square:`{prefix}stats PlayerName` - Display stats for PlayerName\nAlias: `{prefix}stat` `{prefix}pc` `{prefix}st` `{prefix}stata` `{prefix}ст` `{prefix}статс` `{prefix}ns`\n" +
+                $":white_small_square:`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
+                $":white_small_square:`{prefix}statusupdates #channel` - Sends a message when SMITE incidents and scheduled maintenances appear in the status page to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
+                $":white_small_square:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
+                $":white_small_square:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g` `{prefix}gods`\n" +
+                $":white_small_square:`{prefix}rgod` - Gives you a random God.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`";
+                x.IsInline = false;
             });
-            //embed.AddField(field =>
-            //{
-            //    field.IsInline = true;
-            //    field.Name = $"{prefix}istats `username`";
-            //    field.Value = $"**Alias**: `{prefix}istat` `{prefix}ipc` `{prefix}ist` `{prefix}istata` `{prefix}ист` `{prefix}истатс`";
-            //});
-            embed.AddField(field =>
+            embed.AddField(x =>
             {
-                field.IsInline = true;
-                field.Name = $"{prefix}status";
-                field.Value = $"Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\n" +
-                $"**Alias**: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`";
-            });
-            //!statusupdates #channel
-            //Automatically SMITE incidents and scheduled maintenances to #channel
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{prefix}statusupdates `#channel`";
-                field.Value = $"Sends a message when SMITE incidents and scheduled maintenances appear in the status page to `#channel`\n" +
-                $"**Alias**: `{prefix}statusupd` `{prefix}su`";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{prefix}stopstatusupdates";
-                field.Value = $"Stops sending messages from the SMITE status page" +
-                $".\n" +
-                $"**Alias**: `{prefix}ssu`";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{prefix}god `godname`";
-                field.Value = $"Gives you information about `godname`.\n**Alias**: `{prefix}g` `{prefix}gods`";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{prefix}rgod";
-                field.Value = $"Gives you a random God.\n**Alias**: `{prefix}rg` `{prefix}randomgod` `{prefix}random`";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{prefix}help";
-                field.Value = $"Information about all available commands for the bot.\n**Alias**: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`";
+                x.Name = ":robot:Bot";
+                x.Value = $":white_small_square:`{prefix}help` - List of all available commands.\nAlias: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`\n" +
+                $":white_small_square:`{prefix}prefix your-prefix-here` - Set custom prefix for your server.\n" +
+                $":white_small_square:`{prefix}botstats` - Bot statistics, invite link, support server etc.\nAlias: `{prefix}about` `{prefix}botinfo` `{prefix}info` `{prefix}bi`";
+                x.IsInline = false;
             });
             embed.WithFooter(footer =>
             {
                 footer.Text = "If something isn't working properly, its probably because the bot is still in development.";
             });
-            await ReplyAsync("", false, embed.Build());
+
+            try
+            {
+                await ReplyAsync("", false, embed.Build());
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("1024"))
+                {
+                    await ReplyAsync("Oops. Because your custom prefix is too long, I was not able to fit the help command in one field.");
+                }
+            }
         }
 
         [Command("botinfo", true)]
-        [Alias("bi", "botstats")]
+        [Alias("bi", "botstats", "about", "info")]
         public async Task BotInfoCommand()
         {
+            int totalUsers = 0;
+            foreach (var guild in Context.Client.Guilds)
+            {
+                totalUsers = totalUsers + guild.Users.Count;
+            }
             string patch = "";
             try
             {
@@ -130,17 +110,11 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(author =>
             {
                 author
-                    .WithName("Thoth Stats")
+                    .WithName("Statistics for Thoth")
                     .WithIconUrl(botIcon);
             });
-            embed.WithTitle("Creator: EasyThe#2836");
+            embed.WithDescription("Creator: EasyThe#2836");
             embed.WithColor(new Color(85, 172, 238));
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Servers";
-                field.Value = Connection.Client.Guilds.Count;
-            });
             embed.AddField(field =>
             {
                 field.IsInline = true;
@@ -150,14 +124,50 @@ namespace ThothBotCore.Modules
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "SMITE Players Processed";
+                field.Name = "Servers";
+                field.Value = Connection.Client.Guilds.Count;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Users";
+                field.Value = totalUsers;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Smite Patch Version";
+                field.Value = patch;
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Players";
                 field.Value = PlayersInDbCount()[0];
             });
             embed.AddField(field =>
             {
-                field.IsInline = false;
-                field.Name = "Smite Patch Version";
-                field.Value = patch;
+                field.IsInline = true;
+                field.Name = "Commands Run";
+                field.Value = Global.CommandsRun;
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Bot Invite";
+                x.Value = $"[Invite](https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=537185344&scope=bot)";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Support Server";
+                x.Value = $"[Invite](https://discord.gg/hU6MTbQ)";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Donate";
+                x.Value = $"[PayPal](https://www.paypal.com/donate/?token=lIMLgua4KDmtcUhJhFR8y0VDZOlTt3D9qlNBMV-GGKPlsVc9mAONvfO88H4Xh7rOufPn3G)";
             });
 
             await ReplyAsync("", false, embed.Build());
@@ -167,9 +177,16 @@ namespace ThothBotCore.Modules
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task SetPrefix([Remainder] string prefix)
         {
-            await Database.SetPrefix(Context.Guild.Id, Context.Guild.Name, prefix);
-            // Consider adding a check if the prefix was set successfully.
-            await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to `{prefix}`");
+            if (prefix.Length > 5)
+            {
+                await ReplyAsync("This prefix is too long.");
+            }
+            else
+            {
+                await Database.SetPrefix(Context.Guild.Id, Context.Guild.Name, prefix);
+                // Consider adding a check if the prefix was set successfully.
+                await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to `{prefix}`");
+            }
         }
 
         [Command("statusupdates")]
@@ -195,6 +212,10 @@ namespace ThothBotCore.Modules
                     await Context.Channel.SendMessageAsync($":warning: I am missing **Access** to {channel.Mention}\n" +
                         $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}.");
                 }
+                else if (ex.Message.ToLowerInvariant().Contains("multiple matches"))
+                {
+                    await Context.Channel.SendMessageAsync("Multiple matches found. Please #mention the channel.");
+                }
                 else
                 {
                     await ReplyAsync(":warning: Something went wrong. This error was reported to the bot creator and will soon be checked.");
@@ -216,6 +237,30 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"**{Context.Guild.Name}** will no longer receive SMITE Server Status updates.");
         }
 
+        [Command("settimezone")]
+        [Alias("stz")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetTimeZone([Remainder] string value)
+        {
+            List<TimeZoneInfo> allTimeZones = new List<TimeZoneInfo>(TimeZoneInfo.GetSystemTimeZones());
+            string timezone = allTimeZones.Find(x => x.DisplayName.Contains(Text.ToTitleCase(value))).ToSerializedString();
+
+            DateTime now = DateTime.UtcNow;
+
+            // Saving to DB
+            await Database.SetTimeZone(Context.Guild, timezone);
+
+            // Deserialize timezone string from db
+            TimeZoneInfo timeZoneInfo = TimeZoneInfo.FromSerializedString(timezone);
+
+            // utc to timezone
+            DateTime timezoned = TimeZoneInfo.ConvertTimeFromUtc(now, timeZoneInfo);
+
+            await ReplyAsync($"UTC Now: {now}\n" +
+                $"In your time: {timezoned}\n" +
+                $"{Database.GetTimeZone(Context.Guild.Id).Result[0]}");
+        }
+
         [Command("ping", true)]
         [Alias("p")]
         public async Task Ping()
@@ -224,6 +269,15 @@ namespace ThothBotCore.Modules
         }
 
         // Owner Commands
+
+        [Command("ibasikuchimaikata")]
+        public async Task StopSSUTimer()
+        {
+            var user = Context.User;
+            await StatusTimer.StopServerStatusTimer($"{user.Username}#{user.Discriminator} stopped SSUTimer.");
+
+            await ReplyAsync("Gotovo, ms. :kissing:");
+        }
 
         [Command("sg")]
         [Summary("Sets a'Game' for the bot :video_game: (Accessible only by the bot owner)")]
@@ -345,11 +399,16 @@ namespace ThothBotCore.Modules
             await ReplyAsync("Done!:shrug:");
         }
 
-        [Command("invite")]
-        [Alias("inv")]
-        public async Task InviteLink()
+        [Command("dg", true)] // Working!
+        [RequireOwner]
+        public async Task DownloadGods()
         {
-            await Context.Channel.SendMessageAsync("https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=278528&scope=bot");
+            string json = await hirezAPI.GetGods();
+            List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(json);
+            await SaveGods(gods);
+            string newjson = JsonConvert.SerializeObject(gods, Formatting.Indented);
+            await UpdateGodsColors(); // not sure if this line works
+            await ReplyAsync("done");
         }
 
         [Command("testupdates")]
@@ -368,22 +427,22 @@ namespace ThothBotCore.Modules
 
             if (time.Days != 0)
             {
-                str += $"**{time.Days}** days, ";
+                str += $"{time.Days}d ";
             }
 
             if (time.Hours != 0)
             {
-                str += $"**{time.Hours}** hours, ";
+                str += $"{time.Hours}h ";
             }
 
             if (time.Minutes != 0)
             {
-                str += $"**{time.Minutes}** minutes, ";
+                str += $"{time.Minutes}m ";
             }
 
             if (time.Seconds != 0)
             {
-                str += $"**{time.Seconds}** seconds";
+                str += $"{time.Seconds}s";
             }
 
             return str;

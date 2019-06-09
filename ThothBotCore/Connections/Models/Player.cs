@@ -12,7 +12,6 @@ namespace ThothBotCore.Connections.Models
             public int HoursPlayed { get; set; }
             public int Id { get; set; }
             public DateTime Last_Login_Datetime { get; set; }
-            public DateTime UpdatedAt { get; set; }
             public int Leaves { get; set; }
             public int Level { get; set; }
             public int Losses { get; set; }
@@ -21,8 +20,11 @@ namespace ThothBotCore.Connections.Models
             public string Name { get; set; }
             public string Personal_Status_Message { get; set; }
             public double Rank_Stat_Conquest { get; set; }
+            public double Rank_Stat_Conquest_Controller { get; set; }
             public double Rank_Stat_Duel { get; set; }
+            public double Rank_Stat_Duel_Controller { get; set; }
             public double Rank_Stat_Joust { get; set; }
+            public double Rank_Stat_Joust_Controller { get; set; }
             public RankedConquest RankedConquest { get; set; }
             public RankedConquestController RankedConquestController { get; set; }
             public RankedDuel RankedDuel { get; set; }
@@ -51,6 +53,7 @@ namespace ThothBotCore.Connections.Models
             public int Points { get; set; }
             public int PrevRank { get; set; }
             public int Rank { get; set; }
+            public double Rank_Stat { get; set; }
             public int Season { get; set; }
             public int Tier { get; set; }
             public int Trend { get; set; }
@@ -67,6 +70,7 @@ namespace ThothBotCore.Connections.Models
             public int Points { get; set; }
             public int PrevRank { get; set; }
             public int Rank { get; set; }
+            public double Rank_Stat { get; set; }
             public int Season { get; set; }
             public int Tier { get; set; }
             public int Trend { get; set; }
@@ -83,6 +87,7 @@ namespace ThothBotCore.Connections.Models
             public int Points { get; set; }
             public int PrevRank { get; set; }
             public int Rank { get; set; }
+            public double Rank_Stat { get; set; }
             public int Season { get; set; }
             public int Tier { get; set; }
             public int Trend { get; set; }
@@ -99,6 +104,7 @@ namespace ThothBotCore.Connections.Models
             public int Points { get; set; }
             public int PrevRank { get; set; }
             public int Rank { get; set; }
+            public double Rank_Stat { get; set; }
             public int Season { get; set; }
             public int Tier { get; set; }
             public int Trend { get; set; }
@@ -115,6 +121,7 @@ namespace ThothBotCore.Connections.Models
             public int Points { get; set; }
             public int PrevRank { get; set; }
             public int Rank { get; set; }
+            public double Rank_Stat { get; set; }
             public int Season { get; set; }
             public int Tier { get; set; }
             public int Trend { get; set; }
@@ -131,6 +138,7 @@ namespace ThothBotCore.Connections.Models
             public int Points { get; set; }
             public int PrevRank { get; set; }
             public int Rank { get; set; }
+            public double Rank_Stat { get; set; }
             public int Season { get; set; }
             public int Tier { get; set; }
             public int Trend { get; set; }
