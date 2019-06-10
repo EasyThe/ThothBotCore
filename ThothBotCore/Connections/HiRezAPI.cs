@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord.Entities;
-using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Connections
 {
@@ -17,7 +16,7 @@ namespace ThothBotCore.Connections
         private readonly string devID = Credentials.botConfig.devId;
         private readonly string authKey = Credentials.botConfig.authKey;
         readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-        private SessionResult sessionResult;
+        private SessionResult sessionResult = new SessionResult();
         private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
         private static string GetMD5Hash(string input)
         {
@@ -351,16 +350,15 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public class SessionResult
-        {
-            public string sessionTime;
-            public string sessionID;
-        }
-
         public class PatchInfo
         {
             public object ret_msg { get; set; }
             public string version_string { get; set; }
         }
+    }
+    public class SessionResult
+    {
+        public string sessionTime { get; set; }
+        public string sessionID { get; set; }
     }
 }
