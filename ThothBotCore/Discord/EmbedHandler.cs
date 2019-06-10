@@ -397,17 +397,6 @@ namespace ThothBotCore.Discord
                         }
                     }
                 }
-                else if (playerStatus[0].status == 2)
-                {
-                    if (playerStatus[0].status_string.ToLower().Contains("in game"))
-                    {
-                        embed.WithDescription($":eyes: {playerStatus[0].status_string}");
-                    }
-                    else
-                    {
-                        embed.WithDescription($":eyes: In {playerStatus[0].status_string}");
-                    }
-                }
                 else
                 {
                     embed.WithDescription($":eyes: {playerStatus[0].status_string}");

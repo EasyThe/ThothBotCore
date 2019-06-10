@@ -4,7 +4,6 @@ using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -17,7 +16,6 @@ using ThothBotCore.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
-using static ThothBotCore.Connections.Models.MatchPlayerDetails;
 using static ThothBotCore.Connections.Models.Player;
 using static ThothBotCore.Storage.Database;
 
@@ -686,7 +684,6 @@ namespace ThothBotCore.Modules
                 embed.WithThumbnailUrl(gods[0].godIcon_URL);
                 if (gods[0].DomColor != 0)
                 {
-                    domColor.DoAllGodColors();
                     embed.WithColor(new Color((uint)gods[0].DomColor));
                 }
                 embed.AddField(field =>
@@ -744,7 +741,6 @@ namespace ThothBotCore.Modules
             embed.WithThumbnailUrl(gods[r].godIcon_URL);
             if (gods[0].DomColor != 0)
             {
-                domColor.DoAllGodColors();
                 embed.WithColor(new Color((uint)gods[r].DomColor));
             }
             embed.AddField(field =>
@@ -908,7 +904,6 @@ namespace ThothBotCore.Modules
                 embed.WithThumbnailUrl(gods[63].godAbility1_URL);
                 if (gods[63].DomColor != 0)
                 {
-                    domColor.DoAllGodColors();
                     embed.WithColor(new Color((uint)gods[63].DomColor));
                 }
 
