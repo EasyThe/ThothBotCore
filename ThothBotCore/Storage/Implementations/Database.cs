@@ -82,6 +82,15 @@ namespace ThothBotCore.Storage
             }
         }
 
+        public static async Task SetGuild(ulong serverID, string serverName) // Working as intended
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"INSERT OR IGNORE INTO serverConfig(serverID, serverName) " +
+                    $"VALUES({serverID}, \"{serverName}\")");
+            }
+        }
+
         public static async Task<List<ServerConfig>> GetServerConfig(SocketGuild guild) // Get prefix for guild. Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
@@ -95,7 +104,7 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                await cnn.ExecuteAsync($"DELETE FROM serverConfig WHERE EXISTS (SELECT * FROM serverConfig WHERE serverID = {id})");
+                await cnn.ExecuteAsync($"DELETE FROM serverConfig WHERE serverID = {id}");
             }
         }
 

@@ -1,12 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
-using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Discord
 {
@@ -43,7 +40,7 @@ namespace ThothBotCore.Discord
 
         private async Task ClientLeftGuildTask(SocketGuild arg)
         {
-            List<ServerConfig> serverConfig = GetServerConfig(arg).Result;
+            await Database.DeleteServerConfig(arg.Id);
             await ErrorTracker.SendLeftServers(arg);
         }
 
@@ -58,8 +55,15 @@ namespace ThothBotCore.Discord
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
             await ErrorTracker.SendJoinedServers(guild);
+            await Database.SetGuild(guild.Id, guild.Name);
             var channel = guild.DefaultChannel;
-
+            foreach (var chnl in guild.TextChannels)
+            {
+                if (chnl.Name.ToLowerInvariant().Contains("bot"))
+                {
+                    channel = chnl;
+                }
+            }
             await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
                 $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +

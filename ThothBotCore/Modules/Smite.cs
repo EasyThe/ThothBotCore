@@ -82,7 +82,8 @@ namespace ThothBotCore.Modules
                                     }
                                     allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
                                 }
-                                catch (Exception ex)
+                                catch (Exception)
+
                                 {
                                 }
                             }
@@ -1000,15 +1001,81 @@ namespace ThothBotCore.Modules
 
         [Command("tt")]
         [RequireOwner]
-        public async Task TestGetPlayer(int id)
+        public async Task TestGetPlayer(string username)
         {
-            //var allTimeZones = TimeZoneInfo.GetSystemTimeZones();
-            //DateTime now = DateTime.UtcNow;
-            //DateTime spec = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(now, username);
-            //await ReplyAsync(spec.ToString());
+            List<SearchPlayers> searchPlayer = await hirezAPI.SearchPlayer(username);
+            if (searchPlayer.Count == 0 || searchPlayer[0].Name.ToLowerInvariant() != username.ToLowerInvariant())
+            {
+                await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
+            }
+            else if (searchPlayer[0].Name.ToLowerInvariant() == username.ToLowerInvariant())
+            {
 
+                await Context.Channel.TriggerTypingAsync();
+                string statusJson = await hirezAPI.GetPlayerStatus(searchPlayer[0].player_id);
+                List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(statusJson);
+                string matchJson = "";
+                if (playerStatus[0].Match != 0)
+                {
+                    matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
+                }
 
-            //await ReplyAsync(sb.ToString());
+                EmbedBuilder embed = EmbedHandler.PlayerStatsEmbed(
+                    await hirezAPI.GetPlayer(searchPlayer[0].player_id.ToString()),
+                    await hirezAPI.GetGodRanks(searchPlayer[0].player_id),
+                    await hirezAPI.GetPlayerAchievements(searchPlayer[0].player_id),
+                    await hirezAPI.GetPlayerStatus(searchPlayer[0].player_id),
+                    matchJson,
+                    searchPlayer[0].portal_id).Result;
+                // Sending initial stats
+                var message = await Context.Channel.SendMessageAsync("", false, embed.Build());
+
+                List<AllQueueStats> allQueue = new List<AllQueueStats>();
+                for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
+                {
+                    int matches = 0;
+                    List<QueueStats> queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(searchPlayer[0].player_id, Text.LegitQueueIDs()[i]));
+                    for (int c = 0; c < queueStats.Count; c++)
+                    {
+                        if (queueStats[c].Matches != 0)
+                        {
+                            matches = matches + queueStats[c].Matches;
+                        }
+                    }
+                    allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
+                }
+                List<AllQueueStats> orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
+                string topMatchesValue = "";
+                if (orderedQueues.Count != 0)
+                {
+                    switch (orderedQueues.Count)
+                    {
+                        case 1:
+                            topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]";
+                            break;
+                        case 2:
+                            topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                            $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]";
+                            break;
+                        default:
+                            topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                            $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
+                                            $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]";
+                            break;
+                    }
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($"<:matches:579604410569850891>**Most Played Modes**");
+                        field.Value = (topMatchesValue);
+                    });
+
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Embed = embed.Build();
+                    });
+                }
+            }
         }
 
         [Command("getgods")]

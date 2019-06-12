@@ -1,7 +1,6 @@
 ﻿using Discord.Commands;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Storage;
@@ -70,6 +69,26 @@ namespace ThothBotCore.Modules
             public string portal { get; set; }
             public int portal_id { get; set; }
             public object ret_msg { get; set; }
+        }
+
+        [Command("insertallguilds")]
+        [RequireOwner]
+        public async Task DoGuilds()
+        {
+            foreach (var guild in Discord.Connection.Client.Guilds)
+            {
+                await Database.SetGuild(guild.Id, guild.Name);
+            }
+            await ReplyAsync("Done!");
+        }
+
+        [Command("deleteserverfromdb")]
+        [RequireOwner]
+        public async Task DeleteGuildFromDB(ulong id)
+        {
+            await Database.DeleteServerConfig(id);
+
+            await ReplyAsync("Should be done :shrug:");
         }
     }
 }

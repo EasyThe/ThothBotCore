@@ -29,3 +29,12 @@ Currently I don't recommend hosting your own instance. Instead you can use the o
 ## Acknowledgements
 
 * This bot exists thanks to [Peter](https://www.youtube.com/channel/UCmfZ6FWTHZjPrPP3dWQ1bHg)'s Discord BOT tutorials :heart:
+
+<a href="https://discordbotlist.com/bots/454145330347376651">
+    <img 
+        width="380" 
+        height="140" 
+        src="https://discordbotlist.com/bots/454145330347376651/widget" 
+        alt="Thoth stats on Discord Bot List">
+</a>
+

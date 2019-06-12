@@ -48,5 +48,6 @@ namespace ThothBotCore.Discord.Entities
         public string setGame { get; set; } = "!!help";
         public string botsAPI { get; set; } = "DiscordBotsAPIkey";
         public string bfdAPI { get; set; } = "BotsForDiscordAPIkey";
+        public string dblAPI { get; set; } = "DiscordBotListAPIkey";
     }
 }

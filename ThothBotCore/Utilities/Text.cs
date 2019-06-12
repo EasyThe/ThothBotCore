@@ -481,9 +481,29 @@ namespace ThothBotCore.Utilities
         }
 
         public static List<int> LegitQueueIDs()
-        {///////////////////////////////423, 426, 430, 433, 434, 435, 440, 445, 448, 451, 452, 459, 466, 450, 502, 503, 504
+        {
             List<int> list = new List<int> { 426, 435, 440, 445, 448, 450, 451, 459, 466, 502, 503, 504 };
             return list;
+        }
+
+        //Paladins Queues
+
+        public static string GetQueueNamePaladins(int queueID)
+        {
+            switch (queueID)
+            {
+                case 424: return "Siege";
+                case 469: return "Team Deathmatch";
+                case 452: return "Onslaught";
+                case 486: return "Competitive KBM";
+                case 470: return "Team Deathmatch Practice";
+                case 425: return "Practice Siege";
+                case 453: return "Onslaught Practice";
+                case 428: return "Competitive Gamepad";
+                case 445: return "Test Maps";
+                default:
+                    return "n/a";
+            }
         }
     }
 }

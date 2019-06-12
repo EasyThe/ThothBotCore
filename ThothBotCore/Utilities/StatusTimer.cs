@@ -15,7 +15,7 @@ namespace ThothBotCore.Utilities
     public static class StatusTimer
     {
         private static Timer ServerStatusTimer;
-        private static Timer ActiveStatusTimer;
+        //private static Timer ActiveStatusTimer;
 
         public static Task StartServerStatusTimer()
         {

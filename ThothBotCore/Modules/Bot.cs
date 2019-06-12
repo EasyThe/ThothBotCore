@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
@@ -71,17 +70,7 @@ namespace ThothBotCore.Modules
                 footer.Text = "If something isn't working properly, its probably because the bot is still in development.";
             });
 
-            try
-            {
-                await ReplyAsync("", false, embed.Build());
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("1024"))
-                {
-                    await ReplyAsync("Oops. Because your custom prefix is too long, I was not able to fit the help command in one field.");
-                }
-            }
+            await ReplyAsync("", false, embed.Build());
         }
 
         [Command("botinfo", true)]
