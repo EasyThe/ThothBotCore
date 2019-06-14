@@ -30,6 +30,7 @@ Currently I don't recommend hosting your own instance. Instead you can use the o
 
 * This bot exists thanks to [Peter](https://www.youtube.com/channel/UCmfZ6FWTHZjPrPP3dWQ1bHg)'s Discord BOT tutorials :heart:
 
+[![Bots for Discord](https://discordbots.org/api/widget/454145330347376651.svg?usernamecolor=FFFFFF&topcolor=000000)](https://discordbots.org/api/widget/454145330347376651.svg?usernamecolor=FFFFFF&topcolor=000000)
 <a href="https://discordbotlist.com/bots/454145330347376651">
     <img 
         width="380" 
@@ -37,4 +38,4 @@ Currently I don't recommend hosting your own instance. Instead you can use the o
         src="https://discordbotlist.com/bots/454145330347376651/widget" 
         alt="Thoth stats on Discord Bot List">
 </a>
-
+[![Bots for Discord](https://botsfordiscord.com/api/bot/454145330347376651/widget)](https://botsfordiscord.com/bots/454145330347376651)
