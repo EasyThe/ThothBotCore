@@ -32,4 +32,4 @@ Currently I don't recommend hosting your own instance. Instead you can use the o
 
 [![DiscordBotsOrg](https://discordbots.org/api/widget/454145330347376651.svg?usernamecolor=FFFFFF&topcolor=000000)](https://discordbots.org/bot/454145330347376651)
 [![Bots for Discord](https://botsfordiscord.com/api/bot/454145330347376651/widget?theme=dark)](https://botsfordiscord.com/bots/454145330347376651)
-[![DiscordBotList](https://discordbotlist.com/bots/454145330347376651/widget)](https://discordbotlist.com/bots/454145330347376651)
+[![DiscordBotList](https://discordbotlist.com/bots/454145330347376651/widget | width=300)](https://discordbotlist.com/bots/454145330347376651)
