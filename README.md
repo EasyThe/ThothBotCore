@@ -18,7 +18,7 @@
 
 Cooler bot for SMITE stats for Discord
 
-Currently I don't recommend hosting your own instance. Instead you can use the one I am hosting [here](https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=278528&scope=bot).
+Currently I don't recommend hosting your own instance. Instead you can use the one I am hosting [here](https://discordbots.org/bot/454145330347376651).
 
 ## Built With :green_heart:
 
