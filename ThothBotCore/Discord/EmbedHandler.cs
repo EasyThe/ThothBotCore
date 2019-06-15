@@ -597,5 +597,42 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
+
+        public static async Task<EmbedBuilder> LoadingStats(string username)
+        {
+            EmbedBuilder embed = new EmbedBuilder();
+
+            embed.WithAuthor(x =>
+            {
+                x.IconUrl = botIcon;
+                x.Name = "Loading...";
+            });
+            embed.Description = $"Loading stats for {username}...";
+
+            return embed;
+        }
+
+        public static async Task<EmbedBuilder> MultiplePlayers(List<PlayerStats> playerStats)
+        {
+            EmbedBuilder embed = new EmbedBuilder();
+
+            embed.WithAuthor(x =>
+            {
+                x.IconUrl = botIcon;
+                x.Name = "Choose a player with its corresponding reaction";
+            });
+
+            for (int i = 1; i < playerStats.Count + 1; i++)
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = playerStats[i].Name;
+                    x.Value = $"Level:{playerStats[i].Level}\n{playerStats[i].hz_player_name}\n{playerStats[i].hz_gamer_tag}\n{Text.PrettyDate(playerStats[i].Last_Login_Datetime)}";
+                });
+            }
+
+            return embed;
+        }
     }
 }

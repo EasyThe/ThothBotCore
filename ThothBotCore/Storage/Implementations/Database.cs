@@ -8,6 +8,7 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using ThothBotCore.Models;
 using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.Player;
@@ -412,6 +413,63 @@ namespace ThothBotCore.Storage
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = cnn.Query<Gods.God>($"SELECT id, godIcon_URL, DomColor FROM Gods", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+        
+        public static async Task InsertItems(List<GetItems.Item> items)
+        {
+            string sql = $"INSERT INTO Items(ActiveFlag, ChildItemId, DeviceName, IconId, ItemDescription, SecondaryDescription, ItemId, " +
+                $"ItemTier, Price, RestrictedRoles, RootItemId, ShortDesc, StartingItem, Type, itemIcon_URL) " +
+                            $"VALUES(@activeflag, @childitemid, @devicename, @iconid, @itemdesc, @secdesc, @itemid, @itemtier, " +
+                            $"@price, @restrictedroles, @rootitemid, @shortdesc, @startingitem, @type, @itemicon_URL)  " +
+                            $"ON CONFLICT(ItemId) " +
+                            $"DO UPDATE SET ActiveFlag = @activeflag, ChildItemId = @childitemid, DeviceName = @devicename, IconId = @iconid, " +
+                            $"ItemDescription = @itemdesc, SecondaryDescription = @secdesc, ItemTier = @itemtier, Price = @price, " +
+                            $"RestrictedRoles = @restrictedroles, RootItemId = @rootitemid, ShortDesc = @shortdesc, " +
+                            $"StartingItem = @startingitem, Type = @type, itemIcon_URL = @itemicon_URL";
+            try
+            {
+                SQLiteConnection connection = new SQLiteConnection(LoadConnectionString());
+                SQLiteCommand command = new SQLiteCommand(sql, connection);
+                int counter = 0;
+                for (int i = 0; i < items.Count; i++)
+                {
+                    await connection.OpenAsync();
+
+                    command.Parameters.AddWithValue("activeflag", items[i].ActiveFlag);
+                    command.Parameters.AddWithValue("childitemid", items[i].ChildItemId);
+                    command.Parameters.AddWithValue("devicename", items[i].DeviceName);
+                    command.Parameters.AddWithValue("iconid", items[i].IconId);
+                    command.Parameters.AddWithValue("itemdesc", items[i].ItemDescription.Description);
+                    command.Parameters.AddWithValue("secdesc", items[i].ItemDescription.SecondaryDescription);
+                    command.Parameters.AddWithValue("itemid", items[i].ItemId);
+                    command.Parameters.AddWithValue("itemtier", items[i].ItemTier);
+                    command.Parameters.AddWithValue("price", items[i].Price);
+                    command.Parameters.AddWithValue("restrictedroles", items[i].RestrictedRoles);
+                    command.Parameters.AddWithValue("rootitemid", items[i].RootItemId);
+                    command.Parameters.AddWithValue("shortdesc", items[i].ShortDesc);
+                    command.Parameters.AddWithValue("startingitem", items[i].StartingItem);
+                    command.Parameters.AddWithValue("type", items[i].Type);
+                    command.Parameters.AddWithValue("itemicon_URL", items[i].itemIcon_URL);
+                    counter++;
+                    await command.ExecuteNonQueryAsync();
+                    connection.Close();
+                }
+                Console.WriteLine(counter);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in InsertItems()\n" + ex.Message);
+            }
+        }
+
+        public static async Task<List<Item>> GetActiveItems(int tier)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE ItemTier = {tier} AND ActiveFlag LIKE '%y%'", new DynamicParameters());
                 return output.ToList();
             }
         }

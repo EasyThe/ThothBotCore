@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
+using ThothBotCore.Models;
 using ThothBotCore.Storage;
 
 namespace ThothBotCore.Modules
@@ -63,14 +64,6 @@ namespace ThothBotCore.Modules
             }
         }
 
-        public class PlayerIDbyName
-        {
-            public int player_id { get; set; }
-            public string portal { get; set; }
-            public int portal_id { get; set; }
-            public object ret_msg { get; set; }
-        }
-
         [Command("insertallguilds")]
         [RequireOwner]
         public async Task DoGuilds()
@@ -89,6 +82,24 @@ namespace ThothBotCore.Modules
             await Database.DeleteServerConfig(id);
 
             await ReplyAsync("Should be done :shrug:");
+        }
+
+        [Command("downloaditems", RunMode = RunMode.Async)]
+        [RequireOwner]
+        public async Task DownloadItems()
+        {
+            List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hirezAPI.GetItems());
+            await Database.InsertItems(itemsList);
+
+            await ReplyAsync(itemsList.Count.ToString());
+        }
+
+        public class PlayerIDbyName
+        {
+            public int player_id { get; set; }
+            public string portal { get; set; }
+            public int portal_id { get; set; }
+            public object ret_msg { get; set; }
         }
     }
 }

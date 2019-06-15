@@ -21,7 +21,7 @@ namespace ThothBotCore.Utilities
             catch (Exception ex)
             {
 
-                await SendError($"Error in SendDMtoOwner\n**Message**: {ex.Message}");
+                await SendError($"Error in SendDMtoOwner\n**Message**: {ex.Message}").ConfigureAwait(false);
             }
         }
 
@@ -37,10 +37,14 @@ namespace ThothBotCore.Utilities
                 });
                 embed.WithTitle($":new:{guild.Name}\n" +
                 $":id:**Server ID:** {guild.Id}\n" +
-                $":bust_in_silhouette:**Owner:** {guild.Owner}\n" +
-                $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
+                $":bust_in_silhouette:**Owner:** {guild.Owner}\n");
+                embed.AddField(x =>
+                {
+                    x.Name = $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
                 $":speech_balloon:**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}\n" +
-                $":alarm_clock:**Joined at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}");
+                $":alarm_clock:**Joined at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}";
+                    x.Value = "\u200b";
+                });
                 if (guild.IconUrl != null || guild.IconUrl == "")
                 {
                     embed.ImageUrl = guild.IconUrl;
@@ -50,7 +54,7 @@ namespace ThothBotCore.Utilities
             catch (Exception ex)
             {
                 await SendError($"Error in SendJoinedServers\n**Message**: {ex.Message}\n" +
-                    $"**StackTrace: **`{ex.StackTrace}`");
+                    $"**StackTrace: **`{ex.StackTrace}`").ConfigureAwait(false);
             }
         }
 
@@ -60,12 +64,17 @@ namespace ThothBotCore.Utilities
             {
                 var embed = new EmbedBuilder();
                 embed.WithColor(new Color(255, 0, 0));
-                embed.WithTitle($":wave:{guild.Name}\n" +
+                embed.WithTitle($":small_red_triangle_down:{guild.Name}\n" +
                 $":id:**Server ID:** {guild.Id}\n" +
-                $":bust_in_silhouette:**Owner:** {guild.Owner}\n" +
-                $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
+                $":bust_in_silhouette:**Owner:** {guild.Owner}");
+                embed.AddField(x =>
+                {
+                    x.Name = $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
                 $":speech_balloon:**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}\n" +
-                $":alarm_clock:**Left at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}");
+                $":alarm_clock:**Left at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}";
+                    x.Value = "\u200b";
+                });
+
                 if (guild.IconUrl != null || guild.IconUrl == "")
                 {
                     embed.ImageUrl = guild.IconUrl;
@@ -76,7 +85,7 @@ namespace ThothBotCore.Utilities
             {
                 await SendError($"Error in SendLeftServers\n" +
                     $"**Message**: {ex.Message}\n" +
-                    $"**StackTrace: **`{ex.StackTrace}`");
+                    $"**StackTrace: **`{ex.StackTrace}`").ConfigureAwait(false);
             }
         }
 
@@ -89,7 +98,7 @@ namespace ThothBotCore.Utilities
             catch (Exception ex)
             {
 
-                await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
+                await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}").ConfigureAwait(false);
             }
         }
 
@@ -113,7 +122,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await reportsChannel.SendMessageAsync($"Error in SendEmbedError.\n{ex.Message}");
             }
         }
     }

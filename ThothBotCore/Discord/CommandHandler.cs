@@ -25,7 +25,7 @@ namespace ThothBotCore.Discord
 
         private async Task HandleCommandAsync(SocketMessage s)
         {
-            if (!(s is SocketUserMessage msg))
+            if (!(s is SocketUserMessage msg) || msg.Author.IsBot)
             {
                 return;
             }
@@ -52,7 +52,7 @@ namespace ThothBotCore.Discord
                 }
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                 {
-                    await ErrorHandler(result, context);
+                    await ErrorHandler(result, context).ConfigureAwait(false);
                 }
             }
         }

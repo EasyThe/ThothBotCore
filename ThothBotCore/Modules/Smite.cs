@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
-using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Models;
@@ -23,7 +22,6 @@ namespace ThothBotCore.Modules
 {
     public class Smite : ModuleBase<SocketCommandContext>
     {
-        readonly string prefix = Credentials.botConfig.prefix;
         readonly string botIcon = "https://i.imgur.com/8qNdxse.png"; // https://i.imgur.com/AgNocjS.png
         static Random rnd = new Random();
 
@@ -37,6 +35,17 @@ namespace ThothBotCore.Modules
             try
             {
                 List<SearchPlayers> searchPlayer = await hirezAPI.SearchPlayer(username);
+                if (searchPlayer.Count != 0)
+                {
+                    List<SearchPlayers> realSearchPlayers = new List<SearchPlayers>();
+                    foreach (var player in searchPlayer)
+                    {
+                        if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
+                        {
+                            realSearchPlayers.Add(player);
+                        }
+                    }
+                }
                 if (searchPlayer.Count == 0 || searchPlayer[0].Name.ToLowerInvariant() != username.ToLowerInvariant())
                 {
                     await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
@@ -1078,40 +1087,43 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("getgods")]
+        [Command("zz")]
         [RequireOwner]
-        public async Task GetGodsCommand(int id)
+        public async Task GetGodsCommand(string type)
         {
-            // testing command i guess xD
-            List<AllQueueStats> allQueue = new List<AllQueueStats>();
-            for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
+            var items = await Database.GetActiveItems(3);
+
+            List<Item> magicalItems = new List<Item>();
+            List<Item> physicalItems = new List<Item>();
+            List<Item> relics = new List<Item>();
+
+            foreach (var item in items)
             {
-                int matches = 0;
-                try
+                if (true)
                 {
-                    List<QueueStats> queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(id, Text.LegitQueueIDs()[i]));
-                    for (int c = 0; c < queueStats.Count; c++)
-                    {
-                        if (queueStats[c].Matches != 0)
-                        {
-                            matches = matches + queueStats[c].Matches;
-                        }
-                    }
-                    allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
+
                 }
             }
-            List<AllQueueStats> orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
+
             StringBuilder sb = new StringBuilder();
-            foreach (var item in orderedQueues)
+
+            if (type == "magical")
             {
-                sb.Append($"{item.queueName} {item.matches}");
+                
+            }
+            else
+            {
+
+            }
+
+            for (int i = 0; i < 6; i++)
+            {
+                int r = rnd.Next(items.Count);
+                sb.Append(items[r].DeviceName);
                 sb.Append("\n");
             }
-            await ReplyAsync($"{sb.ToString()}\n Count: {orderedQueues.Count}");
+
+            await ReplyAsync(sb.ToString());
         }
 
         [Command("nz")] // keep it simple pls
@@ -1138,6 +1150,140 @@ namespace ThothBotCore.Modules
                     await ReplyAsync("Saved as testmethod.json");
                 }
                 Console.WriteLine(ex.Message);
+            }
+        }
+
+        [Command("dai", RunMode = RunMode.Async)]
+        [RequireOwner]
+        public async Task NewStats([Remainder] string username)
+        {
+            try
+            {
+                List<SearchPlayers> searchPlayer = await hirezAPI.SearchPlayer(username);
+                List<SearchPlayers> realSearchPlayers = new List<SearchPlayers>();
+                if (searchPlayer.Count != 0)
+                {
+                    foreach (var player in searchPlayer)
+                    {
+                        if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
+                        {
+                            realSearchPlayers.Add(player);
+                        }
+                    }
+                }
+
+                if (realSearchPlayers.Count != 1)
+                {
+                    List<PlayerStats> multiplePlayerStats = new List<PlayerStats>();
+                    for (int i = 0; i < realSearchPlayers.Count; i++)
+                    {
+                        multiplePlayerStats.Add(JsonConvert.DeserializeObject<List<PlayerStats>>(await hirezAPI.GetPlayer(realSearchPlayers[i].player_id.ToString()))[0]);
+                    }
+
+                    await ReplyAsync("", false, EmbedHandler.MultiplePlayers(multiplePlayerStats).Result.Build());
+                }
+
+                if (searchPlayer.Count == 0 || searchPlayer[0].Name.ToLowerInvariant() != username.ToLowerInvariant())
+                {
+                    await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
+                }
+                else if (searchPlayer[0].Name.ToLowerInvariant() == username.ToLowerInvariant())
+                {
+                    await EmbedHandler.LoadingStats(searchPlayer[0].Name);
+                    //await Context.Channel.TriggerTypingAsync();
+                    try
+                    {
+                        string statusJson = await hirezAPI.GetPlayerStatus(searchPlayer[0].player_id);
+                        List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(statusJson);
+                        string matchJson = "";
+                        if (playerStatus[0].Match != 0)
+                        {
+                            matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
+                        }
+
+                        EmbedBuilder embed = EmbedHandler.PlayerStatsEmbed(
+                            await hirezAPI.GetPlayer(searchPlayer[0].player_id.ToString()),
+                            await hirezAPI.GetGodRanks(searchPlayer[0].player_id),
+                            await hirezAPI.GetPlayerAchievements(searchPlayer[0].player_id),
+                            await hirezAPI.GetPlayerStatus(searchPlayer[0].player_id),
+                            matchJson,
+                            searchPlayer[0].portal_id).Result;
+                        var message = await Context.Channel.SendMessageAsync("", false, embed.Build());
+
+                        try
+                        {
+                            List<AllQueueStats> allQueue = new List<AllQueueStats>();
+                            for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
+                            {
+                                int matches = 0;
+                                try
+                                {
+                                    List<QueueStats> queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(searchPlayer[0].player_id, Text.LegitQueueIDs()[i]));
+                                    for (int c = 0; c < queueStats.Count; c++)
+                                    {
+                                        if (queueStats[c].Matches != 0)
+                                        {
+                                            matches = matches + queueStats[c].Matches;
+                                        }
+                                    }
+                                    allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
+                                }
+                                catch (Exception)
+                                {
+                                }
+                            }
+                            List<AllQueueStats> orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
+                            string topMatchesValue = "";
+                            if (orderedQueues.Count != 0)
+                            {
+                                switch (orderedQueues.Count)
+                                {
+                                    case 1:
+                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]";
+                                        break;
+                                    case 2:
+                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]";
+                                        break;
+                                    default:
+                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
+                                                        $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]";
+                                        break;
+                                }
+                                embed.AddField(field =>
+                                {
+                                    field.IsInline = true;
+                                    field.Name = ($"<:matches:579604410569850891>**Most Played Modes**");
+                                    field.Value = (topMatchesValue);
+                                });
+
+                                await message.ModifyAsync(x =>
+                                {
+                                    x.Embed = embed.Build();
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}");
+                        await ReplyAsync("Oops.. I've encountered an error. :sob:");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync($"Oops.. Either this player was not found or an unexpected error has occured.");
+                await ErrorTracker.SendError($"**Stats Command**\n" +
+                    $"**Message: **{Context.Message.Content}\n" +
+                    $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
+                    $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
+                    $"**Error: **{ex.Message}");
             }
         }
 

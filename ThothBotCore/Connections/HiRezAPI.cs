@@ -15,6 +15,7 @@ namespace ThothBotCore.Connections
     {
         private readonly string devID = Credentials.botConfig.devId;
         private readonly string authKey = Credentials.botConfig.authKey;
+        private const int language = 1;
         readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         private SessionResult sessionResult = new SessionResult();
         private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
@@ -229,6 +230,23 @@ namespace ThothBotCore.Connections
             using (var httpClient = new HttpClient(handler, false))
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayerstatusjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{playerID}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
+        public async Task<string> GetItems()
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getitems" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getitemsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{language}"))
                 {
                     var response = await httpClient.SendAsync(request);
                     return await response.Content.ReadAsStringAsync();
