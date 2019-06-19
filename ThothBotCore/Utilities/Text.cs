@@ -183,7 +183,7 @@ namespace ThothBotCore.Utilities
                 case "10":
                     return "https://cdn.discordapp.com/emojis/537749895029850112.png"; // Xbox
                 case "22":
-                    return "https://cdn.discordapp.com/emojis/537752006719176714.png"; // Switch
+                    return "https://i.imgur.com/f11agtV.png"; // Switch
                 default:
                     return "https://i.imgur.com/8qNdxse.png";
             }

@@ -8,6 +8,7 @@ namespace ThothBotCore.Models
         public string DeviceName { get; set; }
         public int IconId { get; set; }
         public string ItemDescription { get; set; }
+        public string ItemBenefits { get; set; }
         public string SecondaryDescription { get; set; }
         public int ItemId { get; set; }
         public int ItemTier { get; set; }
@@ -18,6 +19,7 @@ namespace ThothBotCore.Models
         public string StartingItem { get; set; }
         public string Type { get; set; }
         public string itemIcon_URL { get; set; }
+        public int DomColor { get; set; }
         public object ret_msg { get; set; }
     }
 }

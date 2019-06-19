@@ -607,7 +607,7 @@ namespace ThothBotCore.Discord
                 x.IconUrl = botIcon;
                 x.Name = "Loading...";
             });
-            embed.Description = $"Loading stats for {username}...";
+            embed.Description = $"Retrieving stats for {username}...";
 
             return embed;
         }

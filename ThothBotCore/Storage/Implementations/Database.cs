@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Models;
@@ -419,13 +420,13 @@ namespace ThothBotCore.Storage
         
         public static async Task InsertItems(List<GetItems.Item> items)
         {
-            string sql = $"INSERT INTO Items(ActiveFlag, ChildItemId, DeviceName, IconId, ItemDescription, SecondaryDescription, ItemId, " +
+            string sql = $"INSERT INTO Items(ActiveFlag, ChildItemId, DeviceName, ItemBenefits, IconId, ItemDescription, SecondaryDescription, ItemId, " +
                 $"ItemTier, Price, RestrictedRoles, RootItemId, ShortDesc, StartingItem, Type, itemIcon_URL) " +
-                            $"VALUES(@activeflag, @childitemid, @devicename, @iconid, @itemdesc, @secdesc, @itemid, @itemtier, " +
+                            $"VALUES(@activeflag, @childitemid, @devicename, @itembenefits, @iconid, @itemdesc, @secdesc, @itemid, @itemtier, " +
                             $"@price, @restrictedroles, @rootitemid, @shortdesc, @startingitem, @type, @itemicon_URL)  " +
                             $"ON CONFLICT(ItemId) " +
-                            $"DO UPDATE SET ActiveFlag = @activeflag, ChildItemId = @childitemid, DeviceName = @devicename, IconId = @iconid, " +
-                            $"ItemDescription = @itemdesc, SecondaryDescription = @secdesc, ItemTier = @itemtier, Price = @price, " +
+                            $"DO UPDATE SET ActiveFlag = @activeflag, ChildItemId = @childitemid, DeviceName = @devicename, ItemBenefits = @itembenefits, " +
+                            $"IconId = @iconid, ItemDescription = @itemdesc, SecondaryDescription = @secdesc, ItemTier = @itemtier, Price = @price, " +
                             $"RestrictedRoles = @restrictedroles, RootItemId = @rootitemid, ShortDesc = @shortdesc, " +
                             $"StartingItem = @startingitem, Type = @type, itemIcon_URL = @itemicon_URL";
             try
@@ -440,6 +441,13 @@ namespace ThothBotCore.Storage
                     command.Parameters.AddWithValue("activeflag", items[i].ActiveFlag);
                     command.Parameters.AddWithValue("childitemid", items[i].ChildItemId);
                     command.Parameters.AddWithValue("devicename", items[i].DeviceName);
+                    StringBuilder benefits = new StringBuilder();
+                    for (int b = 0; b < items[i].ItemDescription.Menuitems.Count; b++)
+                    {
+                        benefits.Append($"{items[i].ItemDescription.Menuitems[b].Value} {items[i].ItemDescription.Menuitems[b].Description}");
+                        benefits.Append("\n");
+                    }
+                    command.Parameters.AddWithValue("itembenefits", benefits.ToString());
                     command.Parameters.AddWithValue("iconid", items[i].IconId);
                     command.Parameters.AddWithValue("itemdesc", items[i].ItemDescription.Description);
                     command.Parameters.AddWithValue("secdesc", items[i].ItemDescription.SecondaryDescription);
@@ -465,11 +473,29 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task<List<Item>> GetActiveItems(int tier)
+        public static async Task<List<Item>> GetActiveTierItems(int tier)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE ItemTier = {tier} AND ActiveFlag LIKE '%y%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<Item>> GetAllItems()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<Item>> GetSpecificItem(string itemname)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE DeviceName LIKE '%{itemname}%' AND ActiveFlag LIKE '%y%'", new DynamicParameters());
                 return output.ToList();
             }
         }
@@ -508,11 +534,19 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static void SaveDomColor(int id, int color)
+        public static void SaveGodDomColor(int id, int color)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 cnn.Execute($"UPDATE Gods SET DomColor = {color} WHERE id = '{id}'");
+            }
+        }
+
+        public static void SaveItemDomColor(int ItemId, int color)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                cnn.Execute($"UPDATE Items SET DomColor = {color} WHERE ItemId = '{ItemId}'");
             }
         }
 

@@ -388,6 +388,15 @@ namespace ThothBotCore.Modules
             await ReplyAsync("Done!:shrug:");
         }
 
+        [Command("doallitemcolors", RunMode = RunMode.Async)]
+        [RequireOwner]
+        public async Task AllItemColors()
+        {
+            domColor.DoAllItemColors();
+
+            await ReplyAsync("Done.");
+        }
+
         [Command("dg", true)] // Working!
         [RequireOwner]
         public async Task DownloadGods()

@@ -855,6 +855,63 @@ namespace ThothBotCore.Modules
             await ReplyAsync("", false, embed.Build());
         }
 
+        [Command("item")]
+        [Alias("i")]
+        public async Task ItemInfoCommand([Remainder]string itemname)
+        {
+            List<Item> item = await Database.GetSpecificItem(itemname);
+
+            if (item.Count != 0)
+            {
+                string secondaryDesc = item[0].SecondaryDescription;
+                var embed = new EmbedBuilder();
+
+                if (secondaryDesc != null || secondaryDesc == "")
+                {
+                    if (secondaryDesc.Contains("PASSIVE"))
+                    {
+                        secondaryDesc = secondaryDesc.Replace("PASSIVE", "**PASSIVE**");
+                    }
+                    if (secondaryDesc.Contains("<font color='#42F46E'>"))
+                    {
+                        secondaryDesc = secondaryDesc.Replace("<font color='#42F46E'>", "");
+                    }
+                    if (secondaryDesc.Contains("<font color='#F44242'>"))
+                    {
+                        secondaryDesc = secondaryDesc.Replace("<font color='#F44242'>", "");
+                    }
+                    else if (secondaryDesc.Contains("AURA"))
+                    {
+                        secondaryDesc = secondaryDesc.Replace("AURA", "**AURA**");
+                    }
+                    else if (secondaryDesc.Contains("ROLE QUEST"))
+                    {
+                        secondaryDesc = secondaryDesc.Replace("ROLE QUEST", "**ROLE QUEST**");
+                    }
+                }
+                embed.WithAuthor(x =>
+                {
+                    x.Name = item[0].DeviceName;
+                    x.IconUrl = item[0].itemIcon_URL;
+                });
+                embed.WithColor(new Color((uint)item[0].DomColor));
+                embed.WithThumbnailUrl(item[0].itemIcon_URL);
+                embed.WithTitle(item[0].ItemBenefits);
+                embed.WithDescription($"{item[0].ItemDescription}\n\n{secondaryDesc}");
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "Price";
+                    x.Value = $"<:coins:590942235474919464>{item[0].Price}";
+                });
+                await ReplyAsync("", false, embed.Build());
+            }
+            else
+            {
+                await ReplyAsync($"{item.Count} results found for `{itemname}`.");
+            }
+        }
+
         // test
         [Command("test")] // Get specific God information
         [RequireOwner]
@@ -1091,7 +1148,7 @@ namespace ThothBotCore.Modules
         [RequireOwner]
         public async Task GetGodsCommand(string type)
         {
-            var items = await Database.GetActiveItems(3);
+            var items = await Database.GetActiveTierItems(3);
 
             List<Item> magicalItems = new List<Item>();
             List<Item> physicalItems = new List<Item>();
@@ -1107,7 +1164,7 @@ namespace ThothBotCore.Modules
 
             StringBuilder sb = new StringBuilder();
 
-            if (type == "magical")
+            if (type == "m")
             {
                 
             }

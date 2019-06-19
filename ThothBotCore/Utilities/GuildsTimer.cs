@@ -90,7 +90,23 @@ namespace ThothBotCore.Utilities
                         $"**Error Message:** {ex.Message}");
                 }
 
-                
+                //Discord.Bots.GG
+                try
+                {
+                    using (var webclient = new HttpClient())
+                    using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
+                    {
+                        webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.dbggAPI);
+                        HttpResponseMessage response = await webclient.PostAsync("https://discord.bots.gg/api/v1/bots/454145330347376651/stats", content);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for Discord.Bots.GG.**\n" +
+                        $"**Error Message:** {ex.Message}");
+                }
+
+
                 Console.WriteLine($"{DateTime.Now.ToString("[HH:mm]")} Guilds count updated! New count: {joinedGuilds}");
             }
 
