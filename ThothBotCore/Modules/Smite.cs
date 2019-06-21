@@ -859,6 +859,10 @@ namespace ThothBotCore.Modules
         [Alias("i")]
         public async Task ItemInfoCommand([Remainder]string itemname)
         {
+            if (itemname.Contains("'"))
+            {
+                itemname = itemname.Replace("'", "''");
+            }
             List<Item> item = await Database.GetSpecificItem(itemname);
 
             if (item.Count != 0)
