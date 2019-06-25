@@ -38,3 +38,11 @@ Currently I don't recommend hosting your own instance. Instead you can use the o
 		src="https://discordbotlist.com/bots/454145330347376651/widget" 
 		alt="Thoth stats on Discord Bot List">
 </a>
+
+# Legal Disclaimer Surrounding GDPR
+
+By using this bot on your server, you should be made aware that the bot has access to see EVERY message you send in ANY channel that it has access to.  All discord bots have this capability, and I am constantly updating my logging techniques to better handle bugs that occur.  If you are uncomfortable with that, you have the option of not using this bot.
+
+**I do not distribute, sell, or use this information for anything other than debugging and reporting abuse to Discord.**
+
+Again, If you have any issues with this, don't use the bot, or contact me if you need clarification on what I'm logging.
