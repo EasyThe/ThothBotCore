@@ -385,6 +385,7 @@ namespace ThothBotCore.Storage.Models
             public string latestGod { get; set; }
             public object ret_msg { get; set; }
             public int DomColor { get; set; }
+            public string Emoji { get; set; }
         }
     }
 }

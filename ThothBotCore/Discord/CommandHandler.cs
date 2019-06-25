@@ -62,7 +62,6 @@ namespace ThothBotCore.Discord
             if (result.ErrorReason.Contains("few parameters"))
             {
                 await context.Channel.SendMessageAsync("Please check the command usage in **!!help**");
-                //await context.Channel.SendMessageAsync("Please check the command usage in **!!help**");
             }
             else if (result.ErrorReason.ToLower().Contains("user requires guild permission administrator"))
             {

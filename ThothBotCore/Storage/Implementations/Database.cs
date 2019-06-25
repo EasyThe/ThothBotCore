@@ -417,7 +417,16 @@ namespace ThothBotCore.Storage
                 return output.ToList();
             }
         }
-        
+
+        public static async Task<List<Gods.God>> GetGodEmoji(string godname)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Gods.God>($"SELECT Emoji FROM Gods WHERE Name LIKE '%{godname}%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public static async Task InsertItems(List<GetItems.Item> items)
         {
             string sql = $"INSERT INTO Items(ActiveFlag, ChildItemId, DeviceName, ItemBenefits, IconId, ItemDescription, SecondaryDescription, ItemId, " +
@@ -538,7 +547,7 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                cnn.Execute($"UPDATE Gods SET DomColor = {color} WHERE id = '{id}'");
+                cnn.ExecuteAsync($"UPDATE Gods SET DomColor = {color} WHERE id = '{id}'");
             }
         }
 
@@ -546,7 +555,15 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                cnn.Execute($"UPDATE Items SET DomColor = {color} WHERE ItemId = '{ItemId}'");
+                cnn.ExecuteAsync($"UPDATE Items SET DomColor = {color} WHERE ItemId = '{ItemId}'");
+            }
+        }
+
+        public static async Task InsertEmojiForGod(string godName, string emoji)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"UPDATE Gods SET Emoji = '{emoji}' WHERE Name LIKE '%{godName}%'");
             }
         }
 

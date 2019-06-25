@@ -125,6 +125,11 @@ namespace ThothBotCore.Utilities
             }
         }
 
+        public static string GetGodEmoji(string godname)
+        {
+            return Database.GetGodEmoji(godname).Result[0].Emoji;
+        }
+
         public static DateTime TimezoneSpecific(DateTime utctime, string timezone)
         {
             TimeZoneInfo destionationTimeZone = TimeZoneInfo.FromSerializedString(timezone);

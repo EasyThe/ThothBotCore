@@ -9,6 +9,7 @@ namespace ThothBotCore.Discord.Entities
         private const string configFile = "Config.json";
 
         public static BotConfig botConfig;
+        public static MiscConfig miscConfig;
 
         static Credentials()
         {

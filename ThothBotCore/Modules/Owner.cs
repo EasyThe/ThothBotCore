@@ -94,6 +94,13 @@ namespace ThothBotCore.Modules
             await ReplyAsync(itemsList.Count.ToString());
         }
 
+        [Command("ae")]
+        [RequireOwner]
+        public async Task AddEmojiToGodCommand(string emoji, [Remainder]string godname)
+        {
+            await Database.InsertEmojiForGod(godname, emoji);
+        }
+
         public class PlayerIDbyName
         {
             public int player_id { get; set; }

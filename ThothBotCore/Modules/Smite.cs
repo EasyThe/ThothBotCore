@@ -932,69 +932,77 @@ namespace ThothBotCore.Modules
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(author =>
                 {
-                    author.WithName(gods[63].Name);
-                    author.WithIconUrl(gods[63].godIcon_URL);
+                    author.WithName(gods[64].Name);
+                    author.WithIconUrl(gods[64].godIcon_URL);
                 });
-                embed.WithTitle(gods[63].Ability1);
-                embed.WithDescription(gods[63].abilityDescription1.itemDescription.description);
-                for (int z = 0; z < gods[63].abilityDescription1.itemDescription.menuitems.Count; z++)
+                embed.WithTitle(gods[64].Ability1);
+                embed.WithDescription(gods[64].abilityDescription1.itemDescription.description);
+                for (int z = 0; z < gods[64].abilityDescription1.itemDescription.menuitems.Count; z++)
                 {
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = (gods[63].abilityDescription1.itemDescription.menuitems[z].description);
-                        field.Value = (gods[63].abilityDescription1.itemDescription.menuitems[z].value);
+                        field.Name = (gods[64].abilityDescription1.itemDescription.menuitems[z].description);
+                        field.Value = (gods[64].abilityDescription1.itemDescription.menuitems[z].value);
                     });
                 }
-                for (int a = 0; a < gods[63].abilityDescription1.itemDescription.rankitems.Count; a++)
+                for (int a = 0; a < gods[64].abilityDescription1.itemDescription.rankitems.Count; a++)
                 {
                     //gods[0].abilityDescription1.itemDescription.rankitems.Count
 
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = (gods[63].abilityDescription1.itemDescription.rankitems[a].description);
-                        field.Value = (gods[63].abilityDescription1.itemDescription.rankitems[a].value);
+                        field.Name = (gods[64].abilityDescription1.itemDescription.rankitems[a].description);
+                        field.Value = (gods[64].abilityDescription1.itemDescription.rankitems[a].value);
                     });
                 }
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
                     field.Name = ($"Cooldown");
-                    field.Value = (gods[63].abilityDescription1.itemDescription.cooldown);
+                    field.Value = (gods[64].abilityDescription1.itemDescription.cooldown);
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
                     field.Name = ($"Cost");
-                    field.Value = (gods[63].abilityDescription1.itemDescription.cost);
+                    field.Value = (gods[64].abilityDescription1.itemDescription.cost);
                 });
 
                 // gods[0].abilityDescription1.itemDescription.cooldown
 
-                embed.WithThumbnailUrl(gods[63].godAbility1_URL);
-                if (gods[63].DomColor != 0)
+                embed.WithThumbnailUrl(gods[64].godAbility1_URL);
+                if (gods[64].DomColor != 0)
                 {
-                    embed.WithColor(new Color((uint)gods[63].DomColor));
+                    embed.WithColor(new Color((uint)gods[64].DomColor));
                 }
 
                 await ReplyAsync("", false, embed.Build());
             }
         }
 
-        [Command("matchdetails")]
+        [Command("kbrat")]
         [RequireOwner]
+        public async Task AnotherTestCommand()
+        {
+            await ReplyAsync(Database.GetGodEmoji("Thoth").Result.Count.ToString());
+        }
+
+        [Command("matchdetails")]
         public async Task MatchDetailsCommand(int id)
         {
+            var embed = new EmbedBuilder();
             await hirezAPI.GetMatchDetails(id);
 
             List<MatchDetails.MatchDetailsPlayer> matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(hirezAPI.matchDetails);
+            await Context.Channel.TriggerTypingAsync();
+            TimeSpan matchTime = TimeSpan.FromSeconds(matchDetails[0].Time_In_Match_Seconds);
 
-            var embed = new EmbedBuilder();
             embed.WithColor(new Color(85, 172, 238));
             embed.WithAuthor(author =>
             {
-                author.WithName(Text.GetQueueName(matchDetails[0].match_queue_id));
+                author.WithName($"{matchDetails[0].name} | {matchTime.Minutes} mins");
                 author.WithIconUrl(botIcon);
                 author.WithUrl($"https://smite.guru/match/{matchDetails[0].Match}");
             });
@@ -1003,62 +1011,62 @@ namespace ThothBotCore.Modules
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[0].playerPortalId)}{matchDetails[0].Reference_Name}, Lvl {matchDetails[0].Account_Level}";// left
-                field.Value = ":small_blue_diamond:" + matchDetails[0].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[0].Reference_Name)} {matchDetails[0].hz_player_name}";// left
+                field.Value = $"KDA: {matchDetails[0].Kills_Player}/{matchDetails[0].Deaths}/{matchDetails[0].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[5].playerPortalId)}{matchDetails[5].Reference_Name}, Lvl {matchDetails[5].Account_Level}";// loss
-                field.Value = ":small_blue_diamond:" + matchDetails[5].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[5].Reference_Name)} {matchDetails[5].hz_player_name}";// loss
+                field.Value = $"KDA: {matchDetails[5].Kills_Player}/{matchDetails[5].Deaths}/{matchDetails[5].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[1].playerPortalId)}{matchDetails[1].Reference_Name}, Lvl {matchDetails[1].Account_Level}";// left
-                field.Value = ":small_blue_diamond:" + matchDetails[1].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[1].Reference_Name)} {matchDetails[1].hz_player_name}";// left
+                field.Value = $"KDA: {matchDetails[1].Kills_Player}/{matchDetails[1].Deaths}/{matchDetails[1].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[6].playerPortalId)}{matchDetails[6].Reference_Name}, Lvl {matchDetails[6].Account_Level}";
-                field.Value = ":small_blue_diamond:" + matchDetails[6].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[6].Reference_Name)} {matchDetails[6].hz_player_name}";
+                field.Value = $"KDA: {matchDetails[6].Kills_Player}/{matchDetails[6].Deaths}/{matchDetails[6].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[2].playerPortalId)}{matchDetails[2].Reference_Name}, Lvl {matchDetails[2].Account_Level}";// left
-                field.Value = ":small_blue_diamond:" + matchDetails[2].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[2].Reference_Name)} {matchDetails[2].hz_player_name}";// left
+                field.Value = $"KDA: {matchDetails[2].Kills_Player}/{matchDetails[2].Deaths}/{matchDetails[2].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[7].playerPortalId)}{matchDetails[7].Reference_Name}, Lvl {matchDetails[7].Account_Level}";
-                field.Value = ":small_blue_diamond:" + matchDetails[7].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[7].Reference_Name)} {matchDetails[7].hz_player_name}";
+                field.Value = $"KDA: {matchDetails[7].Kills_Player}/{matchDetails[7].Deaths}/{matchDetails[7].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[3].playerPortalId)}{matchDetails[3].Reference_Name}, Lvl {matchDetails[3].Account_Level}";// left
-                field.Value = ":small_blue_diamond:" + matchDetails[3].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[3].Reference_Name)} {matchDetails[3].hz_player_name}";// left
+                field.Value = $"KDA: {matchDetails[3].Kills_Player}/{matchDetails[3].Deaths}/{matchDetails[3].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[8].playerPortalId)}{matchDetails[8].Reference_Name}, Lvl {matchDetails[8].Account_Level}";
-                field.Value = ":small_blue_diamond:" + matchDetails[8].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[8].Reference_Name)} {matchDetails[8].hz_player_name}";
+                field.Value = $"KDA: {matchDetails[8].Kills_Player}/{matchDetails[8].Deaths}/{matchDetails[8].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[4].playerPortalId)}{matchDetails[4].Reference_Name}, Lvl {matchDetails[4].Account_Level}";// left
-                field.Value = ":small_blue_diamond:" + matchDetails[4].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[4].Reference_Name)} {matchDetails[4].hz_player_name}";// left
+                field.Value = $"KDA: {matchDetails[4].Kills_Player}/{matchDetails[4].Deaths}/{matchDetails[4].Assists}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $"{Text.GetPortalIcon(matchDetails[9].playerPortalId)}{matchDetails[9].Reference_Name}, Lvl {matchDetails[9].Account_Level}";
-                field.Value = ":small_blue_diamond:" + matchDetails[9].hz_player_name;
+                field.Name = $"{Text.GetGodEmoji(matchDetails[9].Reference_Name)} {matchDetails[9].hz_player_name}";
+                field.Value = $"KDA: {matchDetails[9].Kills_Player}/{matchDetails[9].Deaths}/{matchDetails[9].Assists}";
             });
             embed.WithFooter(x =>
             {
