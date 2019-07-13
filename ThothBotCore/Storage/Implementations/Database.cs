@@ -322,7 +322,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task SetPlayerSpecials(int id, string Name, ulong? discordID = null, int? strValue = null, int? proValue = null, string specValue = "")
+        public static async Task SetPlayerSpecials(int id, string Name, ulong? discordID = null, int? strValue = null, string strLink = "", int? proValue = null)
         {
             try
             {// to fix
@@ -340,10 +340,10 @@ namespace ThothBotCore.Storage
                 {
                     using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
                     {
-                        await cnn.ExecuteAsync($"INSERT INTO playersSpecial(active_player_id, Name, streamer_bool) " +
-                            $"VALUES({id}, \"{Name}\", {strValue}) " +
+                        await cnn.ExecuteAsync($"INSERT INTO playersSpecial(active_player_id, Name, streamer_bool, streamer_link) " +
+                            $"VALUES({id}, \"{Name}\", {strValue}, \"{strLink}\") " +
                             $"ON CONFLICT(active_player_id) " +
-                            $"DO UPDATE SET streamer_bool = {strValue}");
+                            $"DO UPDATE SET streamer_bool = {strValue}, streamer_link = \"{strLink}\"");
                     }
                 }
                 if (proValue.HasValue)
@@ -354,16 +354,6 @@ namespace ThothBotCore.Storage
                             $"VALUES({id}, \"{Name}\", {proValue}) " +
                             $"ON CONFLICT(active_player_id) " +
                             $"DO UPDATE SET pro_bool = {proValue}");
-                    }
-                }
-                if (specValue != "" || specValue != null)
-                {
-                    using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-                    {
-                        await cnn.ExecuteAsync($"INSERT INTO playersSpecial(active_player_id, Name, special) " +
-                            $"VALUES({id}, \"{Name}\", \"{specValue}\") " +
-                            $"ON CONFLICT(active_player_id) " +
-                            $"DO UPDATE SET special = \"{specValue}\"");
                     }
                 }
             }
@@ -564,6 +554,14 @@ namespace ThothBotCore.Storage
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 await cnn.ExecuteAsync($"UPDATE Gods SET Emoji = '{emoji}' WHERE Name LIKE '%{godName}%'");
+            }
+        }
+
+        public static async Task InsertEmojiForItem(string itemName, string emoji)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"UPDATE Items SET Emoji = '{emoji}' WHERE DeviceName LIKE '%{itemName}%' AND ItemTier = 3");
             }
         }
 

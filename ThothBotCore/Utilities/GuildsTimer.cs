@@ -40,7 +40,7 @@ namespace ThothBotCore.Utilities
                 {
                     totalUsers = totalUsers + guild.Users.Count;
                 }
-
+                Console.WriteLine("Users: " + totalUsers);
                 //DiscordBots.org
                 try
                 {
@@ -103,6 +103,23 @@ namespace ThothBotCore.Utilities
                 catch (Exception ex)
                 {
                     await ErrorTracker.SendError("**Something happened when I tried to update guilds count for Discord.Bots.GG.**\n" +
+                        $"**Error Message:** {ex.Message}");
+                }
+
+                //BotsOnDiscord
+                try
+                {
+                    using (var webclient = new HttpClient())
+                    using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
+                    {
+                        webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.BotsOnDiscordAPI);
+                        HttpResponseMessage response = await webclient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/454145330347376651/guilds", content);
+                        Console.WriteLine(response.StatusCode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for BotsOnDiscord.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 

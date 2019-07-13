@@ -57,7 +57,7 @@ namespace ThothBotCore.Discord
             }
         }
 
-        private async Task ErrorHandler(IResult result, SocketCommandContext context)
+        public static async Task ErrorHandler(IResult result, SocketCommandContext context)
         {
             if (result.ErrorReason.Contains("few parameters"))
             {

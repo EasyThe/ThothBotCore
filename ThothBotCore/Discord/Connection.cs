@@ -48,6 +48,7 @@ namespace ThothBotCore.Discord
         {
             StatusTimer.StartServerStatusTimer();
             guildsTimer.StartGuildsCountTimer();
+            _client.DownloadUsersAsync(Client.Guilds);
 
             return Task.CompletedTask;
         }
@@ -64,11 +65,18 @@ namespace ThothBotCore.Discord
                     channel = chnl;
                 }
             }
-            await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +
+            try
+            {
+                await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
                 $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +
                 $":small_orange_diamond:You can check my commands by using `{Credentials.botConfig.prefix}help`\n" +
                 $":small_orange_diamond:Please make sure I have **Send Messages**, **Read Messages**, **Embed Links** and **Use External Emojis** in the channels you would like me to react to your commands.");
+            }
+            catch (System.Exception)
+            {
+                System.Console.WriteLine("Couldn't send JoinedMessage to the Guild.");
+            }
         }
     }
 }

@@ -908,6 +908,12 @@ namespace ThothBotCore.Modules
                     x.Name = "Price";
                     x.Value = $"<:coins:590942235474919464>{item[0].Price}";
                 });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "Tier";
+                    x.Value = $"{item[0].ItemTier}";
+                });
                 await ReplyAsync("", false, embed.Build());
             }
             else
@@ -1218,7 +1224,10 @@ namespace ThothBotCore.Modules
                     await File.WriteAllTextAsync("testmethod.json", json);
                     await ReplyAsync("Saved as testmethod.json");
                 }
-                Console.WriteLine(ex.Message);
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 

@@ -89,17 +89,26 @@ namespace ThothBotCore.Utilities
                 if (playerSpecial[0].pro_bool != 0)
                 {
                     sb.Append(":mouse_three_button: Pro Player");
+                    sb.Append("\n");
                 }
                 if (playerSpecial[0].streamer_bool != 0)
                 {
                     if (playerSpecial[0].streamer_link != null)
                     {
-                        sb.Append($"<:streamer:579125715874742280> Streamer - {playerSpecial[0].streamer_link}");
+                        if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("twitch"))
+                        {
+                            sb.Append($"<:Twitch:579125715874742280> Streamer - {playerSpecial[0].streamer_link}");
+                        }
+                        else if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("mixer"))
+                        {
+                            sb.Append($"<:Mixer:595036189224992771> Streamer - {playerSpecial[0].streamer_link}");
+                        }
+                        else
+                        {
+                            sb.Append("<:Twitch:579125715874742280> Streamer");
+                        }
                     }
-                    else
-                    {
-                        sb.Append("<:streamer:579125715874742280> Streamer");
-                    }
+                    sb.Append("\n");
                 }
                 if (playerSpecial[0].special.Contains("dev"))
                 {

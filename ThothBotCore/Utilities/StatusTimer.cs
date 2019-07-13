@@ -121,7 +121,7 @@ namespace ThothBotCore.Utilities
                                     }
                                     catch (Exception ex)
                                     {
-                                        await ErrorTracker.SendError(":warning:**Exception in StatusTimer:** \n" +
+                                        await ErrorTracker.SendError(":warning:**Exception in StatusTimer (DB SAVE):** \n" +
                                             $"**Message: **{ex.Message}\n" +
                                             $"**StackTrace: **`{ex.StackTrace}`");
                                         ServerStatusTimer.Enabled = false;
@@ -187,7 +187,7 @@ namespace ThothBotCore.Utilities
                                             expectedDtime += $"{expDwntime.Hours} hours";
                                         }
                                     }
-                                    if (expDwntime.Minutes != 0)
+                                    if (expDwntime.Minutes != 0 || expDwntime.Hours != 0)
                                     {
                                         expectedDtime += " and ";
                                         if (expDwntime.Minutes == 1)
@@ -203,14 +203,6 @@ namespace ThothBotCore.Utilities
                                     {
                                         expectedDtime = "n/a";
                                     }
-
-                                    // this? 
-                                    //for (int j = 0; j < ServerStatus.scheduled_maintenances[i].incident_updates.Count; j++)
-                                    //{
-                                    //    string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[j].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[j].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[j].status);
-                                    //
-                                    //    maintValue = maintValue + $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - {ServerStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{ServerStatus.scheduled_maintenances[i].incident_updates[j].body}\n";
-                                    //}
 
                                     string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status);
                                     maintValue = maintValue + $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - {ServerStatus.scheduled_maintenances[i].incident_updates[0].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{ServerStatus.scheduled_maintenances[i].incident_updates[0].body}\n";

@@ -3,7 +3,6 @@ using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -36,7 +35,10 @@ namespace ThothBotCore.Modules
                     await File.WriteAllTextAsync("paladinstestmethod.json", json);
                     await ReplyAsync("Saved as paladinstestmethod.json");
                 }
-                Console.WriteLine(ex.Message);
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 

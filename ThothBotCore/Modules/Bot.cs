@@ -10,7 +10,6 @@ using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
-using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Storage.Database;
 
@@ -71,7 +70,25 @@ namespace ThothBotCore.Modules
                 footer.Text = "If something isn't working properly, its probably because the bot is still in development.";
             });
 
-            await ReplyAsync("", false, embed.Build());
+            try
+            {
+                await ReplyAsync("", false, embed.Build());
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.ToLower().Contains("50013"))
+                {
+                    try
+                    {
+                        await ReplyAsync($"I need **Embed Links** permissions in this channel.");
+                    }
+                    catch (Exception)
+                    {
+                        IUser user = Connection.Client.GetUser(Context.Message.Author.Id);
+                        await user.SendMessageAsync($"I don't have **Send Messages** or **Embed Links** permissions in #{Context.Channel.Name}.");
+                    }
+                }
+            }
         }
 
         [Command("botinfo", true)]
@@ -377,37 +394,6 @@ namespace ThothBotCore.Modules
                     .WithIconUrl(botIcon);
             });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
-        }
-
-        [Command("updategods", true)]
-        [Alias("ug")]
-        [RequireOwner]
-        public async Task UpdateGodsColors()
-        {
-            domColor.DoAllGodColors();
-
-            await ReplyAsync("Done!:shrug:");
-        }
-
-        [Command("doallitemcolors", RunMode = RunMode.Async)]
-        [RequireOwner]
-        public async Task AllItemColors()
-        {
-            domColor.DoAllItemColors();
-
-            await ReplyAsync("Done.");
-        }
-
-        [Command("dg", true)] // Working!
-        [RequireOwner]
-        public async Task DownloadGods()
-        {
-            string json = await hirezAPI.GetGods();
-            List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(json);
-            await SaveGods(gods);
-            string newjson = JsonConvert.SerializeObject(gods, Formatting.Indented);
-            await UpdateGodsColors(); // not sure if this line works
-            await ReplyAsync("done");
         }
 
         [Command("testupdates")]
