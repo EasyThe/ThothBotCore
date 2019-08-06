@@ -43,7 +43,7 @@ namespace ThothBotCore.Modules
                 author.WithIconUrl(botIcon);
             });
             embed.WithColor(new Color(85, 172, 238));
-            embed.WithTitle($":new:You can now check item information with `{prefix}item itemname`");
+            //embed.WithTitle($":new:You can now check item information with `{prefix}item itemname`");
             embed.WithDescription("[Support server](http://discord.gg/hU6MTbQ)\n" + desc);
             embed.AddField(x =>
             {
@@ -52,9 +52,10 @@ namespace ThothBotCore.Modules
                 $":white_small_square:`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
                 $":white_small_square:`{prefix}statusupdates #channel` - Sends a message when SMITE incidents and scheduled maintenances appear in the status page to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
                 $":white_small_square:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
-                $":white_small_square:`{prefix}god baron` - Gives you information about `Baron Samedi`.\nAlias: `{prefix}g` `{prefix}gods`\n" +
+                $":white_small_square:`{prefix}gods` - Overall information about the gods in the game.\n" +
+                $":white_small_square:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g`\n" +
                 $":white_small_square:`{prefix}rgod` - Gives you a random God.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
-                $":white_small_square:`{prefix}item poly` - Gives you information about items in SMITE.\nAlias: `{prefix}i`";
+                $":white_small_square:`{prefix}item ItemName` - Gives you information about `ItemName`.\nAlias: `{prefix}i`";
                 x.IsInline = false;
             });
             embed.AddField(x =>

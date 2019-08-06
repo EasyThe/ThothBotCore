@@ -189,7 +189,8 @@ namespace ThothBotCore.Modules
                 int rPlayerMasteryLevel = playerStats[0].MasteryLevel;
                 int rTotalWorsh = playerStats[0].Total_Worshippers;
                 string rPlayerStatus = playerStats[0].Personal_Status_Message;
-                string rPlayerCreated = playerStats[0].Created_Datetime.ToString("dd.MM.yyyy");
+                //string rPlayerCreated = playerStats[0].Created_Datetime.ToString("dd.MM.yyyy"); // Broke when Created_Datetime was changed to string.
+                string rPlayerCreated = playerStats[0].Created_Datetime;
                 string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
                 double rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
                 string rAvatarURL = playerStats[0].Avatar_URL;
@@ -670,12 +671,76 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [Command("gods", true)]
+        [Alias("годс")]
+        public async Task GodsCommand()
+        {
+            List<Gods.God> gods = LoadAllGods();
+
+            if (gods.Count != 0)
+            {
+                StringBuilder onRotation = new StringBuilder();
+                var embed = new EmbedBuilder();
+                var latestGod = gods.Find(x => x.latestGod == "y");
+                var mages = gods.FindAll(x => x.Roles.Contains("Mage"));
+                var hunters = gods.FindAll(x => x.Roles.Contains("Hunter"));
+                var guardians = gods.FindAll(x => x.Roles.Contains("Guardian"));
+                var assassins = gods.FindAll(x => x.Roles.Contains("Assassin"));
+                var warriors = gods.FindAll(x => x.Roles.Contains("Warrior"));
+
+                foreach (var god in gods)
+                {
+                    if (god.OnFreeRotation == "true")
+                    {
+                        onRotation.Append(god.Emoji);
+                    }
+                }
+                embed.WithColor(new Color(85, 172, 238));
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"Gods: {gods.Count}";
+                    x.Value = $"<:Mage:607990144380698625> {mages.Count}\n" +
+                    $"<:Hunter:607990144271646740> {hunters.Count}\n" +
+                    $"<:Guardian:607990144385024000> {guardians.Count}\n" +
+                    $"<:Assassin:607990143915261983> {assassins.Count}\n" +
+                    $"<:Warrior:607990144338886658> {warriors.Count}";
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "On Free Rotation";
+                    x.Value = onRotation.ToString();
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = "Latest God";
+                    x.Value = $"{latestGod.Emoji} {latestGod.Name}\n:small_blue_diamond: {latestGod.Title}\n:small_blue_diamond: {latestGod.Type}";
+                });
+                embed.WithFooter(x =>
+                {
+                    x.Text = $"For God specific information use !!god GodName";
+                });
+
+                await ReplyAsync("", false, embed.Build());
+
+            }
+            else
+            {
+                await ReplyAsync("Something is not right... Please report this in my support server.");
+            }
+        }
+
         [Command("god")] // Get specific God information
-        [Alias("g", "gods")]
+        [Alias("g")]
         public async Task GodInfo([Remainder] string god)
         {
             string titleCaseGod = Text.ToTitleCase(god);
-
+            if (titleCaseGod.Contains("'"))
+            {
+                titleCaseGod = titleCaseGod.Replace("'", "''");
+            }
             List<Gods.God> gods = LoadGod(titleCaseGod);
 
             if (gods.Count == 0)

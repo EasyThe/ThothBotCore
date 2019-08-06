@@ -41,6 +41,14 @@ namespace ThothBotCore.Utilities
                     totalUsers = totalUsers + guild.Users.Count;
                 }
                 Console.WriteLine("Users: " + totalUsers);
+                if (Connection.Client.CurrentUser.Id == 587623068461957121)
+                {
+                    GuildCountTimer.Interval = 60000;
+                    GuildCountTimer.AutoReset = true;
+                    GuildCountTimer.Enabled = true;
+                    return;
+                }
+
                 //DiscordBots.org
                 try
                 {

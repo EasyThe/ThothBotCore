@@ -355,9 +355,16 @@ namespace ThothBotCore.Discord
             }
             else
             {
-                rPlayerName = checkedPlayerName;
+                if (playerStats[0].hz_player_name != "" || playerStats[0].hz_player_name != null)
+                {
+                    rPlayerName = playerStats[0].hz_player_name;
+                }
+                else
+                {
+                    rPlayerName = playerStats[0].hz_gamer_tag;
+                }
             }
-            string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
+            string rPlayerCreated = playerStats[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a";
             string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
             double rWinRate = 0;
             if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
@@ -376,7 +383,7 @@ namespace ThothBotCore.Discord
             embed.WithTitle(Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString()).Result);
             if (playerStatus[0].status == 0)
             {
-                embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
+                embed.WithDescription($":eyes: **Last Login:** {(playerStats[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}");
                 embed.WithColor(new Color(220, 147, 4));
                 defaultEmoji = ":small_orange_diamond:";
             }
@@ -640,7 +647,7 @@ namespace ThothBotCore.Discord
                 {
                     x.IsInline = false;
                     x.Name = playerStats[i].Name;
-                    x.Value = $"Level:{playerStats[i].Level}\n{playerStats[i].hz_player_name}\n{playerStats[i].hz_gamer_tag}\n{Text.PrettyDate(playerStats[i].Last_Login_Datetime)}";
+                    x.Value = $"Level:{playerStats[i].Level}\n{playerStats[i].hz_player_name}\n{playerStats[i].hz_gamer_tag}\n{(playerStats[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
                 });
             }
 

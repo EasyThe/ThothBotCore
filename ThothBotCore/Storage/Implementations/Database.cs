@@ -390,6 +390,15 @@ namespace ThothBotCore.Storage
             }
         }
 
+        public static List<Gods.God> LoadAllGods() // Get all gods
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<Gods.God>($"SELECT * FROM Gods", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public static List<Gods.God> GetRandomGod() // Get random god for rgod command
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
@@ -501,10 +510,11 @@ namespace ThothBotCore.Storage
 
         public static async Task SaveGods(List<Gods.God> gods)
         {
-            string sql = $"INSERT INTO Gods(id, Name, Pantheon, Pros, Roles, Title, Type, godIcon_URL) " +
-                    $"VALUES(@id, @Name, @Pantheon, @Pros, @Roles, @Title, @Type, @godIcon_URL) " +
+            string sql = $"INSERT INTO Gods(id, Name, Pantheon, Pros, Roles, Title, Type, godIcon_URL, OnFreeRotation, latestGod) " +
+                    $"VALUES(@id, @Name, @Pantheon, @Pros, @Roles, @Title, @Type, @godIcon_URL, @OnFreeRotation, @latestGod) " +
                     $"ON CONFLICT(id) " +
-                    $"DO UPDATE SET godIcon_URL = @godIcon_URL";
+                    $"DO UPDATE SET Pros = @Pros, Roles = @Roles, Title = @Title, Type = @Type, godIcon_URL = @godIcon_URL, " +
+                    $"OnFreeRotation = @OnFreeRotation, latestGod = @latestGod";
             try
             {
                 SQLiteConnection connection = new SQLiteConnection(LoadConnectionString());
@@ -521,6 +531,8 @@ namespace ThothBotCore.Storage
                     command.Parameters.AddWithValue("Title", gods[i].Title);
                     command.Parameters.AddWithValue("Type", gods[i].Type);
                     command.Parameters.AddWithValue("godIcon_URL", gods[i].godIcon_URL);
+                    command.Parameters.AddWithValue("OnFreeRotation", gods[i].OnFreeRotation);
+                    command.Parameters.AddWithValue("latestGod", gods[i].latestGod);
                     Console.WriteLine($"{i} {gods[i].Name}");
                     await command.ExecuteNonQueryAsync();
                     connection.Close();

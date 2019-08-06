@@ -25,9 +25,9 @@ namespace ThothBotCore.Utilities
 
             using (WebClient client = new WebClient())
             {
-                client.DownloadFile(new Uri(link), $@".\Storage\Gods\{splitLink[5]}");
+                client.DownloadFile(new Uri(link), $@"./Storage/Gods/{splitLink[5]}");
             }
-            string image = $@".\Storage\Gods\{splitLink[5]}";
+            string image = $@"./Storage/Gods/{splitLink[5]}";
             var colorThief = new ColorThief();
             img = new Bitmap(image);
 

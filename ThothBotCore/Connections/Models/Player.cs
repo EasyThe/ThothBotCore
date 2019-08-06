@@ -8,10 +8,10 @@ namespace ThothBotCore.Connections.Models
         {
             public int ActivePlayerId { get; set; }
             public string Avatar_URL { get; set; }
-            public DateTime Created_Datetime { get; set; }
+            public string Created_Datetime { get; set; }
             public int HoursPlayed { get; set; }
             public int Id { get; set; }
-            public DateTime Last_Login_Datetime { get; set; }
+            public string Last_Login_Datetime { get; set; }
             public int Leaves { get; set; }
             public int Level { get; set; }
             public int Losses { get; set; }
@@ -40,7 +40,7 @@ namespace ThothBotCore.Connections.Models
             public int Total_Achievements { get; set; }
             public int Total_Worshippers { get; set; }
             public int Wins { get; set; }
-            public object hz_gamer_tag { get; set; }
+            public string hz_gamer_tag { get; set; }
             public string hz_player_name { get; set; }
             public object ret_msg { get; set; }
         }

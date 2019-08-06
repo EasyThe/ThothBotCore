@@ -121,11 +121,18 @@ namespace ThothBotCore.Modules
             domColor.DoAllGodColors();
             await ReplyAsync($"{gods.Count} Gods were found and saved to the DB.");
 
-            List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hirezAPI.GetItems());
-            await Database.InsertItems(itemsList);
-            domColor.DoAllItemColors();
+            try
+            {
+                List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hirezAPI.GetItems());
+                await Database.InsertItems(itemsList);
+                domColor.DoAllItemColors();
 
-            await ReplyAsync($"{itemsList.Count} items were found and saved to the DB.");
+                await ReplyAsync($"{itemsList.Count} Items were found and saved to the DB.");
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync(ex.Message);
+            }
         }
 
         [Command("ae")]
@@ -146,7 +153,7 @@ namespace ThothBotCore.Modules
             await Database.InsertEmojiForItem(itemName, emoji);
         }
 
-        [Command("lg")]
+        [Command("lg")] // Leave Guild
         [RequireOwner]
         public async Task LeaveGuild(ulong id)
         {
