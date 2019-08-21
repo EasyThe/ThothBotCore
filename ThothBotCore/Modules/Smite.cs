@@ -92,7 +92,6 @@ namespace ThothBotCore.Modules
                                     allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
                                 }
                                 catch (Exception)
-
                                 {
                                 }
                             }
@@ -135,7 +134,8 @@ namespace ThothBotCore.Modules
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}");
+                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n" +
+                            $"{DateTime.Now}");
                         await ReplyAsync("Oops.. I've encountered an error. :sob:");
                     }
                 }
@@ -779,13 +779,13 @@ namespace ThothBotCore.Modules
                     field.Name = "Role";
                     field.Value = gods[0].Roles;
                 });
-                if (gods[0].Pros != null)
+                if (gods[0].Pros != null || gods[0].Pros != " " || gods[0].Pros != "")
                 {
                     embed.AddField(field =>
                     {
                         field.IsInline = false;
                         field.Name = "Pros";
-                        field.Value = gods[0].Pros;
+                        field.Value = gods[0].Pros + "\u200b";
                     });
                 }
                 embed.WithFooter(x =>
@@ -802,39 +802,78 @@ namespace ThothBotCore.Modules
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod()
         {
-            List<Gods.God> gods = Database.GetRandomGod();
+            List<Gods.God> gods = Database.LoadAllGodsWithLessInfo();
 
-            int r = rnd.Next(gods.Count);
+            int rr = rnd.Next(gods.Count);
+            string godType = "";
+            StringBuilder sb = new StringBuilder();
+
+            // Random Build START
+
+            if (gods[rr].Roles.Contains("Mage") || gods[rr].Roles.Contains("Guardian"))
+            {
+                godType = "magical";
+            }
+            else
+            {
+                godType = "physical";
+            }
+
+            // Random Relics
+            var active = await Database.GetActiveActives();
+            for (int a = 0; a < 2; a++)
+            {
+                int ar = rnd.Next(active.Count);
+                sb.Append(active[ar].Emoji);
+                active.RemoveAt(ar);
+            }
+
+            // Boots or Shoes depending on the god type
+            var boots = await Database.GetBootsOrShoes(godType);
+            int boot = rnd.Next(boots.Count);
+            sb.Append(boots[boot].Emoji);
+
+            var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles);
+
+            // Finishing the build with 5 items
+            for (int i = 0; i < 5; i++)
+            {
+                int r = rnd.Next(items.Count);
+                sb.Append(items[r].Emoji);
+                items.RemoveAt(r);
+            }
+
+            // Random Build END
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
             {
-                author.WithName(gods[r].Name);
-                author.WithIconUrl(gods[r].godIcon_URL);
+                author.WithName(gods[rr].Name);
+                author.WithIconUrl(gods[rr].godIcon_URL);
             });
-            embed.WithTitle(gods[r].Title);
-            embed.WithThumbnailUrl(gods[r].godIcon_URL);
+            embed.WithTitle(gods[rr].Title);
+            embed.WithThumbnailUrl(gods[rr].godIcon_URL);
             if (gods[0].DomColor != 0)
             {
-                embed.WithColor(new Color((uint)gods[r].DomColor));
+                embed.WithColor(new Color((uint)gods[rr].DomColor));
             }
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "Pantheon";
-                field.Value = gods[r].Pantheon;
+                field.Name = "Role";
+                field.Value = gods[rr].Roles;
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = "Type";
-                field.Value = gods[r].Type;
+                field.Value = gods[rr].Type;
             });
-            embed.AddField(field =>
+            embed.AddField(x =>
             {
-                field.IsInline = true;
-                field.Name = "Role";
-                field.Value = gods[r].Roles;
+                x.IsInline = false;
+                x.Name = ":new: Random Build";
+                x.Value = sb.ToString();
             });
 
             await ReplyAsync($"{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
@@ -1229,41 +1268,66 @@ namespace ThothBotCore.Modules
 
         [Command("zz")]
         [RequireOwner]
-        public async Task GetGodsCommand(string type)
+        public async Task GetGodsCommand()
         {
-            var items = await Database.GetActiveTierItems(3);
+            var gods = Database.LoadAllGodsWithLessInfo();
+            int rr = rnd.Next(gods.Count); // get random god
+            string godType = "";
 
-            List<Item> magicalItems = new List<Item>();
-            List<Item> physicalItems = new List<Item>();
-            List<Item> relics = new List<Item>();
+            StringBuilder sb = new StringBuilder(); // Final Build
 
-            foreach (var item in items)
+            if (gods[rr].Roles.Contains("Mage") || gods[rr].Roles.Contains("Guardian"))
             {
-                if (true)
-                {
-
-                }
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            if (type == "m")
-            {
-                
+                godType = "magical";
             }
             else
             {
-
+                godType = "physical";
             }
 
-            for (int i = 0; i < 6; i++)
+            //God
+            sb.Append(gods[rr].Emoji + " ");
+
+            // Random Relics
+            var active = await Database.GetActiveActives();
+            for (int a = 0; a < 2; a++)
+            {
+                int ar = rnd.Next(active.Count);
+                sb.Append(active[ar].Emoji);
+                active.RemoveAt(ar);
+            }
+
+            // Boots or Shoes depending on the god type
+            var boots = await Database.GetBootsOrShoes(godType);
+            int boot = rnd.Next(boots.Count);
+            sb.Append(boots[boot].Emoji);
+
+            var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles);
+
+            // Finishing the build with 5 items
+            for (int i = 0; i < 5; i++)
             {
                 int r = rnd.Next(items.Count);
-                sb.Append(items[r].DeviceName);
-                sb.Append("\n");
+                sb.Append(items[r].Emoji);
+                items.RemoveAt(r);
             }
 
             await ReplyAsync(sb.ToString());
+        }
+
+        [Command("testdbstuff")]
+        [RequireOwner]
+        public async Task LiterallyTestDbThings(string args)
+        {
+            var thing = await Database.GetBootsOrShoes(args);
+
+            StringBuilder result = new StringBuilder();
+            foreach (var item in thing)
+            {
+                result.Append(item.Emoji);
+            }
+
+            await ReplyAsync(result.ToString());
         }
 
         [Command("nz")] // keep it simple pls

@@ -343,15 +343,21 @@ namespace ThothBotCore.Discord
             List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(playerstatusjson);
 
             string defaultEmoji = ""; //:small_blue_diamond: <:gems:443919192748589087>
-            string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
 
             string rPlayerName = "";
 
-            if (checkedPlayerName.Contains("]"))
+            if (playerStats[0].Name.Contains("]"))
             {
-                string[] splitName = checkedPlayerName.Split(']');
+                string[] splitName = playerStats[0].Name.Split(']');
                 rPlayerName = splitName[1];
-                rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                if (playerStats[0].hz_player_name != "" || playerStats[0].hz_player_name != null)
+                {
+                    rPlayerName = playerStats[0].hz_player_name + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                }
+                else
+                {
+                    rPlayerName = playerStats[0].hz_gamer_tag + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                }
             }
             else
             {

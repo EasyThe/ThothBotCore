@@ -399,11 +399,11 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static List<Gods.God> GetRandomGod() // Get random god for rgod command
+        public static List<Gods.God> LoadAllGodsWithLessInfo() // Get random god for rgod command
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                var output = cnn.Query<Gods.God>($"SELECT Name, godIcon_URL, Pantheon, Roles, Title, Type, DomColor FROM Gods", new DynamicParameters());
+                var output = cnn.Query<Gods.God>($"SELECT Name, godIcon_URL, Pantheon, Roles, Title, Type, DomColor, Emoji FROM Gods", new DynamicParameters());
                 return output.ToList();
             }
         }
@@ -485,7 +485,35 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE ItemTier = {tier} AND ActiveFlag LIKE '%y%'", new DynamicParameters());
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE ItemTier = {tier} AND ActiveFlag LIKE '%y%' AND Type LIKE '%Item%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<Item>> GetActiveItemsByGodType(string type, string role)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items " +
+                    $"WHERE ItemTier = 3 " +
+                    $"AND ActiveFlag LIKE '%y%' " +
+                    $"AND Type LIKE '%Item%' " +
+                    $"AND GodType LIKE '%{type}%' " +
+                    $"AND GodType NOT LIKE '%boots%'" +
+                    $"AND RestrictedRoles NOT LIKE '%{role}%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<Item>> GetActiveActives()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items " +
+                    $"WHERE ItemTier = 2 " +
+                    $"AND ActiveFlag LIKE '%y%' " +
+                    $"AND Type LIKE '%Active%' " +
+                    $"AND DeviceName NOT LIKE '%Relic%'", new DynamicParameters());
                 return output.ToList();
             }
         }
@@ -504,6 +532,15 @@ namespace ThothBotCore.Storage
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE DeviceName LIKE '%{itemname}%' AND ActiveFlag LIKE '%y%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<Item>> GetBootsOrShoes(string className)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE GodType LIKE '%{className}, boots%' AND ActiveFlag LIKE '%y%'", new DynamicParameters());
                 return output.ToList();
             }
         }

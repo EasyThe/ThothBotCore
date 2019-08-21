@@ -54,7 +54,7 @@ namespace ThothBotCore.Modules
                 $":white_small_square:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
                 $":white_small_square:`{prefix}gods` - Overall information about the gods in the game.\n" +
                 $":white_small_square:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g`\n" +
-                $":white_small_square:`{prefix}rgod` - Gives you a random God.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
+                $":white_small_square:`{prefix}rgod` - Gives you a random God and randomised build.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
                 $":white_small_square:`{prefix}item ItemName` - Gives you information about `ItemName`.\nAlias: `{prefix}i`";
                 x.IsInline = false;
             });

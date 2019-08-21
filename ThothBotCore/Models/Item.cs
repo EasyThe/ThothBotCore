@@ -21,5 +21,7 @@ namespace ThothBotCore.Models
         public string itemIcon_URL { get; set; }
         public int DomColor { get; set; }
         public object ret_msg { get; set; }
+        public string Emoji { get; set; }
+        public string GodType { get; set; }
     }
 }
