@@ -44,172 +44,188 @@ namespace ThothBotCore.Modules
 
         [Command("pst")]
         [Alias("pstat", "pst", "pstata", "пст", "пстатс", "pns")]
-        public async Task PaladinsStats(string username)
+        public async Task PaladinsStats([Remainder]string username)
         {
-            await Context.Channel.TriggerTypingAsync();
-            List<PaladinsPlayer.Player> playerStats = JsonConvert.DeserializeObject<List<PaladinsPlayer.Player>>(await hirezAPI.GetPlayerPaladins(username)); // GetPlayer
-            if (playerStats.Count != 0)
+            try
             {
-                List<PaladinsGodRanks> godRanks = JsonConvert.DeserializeObject<List<PaladinsGodRanks>>(await hirezAPI.GetGodRanksPaladins(playerStats[0].ActivePlayerId)); //GodRanks
-                // SMITE API ONLY PlayerAchievements playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
-                List<PaladinsPlayer.PaladinsPlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PaladinsPlayer.PaladinsPlayerStatus>>(await hirezAPI.GetPlayerStatusPaladins(playerStats[0].ActivePlayerId));
+                var search = await hirezAPI.SearchPlayersPaladins(username);
 
-                string defaultEmoji = ""; //:small_blue_diamond: <:gems:443919192748589087>
-                string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
+                if (search.Count != 0 && search[0].Name.ToLowerInvariant() == username.ToLowerInvariant())
+                {
+                    await Context.Channel.TriggerTypingAsync();
+                    List<PaladinsPlayer.Player> playerStats = JsonConvert.DeserializeObject<List<PaladinsPlayer.Player>>(await hirezAPI.GetPlayerPaladins(search[0].player_id.ToString())); // GetPlayer
 
-                string rPlayerName = "";
+                    List<PaladinsGodRanks> godRanks = JsonConvert.DeserializeObject<List<PaladinsGodRanks>>(await hirezAPI.GetGodRanksPaladins(playerStats[0].ActivePlayerId)); //GodRanks
+                                                                                                                                                                                // SMITE API ONLY PlayerAchievements playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
+                    List<PaladinsPlayer.PaladinsPlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PaladinsPlayer.PaladinsPlayerStatus>>(await hirezAPI.GetPlayerStatusPaladins(playerStats[0].ActivePlayerId));
 
-                if (checkedPlayerName.Contains("]"))
-                {
-                    string[] splitName = checkedPlayerName.Split(']');
-                    rPlayerName = splitName[1];
-                    rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
-                }
-                else
-                {
-                    rPlayerName = checkedPlayerName;
-                }
-                string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
-                string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
-                double rWinRate = 0;
-                if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
-                {
-                    rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
-                }
+                    string defaultEmoji = ""; //:small_blue_diamond: <:gems:443919192748589087>
+                    string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
 
-                var embed = new EmbedBuilder();
-                embed.WithThumbnailUrl(botIcon);
-                embed.WithAuthor(author =>
-                {
-                    author
-                        .WithName($"{rPlayerName}")
-                        .WithUrl($"https://paladins.guru/profile/{playerStats[0].ActivePlayerId}")
-                        .WithIconUrl(botIcon);
-                });
-                //embed.WithTitle(Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString()).Result);
-                if (playerStatus[0].status == 0)
-                {
-                    embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
-                    embed.WithColor(new Color(220, 147, 4));
-                    defaultEmoji = ":small_orange_diamond:";
-                }
-                else
-                {
-                    defaultEmoji = ":small_blue_diamond:"; // :small_blue_diamond: <:blank:570291209906552848>
-                    embed.WithColor(new Color(85, 172, 238));
-                    if (playerStatus[0].Match != 0)
+                    string rPlayerName = "";
+
+                    if (checkedPlayerName.Contains("]"))
                     {
-                        //await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
-                        List<PaladinsMatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PaladinsMatchPlayerDetails.PlayerMatchDetails>>(await hirezAPI.GetMatchPlayerDetailsPaladins(playerStatus[0].Match));
-                        for (int s = 0; s < matchPlayerDetails.Count; s++)
-                        {
-                            if (matchPlayerDetails[s].playerId == playerStats[0].ActivePlayerId)
-                            {
-                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueNamePaladins(matchPlayerDetails[0].Queue)}**, playing as {matchPlayerDetails[s].ChampionName}");
-                            }
-                        }
+                        string[] splitName = checkedPlayerName.Split(']');
+                        rPlayerName = splitName[1];
+                        rPlayerName = rPlayerName + $", {splitName[0]}]{playerStats[0].Team_Name}";
                     }
                     else
                     {
-                        embed.WithDescription($":eyes: {playerStatus[0].status_string}");
+                        rPlayerName = checkedPlayerName;
                     }
-                }
-                // invisible character \u200b
-                string region = "";
-                switch (playerStats[0].Region)
-                {
-                    case "Europe": region = $":flag_eu:{playerStats[0].Region}"; break;
-                    case "North America": region = $":flag_us:{playerStats[0].Region}"; break;
-                    case "Brazil": region = $":flag_br:{playerStats[0].Region}"; break;
-                    case "Australia": region = $":flag_au:{playerStats[0].Region}"; break;
-                    case "": region = $"{defaultEmoji}n/a"; break;
-                    default: region = $"{defaultEmoji}{playerStats[0].Region}"; break;
-                } // Region
-                embed.AddField(field =>
-                {
-                    field.IsInline = true;
-                    field.Name = ($"<:Paladins:588196531019186193>**Account**");
-                    field.Value = ($"{defaultEmoji}Level: {playerStats[0].Level}\n" +
-                    $"{defaultEmoji}Mastery Level: {playerStats[0].MasteryLevel}\n" +
-                    $"{defaultEmoji}Platform: {playerStats[0].Platform}\n" +
-                    $"{region}");
-                });
-                int matches = playerStats[0].Wins + playerStats[0].Losses;
-                embed.AddField(field =>
-                {
-                    field.IsInline = true;
-                    field.Name = $"<:Paladins:588196531019186193>**Win Ratio** [{Math.Round(rWinRate, 2)}%]";
-                    field.Value = $"{defaultEmoji}Matches: {matches}\n" +
-                    $":trophy:Wins: {playerStats[0].Wins}\n" +
-                    $":flag_white:Losses: {playerStats[0].Losses}\n" +
-                    $":runner:Leaves: {playerStats[0].Leaves}";
-                });
-                // Ranked
-                embed.AddField(field =>
-                {
-                    field.IsInline = true;
-                    field.Name = $"<:Paladins:588196531019186193>**{Text.GetRankedConquest(playerStats[0].Tier_RankedKBM).Item1}**";
-                    field.Value = $"{defaultEmoji}Rank: {playerStats[0].RankedKBM.Rank}\n" +
-                    $"{defaultEmoji}Wins: {playerStats[0].RankedKBM.Wins}\n" +
-                    $"{defaultEmoji}Losses: {playerStats[0].RankedKBM.Losses}";
-                });
-                if (godRanks.Count != 0)
-                {
-                    switch (godRanks.Count)
+                    string rPlayerCreated = Text.InvariantDate(playerStats[0].Created_Datetime);
+                    string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
+                    double rWinRate = 0;
+                    if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
                     {
-                        case 1:
-                            embed.AddField(field =>
-                            {
-                                field.IsInline = true;
-                                field.Name = "<:Paladins:588196531019186193>**Top Champions**";
-                                field.Value = $":first_place:{godRanks[0].champion}";
-                            });
-                            break;
-                        case 2:
-                            embed.AddField(field =>
-                            {
-                                field.IsInline = true;
-                                field.Name = "<:Paladins:588196531019186193>**Top Champions**";
-                                field.Value = $":first_place:{godRanks[0].champion}\n" +
-                                $":second_place:{godRanks[1].champion}\n";
-                            });
-                            break;
-                        default:
-                            embed.AddField(field =>
-                            {
-                                field.IsInline = true;
-                                field.Name = "<:Paladins:588196531019186193>**Top Champions**";
-                                field.Value = $":first_place:{godRanks[0].champion}\n" +
-                                $":second_place:{godRanks[1].champion}\n" +
-                                $":third_place:{godRanks[2].champion}";
-                            });
-                            break;
+                        rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
                     }
-                } // Top Champions
-                embed.AddField(field =>
-                {
-                    field.IsInline = true;
-                    field.Name = $":video_game:**Playing since**";
-                    field.Value = $"{defaultEmoji}{rPlayerCreated}";
-                });
-                embed.AddField(field =>
-                {
-                    field.IsInline = true;
-                    field.Name = $":hourglass:**Playtime**";
-                    field.Value = $"{defaultEmoji}{rHoursPlayed}";
-                });
-                embed.WithFooter(footer =>
-                {
-                    footer
-                        .WithText(playerStats[0].Personal_Status_Message)
-                        .WithIconUrl(botIcon);
-                });
 
-                await ReplyAsync("", false, embed.Build());
+                    var embed = new EmbedBuilder();
+                    embed.WithThumbnailUrl(botIcon);
+                    embed.WithAuthor(author =>
+                    {
+                        author
+                            .WithName($"{rPlayerName}")
+                            .WithUrl($"https://paladins.guru/profile/{playerStats[0].ActivePlayerId}")
+                            .WithIconUrl(botIcon);
+                    });
+                    //embed.WithTitle(Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString()).Result);
+                    if (playerStatus[0].status == 0)
+                    {
+                        embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
+                        embed.WithColor(new Color(220, 147, 4));
+                        defaultEmoji = ":small_orange_diamond:";
+                    }
+                    else
+                    {
+                        defaultEmoji = ":small_blue_diamond:"; // :small_blue_diamond: <:blank:570291209906552848>
+                        embed.WithColor(Constants.DefaultBlueColor);
+                        if (playerStatus[0].Match != 0)
+                        {
+                            //await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
+                            List<PaladinsMatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PaladinsMatchPlayerDetails.PlayerMatchDetails>>(await hirezAPI.GetMatchPlayerDetailsPaladins(playerStatus[0].Match));
+                            for (int s = 0; s < matchPlayerDetails.Count; s++)
+                            {
+                                if (matchPlayerDetails[s].playerId == playerStats[0].ActivePlayerId)
+                                {
+                                    embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueNamePaladins(matchPlayerDetails[0].Queue)}**, playing as {matchPlayerDetails[s].ChampionName}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            embed.WithDescription($":eyes: {playerStatus[0].status_string}");
+                        }
+                    }
+                    // invisible character \u200b
+                    string region = "";
+                    switch (playerStats[0].Region)
+                    {
+                        case "Europe": region = $":flag_eu:{playerStats[0].Region}"; break;
+                        case "North America": region = $":flag_us:{playerStats[0].Region}"; break;
+                        case "Brazil": region = $":flag_br:{playerStats[0].Region}"; break;
+                        case "Australia": region = $":flag_au:{playerStats[0].Region}"; break;
+                        case "": region = $"{defaultEmoji}n/a"; break;
+                        default: region = $"{defaultEmoji}{playerStats[0].Region}"; break;
+                    } // Region
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = ($"<:Paladins:588196531019186193>**Account**");
+                        field.Value = ($"{defaultEmoji}Level: {playerStats[0].Level}\n" +
+                        $"{defaultEmoji}Mastery Level: {playerStats[0].MasteryLevel}\n" +
+                        $"{defaultEmoji}Platform: {playerStats[0].Platform}\n" +
+                        $"{region}");
+                    });
+                    int matches = playerStats[0].Wins + playerStats[0].Losses;
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = $"<:Paladins:588196531019186193>**Win Ratio** [{Math.Round(rWinRate, 2)}%]";
+                        field.Value = $"{defaultEmoji}Matches: {matches}\n" +
+                        $":trophy:Wins: {playerStats[0].Wins}\n" +
+                        $":flag_white:Losses: {playerStats[0].Losses}\n" +
+                        $":runner:Leaves: {playerStats[0].Leaves}";
+                    });
+                    // Ranked
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = $"<:Paladins:588196531019186193>**{Text.GetRankedConquest(playerStats[0].Tier_RankedKBM).Item1}**";
+                        field.Value = $"{defaultEmoji}Rank: {playerStats[0].RankedKBM.Rank}\n" +
+                        $"{defaultEmoji}Wins: {playerStats[0].RankedKBM.Wins}\n" +
+                        $"{defaultEmoji}Losses: {playerStats[0].RankedKBM.Losses}";
+                    });
+                    if (godRanks.Count != 0)
+                    {
+                        switch (godRanks.Count)
+                        {
+                            case 1:
+                                embed.AddField(field =>
+                                {
+                                    field.IsInline = true;
+                                    field.Name = "<:Paladins:588196531019186193>**Top Champions**";
+                                    field.Value = $":first_place:{godRanks[0].champion}";
+                                });
+                                break;
+                            case 2:
+                                embed.AddField(field =>
+                                {
+                                    field.IsInline = true;
+                                    field.Name = "<:Paladins:588196531019186193>**Top Champions**";
+                                    field.Value = $":first_place:{godRanks[0].champion}\n" +
+                                    $":second_place:{godRanks[1].champion}\n";
+                                });
+                                break;
+                            default:
+                                embed.AddField(field =>
+                                {
+                                    field.IsInline = true;
+                                    field.Name = "<:Paladins:588196531019186193>**Top Champions**";
+                                    field.Value = $":first_place:{godRanks[0].champion}\n" +
+                                    $":second_place:{godRanks[1].champion}\n" +
+                                    $":third_place:{godRanks[2].champion}";
+                                });
+                                break;
+                        }
+                    } // Top Champions
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = $":video_game:**Playing since**";
+                        field.Value = $"{defaultEmoji}{rPlayerCreated}";
+                    });
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = $":hourglass:**Playtime**";
+                        field.Value = $"{defaultEmoji}{rHoursPlayed}";
+                    });
+                    embed.WithFooter(footer =>
+                    {
+                        footer
+                            .WithText(playerStats[0].Personal_Status_Message)
+                            .WithIconUrl(botIcon);
+                    });
+
+                    await ReplyAsync("", false, embed.Build());
+                }
+                else
+                {
+                    await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
+                await ReplyAsync($"Oops.. Either this player was not found or an unexpected error has occured.");
+                await ErrorTracker.SendError($"**__Paladins__Stats Command**\n" +
+                    $"**Message: **{Context.Message.Content}\n" +
+                    $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
+                    $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
+                    $"**Error: **{ex.Message}\n" +
+                    $"**InnerException: ** {ex.InnerException}");
             }
         }
     }

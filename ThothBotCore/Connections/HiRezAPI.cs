@@ -388,6 +388,24 @@ namespace ThothBotCore.Connections
             }
         }
 
+        public async Task<List<SearchPlayers>> SearchPlayersPaladins(string username)
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}searchplayersjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    string json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<SearchPlayers>>(json);
+                }
+            }
+        }
+
         public async Task<string> GetPlayerPaladins(string username)
         {
             await CheckSession();

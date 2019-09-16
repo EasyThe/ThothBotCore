@@ -499,7 +499,7 @@ namespace ThothBotCore.Storage
                     $"AND ActiveFlag LIKE '%y%' " +
                     $"AND Type LIKE '%Item%' " +
                     $"AND GodType LIKE '%{type}%' " +
-                    $"AND GodType NOT LIKE '%boots%'" +
+                    $"AND GodType NOT LIKE '%boots%' " +
                     $"AND RestrictedRoles NOT LIKE '%{role}%'", new DynamicParameters());
                 return output.ToList();
             }
@@ -531,7 +531,7 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE DeviceName LIKE '%{itemname}%' AND ActiveFlag LIKE '%y%'", new DynamicParameters());
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE DeviceName LIKE '%{itemname}%' AND ActiveFlag LIKE '%y%' AND ItemTier NOT LIKE '%4%'", new DynamicParameters());
                 return output.ToList();
             }
         }

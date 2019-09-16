@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
+using ThothBotCore.Tournament;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Discord
@@ -29,7 +30,9 @@ namespace ThothBotCore.Discord
             await _client.StartAsync();
             Client = _client;
             CommandHandler _handler = new CommandHandler();
+            SignupReader _signupReader = new SignupReader();
             await _handler.InitializeAsync(_client);
+            await _signupReader.InitializeSignupReaderAsync(_client);
 
             _client.Ready += ClientReadyTask;
             _client.JoinedGuild += JoinedNewGuildActions;
@@ -67,15 +70,11 @@ namespace ThothBotCore.Discord
             }
             try
             {
-                await channel.SendMessageAsync(":wave:**Hi. Thanks for adding me!**\n" +
-                $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
-                $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +
-                $":small_orange_diamond:You can check my commands by using `{Credentials.botConfig.prefix}help`\n" +
-                $":small_orange_diamond:Please make sure I have **Send Messages**, **Read Messages**, **Embed Links** and **Use External Emojis** in the channels you would like me to react to your commands.");
+                await channel.SendMessageAsync(Constants.JoinedMessage);
             }
             catch (System.Exception)
             {
-                System.Console.WriteLine("Couldn't send JoinedMessage to the Guild.");
+                System.Console.WriteLine(Constants.FailedToSendJoinedMessage);
             }
         }
     }

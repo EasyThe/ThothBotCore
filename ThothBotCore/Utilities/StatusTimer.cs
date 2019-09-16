@@ -42,6 +42,11 @@ namespace ThothBotCore.Utilities
             {
                 if (Discord.Connection.Client.LoginState.ToString() == "LoggedIn")
                 {
+                    if (!Directory.Exists("Status"))
+                    {
+                        Directory.CreateDirectory("Status");
+                    }
+
                     await StatusPage.GetStatusSummary();
                     ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
                     //ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(File.ReadAllText("test.json")); // Debugging
@@ -71,21 +76,21 @@ namespace ThothBotCore.Utilities
 
                                     for (int z = 0; z < ServerStatus.incidents[i].components.Count; z++) // cycle for platform icons
                                     {
-                                        if (ServerStatus.incidents[i].components[z].name.Contains("Switch"))
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("Smite Switch"))
                                         {
-                                            incidentPlatIcons += "<:switchicon:537752006719176714> ";
+                                            incidentPlatIcons += "<:SW:537752006719176714> ";
                                         }
-                                        if (ServerStatus.incidents[i].components[z].name.Contains("Xbox"))
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("Smite Xbox"))
                                         {
-                                            incidentPlatIcons += "<:xboxicon:537749895029850112> ";
+                                            incidentPlatIcons += "<:XB:537749895029850112> ";
                                         }
-                                        if (ServerStatus.incidents[i].components[z].name.Contains("PS4"))
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("Smite PS4"))
                                         {
-                                            incidentPlatIcons += "<:playstationicon:537745670518472714> ";
+                                            incidentPlatIcons += "<:PS4:537745670518472714> ";
                                         }
-                                        if (ServerStatus.incidents[i].components[z].name.Contains("PC"))
+                                        if (ServerStatus.incidents[i].components[z].name.Contains("Smite PC"))
                                         {
-                                            incidentPlatIcons += "<:pcicon:537746891610259467> ";
+                                            incidentPlatIcons += "<:PC:537746891610259467> ";
                                         }
                                     }
 
@@ -156,21 +161,21 @@ namespace ThothBotCore.Utilities
 
                                     for (int k = 0; k < ServerStatus.scheduled_maintenances[i].components.Count; k++)
                                     {
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Switch"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Switch"))
                                         {
-                                            platIcon += "<:switchicon:537752006719176714> ";
+                                            platIcon += "<:SW:537752006719176714> ";
                                         }
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Xbox"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Xbox"))
                                         {
-                                            platIcon += "<:xboxicon:537749895029850112> ";
+                                            platIcon += "<:XB:537749895029850112> ";
                                         }
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("PS4"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PS4"))
                                         {
-                                            platIcon += "<:playstationicon:537745670518472714> ";
+                                            platIcon += "<:PS4:537745670518472714> ";
                                         }
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("PC"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PC"))
                                         {
-                                            platIcon += "<:pcicon:537746891610259467> ";
+                                            platIcon += "<:PC:537746891610259467> ";
                                         }
                                     }
 
@@ -220,21 +225,21 @@ namespace ThothBotCore.Utilities
 
                                     for (int k = 0; k < ServerStatus.scheduled_maintenances[i].components.Count; k++)
                                     {
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Switch"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Switch"))
                                         {
-                                            platIcon += "<:switchicon:537752006719176714> ";
+                                            platIcon += "<:SW:537752006719176714> ";
                                         }
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Xbox"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Xbox"))
                                         {
-                                            platIcon += "<:xboxicon:537749895029850112> ";
+                                            platIcon += "<:XB:537749895029850112> ";
                                         }
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("PS4"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PS4"))
                                         {
-                                            platIcon += "<:playstationicon:537745670518472714> ";
+                                            platIcon += "<:PS4:537745670518472714> ";
                                         }
-                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("PC"))
+                                        if (ServerStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PC"))
                                         {
-                                            platIcon += "<:pcicon:537746891610259467> ";
+                                            platIcon += "<:PC:537746891610259467> ";
                                         }
                                     }
 
@@ -270,7 +275,8 @@ namespace ThothBotCore.Utilities
                                         {
                                             expectedDtime = "n/a";
                                         }
-
+                                        string test = platIcon + ServerStatus.scheduled_maintenances[i].name;
+                                        Console.WriteLine(test.Length);
                                         embed.AddField(field =>
                                         {
                                             field.IsInline = false;

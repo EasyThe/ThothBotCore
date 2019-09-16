@@ -11,11 +11,11 @@ namespace ThothBotCore.Connections.Models
             public string GodName { get; set; }
             public int Mastery_Level { get; set; }
             public int Match { get; set; }
-            public int Queue { get; set; }
+            public string Queue { get; set; }
             public int SkinId { get; set; }
             public int Tier { get; set; }
-            public DateTime playerCreated { get; set; }
-            public int playerId { get; set; }
+            public string playerCreated { get; set; }
+            public string playerId { get; set; }
             public string playerName { get; set; }
             public object ret_msg { get; set; }
             public int taskForce { get; set; }

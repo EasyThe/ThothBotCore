@@ -67,28 +67,28 @@ namespace ThothBotCore.Discord
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "<:pcicon:537746891610259467> " + foundPC.name; // PC
+                field.Name = "<:PC:537746891610259467> " + foundPC.name; // PC
                 field.Value = Text.StatusEmoji(foundPC.status) + pcValue;
             });
             string ps4Value = foundPS4.status.Contains("_") ? Text.ToTitleCase(foundPS4.status.Replace("_", " ")) : Text.ToTitleCase(foundPS4.status);
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "<:playstationicon:537745670518472714> " + foundPS4.name; // PS4
+                field.Name = "<:PS4:537745670518472714> " + foundPS4.name; // PS4
                 field.Value = Text.StatusEmoji(foundPS4.status) + ps4Value;
             });
             string xbValue = foundXBO.status.Contains("_") ? Text.ToTitleCase(foundXBO.status.Replace("_", " ")) : Text.ToTitleCase(foundXBO.status);
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "<:xboxicon:537749895029850112> " + foundXBO.name; // Xbox
+                field.Name = "<:XB:537749895029850112> " + foundXBO.name; // Xbox
                 field.Value = Text.StatusEmoji(foundXBO.status) + xbValue;
             });
             string swValue = foundSwi.status.Contains("_") ? Text.ToTitleCase(foundSwi.status.Replace("_", " ")) : Text.ToTitleCase(foundSwi.status);
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "<:switchicon:537752006719176714> " + foundSwi.name; // Switch
+                field.Name = "<:SW:537752006719176714> " + foundSwi.name; // Switch
                 field.Value = Text.StatusEmoji(foundSwi.status) + swValue;
             });
             string apiValue = foundAPI.status.Contains("_") ? Text.ToTitleCase(foundAPI.status.Replace("_", " ")) : Text.ToTitleCase(foundAPI.status);
@@ -140,19 +140,19 @@ namespace ThothBotCore.Discord
                     {
                         if (serverStatus.incidents[n].components[z].name.Contains("Smite Switch"))
                         {
-                            incidentPlatIcons += "<:switchicon:537752006719176714> ";
+                            incidentPlatIcons += "<:SW:537752006719176714> ";
                         }
                         if (serverStatus.incidents[n].components[z].name.Contains("Smite Xbox"))
                         {
-                            incidentPlatIcons += "<:xboxicon:537749895029850112> ";
+                            incidentPlatIcons += "<:XB:537749895029850112> ";
                         }
                         if (serverStatus.incidents[n].components[z].name.Contains("Smite PS4"))
                         {
-                            incidentPlatIcons += "<:playstationicon:537745670518472714> ";
+                            incidentPlatIcons += "<:PS4:537745670518472714> ";
                         }
                         if (serverStatus.incidents[n].components[z].name.Contains("Smite PC"))
                         {
-                            incidentPlatIcons += "<:pcicon:537746891610259467> ";
+                            incidentPlatIcons += "<:PC:537746891610259467> ";
                         }
                     }
 
@@ -207,19 +207,19 @@ namespace ThothBotCore.Discord
                         {
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Switch"))
                             {
-                                platIcon += "<:switchicon:537752006719176714> ";
+                                platIcon += "<:SW:537752006719176714> ";
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Xbox"))
                             {
-                                platIcon += "<:xboxicon:537749895029850112> ";
+                                platIcon += "<:XB:537749895029850112> ";
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PS4"))
                             {
-                                platIcon += "<:playstationicon:537745670518472714> ";
+                                platIcon += "<:PS4:537745670518472714> ";
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PC"))
                             {
-                                platIcon += "<:pcicon:537746891610259467> ";
+                                platIcon += "<:PC:537746891610259467> ";
                             }
                         }
                         TimeSpan expDwntime = serverStatus.scheduled_maintenances[i].scheduled_until - serverStatus.scheduled_maintenances[i].scheduled_for;
@@ -273,19 +273,19 @@ namespace ThothBotCore.Discord
                         {
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Switch"))
                             {
-                                platIcon += "<:switchicon:537752006719176714> ";
+                                platIcon += "<:SW:537752006719176714> ";
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Xbox"))
                             {
-                                platIcon += "<:xboxicon:537749895029850112> ";
+                                platIcon += "<:XB:537749895029850112> ";
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PS4"))
                             {
-                                platIcon += "<:playstationicon:537745670518472714> ";
+                                platIcon += "<:PS4:537745670518472714> ";
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PC"))
                             {
-                                platIcon += "<:pcicon:537746891610259467> ";
+                                platIcon += "<:PC:537746891610259467> ";
                             }
                         }
 
@@ -350,7 +350,7 @@ namespace ThothBotCore.Discord
             {
                 string[] splitName = playerStats[0].Name.Split(']');
                 rPlayerName = splitName[1];
-                if (playerStats[0].hz_player_name != "" || playerStats[0].hz_player_name != null)
+                if (playerStats[0].hz_player_name != null)
                 {
                     rPlayerName = playerStats[0].hz_player_name + $", {splitName[0]}]{playerStats[0].Team_Name}";
                 }
@@ -361,7 +361,7 @@ namespace ThothBotCore.Discord
             }
             else
             {
-                if (playerStats[0].hz_player_name != "" || playerStats[0].hz_player_name != null)
+                if (playerStats[0].hz_player_name != null)
                 {
                     rPlayerName = playerStats[0].hz_player_name;
                 }
@@ -396,7 +396,7 @@ namespace ThothBotCore.Discord
             else
             {
                 defaultEmoji = ":small_blue_diamond:"; // :small_blue_diamond: <:blank:570291209906552848>
-                embed.WithColor(new Color(85, 172, 238));
+                embed.WithColor(Constants.DefaultBlueColor);
                 if (playerStatus[0].Match != 0)
                 {
                     //await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
@@ -404,9 +404,16 @@ namespace ThothBotCore.Discord
 
                     for (int s = 0; s < matchPlayerDetails.Count; s++)
                     {
-                        if (matchPlayerDetails[s].playerId == playerStats[0].ActivePlayerId)
+                        if (matchPlayerDetails[0].ret_msg == null)
                         {
-                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(matchPlayerDetails[0].Queue)}**, playing as {matchPlayerDetails[s].GodName}");
+                            if (Int32.Parse(matchPlayerDetails[s].playerId) == playerStats[0].ActivePlayerId)
+                            {
+                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**, playing as {matchPlayerDetails[s].GodName}");
+                            }
+                        }
+                        else
+                        {
+                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**");
                         }
                     }
                 }
@@ -656,6 +663,82 @@ namespace ThothBotCore.Discord
                     x.Value = $"Level:{playerStats[i].Level}\n{playerStats[i].hz_player_name}\n{playerStats[i].hz_gamer_tag}\n{(playerStats[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
                 });
             }
+
+            return embed;
+        }
+
+        public static async Task<EmbedBuilder> LiveMatchEmbed(List<MatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails)
+        {
+            var embed = new EmbedBuilder();
+
+            embed.WithColor(Constants.DefaultBlueColor);
+            embed.WithAuthor(author =>
+            {
+                author.WithName($"{Text.GetQueueName(Int32.Parse(matchPlayerDetails[0].Queue))}");
+                author.WithIconUrl(botIcon);
+            });
+            embed.WithThumbnailUrl(botIcon);
+
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[0].GodName)} {matchPlayerDetails[0].playerName}";// left
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[5].GodName)} {matchPlayerDetails[5].playerName}";// loss
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[1].GodName)} {matchPlayerDetails[1].playerName}";// left
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[6].GodName)} {matchPlayerDetails[6].playerName}";
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[2].GodName)} {matchPlayerDetails[2].playerName}";// left
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[7].GodName)} {matchPlayerDetails[7].playerName}";
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[3].GodName)} {matchPlayerDetails[3].playerName}";// left
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[8].GodName)} {matchPlayerDetails[8].playerName}";
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[4].GodName)} {matchPlayerDetails[4].playerName}";// left
+                field.Value = $"?";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[9].GodName)} {matchPlayerDetails[9].playerName}";
+                field.Value = $"?";
+            });
 
             return embed;
         }

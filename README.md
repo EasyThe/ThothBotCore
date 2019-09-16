@@ -18,7 +18,7 @@
 
 Cooler bot for SMITE stats for Discord
 
-Currently I don't recommend hosting your own instance. Instead you can use the one I am hosting [here](https://discordbots.org/bot/454145330347376651).
+This page does not contain instructions on how to set-up and host Thoth on your own. Instead you can use the one I am hosting [here](https://discordbots.org/bot/454145330347376651).
 
 ## Built With :green_heart:
 
@@ -32,7 +32,6 @@ Currently I don't recommend hosting your own instance. Instead you can use the o
 
 [![DiscordBotsOrg](https://discordbots.org/api/widget/454145330347376651.svg?usernamecolor=FFFFFF&topcolor=000000)](https://discordbots.org/bot/454145330347376651)
 [![Bots for Discord](https://botsfordiscord.com/api/bot/454145330347376651/widget?theme=dark)](https://botsfordiscord.com/bots/454145330347376651)
-[![Thoth](https://bots.ondiscord.xyz/bots/454145330347376651/embed?theme=dark&showGuilds=true)](https://bots.ondiscord.xyz/bots/454145330347376651)
 <a href="454145330347376651">
 	<img 
 		width="300" 

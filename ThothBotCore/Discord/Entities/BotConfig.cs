@@ -28,12 +28,13 @@ namespace ThothBotCore.Discord.Entities
             {
                 string json = File.ReadAllText(configFolder + "/" + configFile);
                 botConfig = JsonConvert.DeserializeObject<BotConfig>(json);
+                
+                SaveConfig();
             }
         }
 
         public static void SaveConfig()
         {
-            botConfig = new BotConfig();
             string json = JsonConvert.SerializeObject(botConfig, Formatting.Indented);
             File.WriteAllText(configFolder + "/" + configFile, json);
         }
@@ -45,6 +46,8 @@ namespace ThothBotCore.Discord.Entities
         public string devId { get; set; } = "HiRezDevID";
         public string authKey { get; set; } = "HiRezAuthKey";
         public string challongeKey { get; set; } = "ChallongeKey";
+        public string trelloKey { get; set; } = "TrelloKey";
+        public string trelloToken { get; set; } = "TrelloToken";
         public string prefix { get; set; } = "!!";
         public string setGame { get; set; } = "!!help";
         public string botsAPI { get; set; } = "DiscordBotsAPIkey";

@@ -42,28 +42,38 @@ namespace ThothBotCore.Modules
                 author.WithName("Available commands");
                 author.WithIconUrl(botIcon);
             });
-            embed.WithColor(new Color(85, 172, 238));
+            embed.WithColor(Constants.DefaultBlueColor);
             //embed.WithTitle($":new:You can now check item information with `{prefix}item itemname`");
             embed.WithDescription("[Support server](http://discord.gg/hU6MTbQ)\n" + desc);
             embed.AddField(x =>
             {
-                x.Name = ":zap:SMITE";
-                x.Value = $":white_small_square:`{prefix}stats PlayerName` - Display stats for PlayerName\nAlias: `{prefix}stat` `{prefix}pc` `{prefix}st` `{prefix}stata` `{prefix}ст` `{prefix}статс` `{prefix}ns`\n" +
-                $":white_small_square:`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
-                $":white_small_square:`{prefix}statusupdates #channel` - Sends a message when SMITE incidents and scheduled maintenances appear in the status page to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
-                $":white_small_square:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
-                $":white_small_square:`{prefix}gods` - Overall information about the gods in the game.\n" +
-                $":white_small_square:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g`\n" +
-                $":white_small_square:`{prefix}rgod` - Gives you a random God and randomised build.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
-                $":white_small_square:`{prefix}item ItemName` - Gives you information about `ItemName`.\nAlias: `{prefix}i`";
+                x.Name = ":zap:SMITE Player Stats";
+                x.Value = $":small_blue_diamond:`{prefix}stats PlayerName` - Display stats for `PlayerName`\nAlias: `{prefix}stat` `{prefix}pc` `{prefix}st` `{prefix}stata` `{prefix}ст` `{prefix}статс` `{prefix}ns`";
+            });
+            embed.AddField(x =>
+            {
+                x.Name = ":zap:SMITE Servers & Bugs";
+                x.Value = $":small_blue_diamond:`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
+                $":small_blue_diamond:`{prefix}statusupdates #channel` - Sends a message when SMITE incidents and scheduled maintenances appear in the status page to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
+                $":small_blue_diamond:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
+                $":small_blue_diamond:`{prefix}trello` - Checks the [SMITE Community Trello Board](https://trello.com/b/d4fJtBlo/smite-community-issues).\nAlias: `{prefix}issues` `{prefix}bugs` `{prefix}board`";
                 x.IsInline = false;
             });
             embed.AddField(x =>
             {
+                x.Name = ":zap: SMITE Information & Fun";
+                x.Value = $":small_blue_diamond:`{prefix}gods` - Overall information about the gods in the game and current free god rotation.\n" +
+                $":small_blue_diamond:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g`\n" +
+                $":small_blue_diamond:`{prefix}rgod` - Gives you a random God and randomised build.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
+                $":small_blue_diamond:`{prefix}rteam 5` - Gives you `5` random Gods with randomised builds for them.\nAlias: `{prefix}rt` `{prefix}team` `{prefix}ртеам` `{prefix}теам`\n" +
+                $":small_blue_diamond:`{prefix}item ItemName` - Gives you information about `ItemName`.\nAlias: `{prefix}i`";
+            });
+            embed.AddField(x =>
+            {
                 x.Name = ":robot:Bot";
-                x.Value = $":white_small_square:`{prefix}help` - List of all available commands.\nAlias: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`\n" +
-                $":white_small_square:`{prefix}prefix your-prefix-here` - Set custom prefix for your server.\n" +
-                $":white_small_square:`{prefix}botstats` - Bot statistics, invite link, support server etc.\nAlias: `{prefix}about` `{prefix}botinfo` `{prefix}info` `{prefix}bi`";
+                x.Value = $":small_blue_diamond:`{prefix}help` - List of all available commands.\nAlias: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`\n" +
+                $":small_blue_diamond:`{prefix}prefix your-prefix-here` - Set custom prefix for your server.\n" +
+                $":small_blue_diamond:`{prefix}botstats` - Bot statistics, invite link, support server etc.\nAlias: `{prefix}about` `{prefix}botinfo` `{prefix}info` `{prefix}bi`";
                 x.IsInline = false;
             });
             embed.WithFooter(footer =>
@@ -122,7 +132,7 @@ namespace ThothBotCore.Modules
                     .WithIconUrl(botIcon);
             });
             embed.WithDescription("Creator: EasyThe#2836");
-            embed.WithColor(new Color(85, 172, 238));
+            embed.WithColor(Constants.DefaultBlueColor);
             embed.AddField(field =>
             {
                 field.IsInline = true;
@@ -319,20 +329,6 @@ namespace ThothBotCore.Modules
                     .WithIconUrl(botIcon);
             });
             embed.WithColor(new Color(0, 255, 0));
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Servers";
-                field.Value = Connection.Client.Guilds.Count;
-
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Uptime";
-                field.Value = GetUptime();
-
-            });
             embed.AddField(field =>
             {
                 field.IsInline = false;

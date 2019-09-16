@@ -69,7 +69,7 @@ namespace ThothBotCore.Modules
             var playerspecs = await Database.GetPlayerSpecials(playerID[0].player_id.ToString());
             var embed = new EmbedBuilder();
             bool b = Convert.ToBoolean(playerspecs[0].streamer_bool);
-            embed.WithColor(new Color(85, 172, 238));
+            embed.WithColor(Constants.DefaultBlueColor);
             embed.AddField(x =>
             {
                 x.IsInline = true;
@@ -89,6 +89,13 @@ namespace ThothBotCore.Modules
                 x.Value = playerspecs[0].streamer_link == "" || playerspecs[0].streamer_link == null ? "n/a" : playerspecs[0].streamer_link;
             });
             await ReplyAsync("", false, embed.Build());
+        }
+
+        [Command("setspec")]
+        [RequireOwner]
+        public async Task SetSpecial([Remainder] string parameters)
+        {
+
         }
 
         [Command("insertallguilds")]
@@ -158,14 +165,6 @@ namespace ThothBotCore.Modules
         public async Task LeaveGuild(ulong id)
         {
             await Discord.Connection.Client.GetGuild(id).LeaveAsync();
-        }
-
-        public class PlayerIDbyName
-        {
-            public int player_id { get; set; }
-            public string portal { get; set; }
-            public int portal_id { get; set; }
-            public object ret_msg { get; set; }
         }
     }
 }

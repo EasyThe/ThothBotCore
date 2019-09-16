@@ -85,11 +85,11 @@ namespace ThothBotCore.Utilities
             List<PlayerSpecial> playerSpecial = await Database.GetPlayerSpecials(id);
             if (playerSpecial.Count != 0)
             {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder specialsResult = new StringBuilder();
                 if (playerSpecial[0].pro_bool != 0)
                 {
-                    sb.Append(":mouse_three_button: Pro Player");
-                    sb.Append("\n");
+                    specialsResult.Append(":mouse_three_button: Pro Player");
+                    specialsResult.Append("\n");
                 }
                 if (playerSpecial[0].streamer_bool != 0)
                 {
@@ -97,24 +97,28 @@ namespace ThothBotCore.Utilities
                     {
                         if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("twitch"))
                         {
-                            sb.Append($"<:Twitch:579125715874742280> Streamer - {playerSpecial[0].streamer_link}");
+                            specialsResult.Append($"<:Twitch:579125715874742280> Streamer - {playerSpecial[0].streamer_link}");
                         }
                         else if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("mixer"))
                         {
-                            sb.Append($"<:Mixer:595036189224992771> Streamer - {playerSpecial[0].streamer_link}");
+                            specialsResult.Append($"<:Mixer:595036189224992771> Streamer - {playerSpecial[0].streamer_link}");
                         }
                         else
                         {
-                            sb.Append("<:Twitch:579125715874742280> Streamer");
+                            specialsResult.Append("<:Twitch:579125715874742280> Streamer");
                         }
                     }
-                    sb.Append("\n");
+                    specialsResult.Append("\n");
                 }
-                if (playerSpecial[0].special.Contains("dev"))
+                if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("dev"))
                 {
-                    sb.Append(":star: Thoth Dev");
+                    specialsResult.Append(":star: Thoth Dev");
                 }
-                return sb.ToString();
+                if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("vulpis"))
+                {
+                    specialsResult.Append("<:VulpisEsports:621460247046782976> Vulpis Esports Owner");
+                }
+                return specialsResult.ToString();
             }
             return "";
         }
@@ -174,11 +178,11 @@ namespace ThothBotCore.Utilities
                 case "5":
                     return "<:steam:581485150043373578>"; // Steam
                 case "9":
-                    return "<:playstationicon:537745670518472714>"; // PS4
+                    return "<:PS4:537745670518472714>"; // PS4
                 case "10":
-                    return "<:xboxicon:537749895029850112>"; // Xbox
+                    return "<:XB:537749895029850112>"; // Xbox
                 case "22":
-                    return "<:switchicon:537752006719176714>"; // Switch
+                    return "<:SW:537752006719176714>"; // Switch
                 default:
                     return "<:blank:570291209906552848>";
             }

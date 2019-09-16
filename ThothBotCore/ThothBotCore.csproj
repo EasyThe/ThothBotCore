@@ -8,6 +8,8 @@
     <PackageProjectUrl />
     <RepositoryUrl>https://github.com/EasyThe/ThothBotCore</RepositoryUrl>
     <Copyright>MIT</Copyright>
+    <AssemblyName>ThothBotCore</AssemblyName>
+    <RootNamespace>ThothBotCore</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

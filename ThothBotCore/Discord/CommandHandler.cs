@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
@@ -89,7 +90,7 @@ namespace ThothBotCore.Discord
             }
             else if (result.ErrorReason.Contains("1024"))
             {
-                await context.Channel.SendMessageAsync("Oops. Because your custom prefix is too long, I was not able to fit the help command in one field.");
+                await context.Channel.SendMessageAsync("Oops. The text is too long so, I was not able to fit the help command in one field.");
             }
             else if (result.ErrorReason.Contains("Command can only be run by the owner of the bot."))
             {

@@ -26,6 +26,7 @@ namespace ThothBotCore.Modules
         static Random rnd = new Random();
 
         HiRezAPI hirezAPI = new HiRezAPI();
+        TrelloAPI trelloAPI = new TrelloAPI();
         DominantColor domColor = new DominantColor();
 
         [Command("stats", RunMode = RunMode.Async)]
@@ -52,7 +53,6 @@ namespace ThothBotCore.Modules
                 }
                 else if (searchPlayer[0].Name.ToLowerInvariant() == username.ToLowerInvariant())
                 {
-
                     await Context.Channel.TriggerTypingAsync();
                     try
                     {
@@ -134,8 +134,7 @@ namespace ThothBotCore.Modules
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n" +
-                            $"{DateTime.Now}");
+                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
                         await ReplyAsync("Oops.. I've encountered an error. :sob:");
                     }
                 }
@@ -147,7 +146,8 @@ namespace ThothBotCore.Modules
                     $"**Message: **{Context.Message.Content}\n" +
                     $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
-                    $"**Error: **{ex.Message}");
+                    $"**Error: **{ex.Message}\n" +
+                    $"**InnerException: ** {ex.InnerException}");
             }
         }
 
@@ -173,13 +173,29 @@ namespace ThothBotCore.Modules
 
                 if (playerStats[0].Name.Contains("]"))
                 {
-                    string[] splitPlayerName = playerStats[0].Name.Split(']');
-                    rPlayerName = splitPlayerName[1];
-                    rTeamName = splitPlayerName[0] + "]" + playerStats[0].Team_Name;
+                    string[] splitName = playerStats[0].Name.Split(']');
+                    rPlayerName = splitName[1];
+                    if (playerStats[0].hz_player_name != null)
+                    {
+                        rPlayerName = playerStats[0].hz_player_name;
+                        rTeamName = splitName[0] + "]" + playerStats[0].Team_Name;
+                    }
+                    else
+                    {
+                        rPlayerName = playerStats[0].hz_gamer_tag;
+                        rTeamName = splitName[0] + "]" + playerStats[0].Team_Name;
+                    }
                 }
                 else
                 {
-                    rPlayerName = playerStats[0].Name;
+                    if (playerStats[0].hz_player_name != null)
+                    {
+                        rPlayerName = playerStats[0].hz_player_name;
+                    }
+                    else
+                    {
+                        rPlayerName = playerStats[0].hz_gamer_tag;
+                    }
                 }
                 int rPlayerLevel = playerStats[0].Level;
                 int rPlayerWins = playerStats[0].Wins;
@@ -695,7 +711,7 @@ namespace ThothBotCore.Modules
                         onRotation.Append(god.Emoji);
                     }
                 }
-                embed.WithColor(new Color(85, 172, 238));
+                embed.WithColor(Constants.DefaultBlueColor);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -829,11 +845,19 @@ namespace ThothBotCore.Modules
             }
 
             // Boots or Shoes depending on the god type
-            var boots = await Database.GetBootsOrShoes(godType);
-            int boot = rnd.Next(boots.Count);
-            sb.Append(boots[boot].Emoji);
+            if (!gods[rr].Name.Contains("Ratatoskr"))
+            {
+                var boots = await Database.GetBootsOrShoes(godType);
+                int boot = rnd.Next(boots.Count);
+                sb.Append(boots[boot].Emoji);
+            }
+            else
+            {
+                var boots = await Database.GetBootsOrShoes(gods[rr].Name);
+                sb.Append(boots[0].Emoji);
+            }
 
-            var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles);
+            var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles.ToLowerInvariant().Trim());
 
             // Finishing the build with 5 items
             for (int i = 0; i < 5; i++)
@@ -872,11 +896,88 @@ namespace ThothBotCore.Modules
             embed.AddField(x =>
             {
                 x.IsInline = false;
-                x.Name = ":new: Random Build";
+                x.Name = "Random Build";
                 x.Value = sb.ToString();
             });
-
             await ReplyAsync($"{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
+        }
+
+        [Command("rteam")]
+        [Alias("team", "ртеам", "теам", "rt")]
+        public async Task RandomTeam(int count)
+        {
+            if (!(count > 5))
+            {
+                var embed = new EmbedBuilder();
+                var gods = Database.LoadAllGodsWithLessInfo();
+
+                embed.WithColor(Constants.DefaultBlueColor);
+
+                for (int i = 0; i < count; i++)
+                {
+                    int rr = rnd.Next(gods.Count);
+                    string godType = "";
+                    StringBuilder sb = new StringBuilder();
+
+                    // Random Build START
+
+                    if (gods[rr].Roles.Contains("Mage") || gods[rr].Roles.Contains("Guardian"))
+                    {
+                        godType = "magical";
+                    }
+                    else
+                    {
+                        godType = "physical";
+                    }
+
+                    // Random Relics
+                    var active = await Database.GetActiveActives();
+                    for (int a = 0; a < 2; a++)
+                    {
+                        int ar = rnd.Next(active.Count);
+                        sb.Append(active[ar].Emoji);
+                        active.RemoveAt(ar);
+                    }
+
+                    // Boots or Shoes depending on the god type
+                    if (!gods[rr].Name.Contains("Ratatoskr"))
+                    {
+                        var boots = await Database.GetBootsOrShoes(godType);
+                        int boot = rnd.Next(boots.Count);
+                        sb.Append(boots[boot].Emoji);
+                    }
+                    else
+                    {
+                        var boots = await Database.GetBootsOrShoes(gods[rr].Name);
+                        sb.Append(boots[0].Emoji);
+                    }
+
+                    var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles.ToLowerInvariant().Trim());
+
+                    // Finishing the build with 5 items
+                    for (int b = 0; b < 5; b++)
+                    {
+                        int r = rnd.Next(items.Count);
+                        sb.Append(items[r].Emoji);
+                        items.RemoveAt(r);
+                    }
+
+                    // Random Build END
+
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = false;
+                        x.Name = $"{gods[rr].Emoji} {gods[rr].Name}";
+                        x.Value = sb.ToString();
+                    });
+                }
+
+                await ReplyAsync($"Team of {count} for you, {Context.Message.Author.Mention}!", false, embed.Build());
+            }
+            else
+            {
+                await ReplyAsync("That's not a proper number for a team, don't ya' think?");
+            }
         }
 
         [Command("status", true)] // SMITE Server Status 
@@ -968,7 +1069,6 @@ namespace ThothBotCore.Modules
                 itemname = itemname.Replace("'", "''");
             }
             List<Item> item = await Database.GetSpecificItem(itemname);
-
             if (item.Count != 0)
             {
                 string secondaryDesc = item[0].SecondaryDescription;
@@ -1023,6 +1123,145 @@ namespace ThothBotCore.Modules
             else
             {
                 await ReplyAsync($"{item.Count} results found for `{itemname}`.");
+            }
+        }
+
+        [Command("trello")]
+        [Alias("issues", "bugs", "board")]
+        public async Task TrelloBoardCommand()
+        {
+            var embed = new EmbedBuilder();
+            var result = await trelloAPI.GetTrelloCards();
+
+            StringBuilder allplatforms = new StringBuilder(2048);
+            StringBuilder pcissues = new StringBuilder(1024);
+            StringBuilder consoleissues = new StringBuilder(1024);
+            StringBuilder fixedinfuture = new StringBuilder(1024);
+            StringBuilder incominghotfix = new StringBuilder(1024);
+
+            foreach (var item in result) // All platforms
+            {
+                if (item.idList == "5c740d7d4e18c107890167ea")
+                {
+                    allplatforms.Append($":small_blue_diamond:[{item.name}]({item.url})\n");
+                }
+            }
+            foreach (var item in result) // PC
+            {
+                if (item.idList == "5c740d8592770555915aae43")
+                {
+                    pcissues.Append($":small_blue_diamond:[{item.name}]({item.url})\n");
+                }
+            }
+            foreach (var item in result) // Console
+            {
+                if (item.idList == "5c76c62de8a42c11305ac376")
+                {
+                    consoleissues.Append($":small_blue_diamond:[{item.name}]({item.url})\n");
+                }
+            }
+            foreach (var item in result) // Fixed in Future
+            {
+                if (item.idList == "5c76ccafb5f8c44198301b65")
+                {
+                    fixedinfuture.Append($":small_blue_diamond:[{item.name}]({item.url})\n");
+                }
+            }
+            foreach (var item in result) // Incoming hotfix
+            {
+                if (item.idList == "5c804623d75e55500472cf9a")
+                {
+                    incominghotfix.Append($":small_blue_diamond:[{item.name}]({item.url})\n");
+                }
+            }
+
+            embed.WithAuthor(x =>
+            {
+                x.Name = "SMITE Community Issues Trello Board";
+                x.Url = "https://trello.com/b/d4fJtBlo/smite-community-issues";
+                x.IconUrl = "https://cdn3.iconfinder.com/data/icons/popular-services-brands-vol-2/512/trello-512.png";
+            });
+
+            // PC Top Issues
+            if (pcissues.ToString() != "")
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "PC Top Issues";
+                    x.Value = pcissues.ToString();
+                });
+            }
+
+            // Console Top Issues
+            if (consoleissues.ToString() != "")
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "Console Top Issues";
+                    x.Value = consoleissues.ToString();
+                });
+            }
+
+            // Fixed in Future Release
+            if (fixedinfuture.ToString() != "")
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "Fixed in Future Release";
+                    x.Value = fixedinfuture.ToString();
+                });
+            }
+
+            // Incoming Hotfix
+            if (incominghotfix.ToString() != "")
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "Incoming Hotfix";
+                    x.Value = incominghotfix.ToString();
+                });
+            }
+
+            embed.WithColor(210, 144, 52);
+            embed.WithTitle("All Platforms Top Issues");
+            if (!(allplatforms.ToString().Length >= 2048))
+            {
+                embed.WithDescription(allplatforms.ToString());
+            }
+            embed.WithDescription(allplatforms.ToString());
+
+            await ReplyAsync("", false, embed.Build());
+        }
+
+        [Command("livematch")]
+        [Alias("live", "lm", "l")]
+        public async Task LiveMatchCommand(string username)
+        {
+            string playeridbyname = await hirezAPI.GetPlayerIdByName(username);
+            if (playeridbyname != "[]")
+            {
+                var playerID = JsonConvert.DeserializeObject<List<PlayerIDbyName>>(playeridbyname);
+                var playerstatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(await hirezAPI.GetPlayerStatus(playerID[0].player_id));
+
+                //testing
+                //await ReplyAsync($"```json\n{JsonConvert.SerializeObject(playerstatus, Formatting.Indented)}```");
+
+                if (playerstatus[0].status == 3 && playerstatus[0].Match != 0)
+                {
+                    await ReplyAsync("", false, EmbedHandler.LiveMatchEmbed(JsonConvert.DeserializeObject<List<MatchPlayerDetails.PlayerMatchDetails>>(await hirezAPI.GetMatchPlayerDetails(playerstatus[0].Match))).Result.Build());
+                }
+                else
+                {
+                    await ReplyAsync($"{username} is not in a match.");
+                }
+            }
+            else
+            {
+                await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
             }
         }
 
@@ -1109,7 +1348,7 @@ namespace ThothBotCore.Modules
             await Context.Channel.TriggerTypingAsync();
             TimeSpan matchTime = TimeSpan.FromSeconds(matchDetails[0].Time_In_Match_Seconds);
 
-            embed.WithColor(new Color(85, 172, 238));
+            embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
                 author.WithName($"{matchDetails[0].name} | {matchTime.Minutes} mins");
@@ -1264,55 +1503,6 @@ namespace ThothBotCore.Modules
                     });
                 }
             }
-        }
-
-        [Command("zz")]
-        [RequireOwner]
-        public async Task GetGodsCommand()
-        {
-            var gods = Database.LoadAllGodsWithLessInfo();
-            int rr = rnd.Next(gods.Count); // get random god
-            string godType = "";
-
-            StringBuilder sb = new StringBuilder(); // Final Build
-
-            if (gods[rr].Roles.Contains("Mage") || gods[rr].Roles.Contains("Guardian"))
-            {
-                godType = "magical";
-            }
-            else
-            {
-                godType = "physical";
-            }
-
-            //God
-            sb.Append(gods[rr].Emoji + " ");
-
-            // Random Relics
-            var active = await Database.GetActiveActives();
-            for (int a = 0; a < 2; a++)
-            {
-                int ar = rnd.Next(active.Count);
-                sb.Append(active[ar].Emoji);
-                active.RemoveAt(ar);
-            }
-
-            // Boots or Shoes depending on the god type
-            var boots = await Database.GetBootsOrShoes(godType);
-            int boot = rnd.Next(boots.Count);
-            sb.Append(boots[boot].Emoji);
-
-            var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles);
-
-            // Finishing the build with 5 items
-            for (int i = 0; i < 5; i++)
-            {
-                int r = rnd.Next(items.Count);
-                sb.Append(items[r].Emoji);
-                items.RemoveAt(r);
-            }
-
-            await ReplyAsync(sb.ToString());
         }
 
         [Command("testdbstuff")]
@@ -1492,6 +1682,18 @@ namespace ThothBotCore.Modules
                     $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
                     $"**Error: **{ex.Message}");
             }
+        }
+
+        [Command("seby")]
+        public async Task Seby([Remainder]string sentence)
+        {
+            string replaced = sentence.Replace('a', 'A')
+                .Replace('e', 'E')
+                .Replace('i', 'I')
+                .Replace('o', 'O')
+                .Replace('u', 'U');
+
+            await ReplyAsync(replaced);
         }
 
         // Owner Commands
