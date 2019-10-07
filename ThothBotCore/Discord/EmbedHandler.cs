@@ -21,11 +21,11 @@ namespace ThothBotCore.Discord
 
         public static EmbedBuilder ServerStatusEmbed(ServerStatus serverStatus)
         {
-            var foundPC = serverStatus.components.Find(x => x.name == "Smite PC");
-            var foundXBO = serverStatus.components.Find(x => x.name == "Smite Xbox");
-            var foundPS4 = serverStatus.components.Find(x => x.name.Contains("Smite PS4"));
-            var foundSwi = serverStatus.components.Find(x => x.name.Contains("Smite Switch"));
-            var foundAPI = serverStatus.components.Find(x => x.name.Contains("API"));
+            var foundPC = serverStatus.components.Find(x => x.name.ToLowerInvariant() == "smite pc");
+            var foundXBO = serverStatus.components.Find(x => x.name.ToLowerInvariant() == "smite xbox");
+            var foundPS4 = serverStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite ps4"));
+            var foundSwi = serverStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite switch"));
+            var foundAPI = serverStatus.components.Find(x => x.name.ToLowerInvariant().Contains("api"));
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
@@ -45,7 +45,7 @@ namespace ThothBotCore.Discord
             {
                 for (int i = 0; i < serverStatus.incidents.Count; i++)
                 {
-                    if (serverStatus.incidents[i].name.Contains("Smite"))
+                    if (serverStatus.incidents[i].name.ToLowerInvariant().Contains("smite"))
                     {
                         // Incident color
                         embed.WithColor(new Color(239, 167, 32));
@@ -56,7 +56,7 @@ namespace ThothBotCore.Discord
             {
                 for (int i = 0; i < serverStatus.scheduled_maintenances.Count; i++)
                 {
-                    if (serverStatus.scheduled_maintenances[i].name.Contains("Smite"))
+                    if (serverStatus.scheduled_maintenances[i].name.ToLowerInvariant().Contains("smite"))
                     {
                         // Maintenance color
                         embed.WithColor(new Color(52, 152, 219));
@@ -118,7 +118,7 @@ namespace ThothBotCore.Discord
 
             for (int n = 0; n < serverStatus.incidents.Count; n++)
             {
-                if (serverStatus.incidents[n].name.Contains("Smite") ||
+                if (serverStatus.incidents[n].name.ToLowerInvariant().Contains("smite") ||
                     serverStatus.incidents[n].components.Any(x=>x.name.ToLowerInvariant().Contains("smite")))
                 {
                     incidentEmbed.WithColor(new Color(239, 167, 32));
@@ -138,19 +138,19 @@ namespace ThothBotCore.Discord
 
                     for (int z = 0; z < serverStatus.incidents[n].components.Count; z++) // cycle for platform icons
                     {
-                        if (serverStatus.incidents[n].components[z].name.Contains("Smite Switch"))
+                        if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite switch"))
                         {
                             incidentPlatIcons += "<:SW:537752006719176714> ";
                         }
-                        if (serverStatus.incidents[n].components[z].name.Contains("Smite Xbox"))
+                        if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite xbox"))
                         {
                             incidentPlatIcons += "<:XB:537749895029850112> ";
                         }
-                        if (serverStatus.incidents[n].components[z].name.Contains("Smite PS4"))
+                        if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite ps4"))
                         {
                             incidentPlatIcons += "<:PS4:537745670518472714> ";
                         }
-                        if (serverStatus.incidents[n].components[z].name.Contains("Smite PC"))
+                        if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite pc"))
                         {
                             incidentPlatIcons += "<:PC:537746891610259467> ";
                         }
@@ -183,8 +183,8 @@ namespace ThothBotCore.Discord
             var embed = new EmbedBuilder();
             for (int i = 0; i < serverStatus.scheduled_maintenances.Count; i++)
             {
-                if (serverStatus.scheduled_maintenances[i].name.Contains("Smite") ||
-                    serverStatus.scheduled_maintenances[i].incident_updates[0].body.Contains("Smite"))
+                if (serverStatus.scheduled_maintenances[i].name.ToLowerInvariant().Contains("smite") ||
+                    serverStatus.scheduled_maintenances[i].incident_updates[0].body.ToLowerInvariant().Contains("smite"))
                 {
                     embed.WithColor(new Color(52, 152, 219)); //maintenance color
                     embed.WithAuthor(author =>
@@ -205,19 +205,19 @@ namespace ThothBotCore.Discord
                     {
                         for (int k = 0; k < serverStatus.scheduled_maintenances[i].components.Count; k++)
                         {
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Switch"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite switch"))
                             {
                                 platIcon += "<:SW:537752006719176714> ";
                             }
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Xbox"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite xbox"))
                             {
                                 platIcon += "<:XB:537749895029850112> ";
                             }
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PS4"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite ps4"))
                             {
                                 platIcon += "<:PS4:537745670518472714> ";
                             }
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PC"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite pc"))
                             {
                                 platIcon += "<:PC:537746891610259467> ";
                             }
@@ -271,19 +271,19 @@ namespace ThothBotCore.Discord
                     {
                         for (int k = 0; k < serverStatus.scheduled_maintenances[i].components.Count; k++)
                         {
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Switch"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite switch"))
                             {
                                 platIcon += "<:SW:537752006719176714> ";
                             }
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite Xbox"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite xbox"))
                             {
                                 platIcon += "<:XB:537749895029850112> ";
                             }
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PS4"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite ps4"))
                             {
                                 platIcon += "<:PS4:537745670518472714> ";
                             }
-                            if (serverStatus.scheduled_maintenances[i].components[k].name.Contains("Smite PC"))
+                            if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite pc"))
                             {
                                 platIcon += "<:PC:537746891610259467> ";
                             }

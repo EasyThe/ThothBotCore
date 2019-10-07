@@ -21,6 +21,7 @@ namespace ThothBotCore.Tournament
 
         private async Task SignupReaderReceivedAction(SocketMessage s)
         {
+            return; // I don't need this now.
             if (!(s is SocketUserMessage msg) || msg.Author.IsBot)
             {
                 return;
@@ -30,7 +31,7 @@ namespace ThothBotCore.Tournament
             if (context.Guild.Id == 518408306415632384 && context.Channel.Id == 588144272553803789)
             {
                 Console.WriteLine("zapis");
-                var playersList = new List<DuelModel.Player>();
+                var playersList = new List<VulpisPlayerModel.Player>();
                 if (!Directory.Exists("Tourneys"))
                 {
                     Directory.CreateDirectory("Tourneys");
@@ -41,7 +42,7 @@ namespace ThothBotCore.Tournament
                     await File.WriteAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}duel.json", jsont);
                 }
 
-                playersList = JsonConvert.DeserializeObject<List<DuelModel.Player>>(await File.ReadAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}duel.json"));
+                playersList = JsonConvert.DeserializeObject<List<VulpisPlayerModel.Player>>(await File.ReadAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}duel.json"));
 
                 // Checking if the player registered already
                 if (playersList.Count != 0)
@@ -56,7 +57,7 @@ namespace ThothBotCore.Tournament
                     }
                 }
 
-                playersList.Add(new DuelModel.Player()
+                playersList.Add(new VulpisPlayerModel.Player()
                 {
                     Name = context.Message.Content,
                     DiscordName = context.Message.Author.Username + "#" + context.Message.Author.DiscriminatorValue,

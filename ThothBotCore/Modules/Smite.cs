@@ -996,7 +996,7 @@ namespace ThothBotCore.Modules
             {
                 for (int i = 0; i < ServerStatus.incidents.Count; i++)
                 {
-                    if (ServerStatus.incidents[i].name.Contains("Smite") ||
+                    if (ServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite") ||
                         ServerStatus.incidents[i].components.Any(x => x.name.ToLowerInvariant().Contains("smite")))
                     {
                         inci = true;
@@ -1012,7 +1012,7 @@ namespace ThothBotCore.Modules
             {
                 for (int c = 0; c < ServerStatus.scheduled_maintenances.Count; c++)
                 {
-                    if (ServerStatus.scheduled_maintenances[c].name.Contains("Smite"))
+                    if (ServerStatus.scheduled_maintenances[c].name.ToLowerInvariant().Contains("smite"))
                     {
                         maint = true;
                     }
@@ -1685,15 +1685,72 @@ namespace ThothBotCore.Modules
         }
 
         [Command("seby")]
-        public async Task Seby([Remainder]string sentence)
+        public async Task Seby()
         {
-            string replaced = sentence.Replace('a', 'A')
-                .Replace('e', 'E')
-                .Replace('i', 'I')
-                .Replace('o', 'O')
-                .Replace('u', 'U');
+            var embed = new EmbedBuilder();
 
-            await ReplyAsync(replaced);
+            embed.AddField(x =>
+            {
+                x.Name = "**Team 1**";
+                x.Value = "Player1\n" +
+                "Player2\n" +
+                "Player3\n" +
+                "Player4\n" +
+                "Player5";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "**Team 2**";
+                x.Value = "Player1\n" +
+                "Player2\n" +
+                "Player3\n" +
+                "Player4\n" +
+                "Player5";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "**Team 3**";
+                x.Value = "Player1\n" +
+                "Player2\n" +
+                "Player3\n" +
+                "Player4\n" +
+                "Player5";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "**Team 4**";
+                x.Value = "Player1\n" +
+                "Player2\n" +
+                "Player3\n" +
+                "Player4\n" +
+                "Player5";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "**Team 5**";
+                x.Value = "Player1\n" +
+                "Player2\n" +
+                "Player3\n" +
+                "Player4\n" +
+                "Player5";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "**Team 6**";
+                x.Value = "Player1\n" +
+                "Player2\n" +
+                "Player3\n" +
+                "Player4\n" +
+                "Player5";
+                x.IsInline = true;
+            });
+
+            await ReplyAsync("", false, embed.Build());
         }
 
         // Owner Commands

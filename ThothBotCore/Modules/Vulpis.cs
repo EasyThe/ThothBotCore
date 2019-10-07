@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
+using ThothBotCore.Tournament;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
@@ -17,11 +18,11 @@ namespace ThothBotCore.Modules
         static Random rnd = new Random();
 
         [Command("duel")]
-        public async Task Duel(string username)
+        public async Task Duel([Remainder]string username)
         {
             if (Context.Guild.Id == 518408306415632384)
             {
-                var playersList = new List<DuelModel.Player>();
+                var playersList = new List<VulpisPlayerModel.Player>();
                 if (!Directory.Exists("Tourneys"))
                 {
                     Directory.CreateDirectory("Tourneys");
@@ -32,7 +33,7 @@ namespace ThothBotCore.Modules
                     await File.WriteAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}duel.json", jsont);
                 }
 
-                playersList = JsonConvert.DeserializeObject<List<DuelModel.Player>>(await File.ReadAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}duel.json"));
+                playersList = JsonConvert.DeserializeObject<List<VulpisPlayerModel.Player>>(await File.ReadAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}duel.json"));
 
                 // Checking if the player registered already
                 if (playersList.Count != 0)
@@ -47,7 +48,7 @@ namespace ThothBotCore.Modules
                     }
                 }
 
-                playersList.Add(new DuelModel.Player()
+                playersList.Add(new VulpisPlayerModel.Player()
                 {
                     Name = username,
                     DiscordName = Context.Message.Author.Username + "#" + Context.Message.Author.DiscriminatorValue,
@@ -96,6 +97,38 @@ namespace ThothBotCore.Modules
             embed.WithDescription(team1.ToString());
 
             await ReplyAsync("", false, embed.Build());
+        }
+
+        [Command("signup")]
+        [Alias("su")]
+        public async Task SignupCommand([Remainder]string input)
+        {
+            await Signups.SoloQConquest(input, Context);
+
+            if (Context.Channel.Name.Contains("soloq-conquest"))
+            {
+                await Signups.SoloQConquest(input, Context);
+            }
+        }
+
+        [Command("dothemagic")]
+        [Alias("dtm")]
+        public async Task DoTheMagic()
+        {
+            await TeamGenerator.SoloQConquest(Context);
+        }
+
+        [Command("givemethemall")]
+        public async Task Iwanthemall()
+        {
+            var playersList = JsonConvert.DeserializeObject<List<VulpisPlayerModel.Player>>(await File.ReadAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}soloqcq.json"));
+            var sb = new StringBuilder();
+
+            foreach (var x in playersList)
+            {
+                sb.Append($"{x.Name}\n");
+            }
+            await ReplyAsync(sb.ToString());
         }
     }
 }

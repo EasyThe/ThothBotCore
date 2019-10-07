@@ -299,7 +299,7 @@ namespace ThothBotCore.Utilities
                 case 504:
                     return "Ranked Conquest(Console)";
                 default:
-                    return "";
+                    return ":shrug:";
             }
         }
 
