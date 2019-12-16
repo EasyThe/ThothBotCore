@@ -1,8 +1,23 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+
 namespace ThothBotCore.Models
 {
     public class VulpisPlayerModel
     {
+        public class BaseTourney
+        {
+            public Tournament Tournament { get; set; } = new Tournament();
+            public List<Player> Players { get; set; } = new List<Player>();
+        }
+
+        public class Tournament
+        {
+            public string Type { get; set; }
+            public bool SignupsAllowed { get; set; } = false;
+            public bool CheckinsAllowed { get; set; } = false;
+            public ulong AnnouncementChannelID { get; set; }
+        }
         public class Player
         {
             public string Name { get; set; }
@@ -11,6 +26,7 @@ namespace ThothBotCore.Models
             public string DiscordName { get; set; }
             public ulong DiscordID { get; set; }
             public bool CheckedIn { get; set; } = false;
+            public bool IsPro { get; set; } = false;
         }
     }
 }

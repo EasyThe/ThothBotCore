@@ -3,7 +3,6 @@ using Discord.WebSocket;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
-using ThothBotCore.Tournament;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Discord
@@ -29,10 +28,9 @@ namespace ThothBotCore.Discord
             await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
             await _client.StartAsync();
             Client = _client;
+            Global.Client = Client;
             CommandHandler _handler = new CommandHandler();
-            SignupReader _signupReader = new SignupReader();
             await _handler.InitializeAsync(_client);
-            await _signupReader.InitializeSignupReaderAsync(_client);
 
             _client.Ready += ClientReadyTask;
             _client.JoinedGuild += JoinedNewGuildActions;

@@ -313,11 +313,20 @@ namespace ThothBotCore.Storage
             connection.Close();
         }
 
-        public static async Task<List<PlayerSpecial>> GetPlayerSpecials(string id) // Working as intended
+        public static async Task<List<PlayerSpecial>> GetPlayerSpecialsByPlayerID(string id) // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = await cnn.QueryAsync<PlayerSpecial>($"SELECT * FROM playersSpecial WHERE active_player_id LIKE '%{id}%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<PlayerSpecial>> GetPlayerSpecialsByDiscordID(ulong id) // Working as intended
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<PlayerSpecial>($"SELECT * FROM playersSpecial WHERE discordID LIKE '%{id}%'", new DynamicParameters());
                 return output.ToList();
             }
         }

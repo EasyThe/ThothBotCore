@@ -254,6 +254,23 @@ namespace ThothBotCore.Connections
             }
         }
 
+        public async Task<string> GetMOTD()
+        {
+            await CheckSession();
+
+            string signature = GetMD5Hash(devID + "getmotd" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmotdjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    return await response.Content.ReadAsStringAsync();
+                }
+            }
+        }
+
         public async Task GetMatchDetails(int matchID)
         {
             await CheckSession();

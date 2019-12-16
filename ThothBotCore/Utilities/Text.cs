@@ -82,13 +82,13 @@ namespace ThothBotCore.Utilities
 
         public static async Task<string> CheckSpecialsForPlayer(string id)
         {
-            List<PlayerSpecial> playerSpecial = await Database.GetPlayerSpecials(id);
+            List<PlayerSpecial> playerSpecial = await Database.GetPlayerSpecialsByPlayerID(id);
             if (playerSpecial.Count != 0)
             {
                 StringBuilder specialsResult = new StringBuilder();
                 if (playerSpecial[0].pro_bool != 0)
                 {
-                    specialsResult.Append(":mouse_three_button: Pro Player");
+                    specialsResult.Append(":military_medal: Pro Player");
                     specialsResult.Append("\n");
                 }
                 if (playerSpecial[0].streamer_bool != 0)
@@ -502,6 +502,23 @@ namespace ThothBotCore.Utilities
         {
             List<int> list = new List<int> { 426, 435, 440, 445, 448, 450, 451, 459, 466, 502, 503, 504 };
             return list;
+        }
+
+        public static string ReFormatMOTDText(string text)
+        {
+            text = text.Replace("<li>", "\n");
+            text = text.Replace("</li>", "");
+            text = text.Replace("Map", "**Map**");
+            text = text.Replace("Starting/Maximum Cooldown Reduction", "**Starting**/**Maximum Cooldown Reduction**");
+            text = text.Replace("Starting Level", "**Starting Level**");
+            text = text.Replace("Starting Gold", "**Starting Gold**");
+            text = text.Replace("Gods", "**Gods**");
+            text = text.Replace("Selection", "**Selection**");
+            text = text.Replace("Infinite Mana", "**Infinite Mana**");
+            text = text.Replace("Maximum Cooldown Reduction", "**Maximum Cooldown Reduction**");
+            text = text.Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
+
+            return text;
         }
 
         //Paladins Queues

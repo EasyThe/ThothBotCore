@@ -683,61 +683,91 @@ namespace ThothBotCore.Discord
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[0].GodName)} {matchPlayerDetails[0].playerName}";// left
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[0].tierWins}/{matchPlayerDetails[0].tierLosses}";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "|";
+                x.Value = "|";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[5].GodName)} {matchPlayerDetails[5].playerName}";// loss
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[5].tierWins}/{matchPlayerDetails[5].tierLosses}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[1].GodName)} {matchPlayerDetails[1].playerName}";// left
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[1].tierWins}/{matchPlayerDetails[1].tierLosses}";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "|";
+                x.Value = "|";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[6].GodName)} {matchPlayerDetails[6].playerName}";
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[6].tierWins}/{matchPlayerDetails[6].tierLosses}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[2].GodName)} {matchPlayerDetails[2].playerName}";// left
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[2].tierWins}/{matchPlayerDetails[2].tierLosses}";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "|";
+                x.Value = "|";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[7].GodName)} {matchPlayerDetails[7].playerName}";
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[7].tierWins}/{matchPlayerDetails[7].tierLosses}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[3].GodName)} {matchPlayerDetails[3].playerName}";// left
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[3].tierWins}/{matchPlayerDetails[3].tierLosses}";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "|";
+                x.Value = "|";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[8].GodName)} {matchPlayerDetails[8].playerName}";
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[8].tierWins}/{matchPlayerDetails[8].tierLosses}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[4].GodName)} {matchPlayerDetails[4].playerName}";// left
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[4].tierWins}/{matchPlayerDetails[4].tierLosses}";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "|";
+                x.Value = "|";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[9].GodName)} {matchPlayerDetails[9].playerName}";
-                field.Value = $"?";
+                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[9].tierWins}/{matchPlayerDetails[9].tierLosses}";
             });
 
             return embed;

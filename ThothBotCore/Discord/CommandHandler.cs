@@ -2,6 +2,7 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -15,13 +16,24 @@ namespace ThothBotCore.Discord
     {
         DiscordSocketClient _client;
         CommandService _commands;
-
+        public IServiceProvider _services;
         public async Task InitializeAsync(DiscordSocketClient client)
         {
             _client = client;
             _commands = new CommandService();
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
+            _services = ConfigureServices();
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
             _client.MessageReceived += HandleCommandAsync;
+        }
+
+        private IServiceProvider ConfigureServices()
+        {
+            return new ServiceCollection()
+                .AddSingleton(_client)
+                .AddSingleton<CommandService>()
+                .AddSingleton<CommandHandler>()
+                .AddSingleton<InteractiveService>()
+                .BuildServiceProvider();
         }
 
         private async Task HandleCommandAsync(SocketMessage s)
@@ -34,27 +46,34 @@ namespace ThothBotCore.Discord
             var context = new SocketCommandContext(_client, msg);
             int argPos = 0;
 
-            if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
+            try
+            {
+                if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
                 || msg.HasStringPrefix(Database.GetServerConfig(context.Guild).Result[0].prefix, ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
+                {
+                    var result = await _commands.ExecuteAsync(context, argPos, _services);
+                    if (result.IsSuccess)
+                    {
+                        Global.CommandsRun++;
+                    }
+                    if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != 518408306415632384 && context.Message.Author.Id != 171675309177831424)
+                    {
+                        await ErrorTracker.SendSuccessCommands("**Result: **" +
+                                (result.IsSuccess ? ":white_check_mark:" : ":negative_squared_cross_mark:") +
+                                $"\n**Message: **{context.Message.Content}\n" +
+                                $"**User: **{context.Message.Author}\n" +
+                                $"**Server: **{context.Guild.Name} **[**{context.Guild.Id}**] **(**{context.Guild.Users.Count}**)");
+                    }
+                    if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
+                    {
+                        await ErrorHandler(result, context).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
             {
-                var result = await _commands.ExecuteAsync(context, argPos, null);
-                if (result.IsSuccess)
-                {
-                    Global.CommandsRun++;
-                }
-                if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != 518408306415632384 && context.Message.Author.Id != 171675309177831424)
-                {
-                    await ErrorTracker.SendSuccessCommands("**Result: **" +
-                            (result.IsSuccess ? ":white_check_mark:" : ":negative_squared_cross_mark:") +
-                            $"\n**Message: **{context.Message.Content}\n" +
-                            $"**User: **{context.Message.Author}\n" +
-                            $"**Server: **{context.Guild.Name} **[**{context.Guild.Id}**] **(**{context.Guild.Users.Count}**)");
-                }
-                if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
-                {
-                    await ErrorHandler(result, context).ConfigureAwait(false);
-                }
+                Console.WriteLine("PEDAL" + ex.Message);
             }
         }
 
@@ -62,7 +81,7 @@ namespace ThothBotCore.Discord
         {
             if (result.ErrorReason.Contains("few parameters"))
             {
-                await context.Channel.SendMessageAsync("Please check the command usage in **!!help**");
+                await context.Channel.SendMessageAsync($"Please check the command usage with **{Credentials.botConfig.prefix}help**");
             }
             else if (result.ErrorReason.ToLower().Contains("user requires guild permission administrator"))
             {

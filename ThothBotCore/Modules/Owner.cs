@@ -3,6 +3,7 @@ using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Models;
@@ -66,7 +67,7 @@ namespace ThothBotCore.Modules
                 await Database.SetPlayerSpecials(playerID[0].player_id, splitParams[1], null, 0);
             }
 
-            var playerspecs = await Database.GetPlayerSpecials(playerID[0].player_id.ToString());
+            var playerspecs = await Database.GetPlayerSpecialsByPlayerID(playerID[0].player_id.ToString());
             var embed = new EmbedBuilder();
             bool b = Convert.ToBoolean(playerspecs[0].streamer_bool);
             embed.WithColor(Constants.DefaultBlueColor);
@@ -166,5 +167,30 @@ namespace ThothBotCore.Modules
         {
             await Discord.Connection.Client.GetGuild(id).LeaveAsync();
         }
+
+        [Command("getjson")]
+        [RequireOwner]
+        public async Task GetPlayerOwnerCommand(string username)
+        {
+            string result = "";
+            try
+            {
+                result = await hirezAPI.GetPlayer(username);
+                await ReplyAsync(result);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("2000"))
+                {
+                    await File.WriteAllTextAsync("testmethod.json", result);
+                    await ReplyAsync("Saved as testmethod.json");
+                }
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
     }
 }
