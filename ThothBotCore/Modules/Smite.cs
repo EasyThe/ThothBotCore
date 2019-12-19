@@ -2041,17 +2041,35 @@ namespace ThothBotCore.Modules
 
         // Shit/fun commands lul
 
-        [Command("rank")]
+        [Command("rank", true, RunMode = RunMode.Async)]
+        [Alias("ранк")]
         public async Task RandomRankCommand()
         {
-            var embed = new EmbedBuilder();
-            int n;
-            n = rnd.Next(0, 27);
-            embed.WithColor(rnd.Next(255), rnd.Next(255), rnd.Next(255));
-            embed.WithTitle("Your rank is");
-            embed.WithDescription($"{Text.GetRankedConquest(n).Item2}{Text.GetRankedConquest(n).Item1}");
+            try
+            {
+                var embed = new EmbedBuilder();
+                int n;
+                n = rnd.Next(0, 28);
+                embed.WithColor(rnd.Next(255), rnd.Next(255), rnd.Next(255));
+                embed.WithAuthor(x =>
+                {
+                    x.IconUrl = Context.Message.Author.GetAvatarUrl();
+                    x.Name = $"{Context.Message.Author.Username}'s rank is:";
+                });
+                if (Context.Message.MentionedUsers.Count > 0)
+                {
+                    var mentionedUser = Context.Message.MentionedUsers.First();
+                    embed.Author.Name = $"{mentionedUser.Username}'s rank is:";
+                    embed.Author.IconUrl = mentionedUser.GetAvatarUrl();
+                }
+                embed.WithTitle($"{Text.GetRankedConquest(n).Item2} {Text.GetRankedConquest(n).Item1}");
 
-            await ReplyAsync("", false,embed.Build());
+                await ReplyAsync("", false, embed.Build());
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync(ex.Message);
+            }
         }
     }
 }

@@ -299,6 +299,15 @@ namespace ThothBotCore.Modules
 
                 string playerIdJSON = await hirezAPI.GetPlayerIdByName(response.Content);
                 var playerIDList = JsonConvert.DeserializeObject<List<PlayerIDbyName>>(playerIdJSON);
+                if (playerIDList.Count == 0)
+                {
+                    embed.Description = $":red_circle: Couldn't find a player with IGN: {response}";
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Embed = embed.Build();
+                    });
+                    return;
+                }
                 string getplayerJSON = await hirezAPI.GetPlayer(playerIDList[0].player_id.ToString());
                 var getplayerList = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerJSON);
 

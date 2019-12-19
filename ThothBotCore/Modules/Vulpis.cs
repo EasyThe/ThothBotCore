@@ -107,6 +107,10 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                if (Context.Guild.Id != 321367254983770112)
+                {
+                    return;
+                }
                 var meganz = new VulpisPlayerModel.BaseTourney();
                 // Interactive BOII
 
@@ -151,6 +155,10 @@ namespace ThothBotCore.Modules
         [Command("signup")]
         public async Task SignupCommand([Remainder]string input)
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             if (Context.Channel.Name.Contains("soloq-conquest"))
             {
                 string fileName = TournamentUtilities.GetTournamentFileName("soloqcq");
@@ -180,6 +188,10 @@ namespace ThothBotCore.Modules
         [Command("opensignups")]
         public async Task OpenSignups([Remainder]string input)
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             string filePath = TournamentUtilities.GetTournamentFileName(input.Trim());
             string json = await File.ReadAllTextAsync(filePath);
             var tourney = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(json);
@@ -195,6 +207,10 @@ namespace ThothBotCore.Modules
         [Command("closesignups")]
         public async Task CloseSignups([Remainder]string input)
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             string filePath = TournamentUtilities.GetTournamentFileName(input.Trim());
             string json = await File.ReadAllTextAsync(filePath);
             var tourney = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(json);
@@ -213,6 +229,10 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                if (Context.Guild.Id != 321367254983770112)
+                {
+                    return;
+                }
                 string filePath = TournamentUtilities.GetTournamentFileName("soloqcq");
                 string json = await File.ReadAllTextAsync(filePath);
                 var tourney = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(json);
@@ -232,6 +252,10 @@ namespace ThothBotCore.Modules
         [Command("closecheckins")]
         public async Task CloseCheckins()
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             string filePath = TournamentUtilities.GetTournamentFileName("soloqcq");
             string json = await File.ReadAllTextAsync(filePath);
             var tourney = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(json);
@@ -248,7 +272,7 @@ namespace ThothBotCore.Modules
         [Command("checkin")]
         public async Task CheckinCommand()
         {
-            if (Context.Channel.Name.Contains("soloq-conquest"))
+            if (Context.Channel.Name.Contains("soloq-conquest") && Context.Guild.Id == 321367254983770112)
             {
                 string fileName = TournamentUtilities.GetTournamentFileName("soloqcq");
                 if (fileName != "")
@@ -288,6 +312,10 @@ namespace ThothBotCore.Modules
         [Command("checktournament")]
         public async Task CheckTournamentCommand()
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             string filePath = TournamentUtilities.GetTournamentFileName("soloqcq");
             string json = await File.ReadAllTextAsync(filePath);
             var tourney = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(json);
@@ -307,6 +335,10 @@ namespace ThothBotCore.Modules
         [Command("checkplayers")]
         public async Task PlayersInTourneyCommand()
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             string filePath = TournamentUtilities.GetTournamentFileName("soloqcq");
             string json = await File.ReadAllTextAsync(filePath);
             var tourney = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(json);
@@ -334,7 +366,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("sqmake")]
-        [RequireOwner]
         public async Task CreateTeamsSQCq()
         {
             await TeamGenerator.SoloQConquest(Context);
@@ -368,9 +399,12 @@ namespace ThothBotCore.Modules
         }
 
         [Command("rsem")]
-        [RequireOwner]
         public async Task ResendTeamsEmbed(SocketTextChannel channel, ulong messageID, SocketTextChannel channelToSendTo)
         {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                return;
+            }
             var chan = Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channel.Id).GetMessageAsync(messageID);
             var sendChannel = Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channelToSendTo.Id);
 
