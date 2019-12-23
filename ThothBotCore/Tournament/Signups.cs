@@ -67,7 +67,7 @@ namespace ThothBotCore.Tournament
                 string json = JsonConvert.SerializeObject(tournament, Formatting.Indented);
                 await File.WriteAllTextAsync(filepath, json);
 
-                // Reading again?
+                // Reading again to make sure everything went well
                 tournament = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(await File.ReadAllTextAsync(filepath));
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(x =>

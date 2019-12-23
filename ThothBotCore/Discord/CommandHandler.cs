@@ -67,35 +67,46 @@ namespace ThothBotCore.Discord
                     }
                     if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                     {
-                        await ErrorHandler(result, context).ConfigureAwait(false);
+                        await ErrorHandler(context, result).ConfigureAwait(false);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("PEDAL" + ex.Message);
+                Console.WriteLine("Guild: " + context.Guild.Name + $"\nMessage: {context.Message.Content}");
+                await ErrorHandler(context, null, ex);
             }
         }
 
-        public static async Task ErrorHandler(IResult result, SocketCommandContext context)
+        public static async Task ErrorHandler(SocketCommandContext context, IResult result = null, Exception exception = null)
         {
-            if (result.ErrorReason.Contains("few parameters"))
+            string errorString = "";
+            if (result == null)
+            {
+                errorString = exception.Message;
+            }
+            else
+            {
+                errorString = result.ErrorReason;
+            }
+
+            if (errorString.ToLowerInvariant().Contains("few parameters"))
             {
                 await context.Channel.SendMessageAsync($"Please check the command usage with **{Credentials.botConfig.prefix}help**");
             }
-            else if (result.ErrorReason.ToLower().Contains("user requires guild permission administrator"))
+            else if (errorString.ToLowerInvariant().Contains("user requires guild permission administrator"))
             {
                 await context.Channel.SendMessageAsync("You must to have **Administrator** permission in this server to use this command.");
             }
-            else if (result.ErrorReason.ToLower().Contains("channel not found"))
+            else if (errorString.ToLowerInvariant().Contains("channel not found"))
             {
                 await context.Channel.SendMessageAsync("Channel not found.");
             }
-            else if (result.ErrorReason.Contains("Command must be used in a guild channel"))
+            else if (errorString.ToLowerInvariant().Contains("Command must be used in a guild channel"))
             {
                 await context.Channel.SendMessageAsync("Command must be used in a guild channel.");
             }
-            else if (result.ErrorReason.ToLower().Contains("50013"))
+            else if (errorString.ToLowerInvariant().Contains("50013"))
             {
                 try
                 {
@@ -107,22 +118,23 @@ namespace ThothBotCore.Discord
                     await user.SendMessageAsync($"I don't have **Send Messages** or **Embed Links** permissions in #{context.Channel.Name}");
                 }
             }
-            else if (result.ErrorReason.Contains("1024"))
+            else if (errorString.ToLowerInvariant().Contains("1024"))
             {
                 await context.Channel.SendMessageAsync("Oops. The text is too long so, I was not able to fit the help command in one field.");
             }
-            else if (result.ErrorReason.Contains("Command can only be run by the owner of the bot."))
+            else if (errorString.ToLowerInvariant().Contains("Command can only be run by the owner of the bot."))
             {
                 return;
             }
             else
             {
-                Console.WriteLine(result.Error + " " + result.ErrorReason);
+                Console.WriteLine("Error Tracker: " + errorString);
                 await ErrorTracker.SendError($"**Message: **{context.Message.Content}\n" +
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Error: **{result.Error}\n" +
-                    $"**Error Reason: **{result.ErrorReason}");
+                    $"**Error Reason: **{result.ErrorReason}\n" +
+                    $"{(exception != null ? $"**Stack Trace:** {exception.StackTrace}\n**Source: **{exception.Source}" : "")}");
                 await context.Channel.SendMessageAsync("Something went wrong. Bot owner was notified about this error and will take care of it as soon as possible. Sorry for the inconvenience caused.");
             }
         }

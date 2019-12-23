@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using Newtonsoft.Json;
 using System;
@@ -13,7 +14,7 @@ using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
 {
-    public class Owner : ModuleBase<SocketCommandContext>
+    public class Owner : InteractiveBase<SocketCommandContext>
     {
         HiRezAPI hirezAPI = new HiRezAPI();
         readonly DominantColor domColor = new DominantColor();
@@ -166,6 +167,16 @@ namespace ThothBotCore.Modules
         public async Task LeaveGuild(ulong id)
         {
             await Discord.Connection.Client.GetGuild(id).LeaveAsync();
+        }
+
+        [Command("sm")]
+        [RequireOwner]
+        public async Task SendMessageAsOwner(ulong server, ulong channel, [Remainder]string message)
+        {
+            var chn = Discord.Connection.Client.GetGuild(server).GetTextChannel(channel);
+
+            var sentMessage = await chn.SendMessageAsync(message);
+            await ReplyAsync("I guess it worked, idk.");
         }
 
         [Command("getjson")]

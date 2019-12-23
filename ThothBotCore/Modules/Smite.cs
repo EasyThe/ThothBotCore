@@ -57,7 +57,7 @@ namespace ThothBotCore.Modules
                 }
                 else if (Context.Message.MentionedUsers.Count != 0)
                 {
-                    var mentionedUser = Context.Message.MentionedUsers.First();
+                    var mentionedUser = Context.Message.MentionedUsers.Last();
                     getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
                     if (getPlayerByDiscordID.Count != 0)
                     {
@@ -748,7 +748,7 @@ namespace ThothBotCore.Modules
                 {
                     if (god.OnFreeRotation == "true")
                     {
-                        onRotation.Append(god.Emoji);
+                        onRotation.Append($"{god.Emoji} {god.Name}\n");
                     }
                 }
                 embed.WithColor(Constants.DefaultBlueColor);

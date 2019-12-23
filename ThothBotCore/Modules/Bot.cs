@@ -61,7 +61,7 @@ namespace ThothBotCore.Modules
             {
                 x.Name = ":zap: SMITE Servers & Bugs";
                 x.Value = $":small_blue_diamond:`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
-                $":small_blue_diamond:`{prefix}statusupdates #channel` - Sends a message when SMITE incidents and scheduled maintenances appear in the status page to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
+                $":small_blue_diamond:`{prefix}statusupdates #channel` - When SMITE incidents and scheduled maintenances appear in the status page they will be sent to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
                 $":small_blue_diamond:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
                 $":small_blue_diamond:`{prefix}trello` - Checks the [SMITE Community Trello Board](https://trello.com/b/d4fJtBlo/smite-community-issues).\nAlias: `{prefix}issues` `{prefix}bugs` `{prefix}board`";
                 x.IsInline = false;
@@ -142,7 +142,7 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(author =>
             {
                 author
-                    .WithName("Statistics for Thoth")
+                    .WithName("Statistics for ThothBot")
                     .WithIconUrl(botIcon);
             });
             embed.WithDescription("Creator: EasyThe#2836");
@@ -168,12 +168,6 @@ namespace ThothBotCore.Modules
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "Smite Patch Version";
-                field.Value = patch;
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
                 field.Name = "Players";
                 field.Value = PlayersInDbCount()[0];
             });
@@ -182,6 +176,24 @@ namespace ThothBotCore.Modules
                 field.IsInline = true;
                 field.Name = "Commands Run";
                 field.Value = Global.CommandsRun;
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Status Update Subs";
+                x.Value = Database.CountOfStatusUpdatesActivatedInDB()[0];
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Linked Players";
+                x.Value = Database.LinkedPlayersInDBCount()[0];
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Smite Patch Version";
+                field.Value = patch;
             });
             embed.AddField(x =>
             {

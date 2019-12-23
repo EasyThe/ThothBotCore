@@ -390,6 +390,24 @@ namespace ThothBotCore.Storage
             }
         }
 
+        public static List<string> LinkedPlayersInDBCount() // Working as intended
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<string>($"SELECT count(*) FROM playersSpecial WHERE discordID IS NOT NULL", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static List<string> CountOfStatusUpdatesActivatedInDB() // Working as intended
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = cnn.Query<string>($"SELECT count(*) FROM serverConfig WHERE statusBool = 1", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public static List<Gods.God> LoadGod(string godname) // Get god by godname
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
