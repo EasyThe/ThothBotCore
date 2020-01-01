@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
@@ -770,6 +771,126 @@ namespace ThothBotCore.Discord
                 field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[9].tierWins}/{matchPlayerDetails[9].tierLosses}";
             });
 
+            return embed;
+        }
+
+        public static async Task<EmbedBuilder> MatchDetailsEmbed(List<MatchDetails.MatchDetailsPlayer> matchdetailsList)
+        {
+            var embed = new EmbedBuilder();
+
+            TimeSpan matchTime = TimeSpan.FromSeconds(matchdetailsList[0].Time_In_Match_Seconds);
+
+            embed.WithColor(Constants.DefaultBlueColor);
+            embed.WithAuthor(author =>
+            {
+                author.WithName($"{matchdetailsList[0].name} | {matchTime.Minutes} mins");
+                author.WithIconUrl(botIcon);
+                author.WithUrl($"https://smite.guru/match/{matchdetailsList[0].Match}");
+            });
+            embed.WithFooter(x =>
+            {
+                x.Text = matchdetailsList[0].Match.ToString();
+            });
+            //embed.WithThumbnailUrl(botIcon);
+
+            var winners = new List<MatchDetails.MatchDetailsPlayer>();
+            var losers = new List<MatchDetails.MatchDetailsPlayer>();
+
+            foreach (var player in matchdetailsList)
+            {
+                if (player.Win_Status.ToLowerInvariant() == "winner")
+                {
+                    winners.Add(player);
+                }
+                else if (player.Win_Status.ToLowerInvariant() == "loser")
+                {
+                    losers.Add(player);
+                }
+                else
+                {
+                    await ErrorTracker.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
+                }
+            }
+
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $":green_circle: **{winners[0].Win_Status}** :green_circle:";
+                x.Value = "\u200b";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "\u200b";
+                x.Value = "\u200b";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $":red_circle: **{losers[0].Win_Status}** :red_circle:";
+                x.Value = "\u200b";
+            });
+
+            var items = await Database.GetAllItems();
+
+
+            for (int i = 0; i < winners.Count; i++)
+            {
+                // Getting their items EXPERIMENTAL
+                var winnerItems = new StringBuilder();
+                var loserItems = new StringBuilder(); ;
+                // Items for winner
+                winnerItems.Append(winners[i].Item_Purch_1);
+                winnerItems.Append("\n");
+                winnerItems.Append(winners[i].Item_Purch_2);
+                winnerItems.Append("\n");
+                winnerItems.Append(winners[i].Item_Purch_3);
+                winnerItems.Append("\n");
+                winnerItems.Append(winners[i].Item_Purch_4);
+                winnerItems.Append("\n");
+                winnerItems.Append(winners[i].Item_Purch_5);
+                winnerItems.Append("\n");
+                winnerItems.Append(winners[i].Item_Purch_6);
+                // losers
+                loserItems.Append(losers[i].Item_Purch_1);
+                loserItems.Append("\n");
+                loserItems.Append(losers[i].Item_Purch_2);
+                loserItems.Append("\n");
+                loserItems.Append(losers[i].Item_Purch_3);
+                loserItems.Append("\n");
+                loserItems.Append(losers[i].Item_Purch_4);
+                loserItems.Append("\n");
+                loserItems.Append(losers[i].Item_Purch_5);
+                loserItems.Append("\n");
+                loserItems.Append(losers[i].Item_Purch_6);
+
+
+
+                // End of getting items EXPERIMENTAL
+
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"{Text.GetGodEmoji(winners[i].Reference_Name)} {(winners[i].hz_player_name != "" ? winners[i].hz_player_name : winners[i].hz_gamer_tag)}";
+                    x.Value = $"<:level:529719212017451008>Level: {winners[i].Account_Level}\n" +
+                    $":crossed_swords:KDA: {winners[i].Kills_Player}/{winners[i].Deaths}/{winners[i].Assists}\n" +
+                    $"{winnerItems.ToString()}";
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"{winners[i].Region} **|** {losers[i].Region}";
+                    x.Value = "\u200b";
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"{Text.GetGodEmoji(losers[i].Reference_Name)} {(losers[i].hz_player_name != "" ? losers[i].hz_player_name : losers[i].hz_gamer_tag)}";
+                    x.Value = $"<:level:529719212017451008>Level: {losers[i].Account_Level}\n" +
+                    $":crossed_swords:KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
+                    $"{loserItems.ToString()}";
+                });
+            }
             return embed;
         }
     }

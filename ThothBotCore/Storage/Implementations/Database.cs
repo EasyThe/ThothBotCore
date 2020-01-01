@@ -516,7 +516,7 @@ namespace ThothBotCore.Storage
                 return output.ToList();
             }
         }
-
+        
         public static async Task<List<Item>> GetActiveItemsByGodType(string type, string role)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
@@ -559,6 +559,15 @@ namespace ThothBotCore.Storage
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE DeviceName LIKE '%{itemname}%' AND ActiveFlag LIKE '%y%' AND ItemTier NOT LIKE '%4%'", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<Item>> GetSpecificItemByID(int id)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<Item>($"SELECT * FROM Items WHERE ItemId = {id} AND ActiveFlag LIKE '%y%' AND ItemTier NOT LIKE '%4%'", new DynamicParameters());
                 return output.ToList();
             }
         }

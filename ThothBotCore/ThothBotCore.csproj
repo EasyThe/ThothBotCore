@@ -45,8 +45,4 @@
     <PackageReference Include="Unity" Version="5.8.13" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Utilities\Smite\" />
-  </ItemGroup>
-
 </Project>

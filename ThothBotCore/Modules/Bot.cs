@@ -69,7 +69,8 @@ namespace ThothBotCore.Modules
             embed.AddField(x =>
             {
                 x.Name = ":zap: SMITE Information";
-                x.Value = $":small_blue_diamond:`{prefix}gods` - Overall information about the gods in the game and current free god rotation.\n" +
+                x.Value = $":new: `{prefix}matchdetails MatchID` - Sends match details about `MatchID`.\nAlias: `{prefix}md`\n" +
+                $":small_blue_diamond:`{prefix}gods` - Overall information about the gods in the game and current free god rotation.\n" +
                 $":small_blue_diamond:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g`\n" +
                 $":small_blue_diamond:`{prefix}item ItemName` - Gives you information about `ItemName`.\nAlias: `{prefix}i`\n" +
                 $":new:`{prefix}motd` - Information about upcoming MOTDs in the game.\nAlias: `{prefix}motds` `{prefix}мотд` `{prefix}мотдс`";

@@ -33,7 +33,6 @@ namespace ThothBotCore.Connections
             return sb.ToString();
         }
 
-        internal string matchDetails;
         internal string pingAPI;
         internal string dataUsed;
         internal string testing;
@@ -271,7 +270,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task GetMatchDetails(int matchID)
+        public async Task<string> GetMatchDetails(int matchID)
         {
             await CheckSession();
 
@@ -283,7 +282,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchID}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    matchDetails = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }
