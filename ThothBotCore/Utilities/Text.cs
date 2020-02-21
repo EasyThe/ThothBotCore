@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Storage;
@@ -14,13 +15,29 @@ namespace ThothBotCore.Utilities
         {
             return text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
         }
-
+        public static string Truncate(string value, int maxChars) // Didnt try if works
+        {
+            return value.Length <= maxChars ? value : value.Substring(0, maxChars - 3) + "...";
+        }
         public static string InvariantDate(DateTime dateTime)
         {
             string invariantDate = "";
             return invariantDate = dateTime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture);
         }
-
+        public static string UserNotFound(string username)
+        {
+            return $"<:X_:579151621502795777>*{username}* is not found!";
+        }
+        public static string UserIsHidden(string username)
+        {
+            return $"<:Hidden:591666971234402320>*{username}* is hidden!";
+        }
+        public static string AbbreviationRegions(string region)
+        {
+            return string.Join(string.Empty, region
+                .Where(char.IsLetter)
+                .Where(char.IsUpper));
+        }
         public static string PrettyDate(DateTime dateTime)
         {
             TimeSpan timeSpan = DateTime.UtcNow.Subtract(dateTime);
@@ -79,7 +96,36 @@ namespace ThothBotCore.Utilities
 
             return dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
         }
-
+        public static string NumberEmojies(int number)
+        {
+            switch (number)
+            {
+                case 0:
+                    return "0️⃣";
+                case 1:
+                    return "1️⃣";
+                case 2:
+                    return "2️⃣";
+                case 3:
+                    return "3️⃣";
+                case 4:
+                    return "4️⃣";
+                case 5:
+                    return "5️⃣";
+                case 6:
+                    return "6️⃣";
+                case 7:
+                    return "7️⃣";
+                case 8:
+                    return "8️⃣";
+                case 9:
+                    return "9️⃣";
+                case 10:
+                    return "🔟";
+                default:
+                    return "🤷‍♂️";
+            }
+        }
         public static async Task<string> CheckSpecialsForPlayer(string id)
         {
             List<PlayerSpecial> playerSpecial = await Database.GetPlayerSpecialsByPlayerID(id);
@@ -122,7 +168,6 @@ namespace ThothBotCore.Utilities
             }
             return "";
         }
-
         public static string StatusEmoji(string status)
         {
             switch (status)
@@ -141,6 +186,28 @@ namespace ThothBotCore.Utilities
         public static string GetGodEmoji(string godname)
         {
             return Database.GetGodEmoji(godname).Result[0].Emoji;
+        }
+        public static string SideName(int taskForce)
+        {
+            if (taskForce == 1)
+            {
+                return "Order";
+            }
+            else
+            {
+                return "Chaos";
+            }
+        }
+        public static string SideEmoji(int taskForce)
+        {
+            if (taskForce == 1)
+            {
+                return "🔹";
+            }
+            else
+            {
+                return "🔸";
+            }
         }
 
         public static DateTime TimezoneSpecific(DateTime utctime, string timezone)
@@ -519,6 +586,18 @@ namespace ThothBotCore.Utilities
             text = text.Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
 
             return text;
+        }
+
+        public static string HiddenProfileCheck(string name)
+        {
+            if (name == "")
+            {
+                return "~~Hidden Profile~~";
+            }
+            else
+            {
+                return name;
+            }
         }
 
         //Paladins Queues

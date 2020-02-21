@@ -59,7 +59,7 @@ namespace ThothBotCore.Modules
                                                                                                                                                                                 // SMITE API ONLY PlayerAchievements playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
                     List<PaladinsPlayer.PaladinsPlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PaladinsPlayer.PaladinsPlayerStatus>>(await hirezAPI.GetPlayerStatusPaladins(playerStats[0].ActivePlayerId));
 
-                    string defaultEmoji = ""; //:small_blue_diamond: <:gems:443919192748589087>
+                    string defaultEmoji = ""; //🔹 <:gems:443919192748589087>
                     string checkedPlayerName = playerStats[0].hz_player_name == null ? playerStats[0].Name : playerStats[0].Name;
 
                     string rPlayerName = "";
@@ -100,7 +100,7 @@ namespace ThothBotCore.Modules
                     }
                     else
                     {
-                        defaultEmoji = ":small_blue_diamond:"; // :small_blue_diamond: <:blank:570291209906552848>
+                        defaultEmoji = "🔹"; // 🔹 <:blank:570291209906552848>
                         embed.WithColor(Constants.DefaultBlueColor);
                         if (playerStatus[0].Match != 0)
                         {
@@ -154,7 +154,8 @@ namespace ThothBotCore.Modules
                     {
                         field.IsInline = true;
                         field.Name = $"<:Paladins:588196531019186193>**{Text.GetRankedConquest(playerStats[0].Tier_RankedKBM).Item1}**";
-                        field.Value = $"{defaultEmoji}Rank: {playerStats[0].RankedKBM.Rank}\n" +
+                        field.Value = $"{defaultEmoji}Season: {playerStats[0].RankedKBM.Season}\n" +
+                        $"{defaultEmoji}Rank: {playerStats[0].RankedKBM.Rank}\n" +
                         $"{defaultEmoji}Wins: {playerStats[0].RankedKBM.Wins}\n" +
                         $"{defaultEmoji}Losses: {playerStats[0].RankedKBM.Losses}";
                     });

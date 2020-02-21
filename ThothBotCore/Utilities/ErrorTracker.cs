@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
@@ -35,16 +36,20 @@ namespace ThothBotCore.Utilities
                 {
                     x.Name = $"Server #{Discord.Connection.Client.Guilds.Count}";
                 });
-                embed.WithTitle($":new:{guild.Name}\n" +
-                $":id:**Server ID:** {guild.Id}\n" +
-                $":bust_in_silhouette:**Owner:** {guild.Owner}\n");
-                embed.AddField(x =>
+                string result = $"🆕{guild.Name}\n" +
+                $"🆔**Server ID:** {guild.Id}\n" +
+                $"👤**Owner:** {guild.Owner}\n" +
+                $"👥**Users:** {guild.MemberCount}\n" +
+                $"💬**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}";
+                if (result.Length >= 256)
                 {
-                    x.Name = $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
-                $":speech_balloon:**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}\n" +
-                $":alarm_clock:**Joined at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}";
-                    x.Value = "\u200b";
-                });
+                    embed.WithDescription(result);
+                }
+                else
+                {
+                    embed.WithTitle(result);
+                }
+
                 if (guild.IconUrl != null || guild.IconUrl == "")
                 {
                     embed.ImageUrl = guild.IconUrl;
@@ -64,16 +69,19 @@ namespace ThothBotCore.Utilities
             {
                 var embed = new EmbedBuilder();
                 embed.WithColor(new Color(255, 0, 0));
-                embed.WithTitle($":small_red_triangle_down:{guild.Name}\n" +
-                $":id:**Server ID:** {guild.Id}\n" +
-                $":bust_in_silhouette:**Owner:** {guild.Owner}");
-                embed.AddField(x =>
+                string result = $"🔻{guild.Name}\n" +
+                $"🆔**Server ID:** {guild.Id}\n" +
+                $"👤**Owner:** {guild.Owner}\n" +
+                $"👥**Users:** {guild.MemberCount}\n" +
+                $"💬**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}";
+                if (result.Length >= 256)
                 {
-                    x.Name = $":busts_in_silhouette:**Users:** {guild.MemberCount}\n" +
-                $":speech_balloon:**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}\n" +
-                $":alarm_clock:**Left at:** {DateTime.Now.ToString("HH:mm dd.MM.yyyy")}";
-                    x.Value = "\u200b";
-                });
+                    embed.WithDescription(result);
+                }
+                else
+                {
+                    embed.WithTitle(result);
+                }
 
                 if (guild.IconUrl != null || guild.IconUrl == "")
                 {
@@ -111,6 +119,23 @@ namespace ThothBotCore.Utilities
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+        }
+        public static async Task SendException(Exception ex, SocketCommandContext context)
+        {
+            try
+            {
+                await reportsChannel.SendMessageAsync($"**Message: **{context.Message.Content}\n" +
+                    $"**User: **{context.Message.Author}\n" +
+                    $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
+                    $"**Exception Message: **{ex.Message}\n" +
+                    $"**Data: **{ex.Data}\n" +
+                    $"**Stack Trace:** {ex.StackTrace}\n" +
+                    $"**Source: **{ex.Source}");
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
             }
         }
 

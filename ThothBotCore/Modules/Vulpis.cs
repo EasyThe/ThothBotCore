@@ -115,7 +115,7 @@ namespace ThothBotCore.Modules
                 // Interactive BOII
 
                 // Tournament type
-                await ReplyAsync(":heart:**Hello, qtie and welcome to TOURNAMENT CREATOR 1.0**\n:small_blue_diamond: Please tell me what the tournament will be (conquest, duel)((you have 60 seconds btw))");
+                await ReplyAsync(":heart:**Hello, qtie and welcome to TOURNAMENT CREATOR 1.0**\n🔹 Please tell me what the tournament will be (conquest, duel)((you have 60 seconds btw))");
                 var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
                 meganz.Tournament.Type = response.Content;
 
@@ -401,7 +401,7 @@ namespace ThothBotCore.Modules
         [Command("rsem")]
         public async Task ResendTeamsEmbed(SocketTextChannel channel, ulong messageID, SocketTextChannel channelToSendTo)
         {
-            if (Context.Guild.Id != 321367254983770112)
+            if (Context.Guild.Id != 321367254983770112 || Context.Message.Author.Id != 171675309177831424)
             {
                 return;
             }

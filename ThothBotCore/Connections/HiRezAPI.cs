@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Models;
 
 namespace ThothBotCore.Connections
 {
@@ -269,7 +270,23 @@ namespace ThothBotCore.Connections
                 }
             }
         }
+        public async Task<List<MatchHistoryModel>> GetMatchHistory(int playerID)
+        {
+            await CheckSession();
 
+            string signature = GetMD5Hash(devID + "getmatchhistory" + authKey + timestamp);
+
+            var handler = new HttpClientHandler();
+            using (var httpClient = new HttpClient(handler, false))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmatchhistoryjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{playerID}"))
+                {
+                    var response = await httpClient.SendAsync(request);
+                    string json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<MatchHistoryModel>>(json);
+                }
+            }
+        }
         public async Task<string> GetMatchDetails(int matchID)
         {
             await CheckSession();

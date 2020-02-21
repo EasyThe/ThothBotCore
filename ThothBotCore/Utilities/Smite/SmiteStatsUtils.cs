@@ -1,7 +1,4 @@
-﻿using Discord.Commands;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
@@ -25,10 +22,6 @@ namespace ThothBotCore.Utilities.Smite
                 }
             }
             return realSearchPlayers;
-        }
-        public static string IsLinkedPlayer(ulong DiscordID)
-        {
-            return "";
         }
     }
 }

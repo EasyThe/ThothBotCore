@@ -6,15 +6,12 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
-using ThothBotCore.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
-using static ThothBotCore.Connections.Models.Player;
 using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Modules
@@ -22,7 +19,6 @@ namespace ThothBotCore.Modules
     public class Bot : InteractiveBase<SocketCommandContext>
     {
         readonly string botIcon = "https://i.imgur.com/8qNdxse.png"; // https://i.imgur.com/AgNocjS.png
-        private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 
         readonly HiRezAPI hirezAPI = new HiRezAPI();
         readonly DominantColor domColor = new DominantColor();
@@ -49,46 +45,46 @@ namespace ThothBotCore.Modules
                 author.WithIconUrl(botIcon);
             });
             embed.WithColor(Constants.DefaultBlueColor);
-            //embed.WithTitle($":new:You can now check item information with `{prefix}item itemname`");
             embed.WithDescription("[Support server](http://discord.gg/hU6MTbQ)\n" + desc);
             embed.AddField(x =>
             {
                 x.Name = ":zap: SMITE Player Stats";
-                x.Value = $":small_blue_diamond:`{prefix}stats PlayerName` - Display stats for `PlayerName`\nAlias: `{prefix}stat` `{prefix}pc` `{prefix}st` `{prefix}stata` `{prefix}ст` `{prefix}статс` `{prefix}ns`\n" +
-                $":new:`{prefix}link` - Link your Discord and SMITE accounts.";
+                x.Value = $"🔹`{prefix}stats PlayerName` - Display stats for `PlayerName`\nAlias: `{prefix}stat` `{prefix}pc` `{prefix}st` `{prefix}stata` `{prefix}ст` `{prefix}статс` `{prefix}ns`\n" +
+                $"🔹`{prefix}link` - Link your Discord and SMITE accounts.";
             });
             embed.AddField(x =>
             {
                 x.Name = ":zap: SMITE Servers & Bugs";
-                x.Value = $":small_blue_diamond:`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
-                $":small_blue_diamond:`{prefix}statusupdates #channel` - When SMITE incidents and scheduled maintenances appear in the status page they will be sent to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
-                $":small_blue_diamond:`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
-                $":small_blue_diamond:`{prefix}trello` - Checks the [SMITE Community Trello Board](https://trello.com/b/d4fJtBlo/smite-community-issues).\nAlias: `{prefix}issues` `{prefix}bugs` `{prefix}board`";
+                x.Value = $"🔹`{prefix}status` - Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.\nAlias: `{prefix}s` `{prefix}статус` `{prefix}statis` `{prefix}server` `{prefix}servers` `{prefix}se` `{prefix}се`\n" +
+                $"🔹`{prefix}statusupdates #channel` - When SMITE incidents and scheduled maintenances appear in the status page they will be sent to `#channel`\nAlias: `{prefix}statusupd` `{prefix}su`\n" +
+                $"🔹`{prefix}stopstatusupdates` - Stops sending messages from the SMITE status page.\nAlias: `{prefix}ssu`\n" +
+                $"🔹`{prefix}trello` - Checks the [SMITE Community Issues Trello Board](https://trello.com/b/d4fJtBlo/smite-community-issues).\nAlias: `{prefix}issues` `{prefix}bugs` `{prefix}board`";
                 x.IsInline = false;
             });
             embed.AddField(x =>
             {
                 x.Name = ":zap: SMITE Information";
-                x.Value = $":new: `{prefix}matchdetails MatchID` - Sends match details about `MatchID`.\nAlias: `{prefix}md`\n" +
-                $":small_blue_diamond:`{prefix}gods` - Overall information about the gods in the game and current free god rotation.\n" +
-                $":small_blue_diamond:`{prefix}god GodName` - Gives you information about `GodName`.\nAlias: `{prefix}g`\n" +
-                $":small_blue_diamond:`{prefix}item ItemName` - Gives you information about `ItemName`.\nAlias: `{prefix}i`\n" +
-                $":new:`{prefix}motd` - Information about upcoming MOTDs in the game.\nAlias: `{prefix}motds` `{prefix}мотд` `{prefix}мотдс`";
+                x.Value = $":new:`{prefix}matchdetails MatchID` - Sends match details about `MatchID`.\nAlias: `{prefix}md`\n" +
+                $":new:`{prefix}livematch PlayerName` - Sends match details if `PlayerName` is in a match.\nAlias: `{prefix}l` `{prefix}live` `{prefix}lm`\n" +
+                $"🔹`{prefix}gods` - Overall information about the gods in the game and current free god rotation.\n" +
+                $"🔹`{prefix}god GodName` - Sends information about `GodName`.\nAlias: `{prefix}g`\n" +
+                $"🔹`{prefix}item ItemName` - Sends information about `ItemName`.\nAlias: `{prefix}i`\n" +
+                $"🔹`{prefix}motd` - Information about upcoming MOTDs in the game.\nAlias: `{prefix}motds` `{prefix}мотд` `{prefix}мотдс`";
             });
             embed.AddField(x =>
             {
                 x.Name = ":zap: SMITE Fun & Troll";
-                x.Value = $":small_blue_diamond:`{prefix}rgod` - Gives you a random God and randomised build.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
-                $":small_blue_diamond:`{prefix}rteam 5` - Gives you `5` random Gods with randomised builds for them.\nAlias: `{prefix}rt` `{prefix}team` `{prefix}ртеам` `{prefix}теам`\n" +
-                $":new:`{prefix}rank` - Gives you random ranked division.";
+                x.Value = $"🔹`{prefix}rgod` - Gives you a random God and randomised build.\nAlias: `{prefix}rg` `{prefix}randomgod` `{prefix}random`\n" +
+                $"🔹`{prefix}rteam 5` - Gives you `5` random Gods with randomised builds for them.\nAlias: `{prefix}rt` `{prefix}team` `{prefix}ртеам` `{prefix}теам`\n" +
+                $"🔹`{prefix}rank` - Gives you random ranked division.";
             });
             embed.AddField(x =>
             {
                 x.Name = ":robot: Bot";
-                x.Value = $":small_blue_diamond:`{prefix}help` - List of all available commands.\nAlias: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`\n" +
-                $":small_blue_diamond:`{prefix}prefix your-prefix-here` - Set custom prefix for your server.\n" +
-                $":small_blue_diamond:`{prefix}botstats` - Bot statistics, invite link, support server etc.\nAlias: `{prefix}about` `{prefix}botinfo` `{prefix}info` `{prefix}bi`\n" +
-                $":small_blue_diamond:`{prefix}changelog` - Latest changes to ThothBot.";
+                x.Value = $"🔹`{prefix}help` - List of all available commands.\nAlias: `{prefix}h` `{prefix}commands` `{prefix}command` `{prefix}cmd` `{prefix}comamands`\n" +
+                $"🔹`{prefix}prefix your-prefix-here` - Set custom prefix for your server.\n" +
+                $"🔹`{prefix}botstats` - Bot statistics, invite link, support server etc.\nAlias: `{prefix}about` `{prefix}botinfo` `{prefix}info` `{prefix}bi`\n" +
+                $"🔹`{prefix}changelog` - Latest changes to ThothBot.";
                 x.IsInline = false;
             });
             embed.WithFooter(footer =>
@@ -113,6 +109,10 @@ namespace ThothBotCore.Modules
                         IUser user = Connection.Client.GetUser(Context.Message.Author.Id);
                         await user.SendMessageAsync($"I don't have **Send Messages** or **Embed Links** permissions in #{Context.Channel.Name}.");
                     }
+                }
+                else
+                {
+                    await ReplyAsync("I am missing permissions in this channel.");
                 }
             }
         }
@@ -154,6 +154,18 @@ namespace ThothBotCore.Modules
                 field.Name = "Uptime";
                 field.Value = GetUptime();
             });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Bot Invite";
+                x.Value = $"[Invite](https://discordapp.com/oauth2/authorize?client_id=454145330347376651&permissions=537259072&scope=bot)";
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Support Server";
+                x.Value = $"[Invite](https://discord.gg/hU6MTbQ)";
+            });
             embed.AddField(field =>
             {
                 field.IsInline = true;
@@ -182,13 +194,13 @@ namespace ThothBotCore.Modules
             {
                 x.IsInline = true;
                 x.Name = "Status Update Subs";
-                x.Value = Database.CountOfStatusUpdatesActivatedInDB()[0];
+                x.Value = CountOfStatusUpdatesActivatedInDB()[0];
             });
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Linked Players";
-                x.Value = Database.LinkedPlayersInDBCount()[0];
+                x.Value = LinkedPlayersInDBCount()[0];
             });
             embed.AddField(field =>
             {
@@ -199,22 +211,15 @@ namespace ThothBotCore.Modules
             embed.AddField(x =>
             {
                 x.IsInline = true;
-                x.Name = "Bot Invite";
-                x.Value = $"[Invite](https://discordapp.com/api/oauth2/authorize?client_id=454145330347376651&permissions=537185344&scope=bot)";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Support Server";
-                x.Value = $"[Invite](https://discord.gg/hU6MTbQ)";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
                 x.Name = "Donate";
                 x.Value = $"[PayPal](https://www.paypal.com/donate/?token=lIMLgua4KDmtcUhJhFR8y0VDZOlTt3D9qlNBMV-GGKPlsVc9mAONvfO88H4Xh7rOufPn3G)";
             });
-
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Buy Gems";
+                x.Value = $"[SMITE Store](https://link.xsolla.com/M43fjVPi)";
+            });
             await ReplyAsync("", false, embed.Build());
         }
 
@@ -280,102 +285,6 @@ namespace ThothBotCore.Modules
             await StopNotifs(Context.Guild.Id);
 
             await ReplyAsync($"**{Context.Guild.Name}** will no longer receive SMITE Server Status updates.");
-        }
-
-        [Command("link", true, RunMode = RunMode.Async)]
-        public async Task LinkAccountsCommand()
-        {
-            try
-            {
-                var embed = new EmbedBuilder();
-                embed.WithDescription("Please enter your ingame name and **make sure your account is not hidden and you are logged in SMITE**\n*you have 120 seconds to respond*");
-                embed.WithAuthor(x =>
-                {
-                    x.Name = "Thoth Account Linking";
-                    x.IconUrl = botIcon;
-                });
-                embed.WithColor(Constants.DefaultBlueColor);
-                embed.WithFooter(x => x.Text = "This is not official Hi-Rez linking!");
-
-                var message = await ReplyAsync("", false, embed.Build());
-                var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(120));
-
-                if (response == null)
-                {
-                    embed.Description = ":red_circle: **Time is up, linking cancelled**";
-                    await message.ModifyAsync(x =>
-                    {
-                        x.Embed = embed.Build();
-                    });
-                    return;
-                }
-
-                string playerIdJSON = await hirezAPI.GetPlayerIdByName(response.Content);
-                var playerIDList = JsonConvert.DeserializeObject<List<PlayerIDbyName>>(playerIdJSON);
-                if (playerIDList.Count == 0)
-                {
-                    embed.Description = $":red_circle: Couldn't find a player with IGN: {response}";
-                    await message.ModifyAsync(x =>
-                    {
-                        x.Embed = embed.Build();
-                    });
-                    return;
-                }
-                string getplayerJSON = await hirezAPI.GetPlayer(playerIDList[0].player_id.ToString());
-                var getplayerList = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerJSON);
-
-                string generatedString = GenerateString();
-                embed.Author.IconUrl = Context.Message.Author.GetAvatarUrl();
-
-                embed.WithTitle(getplayerList[0].hz_player_name + " " + getplayerList[0].hz_gamer_tag);
-                embed.WithDescription($"<:level:529719212017451008>**Level**: {getplayerList[0].Level}\n" +
-                    $":calendar:**Account Created**: {getplayerList[0].Created_Datetime}\n\n" +
-                    $"**If this is your account, change your __Personal Status Message__ to: `{generatedString}` (you can Ctrl+C Ctrl+V) so we can be sure it's your account.**\n*You have 120 seconds to perform this action.*\n" +
-                    $"\nWhen you are done, write `done` or anything else to cancel.");
-                embed.ImageUrl = "https://media.discordapp.net/attachments/528621646626684928/656237343405244416/Untitled-1.png";
-
-                await message.ModifyAsync(x =>
-                {
-                    x.Embed = embed.Build();
-                });
-                embed.ImageUrl = null;
-                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(120));
-                if (response == null || response.Content.ToLowerInvariant() == "done")
-                {
-                    getplayerJSON = await hirezAPI.GetPlayer(playerIDList[0].player_id.ToString());
-                    getplayerList = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerJSON);
-                    if (getplayerList[0].Personal_Status_Message.ToLowerInvariant() == generatedString)
-                    {
-                        await Database.SetPlayerSpecials(playerIDList[0].player_id,
-                            (getplayerList[0].hz_player_name != null ? getplayerList[0].hz_player_name : getplayerList[0].hz_gamer_tag),
-                            Context.Message.Author.Id);
-                        embed.WithTitle(getplayerList[0].hz_player_name + " " + getplayerList[0].hz_gamer_tag);
-                        embed.WithDescription($":tada: Congratulations, you've successfully linked your Discord and SMITE account into the Thoth Database.");
-                        embed.ImageUrl = null;
-
-                        await message.ModifyAsync(x =>
-                        {
-                            x.Embed = embed.Build();
-                        });
-                    }
-                    else
-                    {
-                        embed.WithDescription($":red_circle: Linking cancelled. {(response==null?"Time is up! " : "")}Your Personal Status Message is `{getplayerList[0].Personal_Status_Message}`");
-                        await message.ModifyAsync(x => x.Embed = embed.Build());
-                    }
-                }
-                else
-                {
-                    embed.WithDescription($":red_circle: Linking cancelled.");
-                    embed.ImageUrl = null;
-                    await message.ModifyAsync(x => x.Embed = embed.Build());
-                }
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync($"Something went wrong: {ex.Message}");
-                await ErrorTracker.SendError($"**LINKING ERROR**\n{ex.Message}\n{ex.StackTrace}\n{ex.InnerException}\n{ex.Source}\n{ex.Data}");
-            }
         }
 
         [Command("settimezone")]
@@ -549,7 +458,7 @@ namespace ThothBotCore.Modules
             await ReplyAsync("", false, embed.Build());
         }
         
-        [Command("changelog")]
+        [Command("changelog", true)]
         public async Task ChangelogCommand()
         {
             var channel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(567192879026536448);
@@ -593,15 +502,6 @@ namespace ThothBotCore.Modules
             }
 
             return str;
-        }
-        private static string GenerateString()
-        {
-            char[] chars = new char[7];
-            for (int i = 0; i < 7; i++)
-            {
-                chars[i] = alphabet[rnd.Next(alphabet.Length)];
-            }
-            return new string(chars);
         }
 
         private class DataUsed

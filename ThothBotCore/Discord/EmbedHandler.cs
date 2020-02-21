@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
@@ -18,15 +17,14 @@ namespace ThothBotCore.Discord
     public class EmbedHandler
     {
         static string botIcon = "https://i.imgur.com/8qNdxse.png";
-        static HiRezAPI hirezAPI = new HiRezAPI();
 
-        public static EmbedBuilder ServerStatusEmbed(ServerStatus serverStatus)
+        public static EmbedBuilder ServerStatusEmbed(ServerStatus smiteServerStatus, ServerStatus discordServerStatus)
         {
-            var foundPC = serverStatus.components.Find(x => x.name.ToLowerInvariant() == "smite pc");
-            var foundXBO = serverStatus.components.Find(x => x.name.ToLowerInvariant() == "smite xbox");
-            var foundPS4 = serverStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite ps4"));
-            var foundSwi = serverStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite switch"));
-            var foundAPI = serverStatus.components.Find(x => x.name.ToLowerInvariant().Contains("api"));
+            var foundPC = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant() == "smite pc");
+            var foundXBO = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant() == "smite xbox");
+            var foundPS4 = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite ps4"));
+            var foundSwi = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite switch"));
+            var foundAPI = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant().Contains("api"));
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
@@ -42,22 +40,22 @@ namespace ThothBotCore.Discord
             {
                 embed.WithColor(new Color(0, 255, 0));
             }
-            else if (serverStatus.incidents.Count >= 1)
+            else if (smiteServerStatus.incidents.Count >= 1)
             {
-                for (int i = 0; i < serverStatus.incidents.Count; i++)
+                for (int i = 0; i < smiteServerStatus.incidents.Count; i++)
                 {
-                    if (serverStatus.incidents[i].name.ToLowerInvariant().Contains("smite"))
+                    if (smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite"))
                     {
                         // Incident color
                         embed.WithColor(new Color(239, 167, 32));
                     }
                 }
             }
-            else if (serverStatus.scheduled_maintenances.Count >= 1)
+            else if (smiteServerStatus.scheduled_maintenances.Count >= 1)
             {
-                for (int i = 0; i < serverStatus.scheduled_maintenances.Count; i++)
+                for (int i = 0; i < smiteServerStatus.scheduled_maintenances.Count; i++)
                 {
-                    if (serverStatus.scheduled_maintenances[i].name.ToLowerInvariant().Contains("smite"))
+                    if (smiteServerStatus.scheduled_maintenances[i].name.ToLowerInvariant().Contains("smite"))
                     {
                         // Maintenance color
                         embed.WithColor(new Color(52, 152, 219));
@@ -99,11 +97,12 @@ namespace ThothBotCore.Discord
                 field.Name = foundAPI.name; // Hi-Rez API
                 field.Value = Text.StatusEmoji(foundAPI.status) + apiValue;
             });
+            var foundDiscAPI = discordServerStatus.components.Find(x => x.name.ToLowerInvariant() == "api");
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "\u2015\u2015\u2015\u2015\u2015\u2015"; // Status page link
-                field.Value = "[Status Page](http://status.hirezstudios.com/)";
+                field.Name = "Discord API"; // Status page link
+                field.Value = Text.StatusEmoji(foundDiscAPI.status) + (foundDiscAPI.status.Contains("_") ? Text.ToTitleCase(foundDiscAPI.status.Replace("_", " ")) : Text.ToTitleCase(foundDiscAPI.status));
             });
             embed.WithFooter(x =>
             {
@@ -112,7 +111,6 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
-
         public static EmbedBuilder StatusIncidentEmbed(ServerStatus serverStatus)
         {
             var incidentEmbed = new EmbedBuilder();
@@ -178,7 +176,6 @@ namespace ThothBotCore.Discord
 
             return null;
         }
-
         public static EmbedBuilder StatusMaintenanceEmbed(ServerStatus serverStatus)
         {
             var embed = new EmbedBuilder();
@@ -335,15 +332,15 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
-
         public static async Task<EmbedBuilder> PlayerStatsEmbed(string getplayerjson, string godranksjson, string achievementsjson, string playerstatusjson, string matchjson, int portal)
         {
-            List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerjson); // GetPlayer
-            List<GodRanks> godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(godranksjson); //GodRanks
-            PlayerAchievements playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
-            List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(playerstatusjson);
+            var playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerjson); // GetPlayer
+            var godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(godranksjson); //GodRanks
+            var playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
+            var playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(playerstatusjson);
+            var embed = new EmbedBuilder();
 
-            string defaultEmoji = ""; //:small_blue_diamond: <:gems:443919192748589087>
+            string defaultEmoji = ""; //🔹 <:gems:443919192748589087>
 
             string rPlayerName = "";
 
@@ -371,15 +368,12 @@ namespace ThothBotCore.Discord
                     rPlayerName = playerStats[0].hz_gamer_tag;
                 }
             }
-            string rPlayerCreated = playerStats[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a";
-            string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
             double rWinRate = 0;
             if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
             {
                 rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
             }
 
-            var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
             {
                 author
@@ -396,7 +390,7 @@ namespace ThothBotCore.Discord
             }
             else
             {
-                defaultEmoji = ":small_blue_diamond:"; // :small_blue_diamond: <:blank:570291209906552848>
+                defaultEmoji = "🔹"; // 🔹 <:blank:570291209906552848>
                 embed.WithColor(Constants.DefaultBlueColor);
                 if (playerStatus[0].Match != 0)
                 {
@@ -468,25 +462,37 @@ namespace ThothBotCore.Discord
             {
                 rankedConqValue = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedConquestController.Wins}/{playerStats[0].RankedConquestController.Losses}\n" +
-                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedConquestController.Rank_Stat, 0)}";
+                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedConquestController.Rank_Stat, 0)}\n" +
+                    $"{defaultEmoji}TP: {playerStats[0].RankedConquestController.Points}\n" +
+                    $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedConquestController.Rank_Variance, 2)}%";
                 rankedJoustValue = $"{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item2}**{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedJoustController.Wins}/{playerStats[0].RankedJoustController.Losses}\n" +
-                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedJoustController.Rank_Stat, 0)}";
+                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedJoustController.Rank_Stat, 0)}\n" +
+                    $"{defaultEmoji}TP: {playerStats[0].RankedJoustController.Points}\n" +
+                    $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedJoustController.Rank_Variance, 2)}%";
                 rankedDuelValue = $"{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item2}**{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedDuelController.Wins}/{playerStats[0].RankedDuelController.Losses}\n" +
-                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedDuelController.Rank_Stat, 0)}";
+                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedDuelController.Rank_Stat, 0)}\n" +
+                    $"{defaultEmoji}TP: {playerStats[0].RankedDuelController.Points}\n" +
+                    $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedDuelController.Rank_Variance, 2)}%";
             }
             else
             {
                 rankedConqValue = $"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}\n" +
-                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Conquest, 0)}";
+                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Conquest, 0)}\n" +
+                    $"{defaultEmoji}TP: {playerStats[0].RankedConquest.Points}\n" +
+                    $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedConquest.Rank_Variance, 2)}%";
                 rankedJoustValue = $"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}\n" +
-                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Joust, 0)}";
+                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Joust, 0)}\n" +
+                    $"{defaultEmoji}TP: {playerStats[0].RankedJoust.Points}\n" +
+                    $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedJoust.Rank_Variance, 2)}%";
                 rankedDuelValue = $"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}\n" +
-                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Duel, 0)}";
+                    $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Duel, 0)}\n" +
+                    $"{defaultEmoji}TP: {playerStats[0].RankedDuel.Points}\n" +
+                    $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedDuel.Rank_Variance, 2)}%";
             }
             embed.AddField(field =>
             {
@@ -510,7 +516,7 @@ namespace ThothBotCore.Discord
             {
                 field.IsInline = true;
                 field.Name = $":video_game:**Playing SMITE since**";
-                field.Value = $"{defaultEmoji}{rPlayerCreated}";
+                field.Value = $"{defaultEmoji}{(playerStats[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
             });
             switch (playerStats[0].Region)
             {
@@ -555,19 +561,19 @@ namespace ThothBotCore.Discord
                     });
                     break;
                 default:
-                    embed.AddField(field =>
+                    embed.AddField(x =>
                     {
-                        field.IsInline = true;
-                        field.Name = ($":globe_with_meridians:**Region**");
-                        field.Value = ($"{defaultEmoji}{playerStats[0].Region}");
+                        x.IsInline = true;
+                        x.Name = $":globe_with_meridians:**Region**";
+                        x.Value = $"{defaultEmoji}{playerStats[0].Region}";
                     });
                     break;
             } // Region
-            embed.AddField(field =>
+            embed.AddField(x =>
             {
-                field.IsInline = true;
-                field.Name = $":hourglass:**Playtime**";
-                field.Value = $"{defaultEmoji}{rHoursPlayed}";
+                x.IsInline = true;
+                x.Name = $":hourglass:**Playtime**";
+                x.Value = $"{defaultEmoji}{playerStats[0].HoursPlayed.ToString()} hours";
             });
             if (godRanks.Count != 0)
             {
@@ -618,7 +624,7 @@ namespace ThothBotCore.Discord
                     .WithIconUrl(playerStats[0].Avatar_URL == "" ? botIcon : playerStats[0].Avatar_URL);
             });
 
-            // Saving the player to the database
+            // Saving to the database
             try
             {
                 await Database.AddPlayerToDb(playerStats, portal);
@@ -630,44 +636,54 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
-
         public static async Task<EmbedBuilder> LoadingStats(string username)
         {
-            EmbedBuilder embed = new EmbedBuilder();
-
-            embed.WithAuthor(x =>
-            {
-                x.IconUrl = botIcon;
-                x.Name = "Loading...";
-            });
-            embed.Description = $"Retrieving stats for {username}...";
-
+            var embed = new EmbedBuilder();
+            embed.Description = $"Loading {username}...";
             return embed;
         }
-
-        public static async Task<EmbedBuilder> MultiplePlayers(List<PlayerStats> playerStats)
+        public static async Task<EmbedBuilder> HiddenProfileEmbed(string username)
         {
-            EmbedBuilder embed = new EmbedBuilder();
-
+            var embed = new EmbedBuilder();
+            embed.Description = Text.UserIsHidden(username);
+            return embed;
+        }
+        public static async Task<EmbedBuilder> ProfileNotFoundEmbed(string username)
+        {
+            var embed = new EmbedBuilder();
+            embed.Description = Text.UserNotFound(username);
+            return embed;
+        }
+        public static async Task<EmbedBuilder> DescriptionEmbed(string description)
+        {
+            var embed = new EmbedBuilder();
+            embed.Description = description;
+            return embed;
+        }
+        public static async Task<EmbedBuilder> MultiplePlayers(List<SearchPlayers> players)
+        {
+            var embed = new EmbedBuilder();
+            var sb = new StringBuilder();
             embed.WithAuthor(x =>
             {
                 x.IconUrl = botIcon;
-                x.Name = "Choose a player with its corresponding reaction";
-            });
-
-            for (int i = 1; i < playerStats.Count + 1; i++)
+                x.Name = "Multiple players found";
+            });//<:Hidden:591666971234402320>
+            embed.WithColor(240, 71, 71);
+            for (int i = 0; i < players.Count; i++)
             {
-                embed.AddField(x =>
-                {
-                    x.IsInline = false;
-                    x.Name = playerStats[i].Name;
-                    x.Value = $"Level:{playerStats[i].Level}\n{playerStats[i].hz_player_name}\n{playerStats[i].hz_gamer_tag}\n{(playerStats[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
-                });
+                sb.Append($"{i+1}. {players[i].Name} {Text.GetPortalIcon(players[i].portal_id.ToString())} " +
+                    $"{Text.CheckSpecialsForPlayer(players[i].player_id.ToString()).Result}" +
+                    $"{(players[i].privacy_flag == "y" ? "**Hidden Profile** <:Hidden:591666971234402320>" : "")}\n");
             }
-
+            embed.WithFooter(x =>
+            {
+                x.Text = "You have 60 seconds to respond.";
+            });
+            embed.WithTitle("Please type the number of the player you would like to choose");
+            embed.WithDescription(sb.ToString());
             return embed;
         }
-
         public static async Task<EmbedBuilder> LiveMatchEmbed(List<MatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails)
         {
             var embed = new EmbedBuilder();
@@ -678,102 +694,80 @@ namespace ThothBotCore.Discord
                 author.WithName($"{Text.GetQueueName(Int32.Parse(matchPlayerDetails[0].Queue))}");
                 author.WithIconUrl(botIcon);
             });
-            embed.WithThumbnailUrl(botIcon);
+            embed.WithFooter(x =>
+            {
+                x.Text = $"Match ID: {matchPlayerDetails[0].Match}";
+            });
 
-            embed.AddField(field =>
+            var team1 = new List<PlayerMatchDetails>();
+            var team2 = new List<PlayerMatchDetails>();
+            foreach (var item in matchPlayerDetails)
             {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[0].GodName)} {matchPlayerDetails[0].playerName}";// left
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[0].tierWins}/{matchPlayerDetails[0].tierLosses}";
-            });
-            embed.AddField(x =>
+                if (item.taskForce == 1)
+                {
+                    team1.Add(item);
+                }
+                else
+                {
+                    team2.Add(item);
+                }
+            }
+            string team1force = Text.SideEmoji(team1[0].taskForce);
+            string team2force = Text.SideEmoji(team2[0].taskForce);
+            var player1 = new StringBuilder();
+            var player2 = new StringBuilder();
+            for (int i = 0; i < team1.Count; i++)
             {
-                x.IsInline = true;
-                x.Name = "|";
-                x.Value = "|";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[5].GodName)} {matchPlayerDetails[5].playerName}";// loss
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[5].tierWins}/{matchPlayerDetails[5].tierLosses}";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[1].GodName)} {matchPlayerDetails[1].playerName}";// left
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[1].tierWins}/{matchPlayerDetails[1].tierLosses}";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "|";
-                x.Value = "|";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[6].GodName)} {matchPlayerDetails[6].playerName}";
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[6].tierWins}/{matchPlayerDetails[6].tierLosses}";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[2].GodName)} {matchPlayerDetails[2].playerName}";// left
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[2].tierWins}/{matchPlayerDetails[2].tierLosses}";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "|";
-                x.Value = "|";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[7].GodName)} {matchPlayerDetails[7].playerName}";
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[7].tierWins}/{matchPlayerDetails[7].tierLosses}";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[3].GodName)} {matchPlayerDetails[3].playerName}";// left
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[3].tierWins}/{matchPlayerDetails[3].tierLosses}";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "|";
-                x.Value = "|";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[8].GodName)} {matchPlayerDetails[8].playerName}";
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[8].tierWins}/{matchPlayerDetails[8].tierLosses}";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[4].GodName)} {matchPlayerDetails[4].playerName}";// left
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[4].tierWins}/{matchPlayerDetails[4].tierLosses}";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "|";
-                x.Value = "|";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"{Text.GetGodEmoji(matchPlayerDetails[9].GodName)} {matchPlayerDetails[9].playerName}";
-                field.Value = $":small_blue_diamond:W/L: {matchPlayerDetails[9].tierWins}/{matchPlayerDetails[9].tierLosses}";
-            });
+                if ((team1[0].Queue == "440") || (team1[0].Queue == "450") || (team1[0].Queue == "451"))
+                {
+                    if (team1[0].Queue == "451")
+                    {
+                        player1.Append($"{Text.GetRankedConquest(team1[i].Tier).Item2} {Text.GetRankedConquest(team1[i].Tier).Item1}\n");
+                        player2.Append($"{Text.GetRankedConquest(team2[i].Tier).Item2} {Text.GetRankedConquest(team2[i].Tier).Item1}\n");
+                    }
+                    else if (team1[0].Queue == "450")
+                    {
+                        player1.Append($"{Text.GetRankedJoust(team1[i].Tier).Item2} {Text.GetRankedJoust(team1[i].Tier).Item1}\n");
+                        player2.Append($"{Text.GetRankedJoust(team2[i].Tier).Item2} {Text.GetRankedJoust(team2[i].Tier).Item1}\n");
+                    }
+                    else
+                    {
+                        player1.Append($"{Text.GetRankedDuel(team1[i].Tier).Item2} {Text.GetRankedDuel(team1[i].Tier).Item1}\n");
+                        player2.Append($"{Text.GetRankedDuel(team2[i].Tier).Item2} {Text.GetRankedDuel(team2[i].Tier).Item1}\n");
+                    }
+                    player1.Append($"🔹 W/L: {team1[i].tierWins}/{team1[i].tierLosses}\n");
+                    player2.Append($":small_orange_diamond: W/L: {team2[i].tierWins}/{team2[i].tierLosses}\n");
+                }
+                else
+                {
+                    player1.Append($":video_game:Account Created: \n{team1force}{(team1[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team1[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
+                    player2.Append($":video_game:Account Created: \n{team2force}{(team2[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team2[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
+                }
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = $"{Text.GetGodEmoji(team1[i].GodName)} {Text.HiddenProfileCheck(team1[i].playerName)}";// left
+                    field.Value = player1.ToString();
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"**{team1[i].Account_Level} **<:level:529719212017451008>** {team2[i].Account_Level}**";
+                    x.Value = $" {Text.AbbreviationRegions(team1[i].playerRegion)} 🌐 {Text.AbbreviationRegions(team2[i].playerRegion)}";
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = $"{Text.GetGodEmoji(team2[i].GodName)} {Text.HiddenProfileCheck(team2[i].playerName)}";// loss
+                    field.Value = player2.ToString();
+                });
+
+                player1.Clear();
+                player2.Clear();
+            }
 
             return embed;
         }
-
         public static async Task<EmbedBuilder> MatchDetailsEmbed(List<MatchDetails.MatchDetailsPlayer> matchdetailsList)
         {
             var embed = new EmbedBuilder();
@@ -789,9 +783,8 @@ namespace ThothBotCore.Discord
             });
             embed.WithFooter(x =>
             {
-                x.Text = matchdetailsList[0].Match.ToString();
+                x.Text = $"Match ID: {matchdetailsList[0].Match.ToString()}";
             });
-            //embed.WithThumbnailUrl(botIcon);
 
             var winners = new List<MatchDetails.MatchDetailsPlayer>();
             var losers = new List<MatchDetails.MatchDetailsPlayer>();
@@ -811,12 +804,13 @@ namespace ThothBotCore.Discord
                     await ErrorTracker.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
                 }
             }
-
+            string team1emo = Text.SideEmoji(winners[0].TaskForce);
+            string team2emo = Text.SideEmoji(losers[0].TaskForce);
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = $":green_circle: **{winners[0].Win_Status}** :green_circle:";
-                x.Value = "\u200b";
+                x.Value = $"{team1emo}{Text.SideName(winners[0].TaskForce)}";
             });
             embed.AddField(x =>
             {
@@ -828,68 +822,73 @@ namespace ThothBotCore.Discord
             {
                 x.IsInline = true;
                 x.Name = $":red_circle: **{losers[0].Win_Status}** :red_circle:";
-                x.Value = "\u200b";
+                x.Value = $"{team2emo}{Text.SideName(losers[0].TaskForce)}";
             });
 
-            var items = await Database.GetAllItems();
-
-
+            var player1 = new StringBuilder();
+            var player2 = new StringBuilder();
             for (int i = 0; i < winners.Count; i++)
             {
-                // Getting their items EXPERIMENTAL
-                var winnerItems = new StringBuilder();
-                var loserItems = new StringBuilder(); ;
-                // Items for winner
-                winnerItems.Append(winners[i].Item_Purch_1);
-                winnerItems.Append("\n");
-                winnerItems.Append(winners[i].Item_Purch_2);
-                winnerItems.Append("\n");
-                winnerItems.Append(winners[i].Item_Purch_3);
-                winnerItems.Append("\n");
-                winnerItems.Append(winners[i].Item_Purch_4);
-                winnerItems.Append("\n");
-                winnerItems.Append(winners[i].Item_Purch_5);
-                winnerItems.Append("\n");
-                winnerItems.Append(winners[i].Item_Purch_6);
-                // losers
-                loserItems.Append(losers[i].Item_Purch_1);
-                loserItems.Append("\n");
-                loserItems.Append(losers[i].Item_Purch_2);
-                loserItems.Append("\n");
-                loserItems.Append(losers[i].Item_Purch_3);
-                loserItems.Append("\n");
-                loserItems.Append(losers[i].Item_Purch_4);
-                loserItems.Append("\n");
-                loserItems.Append(losers[i].Item_Purch_5);
-                loserItems.Append("\n");
-                loserItems.Append(losers[i].Item_Purch_6);
+                if ((winners[0].match_queue_id == 440) || (winners[0].match_queue_id == 450) || (winners[0].match_queue_id == 451))
+                {
+                    if (winners[0].match_queue_id == 451)
+                    {
+                        player1.Append($"{Text.GetRankedConquest(winners[i].Conquest_Tier).Item2}{Text.GetRankedConquest(winners[i].Conquest_Tier).Item1}\n");
+                        player1.Append($"{team1emo}W/L: {winners[i].Conquest_Wins}/{winners[i].Conquest_Losses}\n");
+                        player1.Append($"{team1emo}MMR: {Math.Round(winners[i].Rank_Stat_Conquest, 0)}\n");
+                        
+                        player2.Append($"{Text.GetRankedConquest(losers[i].Conquest_Tier).Item2}{Text.GetRankedConquest(losers[i].Conquest_Tier).Item1}\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Conquest_Wins}/{losers[i].Conquest_Losses}\n");
+                        player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Conquest, 0)}\n");
+                    }
+                    else if (winners[0].match_queue_id == 450)
+                    {
+                        player1.Append($"{Text.GetRankedJoust(winners[i].Joust_Tier).Item2}{Text.GetRankedJoust(winners[i].Joust_Tier).Item1}\n");
+                        player1.Append($"{team1emo}W/L: {winners[i].Joust_Wins}/{winners[i].Joust_Losses}\n");
+                        player1.Append($"{team1emo}MMR: {Math.Round(winners[i].Rank_Stat_Joust, 0)}\n");
 
+                        player2.Append($"{Text.GetRankedJoust(losers[i].Joust_Tier).Item2}{Text.GetRankedJoust(losers[i].Joust_Tier).Item1}\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Joust_Wins}/{losers[i].Joust_Losses}\n");
+                        player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Joust, 0)}\n");
+                    }
+                    else
+                    {
+                        player1.Append($"{Text.GetRankedDuel(winners[i].Duel_Tier).Item2}{Text.GetRankedDuel(winners[i].Duel_Tier).Item1}\n");
+                        player1.Append($"{team1emo}W/L: {winners[i].Duel_Wins}/{winners[i].Duel_Losses}\n");
+                        player1.Append($"{team1emo}MMR: {Math.Round(winners[i].Rank_Stat_Duel, 0)}\n");
 
+                        player2.Append($"{Text.GetRankedDuel(losers[i].Duel_Tier).Item2}{Text.GetRankedDuel(losers[i].Duel_Tier).Item1}\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Duel_Wins}/{losers[i].Duel_Losses}\n");
+                        player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Duel, 0)}\n");
+                    }
+                }
 
-                // End of getting items EXPERIMENTAL
+                player1.Append($":crossed_swords:KDA: {winners[i].Kills_Player}/{winners[i].Deaths}/{winners[i].Assists}\n" +
+                    $"🗡Damage: {winners[i].Damage_Player}");
+                player2.Append($":crossed_swords:KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
+                    $"🗡Damage: {losers[i].Damage_Player}");
 
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{Text.GetGodEmoji(winners[i].Reference_Name)} {(winners[i].hz_player_name != "" ? winners[i].hz_player_name : winners[i].hz_gamer_tag)}";
-                    x.Value = $"<:level:529719212017451008>Level: {winners[i].Account_Level}\n" +
-                    $":crossed_swords:KDA: {winners[i].Kills_Player}/{winners[i].Deaths}/{winners[i].Assists}\n" +
-                    $"{winnerItems.ToString()}";
+                    x.Name = $"{Text.GetGodEmoji(winners[i].Reference_Name)} {(winners[i].hz_player_name == null || winners[i].hz_player_name == "" ? winners[i].hz_gamer_tag : winners[i].hz_player_name)}";
+                    x.Value = player1.ToString();
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{winners[i].Region} **|** {losers[i].Region}";
-                    x.Value = "\u200b";
+                    x.Name = $"**{winners[i].Account_Level} **<:level:529719212017451008>** {losers[i].Account_Level}**";
+                    x.Value = $" {winners[i].Region} 🌐 {losers[i].Region}";
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{Text.GetGodEmoji(losers[i].Reference_Name)} {(losers[i].hz_player_name != "" ? losers[i].hz_player_name : losers[i].hz_gamer_tag)}";
-                    x.Value = $"<:level:529719212017451008>Level: {losers[i].Account_Level}\n" +
-                    $":crossed_swords:KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
-                    $"{loserItems.ToString()}";
+                    x.Name = $"{Text.GetGodEmoji(losers[i].Reference_Name)} {(losers[i].hz_player_name == "" || losers[i].hz_player_name == null ? losers[i].hz_gamer_tag : losers[i].hz_player_name)}";
+                    x.Value = player2.ToString();
                 });
+
+                player1.Clear();
+                player2.Clear();
             }
             return embed;
         }

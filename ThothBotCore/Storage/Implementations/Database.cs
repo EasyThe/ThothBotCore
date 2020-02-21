@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ThothBotCore.Connections.Models;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
@@ -331,6 +332,77 @@ namespace ThothBotCore.Storage
             }
         }
 
+        public static async Task AddGodRanksInDB(List<GodRanks> godRanks)
+        {
+            string sql = $"INSERT INTO playersGodRanks(Assists, Deaths, Kills, Losses, MinionKills, Rank, Wins, Worshippers, God, GodID, playerID, UpdatedAt) " +
+                $"VALUES(@Assists, @Deaths, @Kills, @Losses, @MinionKills, @Rank, @Wins, @Worshippers, @God, @GodID, @playerID, @UpdatedAt)";
+            try
+            {
+                SQLiteConnection connection = new SQLiteConnection(LoadConnectionString());
+                SQLiteCommand command = new SQLiteCommand(sql, connection);
+                for (int i = 0; i < godRanks.Count; i++)
+                {
+                    await connection.OpenAsync();
+
+                    command.Parameters.AddWithValue("Assists", godRanks[i].Assists);
+                    command.Parameters.AddWithValue("Deaths", godRanks[i].Deaths);
+                    command.Parameters.AddWithValue("Kills", godRanks[i].Kills);
+                    command.Parameters.AddWithValue("Losses", godRanks[i].Losses);
+                    command.Parameters.AddWithValue("MinionKills", godRanks[i].MinionKills);
+                    command.Parameters.AddWithValue("Rank", godRanks[i].Rank);
+                    command.Parameters.AddWithValue("Wins", godRanks[i].Wins);
+                    command.Parameters.AddWithValue("Worshippers", godRanks[i].Worshippers);
+                    command.Parameters.AddWithValue("God", godRanks[i].god);
+                    command.Parameters.AddWithValue("GodID", godRanks[i].god_id);
+                    command.Parameters.AddWithValue("playerID", godRanks[i].player_id);
+                    command.Parameters.AddWithValue("UpdatedAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    await command.ExecuteNonQueryAsync();
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in AddGodRanksInDB()\n" + ex.Message);
+            }
+        }
+
+        public static async Task AddMatchInDB(List<MatchDetails.MatchDetailsPlayer> matchDetails)
+        {
+            string sql = $"INSERT INTO MatchDetails(ActiveFlag, ChildItemId, DeviceName, ItemBenefits, IconId, ItemDescription, SecondaryDescription, ItemId, " +
+                $"ItemTier, Price, RestrictedRoles, RootItemId, ShortDesc, StartingItem, Type, itemIcon_URL) " +
+                            $"VALUES(@activeflag, @childitemid, @devicename, @itembenefits, @iconid, @itemdesc, @secdesc, @itemid, @itemtier, " +
+                            $"@price, @restrictedroles, @rootitemid, @shortdesc, @startingitem, @type, @itemicon_URL)  " +
+                            $"ON CONFLICT(ItemId) " +
+                            $"DO UPDATE SET ActiveFlag = @activeflag, ChildItemId = @childitemid, DeviceName = @devicename, ItemBenefits = @itembenefits, " +
+                            $"IconId = @iconid, ItemDescription = @itemdesc, SecondaryDescription = @secdesc, ItemTier = @itemtier, Price = @price, " +
+                            $"RestrictedRoles = @restrictedroles, RootItemId = @rootitemid, ShortDesc = @shortdesc, " +
+                            $"StartingItem = @startingitem, Type = @type, itemIcon_URL = @itemicon_URL";
+            try
+            {
+                SQLiteConnection connection = new SQLiteConnection(LoadConnectionString());
+                SQLiteCommand command = new SQLiteCommand(sql, connection);
+                for (int i = 0; i < matchDetails.Count; i++)
+                {
+                    await connection.OpenAsync();
+
+                    command.Parameters.AddWithValue("activeflag", matchDetails[i].Account_Level);
+                    command.Parameters.AddWithValue("childitemid", matchDetails[i].ActiveId1);
+
+                    await command.ExecuteNonQueryAsync();
+                    connection.Close();
+                }
+                sql = $"INSERT INTO Matches(match_id) VALUES({matchDetails[0].Match})";
+                await connection.OpenAsync();
+                await command.ExecuteNonQueryAsync();
+                connection.Close();
+            }
+            catch (Exception ex)
+            {
+                await ErrorTracker.SendError("Error in AddMatchInDB");
+                Console.WriteLine("Error in AddMatchInDB()\n" + ex.Message);
+            }
+        }
+
         public static async Task SetPlayerSpecials(int id, string Name, ulong? discordID = null, int? strValue = null, string strLink = "", int? proValue = null)
         {
             try
@@ -448,6 +520,10 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
+                if (godname.Contains("'"))
+                {
+                    godname = godname.Replace("'", "''");
+                }
                 var output = await cnn.QueryAsync<Gods.God>($"SELECT Emoji FROM Gods WHERE Name LIKE '%{godname}%'", new DynamicParameters());
                 return output.ToList();
             }
@@ -468,7 +544,6 @@ namespace ThothBotCore.Storage
             {
                 SQLiteConnection connection = new SQLiteConnection(LoadConnectionString());
                 SQLiteCommand command = new SQLiteCommand(sql, connection);
-                int counter = 0;
                 for (int i = 0; i < items.Count; i++)
                 {
                     await connection.OpenAsync();
@@ -495,12 +570,9 @@ namespace ThothBotCore.Storage
                     command.Parameters.AddWithValue("startingitem", items[i].StartingItem);
                     command.Parameters.AddWithValue("type", items[i].Type);
                     command.Parameters.AddWithValue("itemicon_URL", items[i].itemIcon_URL);
-                    counter++;
                     await command.ExecuteNonQueryAsync();
                     connection.Close();
                 }
-                Console.WriteLine(counter);
-
             }
             catch (Exception ex)
             {

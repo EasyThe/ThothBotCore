@@ -57,6 +57,10 @@ namespace ThothBotCore.Discord
                     {
                         Global.CommandsRun++;
                     }
+                    else if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && msg.Content.ToLowerInvariant().Contains("love"))
+                    {
+                        await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
+                    }
                     if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != 518408306415632384 && context.Message.Author.Id != 171675309177831424)
                     {
                         await ErrorTracker.SendSuccessCommands("**Result: **" +
@@ -102,11 +106,11 @@ namespace ThothBotCore.Discord
             {
                 await context.Channel.SendMessageAsync("Channel not found.");
             }
-            else if (errorString.ToLowerInvariant().Contains("Command must be used in a guild channel"))
+            else if (errorString.ToLowerInvariant().Contains("command must be used in a guild channel"))
             {
                 await context.Channel.SendMessageAsync("Command must be used in a guild channel.");
             }
-            else if (errorString.ToLowerInvariant().Contains("50013"))
+            else if (errorString.ToLowerInvariant().Contains("50013") || errorString.ToLowerInvariant().Contains("embedlinks"))
             {
                 try
                 {
@@ -122,7 +126,7 @@ namespace ThothBotCore.Discord
             {
                 await context.Channel.SendMessageAsync("Oops. The text is too long so, I was not able to fit the help command in one field.");
             }
-            else if (errorString.ToLowerInvariant().Contains("Command can only be run by the owner of the bot."))
+            else if (errorString.ToLowerInvariant().Contains("command can only be run by the owner of the bot."))
             {
                 return;
             }

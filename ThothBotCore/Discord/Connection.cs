@@ -72,7 +72,7 @@ namespace ThothBotCore.Discord
             }
             catch (System.Exception)
             {
-                System.Console.WriteLine(Constants.FailedToSendJoinedMessage);
+                await ErrorTracker.SendError(Constants.FailedToSendJoinedMessage);
             }
         }
     }
