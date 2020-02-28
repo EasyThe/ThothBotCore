@@ -335,7 +335,6 @@ namespace ThothBotCore.Modules
         [RequireOwner] // vremenno
         public async Task ImageStats([Remainder] string username)
         {
-            //var converter = new HtmlConverter();
             string json = await hirezAPI.GetPlayer(username);
             if (json == "[]")
             {
@@ -384,7 +383,6 @@ namespace ThothBotCore.Modules
                 int rPlayerMasteryLevel = playerStats[0].MasteryLevel;
                 int rTotalWorsh = playerStats[0].Total_Worshippers;
                 string rPlayerStatus = playerStats[0].Personal_Status_Message;
-                //string rPlayerCreated = playerStats[0].Created_Datetime.ToString("dd.MM.yyyy"); // Broke when Created_Datetime was changed to string.
                 string rPlayerCreated = playerStats[0].Created_Datetime;
                 string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
                 double rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
@@ -827,21 +825,14 @@ namespace ThothBotCore.Modules
                         rAvatarBorderURL = "";
                         break;
                 }
-
                 var css = "<html>\n\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css\" integrity=\"sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO\"\n        crossorigin=\"anonymous\">\n    <style>\n        html {\n            height: 100%;\n        }\n        \n        body {\n            background-color: transparent;\n            color: white;\n            background-image: url(https://web2.hirez.com/smite/v3/s5/HarpyNest_S4.jpg);\n            background-repeat: no-repeat;\n            background-size: cover;\n            background-position: top;\n            margin: 5px;\n        }\n\n        .avatarPos {\n            position: absolute;\n            top: 25px;\n            left: 25px;\n        }\n\n        .imgA1 {\n            z-index: 1;\n            width: 70px;\n            left: 8px;\n            top: 8px;\n        }\n\n        .imgB1 {\n            z-index: 3;\n            width: 110px;\n            left: -12;\n            top: -11px;\n        }\n\n        .row {\n            border: 2px solid #26728d;\n            background-color: rgba(14, 25, 38, .9);\n            color: #c9f9fb;\n            padding: 10px;\n        }\n\n        .col {\n            border: 2px solid #26728d;\n        }\n\n        .AccStats {\n            font-size: 18px;\n        }\n\n        .names {\n            padding-left: 100px;\n        }\n\n        .levels {\n            position: fixed;\n            top: 18;\n            right: 18px;\n        }\n\n        .left-col {\n            float: left;\n            width: 50%;\n            background-color: rgba(14, 25, 38, .9);\n            background-image: url(https://i.imgur.com/MfBC9I6.png);\n            background-position: right;\n            background-repeat: no-repeat;\n            background-size: contain;\n            height: 140px;\n            padding-left: 10px;\n        }\n        \n        .right-col {\n            float: right;\n            width: 50%;\n            background-color: rgba(14, 25, 38, .9);\n            background-image: url(https://i.imgur.com/skbL9IZ.png);\n            background-position: left;\n            background-repeat: no-repeat;\n            background-size: contain;\n            height: 140px;\n            text-align: right;\n            padding-right: 10px;\n        }\n\n        .conquest-col {\n            width: 100%;\n            height: 140px;\n            background-image: url(https://i.imgur.com/ayyGCkZ.png);\n            background-size: cover;\n            background-position: center;\n            background-repeat: no-repeat;\n            border-bottom: 2px solid #26728d;\n            padding-left: 10px;\n        }\n    </style>\n</head>";
                 var html = $"<body>\n    <div class=\"container-fluid\">\n        <div class=\"row\" style=\"height: 112px; border-bottom: 1px solid #26728d;\">\n            <div class=\"col-1\">\n                <img class=\"avatarPos imgA1\" src=\"{rAvatarURL}\">\n                <img class=\"avatarPos imgB1\" src=\"{rAvatarBorderURL}\">\n            </div>\n            <div class=\"names col-11\">\n                <h2>{rPlayerName}</h2>\n                <h5>{rTeamName}</h5>\n                <div class=\"levels\">\n                    <img src=\"https://i.imgur.com/8IluUqL.png\" />{rPlayerLevel}<br>\n                    <img src=\"https://i.imgur.com/cSFMiWX.png\" />{rPlayerMasteryLevel}<br>\n                    <img src=\"https://i.imgur.com/baSKFnW.png\" width=\"28px\" />{rTotalWorsh} \n                    <div style=\"position: fixed; top: 25px; right: 120; text-align: center; border-left: 1px solid #26728d; border-right: 1px solid #26728d; padding-left: 10px; padding-right: 10px;\">\n                            <h3>Playtime</h3>\n                            <h5>{rHoursPlayed}</h5>\n                    </div>\n                </div>\n            </div>\n        </div>\n        <div class=\"row\" style=\"border-top: 0px !important; padding-top: 5px !important; padding-bottom: 5px !important;\">\n            <div class=\"col-12\" style=\"padding-top: 0px !important; padding-bottom: 0px !important; text-align: center;\">\n                <h5 style=\"margin-bottom: 5px !important;\">{rPlayerStatus}</h5>\n            </div>\n        </div>\n        <div class=\"row\" style=\"margin-top: 3px; padding: 0; height: 284px;\">\n            <div class=\"conquest-col\" style=\"border-right: 1px solid #26728d;\">\n                <img src=\"{rConquestTierImg}\" />\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Conquest<br>{rConquestTier}</h5>\n            </div>\n            <div class=\"left-col\">\n                <img src=\"{rJoustTierImg}\" />\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Joust<br>{rJoustTier}</h5>\n            </div>\n            <div class=\"right-col\">\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Duel<br>{rDuelTier}</h5>\n                <img src=\"{rDuelTierImg}\" />\n            </div>\n        </div>\n    </div>\n</body>\n\n</html>";
-
                 try
                 {
-                    
-                    //var jpegbytes = converter.FromHtmlString(css + html);
-                    //await Context.Channel.SendFileAsync(new MemoryStream(jpegbytes), $"{playerStats[0].Id}.jpg");
                     if (!Directory.Exists("Storage/PlayerImages"))
                     {
                         Directory.CreateDirectory("Storage/PlayerImages");
                     }
-                    //File.WriteAllBytes($"Storage/PlayerImages/{playerStats[0].ActivePlayerId}.jpg", jpegbytes);
-
                     var embed = new EmbedBuilder();
                     var fileName = $"Storage/PlayerImages/{playerStats[0].ActivePlayerId}.jpg";
                     embed.AddField(field =>
@@ -1274,7 +1265,6 @@ namespace ThothBotCore.Modules
             {
                 discordStatus = JsonConvert.DeserializeObject<ServerStatus>(discjson);
             }
-            //ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(File.ReadAllText("test.json"));
 
             await ReplyAsync("", false, EmbedHandler.ServerStatusEmbed(smiteServerStatus, discordStatus).Build()); // Server Status POST
             bool maint = false;
@@ -2002,7 +1992,7 @@ namespace ThothBotCore.Modules
 
             if (gods.Count == 0)
             {
-                //await ReplyAsync($"{titleCaseGod} was not found");
+                //titlecasegod was not found imashe tuk nz
             }
             else
             {
@@ -2025,8 +2015,6 @@ namespace ThothBotCore.Modules
                 }
                 for (int a = 0; a < gods[64].abilityDescription1.itemDescription.rankitems.Count; a++)
                 {
-                    //gods[0].abilityDescription1.itemDescription.rankitems.Count
-
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
@@ -2046,8 +2034,6 @@ namespace ThothBotCore.Modules
                     field.Name = ($"Cost");
                     field.Value = (gods[64].abilityDescription1.itemDescription.cost);
                 });
-
-                // gods[0].abilityDescription1.itemDescription.cooldown
 
                 embed.WithThumbnailUrl(gods[64].godAbility1_URL);
                 if (gods[64].DomColor != 0)
@@ -2119,10 +2105,6 @@ namespace ThothBotCore.Modules
             string json = "";
             try
             {
-                //List<PlayerSpecial> playerSpecial = await GetPlayerSpecials(id);
-                //StringBuilder sb = new StringBuilder();
-                //sb.Append($"{playerSpecial[0].special}");
-                //await ReplyAsync(Text.CheckSpecialsForPlayer(id).Result);
                 json = await hirezAPI.APITestMethod(endpoint, value);
                 dynamic parsedJson = JsonConvert.DeserializeObject(json);
 
@@ -2251,8 +2233,8 @@ namespace ThothBotCore.Modules
                 try
                 {
                     Console.WriteLine($"[{playerList[0].ActivePlayerId}]{playerList[0].hz_player_name} Updated!");
-                    //await Database.AddPlayerToDb(playerList);
-                    // commented out after adding portal_id to the database
+                    //adding player to DB
+                    //commented out after adding portal_id to the database
                 }
                 catch (Exception ex)
                 {

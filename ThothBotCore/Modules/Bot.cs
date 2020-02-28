@@ -425,15 +425,6 @@ namespace ThothBotCore.Modules
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
 
-        [Command("testupdates")]
-        [RequireOwner]
-        public async Task TestUpdates([Remainder]string message)
-        {
-            var nz = GetServerStatusUpdates(message);
-            await ReplyAsync(GetServerStatusUpdates(message)[0]);
-            //await StatusNotifier.SendNotifs(message);
-        }
-
         [Command("thoth", true)]
         public async Task BasicInfoCommand()
         {

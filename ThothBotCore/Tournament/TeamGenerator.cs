@@ -72,7 +72,6 @@ namespace ThothBotCore.Tournament
 
             await context.Channel.SendMessageAsync("", false, embed.Build());
         }
-
         private static async Task GetConquestTeams(SocketCommandContext context, List<VulpisPlayerModel.Player> playersList, List<VulpisConquestTeamModel> teamslist)
         {
             var embed = new EmbedBuilder();
@@ -113,7 +112,6 @@ namespace ThothBotCore.Tournament
                     $"{nz.ToString()}");
             }
         }
-
         public static async Task SoloQConquest(SocketCommandContext context)
         {
             var tournamentObj = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(await File.ReadAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq")));
@@ -297,14 +295,6 @@ namespace ThothBotCore.Tournament
                 Console.WriteLine("ERROR BRAT : " + ex.Message);
             }
             await GetConquestTeams(context, tournamentObj.Players, teamsList);
-        }
-
-        public static async Task Assault(SocketCommandContext context)
-        {
-            if (true)
-            {
-
-            }
         }
     }
 }

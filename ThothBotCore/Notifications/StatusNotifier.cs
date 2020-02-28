@@ -23,14 +23,12 @@ namespace ThothBotCore.Notifications
                     channel = Connection.Client.GetGuild(notifChannels[i].serverID).GetTextChannel(notifChannels[i].statusChannel);
                     await channel.SendMessageAsync("", false, embed.Build());
                     System.Console.WriteLine($"Sent Status Updates to: {notifChannels[i].serverName}[{notifChannels[i].serverID}]");
-                    //System.Threading.Thread.Sleep(100);
                 }
                 catch (System.Exception ex)
                 {
                     if (ex.Message.Contains("Missing"))
                     {
                         SocketGuild guild = Connection.Client.GetGuild(notifChannels[i].serverID);
-                        //SocketTextChannel defaultChannel = guild.DefaultChannel;
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
                         await user.SendMessageAsync($":warning: I am missing **Access** to {channel.Mention}\n" +
                         $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}." +

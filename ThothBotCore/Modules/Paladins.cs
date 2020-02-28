@@ -54,9 +54,7 @@ namespace ThothBotCore.Modules
                 {
                     await Context.Channel.TriggerTypingAsync();
                     List<PaladinsPlayer.Player> playerStats = JsonConvert.DeserializeObject<List<PaladinsPlayer.Player>>(await hirezAPI.GetPlayerPaladins(search[0].player_id.ToString())); // GetPlayer
-
                     List<PaladinsGodRanks> godRanks = JsonConvert.DeserializeObject<List<PaladinsGodRanks>>(await hirezAPI.GetGodRanksPaladins(playerStats[0].ActivePlayerId)); //GodRanks
-                                                                                                                                                                                // SMITE API ONLY PlayerAchievements playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
                     List<PaladinsPlayer.PaladinsPlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PaladinsPlayer.PaladinsPlayerStatus>>(await hirezAPI.GetPlayerStatusPaladins(playerStats[0].ActivePlayerId));
 
                     string defaultEmoji = ""; //🔹 <:gems:443919192748589087>
@@ -91,7 +89,6 @@ namespace ThothBotCore.Modules
                             .WithUrl($"https://paladins.guru/profile/{playerStats[0].ActivePlayerId}")
                             .WithIconUrl(botIcon);
                     });
-                    //embed.WithTitle(Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString()).Result);
                     if (playerStatus[0].status == 0)
                     {
                         embed.WithDescription($":eyes: **Last Login:** {Text.PrettyDate(playerStats[0].Last_Login_Datetime)}");
@@ -104,7 +101,6 @@ namespace ThothBotCore.Modules
                         embed.WithColor(Constants.DefaultBlueColor);
                         if (playerStatus[0].Match != 0)
                         {
-                            //await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
                             List<PaladinsMatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PaladinsMatchPlayerDetails.PlayerMatchDetails>>(await hirezAPI.GetMatchPlayerDetailsPaladins(playerStatus[0].Match));
                             for (int s = 0; s < matchPlayerDetails.Count; s++)
                             {
@@ -119,7 +115,6 @@ namespace ThothBotCore.Modules
                             embed.WithDescription($":eyes: {playerStatus[0].status_string}");
                         }
                     }
-                    // invisible character \u200b
                     string region = "";
                     switch (playerStats[0].Region)
                     {

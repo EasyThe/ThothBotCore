@@ -15,9 +15,5 @@ namespace ThothBotCore.Tournament
             string result = list.FindLast(x => x.Contains(name));
             return list.FindLast(x => x.Contains(name));
         }
-        public async Task CreateChallongeTournament()
-        {
-
-        }
     }
 }

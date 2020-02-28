@@ -15,8 +15,6 @@ namespace ThothBotCore.Utilities
     public static class StatusTimer
     {
         private static Timer ServerStatusTimer;
-        //private static Timer ActiveStatusTimer;
-
         public static Task StartServerStatusTimer()
         {
             ServerStatusTimer = new Timer() // Timer for SMITE Server Status
@@ -28,14 +26,12 @@ namespace ThothBotCore.Utilities
 
             return Task.CompletedTask;
         }
-
         public static async Task StopServerStatusTimer(string message)
         {
             ServerStatusTimer.Enabled = false;
             Console.WriteLine(message);
             await ErrorTracker.SendError(message);
         }
-
         private static async void ServerStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
@@ -49,22 +45,22 @@ namespace ThothBotCore.Utilities
 
                     await StatusPage.GetStatusSummary();
                     ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
-                    //ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(File.ReadAllText("test.json")); // Debugging
 
                     if (ServerStatus.incidents.Count >= 1) // Incidents
                     {
+                        var incidentEmbed = new EmbedBuilder();
                         for (int i = 0; i < ServerStatus.incidents.Count; i++)
                         {
-                            if (ServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite") ||
-                                ServerStatus.incidents[i].incident_updates[0].body.ToLowerInvariant().Contains("smite"))
-                            {
-                                var incidentEmbed = new EmbedBuilder();
+                            if ((ServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite") ||
+                                ServerStatus.incidents[i].incident_updates[0].body.ToLowerInvariant().Contains("smite")) && !(ServerStatus.incidents[i].name.ToLowerInvariant().Contains("blitz")))
+                            {                                                                
                                 if (Database.GetServerStatusUpdates(ServerStatus.incidents[i].incident_updates[0].id)[0] == "0")
                                 {
+                                    incidentEmbed.WithColor(new Color(239, 167, 32));
+
                                     string json = JsonConvert.SerializeObject(ServerStatus, Formatting.Indented);
                                     File.WriteAllText($"Status/{ServerStatus.incidents[i].id}.json", json);
 
-                                    incidentEmbed.WithColor(new Color(239, 167, 32));
                                     string incidentValue = "";
                                     for (int c = 0; c < ServerStatus.incidents[i].incident_updates.Count; c++)
                                     {
@@ -109,10 +105,6 @@ namespace ThothBotCore.Utilities
                                         });
                                     }
 
-                                    // Sending the Incident to the servers
-                                    await StatusNotifier.SendServerStatus(incidentEmbed);
-                                    //await ErrorTracker.SendEmbedError(incidentEmbed); // Debugging
-
                                     // Saving to DB
                                     try
                                     {
@@ -133,6 +125,11 @@ namespace ThothBotCore.Utilities
                                     }
                                 }
                             }
+                        }
+                        if (incidentEmbed.Length != 0)
+                        {
+                            // Sending the Incident to the servers
+                            await StatusNotifier.SendServerStatus(incidentEmbed);
                         }
                     }
 
@@ -318,12 +315,6 @@ namespace ThothBotCore.Utilities
             ServerStatusTimer.Interval = 60000;
             ServerStatusTimer.AutoReset = true;
             ServerStatusTimer.Enabled = true;
-        }
-
-        private static async void ActiveStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            await StatusPage.GetStatusSummary();
-            ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
         }
     }
 }

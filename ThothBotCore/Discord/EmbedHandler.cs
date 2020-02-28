@@ -394,9 +394,7 @@ namespace ThothBotCore.Discord
                 embed.WithColor(Constants.DefaultBlueColor);
                 if (playerStatus[0].Match != 0)
                 {
-                    //await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
                     List<PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(matchjson);
-
                     for (int s = 0; s < matchPlayerDetails.Count; s++)
                     {
                         if (matchPlayerDetails[0].ret_msg == null)
