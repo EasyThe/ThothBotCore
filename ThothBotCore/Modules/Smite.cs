@@ -1274,8 +1274,9 @@ namespace ThothBotCore.Modules
             {
                 for (int i = 0; i < smiteServerStatus.incidents.Count; i++)
                 {
-                    if (smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite") ||
-                        smiteServerStatus.incidents[i].components.Any(x => x.name.ToLowerInvariant().Contains("smite")))
+                    if ((smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite") ||
+                         smiteServerStatus.incidents[i].incident_updates[0].body.ToLowerInvariant().Contains("smite")) && 
+                         !(smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("blitz")))
                     {
                         inci = true;
                     }
@@ -1283,7 +1284,11 @@ namespace ThothBotCore.Modules
             }
             if (inci == true)
             {
-                await ReplyAsync("", false, EmbedHandler.StatusIncidentEmbed(smiteServerStatus).Build());
+                var embed = EmbedHandler.StatusIncidentEmbed(smiteServerStatus);
+                if (embed != null)
+                {
+                    await ReplyAsync("", false, EmbedHandler.StatusIncidentEmbed(smiteServerStatus).Build());
+                }
             }
             // Scheduled Maintenances
             if (smiteServerStatus.scheduled_maintenances.Count >= 1)
@@ -1776,6 +1781,11 @@ namespace ThothBotCore.Modules
             {
                 string[] finalDesc = { };
                 motdDay = motdList.Find(x => x.startDateTime.Date == DateTime.Today.AddDays(i));
+                if (motdDay == null)
+                {
+                    await ReplyAsync("", false, embed.Build());
+                    return;
+                }
                 desc = Text.ReFormatMOTDText(motdDay.description);
                 if (desc.Contains("**Map"))
                 {

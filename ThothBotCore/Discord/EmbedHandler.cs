@@ -117,8 +117,9 @@ namespace ThothBotCore.Discord
 
             for (int n = 0; n < serverStatus.incidents.Count; n++)
             {
-                if (serverStatus.incidents[n].name.ToLowerInvariant().Contains("smite") ||
-                    serverStatus.incidents[n].components.Any(x=>x.name.ToLowerInvariant().Contains("smite")))
+                if ((serverStatus.incidents[n].name.ToLowerInvariant().Contains("smite") ||
+                         serverStatus.incidents[n].incident_updates[0].body.ToLowerInvariant().Contains("smite")) &&
+                         !(serverStatus.incidents[n].name.ToLowerInvariant().Contains("blitz")))
                 {
                     incidentEmbed.WithColor(new Color(239, 167, 32));
                     incidentEmbed.WithAuthor(author =>
