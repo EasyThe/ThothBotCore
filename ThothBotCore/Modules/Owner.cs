@@ -93,13 +93,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync("", false, embed.Build());
         }
 
-        [Command("setspec")]
-        [RequireOwner]
-        public async Task SetSpecial([Remainder] string parameters)
-        {
-
-        }
-
         [Command("insertallguilds")]
         [RequireOwner]
         public async Task DoGuilds()
@@ -124,24 +117,8 @@ namespace ThothBotCore.Modules
         [RequireOwner]
         public async Task UpdateDBFromSmiteAPI()
         {
-            List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(await hirezAPI.GetGods());
-            await Database.SaveGods(gods);
-            string newjson = JsonConvert.SerializeObject(gods, Formatting.Indented);
-            domColor.DoAllGodColors();
-            await ReplyAsync($"{gods.Count} Gods were found and saved to the DB.");
-
-            try
-            {
-                List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hirezAPI.GetItems());
-                await Database.InsertItems(itemsList);
-                domColor.DoAllItemColors();
-
-                await ReplyAsync($"{itemsList.Count} Items were found and saved to the DB.");
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync(ex.Message);
-            }
+            // oppaa
+            Utils.UpdateDb(hirezAPI);
         }
 
         [Command("ae")]
@@ -152,7 +129,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("aei")]
-        [RequireUserPermission(GuildPermission.Administrator)]
+        [RequireOwner]
         public async Task AddEmojiToItemCommand(string emoji, [Remainder]string itemName)
         {
             if (itemName.Contains("'"))

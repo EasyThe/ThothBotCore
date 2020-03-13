@@ -21,7 +21,6 @@ namespace ThothBotCore.Modules
         readonly string botIcon = "https://i.imgur.com/8qNdxse.png"; // https://i.imgur.com/AgNocjS.png
 
         readonly HiRezAPI hirezAPI = new HiRezAPI();
-        readonly DominantColor domColor = new DominantColor();
         static Random rnd = new Random();
 
         [Command("help", true)] // Help command

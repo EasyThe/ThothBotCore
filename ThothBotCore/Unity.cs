@@ -9,7 +9,6 @@ namespace ThothBotCore
     public static class Unity
     {
         private static UnityContainer _container;
-
         public static UnityContainer Container
         {
             get

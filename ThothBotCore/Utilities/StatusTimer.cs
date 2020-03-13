@@ -44,7 +44,7 @@ namespace ThothBotCore.Utilities
                     }
 
                     await StatusPage.GetStatusSummary();
-                    ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
+                    ServerStatus ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(await StatusPage.GetStatusSummary());
 
                     if (ServerStatus.incidents.Count >= 1) // Incidents
                     {

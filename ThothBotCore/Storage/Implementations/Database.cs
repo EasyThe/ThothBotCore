@@ -5,12 +5,13 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SQLite;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Models;
+using ThothBotCore.Modules;
 using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.Player;
@@ -524,8 +525,22 @@ namespace ThothBotCore.Storage
                 {
                     godname = godname.Replace("'", "''");
                 }
-                var output = await cnn.QueryAsync<Gods.God>($"SELECT Emoji FROM Gods WHERE Name LIKE '%{godname}%'", new DynamicParameters());
-                return output.ToList();
+                var output = await cnn.QueryAsync<Gods.God>($"SELECT Emoji,godIcon_URL FROM Gods WHERE Name LIKE '%{godname}%'", new DynamicParameters());
+                var returnlist = output.ToList();
+                if (returnlist[0].Emoji == null || returnlist[0].Emoji == "")
+                {
+                    await ErrorTracker.SendError("Found missing emoji for " + godname);
+
+                    // do tuk stignahme, ne uspqh da izmislq kak da vzema hirezapi za da pusna updatedb ot utils..
+                    //Utils.UpdateDb
+                    Utils.AddNewGodEmojiInGuild(returnlist[0].godIcon_URL);
+                    //fix this bro pls
+                    return returnlist;
+                }
+                else
+                {
+                    return returnlist;
+                }
             }
         }
 

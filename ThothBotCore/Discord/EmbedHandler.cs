@@ -395,7 +395,7 @@ namespace ThothBotCore.Discord
                 embed.WithColor(Constants.DefaultBlueColor);
                 if (playerStatus[0].Match != 0)
                 {
-                    List<PlayerMatchDetails> matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(matchjson);
+                    var matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(matchjson);
                     for (int s = 0; s < matchPlayerDetails.Count; s++)
                     {
                         if (matchPlayerDetails[0].ret_msg == null)
@@ -456,7 +456,7 @@ namespace ThothBotCore.Discord
             string rankedConqValue = "";
             string rankedJoustValue = "";
             string rankedDuelValue = "";
-            // Ranked Modes check for PC or Console portals
+            // Ranked Modes check for PC or Console
             if (portal == 9 || portal == 10 || portal == 22)
             {
                 rankedConqValue = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
@@ -531,32 +531,32 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = ($":globe_with_meridians:**Region**");
-                        field.Value = ($":flag_us:{playerStats[0].Region}");
+                        field.Name = $":globe_with_meridians:**Region**";
+                        field.Value = $":flag_us:{playerStats[0].Region}";
                     });
                     break;
                 case "Brazil":
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = ($":globe_with_meridians:**Region**");
-                        field.Value = ($":flag_br:{playerStats[0].Region}");
+                        field.Name = $":globe_with_meridians:**Region**";
+                        field.Value = $":flag_br:{playerStats[0].Region}";
                     });
                     break;
                 case "Australia":
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = ($":globe_with_meridians:**Region**");
-                        field.Value = ($":flag_au:{playerStats[0].Region}");
+                        field.Name = $":globe_with_meridians:**Region**";
+                        field.Value = $":flag_au:{playerStats[0].Region}";
                     });
                     break;
                 case "":
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = ($":globe_with_meridians:**Region**");
-                        field.Value = ($"{defaultEmoji}n/a");
+                        field.Name = $":globe_with_meridians:**Region**";
+                        field.Value = $"{defaultEmoji}n/a";
                     });
                     break;
                 default:
@@ -574,6 +574,7 @@ namespace ThothBotCore.Discord
                 x.Name = $":hourglass:**Playtime**";
                 x.Value = $"{defaultEmoji}{playerStats[0].HoursPlayed.ToString()} hours";
             });
+            // Top Gods
             if (godRanks.Count != 0)
             {
                 switch (godRanks.Count)
@@ -606,16 +607,20 @@ namespace ThothBotCore.Discord
                         });
                         break;
                 }
-            } // Top Gods
-            double kda = (double)(playerAchievements.PlayerKills + (playerAchievements.AssistedKills / 2)) / playerAchievements.Deaths;
-            embed.AddField(field =>
+            } 
+            // KDA
+            if (playerAchievements.PlayerKills != 0 && playerAchievements.AssistedKills != 0 && playerAchievements.Deaths != 0)
             {
-                field.IsInline = true;
-                field.Name = ($":crossed_swords:**KDA** [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
-                field.Value = ($":dagger:Kills: {playerAchievements.PlayerKills}\n" +
-                $":skull_crossbones:Deaths: {playerAchievements.Deaths}\n" +
-                $":handshake:Assists: {playerAchievements.AssistedKills}");
-            });
+                double kda = (double)(playerAchievements.PlayerKills + (playerAchievements.AssistedKills / 2)) / playerAchievements.Deaths;
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = ($":crossed_swords:**KDA** [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
+                    field.Value = ($":dagger:Kills: {playerAchievements.PlayerKills}\n" +
+                    $":skull_crossbones:Deaths: {playerAchievements.Deaths}\n" +
+                    $":handshake:Assists: {playerAchievements.AssistedKills}");
+                });
+            }
             embed.WithFooter(footer =>
             {
                 footer
@@ -626,7 +631,7 @@ namespace ThothBotCore.Discord
             // Saving to the database
             try
             {
-                await Database.AddPlayerToDb(playerStats, portal);
+                await Database.AddPlayerToDb(playerStats, portal).ConfigureAwait(false);//tuk butnahme nz
             }
             catch (Exception ex)
             {
@@ -653,11 +658,11 @@ namespace ThothBotCore.Discord
             embed.Description = Text.UserNotFound(username);
             return embed;
         }
-        public static async Task<EmbedBuilder> DescriptionEmbed(string description)
+        public static Task<Embed> BuildDescriptionEmbedAsync(string description)
         {
             var embed = new EmbedBuilder();
             embed.Description = description;
-            return embed;
+            return Task.FromResult(embed.Build());
         }
         public static async Task<EmbedBuilder> MultiplePlayers(List<SearchPlayers> players)
         {
@@ -823,6 +828,10 @@ namespace ThothBotCore.Discord
                 x.Name = $":red_circle: **{losers[0].Win_Status}** :red_circle:";
                 x.Value = $"{team2emo}{Text.SideName(losers[0].TaskForce)}";
             });
+            if (matchdetailsList[0].Entry_Datetime != null)
+            {
+                embed.WithTimestamp(matchdetailsList[0].Entry_Datetime);
+            }
 
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();

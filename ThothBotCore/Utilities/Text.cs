@@ -34,9 +34,16 @@ namespace ThothBotCore.Utilities
         }
         public static string AbbreviationRegions(string region)
         {
-            return string.Join(string.Empty, region
+            if (region.ToLowerInvariant() == "europe")
+            {
+                return "EU";
+            }
+            else
+            {
+                return string.Join(string.Empty, region
                 .Where(char.IsLetter)
                 .Where(char.IsUpper));
+            }
         }
         public static string PrettyDate(DateTime dateTime)
         {
@@ -128,14 +135,13 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<string> CheckSpecialsForPlayer(string id)
         {
-            List<PlayerSpecial> playerSpecial = await Database.GetPlayerSpecialsByPlayerID(id);
+            var playerSpecial = await Database.GetPlayerSpecialsByPlayerID(id);
             if (playerSpecial.Count != 0)
             {
-                StringBuilder specialsResult = new StringBuilder();
+                var specialsResult = new StringBuilder();
                 if (playerSpecial[0].pro_bool != 0)
                 {
                     specialsResult.Append(":military_medal: Pro Player");
-                    specialsResult.Append("\n");
                 }
                 if (playerSpecial[0].streamer_bool != 0)
                 {
@@ -154,7 +160,6 @@ namespace ThothBotCore.Utilities
                             specialsResult.Append("<:Twitch:579125715874742280> Streamer");
                         }
                     }
-                    specialsResult.Append("\n");
                 }
                 if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("dev"))
                 {
@@ -173,7 +178,7 @@ namespace ThothBotCore.Utilities
             switch (status)
             {
                 case "operational":
-                    return "<:operational:579125995618172929>"; //<:operational:579125995618172929>
+                    return "<:operational:579125995618172929>";
                 case "degraded_performance":
                     return "<:incident:579145224522301480>";
                 case "under_maintenance":

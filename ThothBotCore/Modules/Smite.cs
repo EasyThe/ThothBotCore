@@ -59,7 +59,8 @@ namespace ThothBotCore.Modules
                     }
                     else
                     {
-                        await ReplyAsync("Command usage: `!!stats InGameName`");
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Command usage: `!!stats InGameName`");
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                 }
@@ -94,7 +95,7 @@ namespace ThothBotCore.Modules
                 // Checking the new list for count of users in it
                 if (realSearchPlayers.Count == 0)
                 {
-                    await ReplyAsync(Text.UserNotFound(username));
+                    await ReplyAsync("", false, EmbedHandler.ProfileNotFoundEmbed(username).Result.Build());
                 }
                 else if (!(realSearchPlayers.Count > 1))
                 {
@@ -211,11 +212,11 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    // trying new thinds
+                    // Multiple Players?
                     var result = MultiplePlayersHandler(realSearchPlayers, Context).Result;
                     if (result.searchPlayers != null && result.searchPlayers.player_id == 0)
                     {
-                        await ReplyAsync(Text.UserNotFound(username));
+                        await ReplyAsync("", false, EmbedHandler.ProfileNotFoundEmbed(username).Result.Build());
                         return;
                     }
                     else if (result.searchPlayers == null && result.userMessage == null)
@@ -264,7 +265,7 @@ namespace ThothBotCore.Modules
                                 {
                                 }
                             }
-                            List<AllQueueStats> orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
+                            var orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
                             string topMatchesValue = "";
                             if (orderedQueues.Count != 0)
                             {
@@ -304,6 +305,13 @@ namespace ThothBotCore.Modules
                                     ts.Seconds,
                                     ts.Milliseconds / 10);
                                 Console.WriteLine("Completed " + elapsedTime);
+                            }
+                            else
+                            {
+                                await result.userMessage.ModifyAsync(x =>
+                                {
+                                    x.Embed = embed.Build();
+                                });
                             }
                         }
                         catch (Exception ex)
@@ -1257,8 +1265,7 @@ namespace ThothBotCore.Modules
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се", "serverstatus")]
         public async Task ServerStatusCheck()
         {
-            await StatusPage.GetStatusSummary();
-            var smiteServerStatus = JsonConvert.DeserializeObject<ServerStatus>(StatusPage.statusSummary);
+            var smiteServerStatus = JsonConvert.DeserializeObject<ServerStatus>(await StatusPage.GetStatusSummary());
             string discjson = await StatusPage.GetDiscordStatusSummary();
             var discordStatus = new ServerStatus();
             if (discjson != "")
@@ -1603,15 +1610,16 @@ namespace ThothBotCore.Modules
                 {
                     if (onMultiplePlayersResult.userMessage == null)
                     {
-
-                        await ReplyAsync("", false, EmbedHandler.DescriptionEmbed($"{username} is not in a match.").Result.Build());
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{username} is not in a match.");
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                     else
                     {
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{username} is not in a match.");
                         await onMultiplePlayersResult.userMessage.ModifyAsync(x =>
                         {
-                            x.Embed = EmbedHandler.DescriptionEmbed($"{username} is not in a match.").Result.Build();
+                            x.Embed = embed;
                         });
                         return;
                     }
@@ -1757,6 +1765,13 @@ namespace ThothBotCore.Modules
             {
                 await ReplyAsync("", false, EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build());
             }
+        }
+        
+        [Command("matchhistory", RunMode = RunMode.Async)]
+        [Alias("mh", "мх")]
+        public async Task MatchHistoryCommand([Remainder]string id = "")
+        {
+
         }
 
         [Command("motd", true)]

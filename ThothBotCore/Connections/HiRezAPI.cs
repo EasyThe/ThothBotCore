@@ -434,6 +434,10 @@ namespace ThothBotCore.Connections
                 {
                     var response = await httpClient.SendAsync(request);
                     string json = await response.Content.ReadAsStringAsync();
+                    if (json.ToLowerInvariant().Contains("not found"))
+                    {
+                        await File.WriteAllTextAsync($"error4ence{DateTime.Now.ToString("dd-MM-yyyy")}.html", json);
+                    }
                     return JsonConvert.DeserializeObject<List<SearchPlayers>>(json);
                 }
             }
