@@ -207,7 +207,8 @@ namespace ThothBotCore.Modules
                     catch (Exception ex)
                     {
                         await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
-                        await ReplyAsync("Oops.. I've encountered an error. :sob:");
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to contact the bot owner for further assistance.");
+                        await ReplyAsync(embed: embed);
                     }
                 }
                 else
@@ -328,7 +329,8 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                await ReplyAsync($"Oops.. Either this player was not found or an unexpected error has occured.");
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
                 await ErrorTracker.SendError($"**Stats Command**\n" +
                     $"**Message: **{Context.Message.Content}\n" +
                     $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
@@ -1645,9 +1647,11 @@ namespace ThothBotCore.Modules
                     await ReplyAsync(matchPlayerDetails[0].ret_msg.ToString());
                 }
             }
-            catch (Exception ex )
+            catch (Exception ex)
             {
                 await ErrorTracker.SendException(ex, Context);
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
             }
         }
 
@@ -1655,170 +1659,282 @@ namespace ThothBotCore.Modules
         [Alias("md", "мд")]
         public async Task MatchDetailsCommand([Remainder]string id = "")
         {
-            await Context.Channel.TriggerTypingAsync();
-
-            var onMultiplePlayersResult = new MultiplePlayersStruct();
-            var getPlayerByDiscordID = new List<PlayerSpecial>();
-            var getPlayerIdByName = new List<PlayerIDbyName>();
-            var matchHistory = new List<MatchHistoryModel>();
-
-            //Checking the linked account
-            if (id == "")
+            try
             {
-                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
+                await Context.Channel.TriggerTypingAsync();
 
-                if (getPlayerByDiscordID.Count != 0)
+                var onMultiplePlayersResult = new MultiplePlayersStruct();
+                var getPlayerByDiscordID = new List<PlayerSpecial>();
+                var getPlayerIdByName = new List<PlayerIDbyName>();
+                var matchHistory = new List<MatchHistoryModel>();
+
+                //Checking the linked account
+                if (id == "")
                 {
-                    matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
-                    id = matchHistory[0].Match.ToString();
-                }
-                else
-                {
-                    await ReplyAsync("Command usage: `!!matchdetails MatchID`");
-                    return;
-                }
-            }
-            else if (Context.Message.MentionedUsers.Count != 0)
-            {
-                var mentionedUser = Context.Message.MentionedUsers.Last();
-                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
-                if (getPlayerByDiscordID.Count != 0)
-                {
-                    matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
-                    id = matchHistory[0].Match.ToString();
-                }
-                else
-                {
-                    await ReplyAsync(Constants.NotLinked);
-                    return;
-                }
-            }
-            else if (!id.All(char.IsDigit))
-            {
-                // Searching for the player
-                var searchPlayer = await hirezAPI.SearchPlayer(id);
-                var realSearchPlayers = new List<SearchPlayers>();
-                if (searchPlayer.Count != 0)
-                {
-                    foreach (var player in searchPlayer)
+                    getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
+
+                    if (getPlayerByDiscordID.Count != 0)
                     {
-                        if (player.Name.ToLowerInvariant() == id.ToLowerInvariant())
-                        {
-                            realSearchPlayers.Add(player);
-                        }
+                        matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
+                        id = matchHistory[0].Match.ToString();
                     }
-                }
-                // Checking the new list for count of users in it
-                if (realSearchPlayers.Count == 0)
-                {
-                    await ReplyAsync(Text.UserNotFound(id));
-                    return;
-                }
-                else if (!(realSearchPlayers.Count > 1))
-                {
-                    if (realSearchPlayers[0].privacy_flag == "y")
+                    else
                     {
-                        await ReplyAsync(Text.UserIsHidden(id));
+                        await ReplyAsync("Command usage: `!!matchdetails MatchID`");
                         return;
                     }
-                    matchHistory = await hirezAPI.GetMatchHistory(realSearchPlayers[0].player_id);
-                    id = matchHistory[0].Match.ToString();
                 }
-                else
+                else if (Context.Message.MentionedUsers.Count != 0)
                 {
-                    //On Multiple players
-                    onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context).Result;
-                    if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
+                    var mentionedUser = Context.Message.MentionedUsers.Last();
+                    getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
+                    if (getPlayerByDiscordID.Count != 0)
+                    {
+                        matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
+                        id = matchHistory[0].Match.ToString();
+                    }
+                    else
+                    {
+                        await ReplyAsync(Constants.NotLinked);
+                        return;
+                    }
+                }
+                else if (!id.All(char.IsDigit))
+                {
+                    // Searching for the player
+                    var searchPlayer = await hirezAPI.SearchPlayer(id);
+                    var realSearchPlayers = new List<SearchPlayers>();
+                    if (searchPlayer.Count != 0)
+                    {
+                        foreach (var player in searchPlayer)
+                        {
+                            if (player.Name.ToLowerInvariant() == id.ToLowerInvariant())
+                            {
+                                realSearchPlayers.Add(player);
+                            }
+                        }
+                    }
+                    // Checking the new list for count of users in it
+                    if (realSearchPlayers.Count == 0)
                     {
                         await ReplyAsync(Text.UserNotFound(id));
                         return;
                     }
-                    else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
+                    else if (!(realSearchPlayers.Count > 1))
                     {
-                        return;
+                        if (realSearchPlayers[0].privacy_flag == "y")
+                        {
+                            await ReplyAsync(Text.UserIsHidden(id));
+                            return;
+                        }
+                        matchHistory = await hirezAPI.GetMatchHistory(realSearchPlayers[0].player_id);
+                        id = matchHistory[0].Match.ToString();
                     }
-                    matchHistory = await hirezAPI.GetMatchHistory(onMultiplePlayersResult.searchPlayers.player_id);
-                    id = matchHistory[0].Match.ToString();
+                    else
+                    {
+                        //On Multiple players
+                        onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context).Result;
+                        if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
+                        {
+                            await ReplyAsync(Text.UserNotFound(id));
+                            return;
+                        }
+                        else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
+                        {
+                            return;
+                        }
+                        matchHistory = await hirezAPI.GetMatchHistory(onMultiplePlayersResult.searchPlayers.player_id);
+                        id = matchHistory[0].Match.ToString();
+                    }
+                }
+                if (id == "0")
+                {
+                    await ReplyAsync($"{id} has no recent matches in record.");
+                    return;
+                }
+                string matchDetailsString = await hirezAPI.GetMatchDetails(Int32.Parse(id));
+                if (matchDetailsString.ToLowerInvariant().Contains("<"))
+                {
+                    await ReplyAsync("Hi-Rez API sent a weird response...");
+                    await ErrorTracker.SendError(matchDetailsString);
+                    return;
+                }
+                var matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(matchDetailsString);
+                if (onMultiplePlayersResult.userMessage != null)
+                {
+                    await onMultiplePlayersResult.userMessage.ModifyAsync(x =>
+                    {
+                        x.Embed = EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build();
+                    });
+                }
+                else
+                {
+                    await ReplyAsync("", false, EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build());
                 }
             }
-            if (id == "0")
+            catch (Exception ex)
             {
-                await ReplyAsync($"{id} has no recent matches in record.");
-                return;
-            }
-            string matchDetailsString = await hirezAPI.GetMatchDetails(Int32.Parse(id));
-            if (matchDetailsString.ToLowerInvariant().Contains("<"))
-            {
-                await ReplyAsync("Hi-Rez API sent a weird response...");
-                await ErrorTracker.SendError(matchDetailsString);
-                return;
-            }
-            var matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(matchDetailsString);
-            if (onMultiplePlayersResult.userMessage != null)
-            {
-                await onMultiplePlayersResult.userMessage.ModifyAsync(x =>
-                {
-                    x.Embed = EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build();
-                });
-            }
-            else
-            {
-                await ReplyAsync("", false, EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build());
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
             }
         }
         
         [Command("matchhistory", RunMode = RunMode.Async)]
         [Alias("mh", "мх")]
-        public async Task MatchHistoryCommand([Remainder]string id = "")
+        public async Task MatchHistoryCommand([Remainder]string username = "")
         {
+            try
+            {
+                await Context.Channel.TriggerTypingAsync();
 
+                var onMultiplePlayersResult = new MultiplePlayersStruct();
+                var getPlayerByDiscordID = new List<PlayerSpecial>();
+                var getPlayerIdByName = new List<PlayerIDbyName>();
+                var matchHistory = new List<MatchHistoryModel>();
+
+                //Checking the linked account
+                if (username == "")
+                {
+                    getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
+
+                    if (getPlayerByDiscordID.Count != 0)
+                    {
+                        matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
+                    }
+                    else
+                    {
+                        await ReplyAsync("Command usage: `!!matchhistory PlayerName`");
+                        return;
+                    }
+                }
+                else if (Context.Message.MentionedUsers.Count != 0)
+                {
+                    var mentionedUser = Context.Message.MentionedUsers.Last();
+                    getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
+                    if (getPlayerByDiscordID.Count != 0)
+                    {
+                        matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
+                    }
+                    else
+                    {
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
+                        await ReplyAsync(embed: embed);
+                        return;
+                    }
+                }
+                else
+                {
+                    // Searching for the player
+                    var searchPlayer = await hirezAPI.SearchPlayer(username);
+                    var realSearchPlayers = new List<SearchPlayers>();
+                    if (searchPlayer.Count != 0)
+                    {
+                        foreach (var player in searchPlayer)
+                        {
+                            if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
+                            {
+                                realSearchPlayers.Add(player);
+                            }
+                        }
+                    }
+                    // Checking the new list for count of users in it
+                    if (realSearchPlayers.Count == 0)
+                    {
+                        await ReplyAsync(Text.UserNotFound(username));
+                        return;
+                    }
+                    else if (!(realSearchPlayers.Count > 1))
+                    {
+                        if (realSearchPlayers[0].privacy_flag == "y")
+                        {
+                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(username));
+                            await ReplyAsync(embed: embed);
+                            return;
+                        }
+                        matchHistory = await hirezAPI.GetMatchHistory(realSearchPlayers[0].player_id);
+                    }
+                    else
+                    {
+                        //On Multiple players
+                        onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context).Result;
+                        if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
+                        {
+                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(username));
+                            await ReplyAsync(embed: embed);
+                            return;
+                        }
+                        else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
+                        {
+                            return;
+                        }
+                        matchHistory = await hirezAPI.GetMatchHistory(onMultiplePlayersResult.searchPlayers.player_id);
+                    }
+                }
+
+                var finalembed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
+                await ReplyAsync(embed: finalembed);
+                // do dat
+            }
+            catch (Exception ex)
+            {
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
+            }
         }
 
         [Command("motd", true)]
         [Alias("motds", "мотд", "мотдс")]
         public async Task MotdCommand()
         {
-            string json = await hirezAPI.GetMOTD();
-            var motdList = JsonConvert.DeserializeObject<List<Motd>>(json);
-            string desc = "";
-            string shitman = "";
-
-            var embed = new EmbedBuilder();
-
-            embed.WithColor(0, 80, 188);
-            embed.WithAuthor(x =>
+            try
             {
-                x.Name = "Matches Of The Day";
-                x.IconUrl = botIcon;
-            });
-            Motd motdDay = new Motd();
-            for (int i = 0; i < 5; i++)
-            {
-                string[] finalDesc = { };
-                motdDay = motdList.Find(x => x.startDateTime.Date == DateTime.Today.AddDays(i));
-                if (motdDay == null)
+                string json = await hirezAPI.GetMOTD();
+                var motdList = JsonConvert.DeserializeObject<List<Motd>>(json);
+                string desc = "";
+                string shitman = "";
+
+                var embed = new EmbedBuilder();
+
+                embed.WithColor(0, 80, 188);
+                embed.WithAuthor(x =>
                 {
-                    await ReplyAsync("", false, embed.Build());
-                    return;
-                }
-                desc = Text.ReFormatMOTDText(motdDay.description);
-                if (desc.Contains("**Map"))
-                {
-                    finalDesc = desc.Split("**Map");
-                    shitman = "**Map" + finalDesc[1];
-                }
-                else
-                {
-                    shitman = desc;
-                }
-                embed.AddField(x =>
-                {
-                    x.Name = $":large_blue_diamond: **{motdDay.title}** - {motdDay.startDateTime.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)}";
-                    x.Value = $"{shitman}";
+                    x.Name = "Matches Of The Day";
+                    x.IconUrl = botIcon;
                 });
-            }
+                Motd motdDay = new Motd();
+                for (int i = 0; i < 5; i++)
+                {
+                    string[] finalDesc = { };
+                    motdDay = motdList.Find(x => x.startDateTime.Date == DateTime.Today.AddDays(i));
+                    if (motdDay == null)
+                    {
+                        await ReplyAsync("", false, embed.Build());
+                        return;
+                    }
+                    desc = Text.ReFormatMOTDText(motdDay.description);
+                    if (desc.Contains("**Map"))
+                    {
+                        finalDesc = desc.Split("**Map");
+                        shitman = "**Map" + finalDesc[1];
+                    }
+                    else
+                    {
+                        shitman = desc;
+                    }
+                    embed.AddField(x =>
+                    {
+                        x.Name = $":large_blue_diamond: **{motdDay.title}** - {motdDay.startDateTime.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)}";
+                        x.Value = $"{shitman}";
+                    });
+                }
 
-            await ReplyAsync("", false, embed.Build());
+                await ReplyAsync("", false, embed.Build());
+            }
+            catch (Exception ex)
+            {
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
+            }
         }
 
         [Command("worshippers")]
@@ -2003,7 +2119,8 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                await ReplyAsync($"Something went wrong: {ex.Message}");
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
                 await ErrorTracker.SendError($"**LINKING ERROR**\n{ex.Message}\n{ex.StackTrace}\n{ex.InnerException}\n{ex.Source}\n{ex.Data}");
             }
         }

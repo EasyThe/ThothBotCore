@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
+using ThothBotCore.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.MatchPlayerDetails;
@@ -899,6 +900,26 @@ namespace ThothBotCore.Discord
                 player2.Clear();
             }
             return embed;
+        }
+        public static Task<Embed> BuildMatchHistoryEmbedAsync(List<MatchHistoryModel> matchHistory)
+        {
+            var embed = new EmbedBuilder();
+
+            embed.WithAuthor(x =>
+            {
+                x.Name = $"Match History of {matchHistory[9].playerName}";
+            });
+            for (int i = 0; i < 5; i++)
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = $"{Text.GetGodEmoji(matchHistory[i].God)} {matchHistory[i].Win_Status} - {Text.PrettyDate(matchHistory[i].Match_Time)}";
+                    x.Value = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | Damage: {matchHistory[i].Damage}";
+                });
+            }
+            // matchHistory[i]
+            return Task.FromResult(embed.Build());
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace ThothBotCore.Models
 {
     public class MatchHistoryModel
@@ -65,7 +67,7 @@ namespace ThothBotCore.Models
         public string Map_Game { get; set; }
         public int Match { get; set; }
         public int Match_Queue_Id { get; set; }
-        public string Match_Time { get; set; }
+        public DateTime Match_Time { get; set; }
         public int Minutes { get; set; }
         public int Multi_kill_Max { get; set; }
         public int Objective_Assists { get; set; }
