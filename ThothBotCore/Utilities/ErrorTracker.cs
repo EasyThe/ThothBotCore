@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
 
@@ -153,14 +154,20 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<Embed> RespondToCommandOnErrorAsync(string message)
         {
+            var sb = new StringBuilder();
             if (message.ToLowerInvariant().Contains("the api is unavailable") || message.ToLowerInvariant().Contains("path"))
             {
-                return await EmbedHandler.BuildDescriptionEmbedAsync("The Hi-Rez API is unavailable. Please try again later.");
+                sb.Append("The Hi-Rez API is unavailable. Please try again later.");
             }
             else
             {
-                return await EmbedHandler.BuildDescriptionEmbedAsync("An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to contact the bot owner for further assistance.");
+                sb.Append("An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to contact the bot owner for further assistance.");
             }
+            if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
+            {
+                sb.Append("\n" + Global.ErrorMessageByOwner);
+            }
+            return await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString());
         }
     }
 }

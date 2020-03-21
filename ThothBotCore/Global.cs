@@ -7,5 +7,6 @@ namespace ThothBotCore
     {
         public static int CommandsRun { get; set; } = 1;
         public static DiscordSocketClient Client { get; set; }
+        public static string ErrorMessageByOwner { get; set; } = null;
     }
 }

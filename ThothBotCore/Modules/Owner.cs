@@ -179,6 +179,19 @@ namespace ThothBotCore.Modules
                 }
             }
         }
-
+        [Command("setglobalerrormessage", true)]
+        [Alias("sgem")]
+        [RequireOwner]
+        public async Task SetGlobalErrorMessageCommand([Remainder]string message = "")
+        {
+            if (message == "")
+            {
+                Global.ErrorMessageByOwner = null;
+                await ReplyAsync("Message removed successfully." + Global.ErrorMessageByOwner);
+                return;
+            }
+            Global.ErrorMessageByOwner = message;
+            await ReplyAsync("Done, boss!");
+        }
     }
 }
