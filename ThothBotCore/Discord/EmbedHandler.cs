@@ -1,9 +1,9 @@
 ﻿using Discord;
+using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
@@ -383,7 +383,8 @@ namespace ThothBotCore.Discord
                     .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
                     .WithIconUrl(Text.GetPortalIconLinks(portal.ToString()));
             });
-            embed.WithTitle(Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString()).Result);
+            string embedTitle = await Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString());
+            embed.WithTitle(embedTitle);
             if (playerStatus[0].status == 0)
             {
                 embed.WithDescription($":eyes: **Last Login:** {(playerStats[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}");
@@ -454,64 +455,145 @@ namespace ThothBotCore.Discord
                 field.Name = $":runner:**Leaves**";
                 field.Value = $"{defaultEmoji}{playerStats[0].Leaves}";
             });
-            string rankedConqValue = "";
-            string rankedJoustValue = "";
-            string rankedDuelValue = "";
             // Ranked Modes check for PC or Console
             if (portal == 9 || portal == 10 || portal == 22)
             {
-                rankedConqValue = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
+                // Consoles
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**🎮";
+                    field.Value = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedConquestController.Wins}/{playerStats[0].RankedConquestController.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedConquestController.Rank_Stat, 0)}\n" +
                     $"{defaultEmoji}TP: {playerStats[0].RankedConquestController.Points}\n" +
                     $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedConquestController.Rank_Variance, 2)}%";
-                rankedJoustValue = $"{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item2}**{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item1}**\n" +
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:jousticon:528673820018737163>**Ranked Joust**🎮";
+                    field.Value = $"{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item2}**{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedJoustController.Wins}/{playerStats[0].RankedJoustController.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedJoustController.Rank_Stat, 0)}\n" +
                     $"{defaultEmoji}TP: {playerStats[0].RankedJoustController.Points}\n" +
                     $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedJoustController.Rank_Variance, 2)}%";
-                rankedDuelValue = $"{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item2}**{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item1}**\n" +
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:jousticon:528673820018737163>**Ranked Duel**🎮";
+                    field.Value = $"{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item2}**{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedDuelController.Wins}/{playerStats[0].RankedDuelController.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedDuelController.Rank_Stat, 0)}\n" +
                     $"{defaultEmoji}TP: {playerStats[0].RankedDuelController.Points}\n" +
                     $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedDuelController.Rank_Variance, 2)}%";
+                });
+                // if the player plays on PC too
+                if (playerStats[0].RankedConquest.Tier != 0 || playerStats[0].RankedJoust.Tier != 0 || playerStats[0].RankedDuel.Tier != 0)
+                {
+                    // PC
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**";
+                        field.Value = $"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}**\n" +
+                        $"{defaultEmoji}W/L: {playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}\n" +
+                        $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Conquest, 0)}\n" +
+                        $"{defaultEmoji}TP: {playerStats[0].RankedConquest.Points}\n" +
+                        $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedConquest.Rank_Variance, 2)}%";
+                    });
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = "<:jousticon:528673820018737163>**Ranked Joust**";
+                        field.Value = $"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}**\n" +
+                        $"{defaultEmoji}W/L: {playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}\n" +
+                        $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Joust, 0)}\n" +
+                        $"{defaultEmoji}TP: {playerStats[0].RankedJoust.Points}\n" +
+                        $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedJoust.Rank_Variance, 2)}%";
+                    });
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = "<:jousticon:528673820018737163>**Ranked Duel**";
+                        field.Value = $"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}**\n" +
+                        $"{defaultEmoji}W/L: {playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}\n" +
+                        $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Duel, 0)}\n" +
+                        $"{defaultEmoji}TP: {playerStats[0].RankedDuel.Points}\n" +
+                        $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedDuel.Rank_Variance, 2)}%";
+                    });
+                }
             }
             else
             {
-                rankedConqValue = $"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}**\n" +
+                // PC
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**";
+                    field.Value = $"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Conquest, 0)}\n" +
                     $"{defaultEmoji}TP: {playerStats[0].RankedConquest.Points}\n" +
                     $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedConquest.Rank_Variance, 2)}%";
-                rankedJoustValue = $"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}**\n" +
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:jousticon:528673820018737163>**Ranked Joust**";
+                    field.Value = $"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Joust, 0)}\n" +
                     $"{defaultEmoji}TP: {playerStats[0].RankedJoust.Points}\n" +
                     $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedJoust.Rank_Variance, 2)}%";
-                rankedDuelValue = $"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}**\n" +
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:jousticon:528673820018737163>**Ranked Duel**";
+                    field.Value = $"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Duel, 0)}\n" +
                     $"{defaultEmoji}TP: {playerStats[0].RankedDuel.Points}\n" +
                     $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedDuel.Rank_Variance, 2)}%";
+                });
+                // If the player plays on consoles too
+                if (playerStats[0].RankedConquestController.Tier != 0 || playerStats[0].RankedJoustController.Tier != 0 || playerStats[0].RankedDuelController.Tier != 0)
+                {
+                    // Consoles
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**🎮";
+                        field.Value = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
+                        $"{defaultEmoji}W/L: {playerStats[0].RankedConquestController.Wins}/{playerStats[0].RankedConquestController.Losses}\n" +
+                        $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedConquestController.Rank_Stat, 0)}\n" +
+                        $"{defaultEmoji}TP: {playerStats[0].RankedConquestController.Points}\n" +
+                        $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedConquestController.Rank_Variance, 2)}%";
+                    });
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = "<:jousticon:528673820018737163>**Ranked Joust**🎮";
+                        field.Value = $"{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item2}**{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item1}**\n" +
+                        $"{defaultEmoji}W/L: {playerStats[0].RankedJoustController.Wins}/{playerStats[0].RankedJoustController.Losses}\n" +
+                        $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedJoustController.Rank_Stat, 0)}\n" +
+                        $"{defaultEmoji}TP: {playerStats[0].RankedJoustController.Points}\n" +
+                        $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedJoustController.Rank_Variance, 2)}%";
+                    });
+                    embed.AddField(field =>
+                    {
+                        field.IsInline = true;
+                        field.Name = "<:jousticon:528673820018737163>**Ranked Duel**🎮";
+                        field.Value = $"{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item2}**{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item1}**\n" +
+                        $"{defaultEmoji}W/L: {playerStats[0].RankedDuelController.Wins}/{playerStats[0].RankedDuelController.Losses}\n" +
+                        $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedDuelController.Rank_Stat, 0)}\n" +
+                        $"{defaultEmoji}TP: {playerStats[0].RankedDuelController.Points}\n" +
+                        $"{defaultEmoji}Variance: {Math.Round(playerStats[0].RankedDuelController.Rank_Variance, 2)}%";
+                    });
+                }
             }
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"<:conquesticon:528673820060418061>**Ranked Conquest**";
-                field.Value = rankedConqValue;
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"<:jousticon:528673820018737163>**Ranked Joust**";
-                field.Value = rankedJoustValue;
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = $"<:jousticon:528673820018737163>**Ranked Duel**";
-                field.Value = rankedDuelValue;
-            });
             embed.AddField(field =>
             {
                 field.IsInline = true;
@@ -677,8 +759,9 @@ namespace ThothBotCore.Discord
             embed.WithColor(240, 71, 71);
             for (int i = 0; i < players.Count; i++)
             {
+                string specialscheck = await Text.CheckSpecialsForPlayer(players[i].player_id.ToString());
                 sb.Append($"{i+1}. {players[i].Name} {Text.GetPortalIcon(players[i].portal_id.ToString())} " +
-                    $"{Text.CheckSpecialsForPlayer(players[i].player_id.ToString()).Result}" +
+                    $"{specialscheck}" +
                     $"{(players[i].privacy_flag == "y" ? "**Hidden Profile** <:Hidden:591666971234402320>" : "")}\n");
             }
             embed.WithFooter(x =>
@@ -721,6 +804,7 @@ namespace ThothBotCore.Discord
             string team2force = Text.SideEmoji(team2[0].taskForce);
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
+            string godemoji = "";
             for (int i = 0; i < team1.Count; i++)
             {
                 if ((team1[0].Queue == "440") || (team1[0].Queue == "450") || (team1[0].Queue == "451"))
@@ -740,18 +824,21 @@ namespace ThothBotCore.Discord
                         player1.Append($"{Text.GetRankedDuel(team1[i].Tier).Item2} {Text.GetRankedDuel(team1[i].Tier).Item1}\n");
                         player2.Append($"{Text.GetRankedDuel(team2[i].Tier).Item2} {Text.GetRankedDuel(team2[i].Tier).Item1}\n");
                     }
-                    player1.Append($"🔹 W/L: {team1[i].tierWins}/{team1[i].tierLosses}\n");
-                    player2.Append($":small_orange_diamond: W/L: {team2[i].tierWins}/{team2[i].tierLosses}\n");
+                    player1.Append($"🔹 W/L: {team1[i].tierWins}/{team1[i].tierLosses}\n" +
+                        $"🔹 MMR: {Math.Round(team1[i].Rank_Stat, 0)}");
+                    player2.Append($"🔸 W/L: {team2[i].tierWins}/{team2[i].tierLosses}\n" +
+                        $"🔸 MMR: {Math.Round(team2[i].Rank_Stat, 0)}");
                 }
                 else
                 {
                     player1.Append($":video_game:Account Created: \n{team1force}{(team1[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team1[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
                     player2.Append($":video_game:Account Created: \n{team2force}{(team2[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team2[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
                 }
+                godemoji = await Database.GetGodEmoji(team1[i].GodName);
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = $"{Text.GetGodEmoji(team1[i].GodName)} {Text.HiddenProfileCheck(team1[i].playerName)}";// left
+                    field.Name = $"{godemoji} {Text.HiddenProfileCheck(team1[i].playerName)}";// left
                     field.Value = player1.ToString();
                 });
                 embed.AddField(x =>
@@ -760,10 +847,11 @@ namespace ThothBotCore.Discord
                     x.Name = $"**{team1[i].Account_Level} **<:level:529719212017451008>** {team2[i].Account_Level}**";
                     x.Value = $" {Text.AbbreviationRegions(team1[i].playerRegion)} 🌐 {Text.AbbreviationRegions(team2[i].playerRegion)}";
                 });
+                godemoji = await Database.GetGodEmoji(team2[i].GodName);
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = $"{Text.GetGodEmoji(team2[i].GodName)} {Text.HiddenProfileCheck(team2[i].playerName)}";// loss
+                    field.Name = $"{godemoji} {Text.HiddenProfileCheck(team2[i].playerName)}";// loss
                     field.Value = player2.ToString();
                 });
 
@@ -817,12 +905,36 @@ namespace ThothBotCore.Discord
                 x.Name = $":green_circle: **{winners[0].Win_Status}** :green_circle:";
                 x.Value = $"{team1emo}{Text.SideName(winners[0].TaskForce)}";
             });
-            embed.AddField(x =>
+            if (winners[0].Ban1.Length != 0)
             {
-                x.IsInline = true;
-                x.Name = "\u200b";
-                x.Value = "\u200b";
-            });
+                var bans = new StringBuilder();
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban1));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban2));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban3));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban4));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban5));
+                bans.Append("\n");
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban6));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban7));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban8));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban9));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban10));
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "🚫**Bans**";
+                    x.Value = bans.ToString();
+                });
+            }
+            else
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "\u200b";
+                    x.Value = "\u200b";
+                });
+            }
             embed.AddField(x =>
             {
                 x.IsInline = true;
@@ -836,6 +948,7 @@ namespace ThothBotCore.Discord
 
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
+            string godemoji = "";
             for (int i = 0; i < winners.Count; i++)
             {
                 if ((winners[0].match_queue_id == 440) || (winners[0].match_queue_id == 450) || (winners[0].match_queue_id == 451))
@@ -877,22 +990,24 @@ namespace ThothBotCore.Discord
                 player2.Append($":crossed_swords:KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
                     $"🗡Damage: {losers[i].Damage_Player}");
 
+                godemoji = await Database.GetGodEmoji(winners[i].Reference_Name);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{Text.GetGodEmoji(winners[i].Reference_Name)} {(winners[i].hz_player_name == null || winners[i].hz_player_name == "" ? winners[i].hz_gamer_tag : winners[i].hz_player_name)}";
+                    x.Name = $"{godemoji} {(winners[i].hz_player_name == null || winners[i].hz_player_name == "" ? winners[i].hz_gamer_tag : winners[i].hz_player_name)}";
                     x.Value = player1.ToString();
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
                     x.Name = $"**{winners[i].Account_Level} **<:level:529719212017451008>** {losers[i].Account_Level}**";
-                    x.Value = $" {winners[i].Region} 🌐 {losers[i].Region}";
+                    x.Value = $"{Text.AbbreviationRegions(winners[i].Region)} 🌐 {Text.AbbreviationRegions(losers[i].Region)}";
                 });
+                godemoji = await Database.GetGodEmoji(losers[i].Reference_Name);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{Text.GetGodEmoji(losers[i].Reference_Name)} {(losers[i].hz_player_name == "" || losers[i].hz_player_name == null ? losers[i].hz_gamer_tag : losers[i].hz_player_name)}";
+                    x.Name = $"{godemoji} {(losers[i].hz_player_name == "" || losers[i].hz_player_name == null ? losers[i].hz_gamer_tag : losers[i].hz_player_name)}";
                     x.Value = player2.ToString();
                 });
 
@@ -901,25 +1016,74 @@ namespace ThothBotCore.Discord
             }
             return embed;
         }
-        public static Task<Embed> BuildMatchHistoryEmbedAsync(List<MatchHistoryModel> matchHistory)
+        public static async Task<Embed> BuildMatchHistoryEmbedAsync(List<MatchHistoryModel> matchHistory)
         {
             var embed = new EmbedBuilder();
 
             embed.WithAuthor(x =>
             {
                 x.Name = $"Match History of {matchHistory[9].playerName}";
+                x.Url = $"https://smite.guru/profile/{matchHistory[0].playerId}/matches";
+                x.IconUrl = botIcon;
             });
+            embed.WithColor(Constants.DefaultBlueColor);
+            string godemoji = "";
             for (int i = 0; i < 5; i++)
             {
+                godemoji = await Database.GetGodEmoji(matchHistory[i].God);
                 embed.AddField(x =>
                 {
                     x.IsInline = false;
-                    x.Name = $"{Text.GetGodEmoji(matchHistory[i].God)} {matchHistory[i].Win_Status} - {Text.PrettyDate(matchHistory[i].Match_Time)}";
-                    x.Value = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | Damage: {matchHistory[i].Damage}";
+                    x.Name = $"{godemoji} **{matchHistory[i].Win_Status}**  {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(matchHistory[i].Match_Time)} [{matchHistory[i].Match}]";
+                    x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | 🗡Damage: {matchHistory[i].Damage}";
                 });
             }
-            // matchHistory[i]
-            return Task.FromResult(embed.Build());
+            return embed.Build();
+        }
+        public static async Task<Embed> BuildWorshippersEmbedAsync(List<GodRanks> ranks, SearchPlayers player)
+        {
+            var sb = new StringBuilder();
+            var embed = new EmbedBuilder();
+            embed.WithColor(Constants.DefaultBlueColor);
+            embed.WithAuthor(x =>
+            {
+                x.Name = $"{player.Name}'s masteries [{ranks.Count}]";
+                x.IconUrl = Text.GetPortalIconLinks(player.portal_id.ToString());
+                x.Url = $"https://smite.guru/profile/{player.player_id}";
+            });
+            int count = 0;
+            int fieldsCounter = 1;
+            for (int i = 0; i < ranks.Count; i++)
+            {
+                sb.AppendLine($"{Text.GetRankEmoji(ranks[i].Rank)} {ranks[i].god} [{ranks[i].Worshippers}]");
+                count++;
+                if (count == 20)
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = Text.NumberEmojies(fieldsCounter);
+                        x.Value = sb.ToString();
+                    });
+                    sb.Clear();
+                    count = 0;
+                    fieldsCounter++;
+                }
+            }
+            if (sb.Length != 0)
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = Text.NumberEmojies(fieldsCounter);
+                    x.Value = sb.ToString();
+                });
+            }
+            embed.WithFooter(x =>
+            {
+                x.Text = "Rank God [Worshippers]";
+            });
+            return await Task.FromResult(embed.Build());
         }
     }
 }

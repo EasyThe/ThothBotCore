@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace ThothBotCore.Connections.Models
 {
     public class MatchPlayerDetails
@@ -14,6 +13,7 @@ namespace ThothBotCore.Connections.Models
             public int Mastery_Level { get; set; }
             public int Match { get; set; }
             public string Queue { get; set; }
+            public double Rank_Stat { get; set; }
             public int SkinId { get; set; }
             public int Tier { get; set; }
             public string mapGame { get; set; }

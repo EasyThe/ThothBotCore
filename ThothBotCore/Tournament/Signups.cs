@@ -207,7 +207,7 @@ namespace ThothBotCore.Tournament
                 });
                 await context.Channel.SendMessageAsync("", false, embed.Build());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await context.Channel.SendMessageAsync("Well... Something isn't right :worried~1:");
             }

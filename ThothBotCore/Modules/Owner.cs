@@ -7,21 +7,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
+using ThothBotCore.Discord;
+using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
-using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
+using ThothBotCore.Utilities.Smite;
 
 namespace ThothBotCore.Modules
 {
+    [RequireOwner]
     public class Owner : InteractiveBase<SocketCommandContext>
     {
         HiRezAPI hirezAPI = new HiRezAPI();
-        readonly DominantColor domColor = new DominantColor();
 
         [Command("setplayersspec")]
         [Alias("sps")]
-        [RequireOwner]
         public async Task SetPlayersSpecial(string username, [Remainder]string parameters)
         {
             List<PlayerIDbyName> playerID = JsonConvert.DeserializeObject<List<PlayerIDbyName>>(await hirezAPI.GetPlayerIdByName(username));
@@ -54,7 +55,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("setstreamer")]
-        [RequireOwner]
         public async Task SetStreamerInDb([Remainder]string parameters)
         {
             string[] splitParams = parameters.Split(" ");
@@ -94,7 +94,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("insertallguilds")]
-        [RequireOwner]
         public async Task DoGuilds()
         {
             foreach (var guild in Discord.Connection.Client.Guilds)
@@ -105,7 +104,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("deleteserverfromdb")]
-        [RequireOwner]
         public async Task DeleteGuildFromDB(ulong id)
         {
             await Database.DeleteServerConfig(id);
@@ -114,7 +112,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("updatedb", true, RunMode = RunMode.Async)]
-        [RequireOwner]
         public async Task UpdateDBFromSmiteAPI()
         {
             // oppaa
@@ -122,7 +119,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("ae")]
-        [RequireOwner]
         public async Task AddEmojiToGodCommand(string emoji, [Remainder]string godname)
         {
             await Database.InsertEmojiForGod(godname, emoji);
@@ -140,14 +136,12 @@ namespace ThothBotCore.Modules
         }
 
         [Command("lg")] // Leave Guild
-        [RequireOwner]
         public async Task LeaveGuild(ulong id)
         {
             await Discord.Connection.Client.GetGuild(id).LeaveAsync();
         }
 
         [Command("sm")]
-        [RequireOwner]
         public async Task SendMessageAsOwner(ulong server, ulong channel, [Remainder]string message)
         {
             var chn = Discord.Connection.Client.GetGuild(server).GetTextChannel(channel);
@@ -157,7 +151,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("getjson")]
-        [RequireOwner]
         public async Task GetPlayerOwnerCommand(string username)
         {
             string result = "";
@@ -179,9 +172,9 @@ namespace ThothBotCore.Modules
                 }
             }
         }
+
         [Command("setglobalerrormessage", true)]
         [Alias("sgem")]
-        [RequireOwner]
         public async Task SetGlobalErrorMessageCommand([Remainder]string message = "")
         {
             if (message == "")
@@ -192,6 +185,143 @@ namespace ThothBotCore.Modules
             }
             Global.ErrorMessageByOwner = message;
             await ReplyAsync("Done, boss!");
+        }
+
+        [Command("setgameinconfig", true)]
+        [Alias("sgic")]
+        public async Task SetGameInConfigCommand([Remainder]string text)
+        {
+            Credentials.botConfig.setGame = text;
+            await ReplyAsync("Ready, boss.\n" + Credentials.botConfig.setGame);
+        }
+
+        [Command("bs", true)]
+        [Summary("Information about the bot accessible only by the bot owner.")]
+        public async Task BotStats()
+        {
+            await hirezAPI.PingAPI();
+
+            string[] pingRePreArr = hirezAPI.pingAPI.Split('"');
+            string[] pingResArr = pingRePreArr[1].Split(' ');
+
+            await hirezAPI.DataUsed();
+
+            var dataUsed = JsonConvert.DeserializeObject<List<DataUsed>>(hirezAPI.dataUsed);
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(author =>
+            {
+                author
+                    .WithName("Thoth Stats")
+                    .WithIconUrl(Global.botIcon);
+            });
+            embed.WithColor(new Color(0, 255, 0));
+            embed.AddField(field =>
+            {
+                field.IsInline = false;
+                field.Name = $"{pingResArr[0]} Statistics";
+                field.Value = "\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015";
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Active Sessions";
+                field.Value = dataUsed[0].Active_Sessions;
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Total Requests Today";
+                field.Value = dataUsed[0].Total_Requests_Today;
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Total Sessions Today";
+                field.Value = dataUsed[0].Total_Sessions_Today;
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Concurrent Sessions";
+                field.Value = dataUsed[0].Concurrent_Sessions;
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ("Request Limit Daily");
+                field.Value = (dataUsed[0].Request_Limit_Daily);
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ("Session Cap");
+                field.Value = (dataUsed[0].Session_Cap);
+
+            });
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ("Session Time Limit");
+                field.Value = (dataUsed[0].Session_Time_Limit);
+
+            });
+            embed.WithFooter(footer =>
+            {
+                footer
+                    .WithText($"{pingResArr[0]} {pingResArr[1]}. {pingResArr[2]} & Discord.NET (API version: {DiscordConfig.APIVersion} | Version: {DiscordConfig.Version})")
+                    .WithIconUrl(Global.botIcon);
+            });
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        [Command("sac")]
+        [Summary("Sets a'Activity' for the bot (Accessible only by the bot owner)")]
+        public async Task SetActivityCommand([Remainder] string game)
+        {
+            await Connection.Client.SetGameAsync(game, "https://www.twitch.tv/smitegame");
+            await Context.Channel.SendMessageAsync($"Successfully set the activity to '**{game}**'");
+            Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")}: Activity was changed to {game}");
+        }
+
+        [Command("sg")]
+        [Summary("Sets a'Game' for the bot :video_game: (Accessible only by the bot owner)")]
+        public async Task SetGame([Remainder] string game)
+        {
+            await Connection.Client.SetGameAsync(game);
+            await Context.Channel.SendMessageAsync($"Successfully set the game to '**{game}**'");
+            Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")}: Game was changed to {game}");
+        }
+
+        [Command("notes", RunMode = RunMode.Async)]
+        public async Task PatchNotesTestCommand(string url)
+        {
+            try
+            {
+                var embed = await PatchPageReader.GetPatchEmbed(url);
+                await ReplyAsync(embed: embed);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        private class DataUsed
+        {
+            public int Active_Sessions { get; set; }
+            public int Concurrent_Sessions { get; set; }
+            public int Request_Limit_Daily { get; set; }
+            public int Session_Cap { get; set; }
+            public int Session_Time_Limit { get; set; }
+            public int Total_Requests_Today { get; set; }
+            public int Total_Sessions_Today { get; set; }
+            public object ret_msg { get; set; }
         }
     }
 }

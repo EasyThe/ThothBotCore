@@ -130,7 +130,7 @@ namespace ThothBotCore.Storage
                 var output = await cnn.QueryAsync<string>($"SELECT timezone FROM serverConfig WHERE serverID LIKE '%{guildID}%'", new DynamicParameters());
                 return output.ToList();
             }
-        } // >> Database.GetTimeZone(Context.Guild.Id).Result[0]
+        }
 
         public static async Task AddPlayerToDb(List<PlayerStats> playerStats, int portal)
         {
@@ -517,7 +517,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task<List<Gods.God>> GetGodEmoji(string godname)
+        public static async Task<string> GetGodEmoji(string godname)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
@@ -535,11 +535,11 @@ namespace ThothBotCore.Storage
                     //Utils.UpdateDb
                     Utils.AddNewGodEmojiInGuild(returnlist[0].godIcon_URL);
                     //fix this bro pls
-                    return returnlist;
+                    return returnlist[0].Emoji;
                 }
                 else
                 {
-                    return returnlist;
+                    return returnlist[0].Emoji;
                 }
             }
         }

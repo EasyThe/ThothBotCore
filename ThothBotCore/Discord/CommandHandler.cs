@@ -20,8 +20,9 @@ namespace ThothBotCore.Discord
         public async Task InitializeAsync(DiscordSocketClient client)
         {
             _client = client;
-            _commands = new CommandService();
             _services = ConfigureServices();
+            _commands = _services.GetRequiredService<CommandService>();
+            Global.commandService = _commands;
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
             _client.MessageReceived += HandleCommandAsync;
         }

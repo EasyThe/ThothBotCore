@@ -77,8 +77,8 @@ namespace ThothBotCore.Utilities
                 }
                 if (secsDiff < 86400)
                 {
-                    return string.Format("{0} hours ago [{1}]",
-                        Math.Floor((double)secsDiff / 3600), dateTime.ToString("HH:mm UTC", CultureInfo.InvariantCulture));
+                    return string.Format("{0} hours ago",
+                        Math.Floor((double)secsDiff / 3600));
                 }
             }
             else if (daysDiff == 1)
@@ -186,11 +186,6 @@ namespace ThothBotCore.Utilities
                 default:
                     return "<:incident:579145224522301480>";
             }
-        }
-
-        public static string GetGodEmoji(string godname)
-        {
-            return Database.GetGodEmoji(godname).Result[0].Emoji;
         }
         public static string SideName(int taskForce)
         {
@@ -372,6 +367,34 @@ namespace ThothBotCore.Utilities
                     return "Ranked Conquest(Console)";
                 default:
                     return ":shrug:";
+            }
+        }
+        public static string GetRankEmoji(int rank)
+        {
+            switch (rank)
+            {
+                case 0:
+                    return "<:blank:570291209906552848>";
+                case 1:
+                    return "<:1_:695991295960940554>";
+                case 2:
+                    return "<:2_:695991295952420994>";
+                case 3:
+                    return "<:3_:695991295998427197>";
+                case 4:
+                    return "<:4_:695991296111935550>";
+                case 5:
+                    return "<:5_:695991296052953150>";
+                case 6:
+                    return "<:6_:695991296145489961>";
+                case 7:
+                    return "<:7_:695991296187301948>";
+                case 8:
+                    return "<:8_:695991298712404038>";
+                case 9:
+                    return "<:9_:695991296401080330>";
+                default:
+                    return "<:10:695983354453033010>";
             }
         }
 

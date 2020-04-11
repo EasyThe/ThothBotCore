@@ -19,6 +19,27 @@ namespace ThothBotCore.Modules
     {
         static Random rnd = new Random();
 
+        [Command("vulpis", true)]
+        public async Task VulpisInfoCommand()
+        {
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.Name = $"Vulpis Esports";
+                x.IconUrl = "https://i.imgur.com/rzu9JNG.png";
+            });
+            embed.WithThumbnailUrl("https://i.imgur.com/rzu9JNG.png");
+            embed.WithColor(Constants.VulpisColor);
+            embed.WithDescription(Constants.VulpisDescription);
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Invite Link";
+                x.Value = "https://discord.gg/CuvfhDP";
+            });
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("assaultteam")]
         [Alias("asteam")]
         public async Task AssaultTeamCommand()
@@ -345,14 +366,14 @@ namespace ThothBotCore.Modules
             {
                 return;
             }
-            var chan = Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channel.Id).GetMessageAsync(messageID);
+            var chan = await Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channel.Id).GetMessageAsync(messageID);
             var sendChannel = Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channelToSendTo.Id);
 
             var embed = new EmbedBuilder();
-            foreach (var em in chan.Result.Embeds)
+            foreach (var em in chan.Embeds)
             {
                 embed = em.ToEmbedBuilder();
-                await sendChannel.SendMessageAsync(chan.Result.Content, false, embed.Build());
+                await sendChannel.SendMessageAsync(chan.Content, false, embed.Build());
             }
         }
     }

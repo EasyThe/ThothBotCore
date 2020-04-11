@@ -14,7 +14,6 @@ namespace ThothBotCore.Modules
     public class Paladins : ModuleBase<SocketCommandContext>
     {
         HiRezAPI hirezAPI = new HiRezAPI();
-        readonly string botIcon = "https://i.imgur.com/2Uuwyur.png";
 
         [Command("pnz")] // keep it simple pls
         [RequireOwner]
@@ -81,13 +80,13 @@ namespace ThothBotCore.Modules
                     }
 
                     var embed = new EmbedBuilder();
-                    embed.WithThumbnailUrl(botIcon);
+                    embed.WithThumbnailUrl(Global.botIcon);
                     embed.WithAuthor(author =>
                     {
                         author
                             .WithName($"{rPlayerName}")
                             .WithUrl($"https://paladins.guru/profile/{playerStats[0].ActivePlayerId}")
-                            .WithIconUrl(botIcon);
+                            .WithIconUrl(Global.botIcon);
                     });
                     if (playerStatus[0].status == 0)
                     {
@@ -203,7 +202,7 @@ namespace ThothBotCore.Modules
                     {
                         footer
                             .WithText(playerStats[0].Personal_Status_Message)
-                            .WithIconUrl(botIcon);
+                            .WithIconUrl(Global.botIcon);
                     });
 
                     await ReplyAsync("", false, embed.Build());

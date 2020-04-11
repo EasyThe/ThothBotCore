@@ -38,6 +38,7 @@ This page does not contain instructions on how to set-up and host Thoth on your 
 		src="https://discordbotlist.com/bots/454145330347376651/widget" 
 		alt="Thoth stats on Discord Bot List">
 </a>
+[![Thoth](https://bots.ondiscord.xyz/bots/454145330347376651/embed?theme=dark&showGuilds=true)](https://bots.ondiscord.xyz/bots/454145330347376651)
 
 # Legal Disclaimer Surrounding GDPR
 

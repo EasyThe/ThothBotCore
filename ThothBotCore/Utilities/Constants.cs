@@ -16,5 +16,8 @@ namespace ThothBotCore.Utilities
         public static Emoji CheckMarkEmoji { get; set; } = new Emoji("✅");
         public static Color DefaultBlueColor { get; set; } = new Color(85, 172, 238);
         public static Color VulpisColor { get; set; } = new Color(230, 175, 43);
+
+        // Vulpis
+        public static string VulpisDescription { get; set; } = "European Smite organisation focused on organizing regular Conquest, Arena, Assault, Joust & Duel tournaments.";
     }
 }

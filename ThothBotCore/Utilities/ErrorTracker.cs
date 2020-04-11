@@ -10,10 +10,10 @@ namespace ThothBotCore.Utilities
 {
     public static class ErrorTracker
     {
-        private static SocketTextChannel reportsChannel = Discord.Connection.Client.GetGuild(518408306415632384).GetTextChannel(557974702941798410);
-        private static SocketTextChannel joinsChannel = Discord.Connection.Client.GetGuild(518408306415632384).GetTextChannel(567495039622709268);
-        private static SocketTextChannel commandsChannel = Discord.Connection.Client.GetGuild(518408306415632384).GetTextChannel(569710679796482068);
-        private static IUser ownerUser = Discord.Connection.Client.GetUser(171675309177831424);
+        private static SocketTextChannel reportsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(557974702941798410);
+        private static SocketTextChannel joinsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(567495039622709268);
+        private static SocketTextChannel commandsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(569710679796482068);
+        private static IUser ownerUser = Connection.Client.GetUser(171675309177831424);
 
         public static async Task SendDMtoOwner(string message)
         {
@@ -36,7 +36,7 @@ namespace ThothBotCore.Utilities
                 embed.WithColor(new Color(255, 255, 255));
                 embed.WithAuthor(x =>
                 {
-                    x.Name = $"Server #{Discord.Connection.Client.Guilds.Count}";
+                    x.Name = $"Server #{Connection.Client.Guilds.Count}";
                 });
                 string result = $"🆕{guild.Name}\n" +
                 $"🆔**Server ID:** {guild.Id}\n" +
@@ -155,9 +155,9 @@ namespace ThothBotCore.Utilities
         public static async Task<Embed> RespondToCommandOnErrorAsync(string message)
         {
             var sb = new StringBuilder();
-            if (message.ToLowerInvariant().Contains("the api is unavailable") || message.ToLowerInvariant().Contains("path"))
+            if (message.ToLowerInvariant().Contains("the api is unavailable"))
             {
-                sb.Append("The Hi-Rez API is unavailable. Please try again later.");
+                sb.Append("Sorry, the Hi-Rez API is unavailable. Please try again later.");
             }
             else
             {

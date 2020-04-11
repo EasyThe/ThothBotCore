@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -21,13 +22,11 @@ using ThothBotCore.Utilities;
 using ThothBotCore.Utilities.Smite;
 using static ThothBotCore.Connections.Models.Player;
 using static ThothBotCore.Storage.Database;
-using Emoji = Discord.Emoji;
 
 namespace ThothBotCore.Modules
 {
     public class Smite : InteractiveBase<SocketCommandContext>
     {
-        readonly string botIcon = "https://i.imgur.com/8qNdxse.png"; // https://i.imgur.com/AgNocjS.png
         static Random rnd = new Random();
         Stopwatch stopWatch = new Stopwatch();
 
@@ -37,9 +36,10 @@ namespace ThothBotCore.Modules
         private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 
         [Command("stats", true, RunMode = RunMode.Async)]
+        [Summary("Display stats for the provided `PlayerName`.")]
         [Alias("stat", "pc", "st", "stata", "ст", "статс", "ns")]
         [RequireBotPermission(ChannelPermission.EmbedLinks)]
-        public async Task Stats([Remainder] string username = "")
+        public async Task Stats([Remainder] string PlayerName = "")
         {
             try
             {
@@ -48,14 +48,14 @@ namespace ThothBotCore.Modules
                 var getPlayerByDiscordID = new List<PlayerSpecial>();
 
                 // Checking if we are searching for Player who linked his Discord with SMITE account
-                if (username == "")
+                if (PlayerName == "")
                 {
                     getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
 
                     if (getPlayerByDiscordID.Count != 0)
                     {
                         playerID = getPlayerByDiscordID[0].active_player_id;
-                        username = getPlayerByDiscordID[0].Name;
+                        PlayerName = getPlayerByDiscordID[0].Name;
                     }
                     else
                     {
@@ -64,29 +64,30 @@ namespace ThothBotCore.Modules
                         return;
                     }
                 }
-                else if (Context.Message.MentionedUsers.Count != 0 && username == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
+                else if (Context.Message.MentionedUsers.Count != 0 && PlayerName == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
                 {
                     var mentionedUser = Context.Message.MentionedUsers.Last();
                     getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
                     if (getPlayerByDiscordID.Count != 0)
                     {
                         playerID = getPlayerByDiscordID[0].active_player_id;
-                        username = getPlayerByDiscordID[0].Name;
+                        PlayerName = getPlayerByDiscordID[0].Name;
                     }
                     else
                     {
-                        await ReplyAsync(Constants.NotLinked);
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                 }
                 // Finding all occurences of provided username and adding them in a list
-                var searchPlayer = await hirezAPI.SearchPlayer(username);
+                var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
                 var realSearchPlayers = new List<SearchPlayers>();
                 if (searchPlayer.Count != 0)
                 {
                     foreach (var player in searchPlayer)
                     {
-                        if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
+                        if (player.Name.ToLowerInvariant() == PlayerName.ToLowerInvariant())
                         {
                             realSearchPlayers.Add(player);
                         }
@@ -95,13 +96,15 @@ namespace ThothBotCore.Modules
                 // Checking the new list for count of users in it
                 if (realSearchPlayers.Count == 0)
                 {
-                    await ReplyAsync("", false, EmbedHandler.ProfileNotFoundEmbed(username).Result.Build());
+                    var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                    await ReplyAsync(embed: embed.Build());
                 }
                 else if (!(realSearchPlayers.Count > 1))
                 {
                     if (realSearchPlayers[0].privacy_flag != "n")
                     {
-                        await ReplyAsync(Text.UserIsHidden(username));
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                     await Context.Channel.TriggerTypingAsync();
@@ -119,14 +122,14 @@ namespace ThothBotCore.Modules
                             matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
                         }
 
-                        var embed = EmbedHandler.PlayerStatsEmbed(
+                        var embed = await EmbedHandler.PlayerStatsEmbed(
                             await hirezAPI.GetPlayer(playerID.ToString()),
                             await hirezAPI.GetGodRanks(playerID),
                             await hirezAPI.GetPlayerAchievements(playerID),
                             await hirezAPI.GetPlayerStatus(playerID),
                             matchJson,
-                            realSearchPlayers[0].portal_id).Result;
-                        var message = await Context.Channel.SendMessageAsync("", false, embed.Build());
+                            realSearchPlayers[0].portal_id);
+                        var message = await Context.Channel.SendMessageAsync(embed: embed.Build());
                         TimeSpan ts = stopWatch.Elapsed;
 
                         // Format and display the TimeSpan value.
@@ -138,17 +141,18 @@ namespace ThothBotCore.Modules
                         try
                         {
                             var allQueue = new List<AllQueueStats>();
-                            for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
+                            int legitQueueCount = Text.LegitQueueIDs().Count;
+                            for (int i = 0; i < legitQueueCount; i++)
                             {
                                 int matches = 0;
                                 try
                                 {
-                                    var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(playerID, Text.LegitQueueIDs()[i]));
+                                    var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(playerID, Text.LegitQueueIDs()[i]).ConfigureAwait(false));
                                     for (int c = 0; c < queueStats.Count; c++)
                                     {
                                         if (queueStats[c].Matches != 0)
                                         {
-                                            matches = matches + queueStats[c].Matches;
+                                            matches += queueStats[c].Matches;
                                         }
                                     }
                                     allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
@@ -157,7 +161,7 @@ namespace ThothBotCore.Modules
                                 {
                                 }
                             }
-                            List<AllQueueStats> orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
+                            var orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
                             string topMatchesValue = "";
                             if (orderedQueues.Count != 0)
                             {
@@ -214,10 +218,11 @@ namespace ThothBotCore.Modules
                 else
                 {
                     // Multiple Players?
-                    var result = MultiplePlayersHandler(realSearchPlayers, Context).Result;
+                    var result = await MultiplePlayersHandler(realSearchPlayers, Context);
                     if (result.searchPlayers != null && result.searchPlayers.player_id == 0)
                     {
-                        await ReplyAsync("", false, EmbedHandler.ProfileNotFoundEmbed(username).Result.Build());
+                        var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                        await ReplyAsync(embed: embed.Build());
                         return;
                     }
                     else if (result.searchPlayers == null && result.userMessage == null)
@@ -235,13 +240,13 @@ namespace ThothBotCore.Modules
                             matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
                         }
 
-                        var embed = EmbedHandler.PlayerStatsEmbed(
+                        var embed = await EmbedHandler.PlayerStatsEmbed(
                             await hirezAPI.GetPlayer(playerID.ToString()),
                             await hirezAPI.GetGodRanks(playerID),
                             await hirezAPI.GetPlayerAchievements(playerID),
                             await hirezAPI.GetPlayerStatus(playerID),
                             matchJson,
-                            result.searchPlayers.portal_id).Result;
+                            result.searchPlayers.portal_id);
 
                         // Getting the top queues
                         try
@@ -856,7 +861,7 @@ namespace ThothBotCore.Modules
                     {
                         footer
                             .WithText($"{playerStats[0].Personal_Status_Message}")
-                            .WithIconUrl(botIcon);
+                            .WithIconUrl(Global.botIcon);
                     });
                     await Context.Channel.SendFileAsync(fileName, embed: embed.Build());
                 }
@@ -942,14 +947,14 @@ namespace ThothBotCore.Modules
                         {
                             matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
                         }
-
-                        var message = await Context.Channel.SendMessageAsync("", false, EmbedHandler.PlayerStatsEmbed(
+                        var embed = await EmbedHandler.PlayerStatsEmbed(
                             await hirezAPI.GetPlayer(playerID.ToString()),
                             await hirezAPI.GetGodRanks(playerID),
                             await hirezAPI.GetPlayerAchievements(playerID),
                             await hirezAPI.GetPlayerStatus(playerID),
                             matchJson,
-                            realSearchPlayers[0].portal_id).Result.Build());
+                            realSearchPlayers[0].portal_id);
+                        var message = await Context.Channel.SendMessageAsync(embed: embed.Build());
                     }
                     catch (Exception ex)
                     {
@@ -971,6 +976,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("gods", true)]
+        [Summary("Overall information about the gods in the game and current free god rotation.")]
         [Alias("годс")]
         public async Task GodsCommand()
         {
@@ -1032,10 +1038,11 @@ namespace ThothBotCore.Modules
         }
 
         [Command("god", true)] // Get specific God information
+        [Summary("Provides information about `GodName`.")]
         [Alias("g")]
-        public async Task GodInfo([Remainder] string god)
+        public async Task GodInfo([Remainder] string GodName)
         {
-            string titleCaseGod = Text.ToTitleCase(god);
+            string titleCaseGod = Text.ToTitleCase(GodName);
             if (titleCaseGod.Contains("'"))
             {
                 titleCaseGod = titleCaseGod.Replace("'", "''");
@@ -1089,7 +1096,7 @@ namespace ThothBotCore.Modules
                 }
                 embed.WithFooter(x =>
                 {
-                    x.IconUrl = botIcon;
+                    x.IconUrl = Global.botIcon;
                     x.Text = "More info soon™..";
                 });
 
@@ -1098,6 +1105,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("rgod", true)] // Random God
+        [Summary("Gives you a random God and randomised build.")]
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod()
         {
@@ -1186,17 +1194,18 @@ namespace ThothBotCore.Modules
         }
 
         [Command("rteam", true)]
+        [Summary("Gives you `number` random Gods with randomised builds for them.")]
         [Alias("team", "ртеам", "теам", "rt")]
-        public async Task RandomTeam(int count)
+        public async Task RandomTeam(int number)
         {
-            if (!(count > 5))
+            if (!(number > 5))
             {
                 var embed = new EmbedBuilder();
                 var gods = Database.LoadAllGodsWithLessInfo();
 
                 embed.WithColor(Constants.DefaultBlueColor);
 
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < number; i++)
                 {
                     int rr = rnd.Next(gods.Count);
                     string godType = "";
@@ -1255,7 +1264,7 @@ namespace ThothBotCore.Modules
                     });
                 }
 
-                await ReplyAsync($"Team of {count} for you, {Context.Message.Author.Mention}!", false, embed.Build());
+                await ReplyAsync($"Team of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
             }
             else
             {
@@ -1264,6 +1273,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("status", true)] // SMITE Server Status 
+        [Summary("Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.")]
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се", "serverstatus")]
         public async Task ServerStatusCheck()
         {
@@ -1316,6 +1326,56 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [Command("statusupdates")]
+        [Summary("When SMITE incidents and scheduled maintenances appear in the status page they will be sent to #channel")]
+        [Alias("statusupd", "su")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetStatusUpdatesChannel(SocketChannel message)
+        {
+            await SetNotifChannel(Context.Guild.Id, Context.Guild.Name, message.Id);
+            SocketTextChannel channel = Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(message.Id);
+            try
+            {
+                await channel.SendMessageAsync($":white_check_mark: {channel.Mention} is now set to receive notifications about SMITE Server Status updates.");
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Missing Permissions"))
+                {
+                    await Context.Channel.SendMessageAsync($":warning: I am missing **Send Messages** permission for {channel.Mention}\n" +
+                        $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}.");
+                }
+                else if (ex.Message.Contains("Missing Access"))
+                {
+                    await Context.Channel.SendMessageAsync($":warning: I am missing **Access** to {channel.Mention}\n" +
+                        $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}.");
+                }
+                else if (ex.Message.ToLowerInvariant().Contains("multiple matches"))
+                {
+                    await Context.Channel.SendMessageAsync("Multiple matches found. Please #mention the channel.");
+                }
+                else
+                {
+                    await ReplyAsync(":warning: Something went wrong. This error was reported to the bot creator and will soon be checked.");
+                    await ErrorTracker.SendError($"**Error in StatusUpdates command**\n" +
+                        $"{ex.Message}\n**Message: **{message}\n" +
+                        $"**Server: **{Context.Guild.Name}[{Context.Guild.Id}]\n" +
+                        $"**Channel: **{Context.Channel.Name}[{Context.Channel.Id}]");
+                }
+            }
+        }
+
+        [Command("stopstatusupdates", true)]
+        [Summary("Stops sending messages from the SMITE status page.")]
+        [Alias("ssu")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task StopStatusUpdates()
+        {
+            await StopNotifs(Context.Guild.Id);
+
+            await ReplyAsync($"**{Context.Guild.Name}** will no longer receive SMITE Server Status updates.");
+        }
+
         [Command("claninfo")]
         [Alias("clan", "c")]
         [RequireOwner] // vremenno
@@ -1327,7 +1387,7 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(author =>
             {
                 author.WithName(clanList[0].Name);
-                author.WithIconUrl(botIcon);
+                author.WithIconUrl(Global.botIcon);
             });
             embed.WithColor(0, 255, 0);
             embed.AddField(field =>
@@ -1353,14 +1413,15 @@ namespace ThothBotCore.Modules
         }
 
         [Command("item")]
+        [Summary("Provides information about `ItemName`.")]
         [Alias("i")]
-        public async Task ItemInfoCommand([Remainder]string itemname)
+        public async Task ItemInfoCommand([Remainder]string ItemName)
         {
-            if (itemname.Contains("'"))
+            if (ItemName.Contains("'"))
             {
-                itemname = itemname.Replace("'", "''");
+                ItemName = ItemName.Replace("'", "''");
             }
-            var item = await Database.GetSpecificItem(itemname);
+            var item = await Database.GetSpecificItem(ItemName);
             if (item.Count != 0)
             {
                 string secondaryDesc = item[0].SecondaryDescription;
@@ -1432,11 +1493,12 @@ namespace ThothBotCore.Modules
             }
             else
             {
-                await ReplyAsync($"{item.Count} results found for `{itemname}`.");
+                await ReplyAsync($"{item.Count} results found for `{ItemName}`.");
             }
         }
 
         [Command("trello", true)]
+        [Summary("Checks the [SMITE Community Issues Trello Board](https://trello.com/b/d4fJtBlo/smite-community-issues).")]
         [Alias("issues", "bugs", "board")]
         public async Task TrelloBoardCommand()
         {
@@ -1515,8 +1577,9 @@ namespace ThothBotCore.Modules
         }
 
         [Command("livematch", RunMode = RunMode.Async)]
+        [Summary("Match details if provided `PlayerName` is in a match.")]
         [Alias("live", "lm", "l")]
-        public async Task LiveMatchCommand([Remainder]string username = "")
+        public async Task LiveMatchCommand([Remainder]string PlayerName = "")
         {
             try
             {
@@ -1526,18 +1589,19 @@ namespace ThothBotCore.Modules
 
                 await Context.Channel.TriggerTypingAsync();
                 // Checking if the message author has linked account
-                if (username == "")
+                if (PlayerName == "")
                 {
                     getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
 
                     if (getPlayerByDiscordID.Count != 0)
                     {
                         playerIDint = getPlayerByDiscordID[0].active_player_id;
-                        username = getPlayerByDiscordID[0].Name;
+                        PlayerName = getPlayerByDiscordID[0].Name;
                     }
                     else
                     {
-                        await ReplyAsync("Command usage: `!!livematch InGameName`");
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Command usage: `!!livematch InGameName`");
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                 }
@@ -1549,24 +1613,25 @@ namespace ThothBotCore.Modules
                     if (getPlayerByDiscordID.Count != 0)
                     {
                         playerIDint = getPlayerByDiscordID[0].active_player_id;
-                        username = getPlayerByDiscordID[0].Name;
+                        PlayerName = getPlayerByDiscordID[0].Name;
                     }
                     else
                     {
-                        await ReplyAsync(Constants.NotLinked);
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                 }
                 // Searching for the player with the provided username
                 if (playerIDint == 0)
                 {
-                    var searchPlayer = await hirezAPI.SearchPlayer(username);
+                    var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
                     var realSearchPlayers = new List<SearchPlayers>();
                     if (searchPlayer.Count != 0)
                     {
                         foreach (var player in searchPlayer)
                         {
-                            if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
+                            if (player.Name.ToLowerInvariant() == PlayerName.ToLowerInvariant())
                             {
                                 realSearchPlayers.Add(player);
                             }
@@ -1575,26 +1640,29 @@ namespace ThothBotCore.Modules
                     // Checking the new list for count of users in it
                     if (realSearchPlayers.Count == 0)
                     {
-                        await ReplyAsync(Text.UserNotFound(username));
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                     else if (!(realSearchPlayers.Count > 1))
                     {
                         if (realSearchPlayers[0].privacy_flag == "y")
                         {
-                            await ReplyAsync(Text.UserIsHidden(username));
+                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
+                            await ReplyAsync(embed: embed);
                             return;
                         }
                         playerIDint = realSearchPlayers[0].player_id;
-                        username = realSearchPlayers[0].Name;
+                        PlayerName = realSearchPlayers[0].Name;
                     }
                     else
                     {
                         //multiple players
-                        onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context).Result;
+                        onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context);
                         if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                         {
-                            await ReplyAsync(Text.UserNotFound(username));
+                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
+                            await ReplyAsync(embed: embed);
                             return;
                         }
                         else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
@@ -1602,7 +1670,7 @@ namespace ThothBotCore.Modules
                             return;
                         }
                         playerIDint = onMultiplePlayersResult.searchPlayers.player_id;
-                        username = onMultiplePlayersResult.searchPlayers.Name;
+                        PlayerName = onMultiplePlayersResult.searchPlayers.Name;
                     }
                 }
 
@@ -1612,13 +1680,13 @@ namespace ThothBotCore.Modules
                 {
                     if (onMultiplePlayersResult.userMessage == null)
                     {
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{username} is not in a match.");
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{PlayerName} is not in a match.");
                         await ReplyAsync(embed: embed);
                         return;
                     }
                     else
                     {
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{username} is not in a match.");
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{PlayerName} is not in a match.");
                         await onMultiplePlayersResult.userMessage.ModifyAsync(x =>
                         {
                             x.Embed = embed;
@@ -1632,13 +1700,15 @@ namespace ThothBotCore.Modules
                 {
                     if (onMultiplePlayersResult.userMessage == null)
                     {
-                        await ReplyAsync("", false, EmbedHandler.LiveMatchEmbed(matchPlayerDetails).Result.Build());
+                        var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
+                        await ReplyAsync(embed: embed.Build());
                     }
                     else
                     {
+                        var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
                         await onMultiplePlayersResult.userMessage.ModifyAsync(x =>
                         {
-                            x.Embed = EmbedHandler.LiveMatchEmbed(matchPlayerDetails).Result.Build();
+                            x.Embed = embed.Build();
                         });
                     }
                 }
@@ -1656,8 +1726,9 @@ namespace ThothBotCore.Modules
         }
 
         [Command("matchdetails", RunMode = RunMode.Async)]
+        [Summary("Match details for the provided `MatchID` or latest match played of provided `PlayerName`.")]
         [Alias("md", "мд")]
-        public async Task MatchDetailsCommand([Remainder]string id = "")
+        public async Task MatchDetailsCommand([Remainder]string MatchID = "")
         {
             try
             {
@@ -1669,14 +1740,14 @@ namespace ThothBotCore.Modules
                 var matchHistory = new List<MatchHistoryModel>();
 
                 //Checking the linked account
-                if (id == "")
+                if (MatchID == "")
                 {
                     getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
 
                     if (getPlayerByDiscordID.Count != 0)
                     {
                         matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
-                        id = matchHistory[0].Match.ToString();
+                        MatchID = matchHistory[0].Match.ToString();
                     }
                     else
                     {
@@ -1691,7 +1762,7 @@ namespace ThothBotCore.Modules
                     if (getPlayerByDiscordID.Count != 0)
                     {
                         matchHistory = await hirezAPI.GetMatchHistory(getPlayerByDiscordID[0].active_player_id);
-                        id = matchHistory[0].Match.ToString();
+                        MatchID = matchHistory[0].Match.ToString();
                     }
                     else
                     {
@@ -1699,16 +1770,16 @@ namespace ThothBotCore.Modules
                         return;
                     }
                 }
-                else if (!id.All(char.IsDigit))
+                else if (!MatchID.All(char.IsDigit))
                 {
                     // Searching for the player
-                    var searchPlayer = await hirezAPI.SearchPlayer(id);
+                    var searchPlayer = await hirezAPI.SearchPlayer(MatchID);
                     var realSearchPlayers = new List<SearchPlayers>();
                     if (searchPlayer.Count != 0)
                     {
                         foreach (var player in searchPlayer)
                         {
-                            if (player.Name.ToLowerInvariant() == id.ToLowerInvariant())
+                            if (player.Name.ToLowerInvariant() == MatchID.ToLowerInvariant())
                             {
                                 realSearchPlayers.Add(player);
                             }
@@ -1717,26 +1788,26 @@ namespace ThothBotCore.Modules
                     // Checking the new list for count of users in it
                     if (realSearchPlayers.Count == 0)
                     {
-                        await ReplyAsync(Text.UserNotFound(id));
+                        await ReplyAsync(Text.UserNotFound(MatchID));
                         return;
                     }
                     else if (!(realSearchPlayers.Count > 1))
                     {
                         if (realSearchPlayers[0].privacy_flag == "y")
                         {
-                            await ReplyAsync(Text.UserIsHidden(id));
+                            await ReplyAsync(Text.UserIsHidden(MatchID));
                             return;
                         }
                         matchHistory = await hirezAPI.GetMatchHistory(realSearchPlayers[0].player_id);
-                        id = matchHistory[0].Match.ToString();
+                        MatchID = matchHistory[0].Match.ToString();
                     }
                     else
                     {
                         //On Multiple players
-                        onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context).Result;
+                        onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context);
                         if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                         {
-                            await ReplyAsync(Text.UserNotFound(id));
+                            await ReplyAsync(Text.UserNotFound(MatchID));
                             return;
                         }
                         else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
@@ -1744,15 +1815,15 @@ namespace ThothBotCore.Modules
                             return;
                         }
                         matchHistory = await hirezAPI.GetMatchHistory(onMultiplePlayersResult.searchPlayers.player_id);
-                        id = matchHistory[0].Match.ToString();
+                        MatchID = matchHistory[0].Match.ToString();
                     }
                 }
-                if (id == "0")
+                if (MatchID == "0")
                 {
-                    await ReplyAsync($"{id} has no recent matches in record.");
+                    await ReplyAsync($"{MatchID} has no recent matches in record.");
                     return;
                 }
-                string matchDetailsString = await hirezAPI.GetMatchDetails(Int32.Parse(id));
+                string matchDetailsString = await hirezAPI.GetMatchDetails(Int32.Parse(MatchID));
                 if (matchDetailsString.ToLowerInvariant().Contains("<"))
                 {
                     await ReplyAsync("Hi-Rez API sent a weird response...");
@@ -1762,14 +1833,16 @@ namespace ThothBotCore.Modules
                 var matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(matchDetailsString);
                 if (onMultiplePlayersResult.userMessage != null)
                 {
+                    var embed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
                     await onMultiplePlayersResult.userMessage.ModifyAsync(x =>
                     {
-                        x.Embed = EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build();
+                        x.Embed = embed.Build();
                     });
                 }
                 else
                 {
-                    await ReplyAsync("", false, EmbedHandler.MatchDetailsEmbed(matchDetails).Result.Build());
+                    var embed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
+                    await ReplyAsync(embed: embed.Build());
                 }
             }
             catch (Exception ex)
@@ -1779,9 +1852,10 @@ namespace ThothBotCore.Modules
             }
         }
         
-        [Command("matchhistory", RunMode = RunMode.Async)]
-        [Alias("mh", "мх")]
-        public async Task MatchHistoryCommand([Remainder]string username = "")
+        [Command("matchhistory", true, RunMode = RunMode.Async)]
+        [Summary("[WIP] Latest match history for `PlayerName`.")]
+        [Alias("mh", "мх", "history")]
+        public async Task MatchHistoryCommand([Remainder]string PlayerName = "")
         {
             try
             {
@@ -1793,7 +1867,7 @@ namespace ThothBotCore.Modules
                 var matchHistory = new List<MatchHistoryModel>();
 
                 //Checking the linked account
-                if (username == "")
+                if (PlayerName == "")
                 {
                     getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
 
@@ -1803,7 +1877,8 @@ namespace ThothBotCore.Modules
                     }
                     else
                     {
-                        await ReplyAsync("Command usage: `!!matchhistory PlayerName`");
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Command usage: `!!matchhistory PlayerName`");
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                 }
@@ -1825,13 +1900,13 @@ namespace ThothBotCore.Modules
                 else
                 {
                     // Searching for the player
-                    var searchPlayer = await hirezAPI.SearchPlayer(username);
+                    var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
                     var realSearchPlayers = new List<SearchPlayers>();
                     if (searchPlayer.Count != 0)
                     {
                         foreach (var player in searchPlayer)
                         {
-                            if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
+                            if (player.Name.ToLowerInvariant() == PlayerName.ToLowerInvariant())
                             {
                                 realSearchPlayers.Add(player);
                             }
@@ -1840,14 +1915,15 @@ namespace ThothBotCore.Modules
                     // Checking the new list for count of users in it
                     if (realSearchPlayers.Count == 0)
                     {
-                        await ReplyAsync(Text.UserNotFound(username));
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
+                        await ReplyAsync(embed: embed);
                         return;
                     }
                     else if (!(realSearchPlayers.Count > 1))
                     {
                         if (realSearchPlayers[0].privacy_flag == "y")
                         {
-                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(username));
+                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
                             await ReplyAsync(embed: embed);
                             return;
                         }
@@ -1856,10 +1932,10 @@ namespace ThothBotCore.Modules
                     else
                     {
                         //On Multiple players
-                        onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context).Result;
+                        onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context);
                         if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                         {
-                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(username));
+                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
                             await ReplyAsync(embed: embed);
                             return;
                         }
@@ -1883,6 +1959,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("motd", true)]
+        [Summary("Information about upcoming MOTDs in the game.")]
         [Alias("motds", "мотд", "мотдс")]
         public async Task MotdCommand()
         {
@@ -1899,7 +1976,7 @@ namespace ThothBotCore.Modules
                 embed.WithAuthor(x =>
                 {
                     x.Name = "Matches Of The Day";
-                    x.IconUrl = botIcon;
+                    x.IconUrl = Global.botIcon;
                 });
                 Motd motdDay = new Motd();
                 for (int i = 0; i < 5; i++)
@@ -1937,31 +2014,123 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("worshippers")]
-        [Alias("wps", "wp")]
-        public async Task WorshippersCommand(int id)
+        [Command("wp", RunMode = RunMode.Async)]
+        [Summary("Shows all masteries for gods played by the provided `PlayerName`.")]
+        [Alias("wps", "worshippers", "mastery", "masteries")]
+        public async Task WorshippersCommand([Remainder]string PlayerName = "")
         {
-            string json = await hirezAPI.GetGodRanks(id);
-            var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
-            var sb = new StringBuilder();
-            foreach (var god in ranks)
+            int playerID = 0;
+            var getPlayerByDiscordID = new List<PlayerSpecial>();
+
+            // Checking if we are searching for Player who linked his Discord with SMITE account
+            if (PlayerName == "")
             {
-                sb.Append($"{god.Rank} {god.god} {god.Worshippers}\n");
+                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
+
+                if (getPlayerByDiscordID.Count != 0)
+                {
+                    playerID = getPlayerByDiscordID[0].active_player_id;
+                    PlayerName = getPlayerByDiscordID[0].Name;
+                }
+                else
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Command usage: `!!wp InGameName`");
+                    await ReplyAsync(embed: embed);
+                    return;
+                }
             }
-            await ReplyAsync(sb.ToString());
+            else if (Context.Message.MentionedUsers.Count != 0 && PlayerName == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
+            {
+                var mentionedUser = Context.Message.MentionedUsers.Last();
+                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
+                if (getPlayerByDiscordID.Count != 0)
+                {
+                    playerID = getPlayerByDiscordID[0].active_player_id;
+                    PlayerName = getPlayerByDiscordID[0].Name;
+                }
+                else
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
+                    await ReplyAsync(embed: embed);
+                    return;
+                }
+            }
+            // Finding all occurences of provided username and adding them in a list
+            var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
+            var realSearchPlayers = new List<SearchPlayers>();
+            if (searchPlayer.Count != 0)
+            {
+                foreach (var player in searchPlayer)
+                {
+                    if (player.Name.ToLowerInvariant() == PlayerName.ToLowerInvariant())
+                    {
+                        realSearchPlayers.Add(player);
+                    }
+                }
+            }
+            // Checking the new list for count of users in it
+            if (realSearchPlayers.Count == 0)
+            {
+                // Profile doesn't exist
+                var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                await ReplyAsync(embed: embed.Build());
+            }
+            else if (!(realSearchPlayers.Count > 1))
+            {
+                if (realSearchPlayers[0].privacy_flag != "n")
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
+                    await ReplyAsync(embed: embed);
+                    return;
+                }
+                await Context.Channel.TriggerTypingAsync();
+                if (playerID == 0)
+                {
+                    playerID = realSearchPlayers[0].player_id;
+                }
+                string json = await hirezAPI.GetGodRanks(playerID);
+                var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
+                var embedz = await EmbedHandler.BuildWorshippersEmbedAsync(ranks, realSearchPlayers[0]);
+                var message = await Context.Channel.SendMessageAsync(embed: embedz);
+            }
+            else
+            {
+                // Multiple Players?
+                var result = await MultiplePlayersHandler(realSearchPlayers, Context);
+                if (result.searchPlayers != null && result.searchPlayers.player_id == 0)
+                {
+                    var embedz = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                    await ReplyAsync(embed: embedz.Build());
+                    return;
+                }
+                else if (result.searchPlayers == null && result.userMessage == null)
+                {
+                    return;
+                }
+                playerID = result.searchPlayers.player_id;
+
+                string json = await hirezAPI.GetGodRanks(playerID);
+                var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
+                var embed = await EmbedHandler.BuildWorshippersEmbedAsync(ranks, result.searchPlayers);
+                await result.userMessage.ModifyAsync(x =>
+                {
+                    x.Embed = embed;
+                });
+            }
         }
 
         [Command("link", true)]
+        [Summary("Link your Discord and SMITE accounts.")]
         public async Task LinkingInfoCommand()
         {
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {
                 x.Name = "Thoth Account Linking";
-                x.IconUrl = botIcon;
+                x.IconUrl = Global.botIcon;
             });
             embed.WithDescription($"Thoth Account Linking will link your Discord and SMITE account in our database which will allow executing commands without providing InGameName. \nCommands using this feature are:\n" +
-                $"`{Credentials.botConfig.prefix}stats`, `{Credentials.botConfig.prefix}livematch`, `{Credentials.botConfig.prefix}matchdetails`\n" +
+                $"`{Credentials.botConfig.prefix}stats`, `{Credentials.botConfig.prefix}livematch`, `{Credentials.botConfig.prefix}matchdetails`, `{Credentials.botConfig.prefix}matchhistory`\n" +
                 $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! Linking requires changing your Personal Status Message in-game to verify that the said account is yours.**" +
                 $"\n\n__To start the linking process write **{Credentials.botConfig.prefix}startlink** and follow the instructions.__");
             embed.WithColor(Constants.DefaultBlueColor);
@@ -1984,7 +2153,7 @@ namespace ThothBotCore.Modules
                 embed.WithAuthor(x =>
                 {
                     x.Name = "Thoth Account Linking";
-                    x.IconUrl = botIcon;
+                    x.IconUrl = Global.botIcon;
                 });
                 embed.WithColor(Constants.DefaultBlueColor);
                 embed.WithFooter(x => x.Text = "This is not official Hi-Rez linking!");
@@ -2050,7 +2219,7 @@ namespace ThothBotCore.Modules
                 else
                 {
                     //On Multiple players
-                    onMultiplePlayersResult = MultiplePlayersHandler(realSearchPlayers, Context, message).Result;
+                    onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context, message);
                     if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                     {
                         embed.WithDescription("🔴 Linking cancelled.");
@@ -2191,7 +2360,9 @@ namespace ThothBotCore.Modules
         [RequireOwner]
         public async Task AnotherTestCommand()
         {
-            await ReplyAsync();
+            var embed = new EmbedBuilder();
+            embed.WithDescription($"[:thinking: Streamer](https://leovoel.github.io/embed-visualizer/)");
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("tt", true, RunMode = RunMode.Async)]
@@ -2367,7 +2538,7 @@ namespace ThothBotCore.Modules
         {
             await ReplyAsync("do not use");
 
-            var playersList = new List<PlayerStats>(GetAllPlayers().Result);
+            var playersList = new List<PlayerStats>(await GetAllPlayers());
 
             for (int i = 0; i < playersList.Count; i++)
             {
@@ -2385,130 +2556,10 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("fst", true, RunMode = RunMode.Async)]
-        [RequireOwner]
-        public async Task FasterStats([Remainder] string username)
-        {
-            try
-            {
-                List<SearchPlayers> searchPlayer = await hirezAPI.SearchPlayer(username);
-                if (searchPlayer.Count != 0)
-                {
-                    List<SearchPlayers> realSearchPlayers = new List<SearchPlayers>();
-                    foreach (var player in searchPlayer)
-                    {
-                        if (player.Name.ToLowerInvariant() == username.ToLowerInvariant())
-                        {
-                            realSearchPlayers.Add(player);
-                        }
-                    }
-                }
-                if (searchPlayer.Count == 0 || searchPlayer[0].Name.ToLowerInvariant() != username.ToLowerInvariant())
-                {
-                    await ReplyAsync($"<:X_:579151621502795777>*{username}* is hidden or not found!");
-                }
-                else if (searchPlayer[0].Name.ToLowerInvariant() == username.ToLowerInvariant())
-                {
-                    await Context.Channel.TriggerTypingAsync();
-                    try
-                    {
-                        string statusJson = await hirezAPI.GetPlayerStatus(searchPlayer[0].player_id);
-                        List<PlayerStatus> playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(statusJson);
-                        string matchJson = "";
-                        string topMatchesValue = "";
-                        if (playerStatus[0].Match != 0)
-                        {
-                            matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
-                        }
-
-                        // Most Played Modes
-                        try
-                        {
-                            List<AllQueueStats> allQueue = new List<AllQueueStats>();
-                            for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
-                            {
-                                int matches = 0;
-                                try
-                                {
-                                    List<QueueStats> queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(searchPlayer[0].player_id, Text.LegitQueueIDs()[i]));
-                                    for (int c = 0; c < queueStats.Count; c++)
-                                    {
-                                        if (queueStats[c].Matches != 0)
-                                        {
-                                            matches = matches + queueStats[c].Matches;
-                                        }
-                                    }
-                                    allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
-                                }
-                                catch (Exception)
-                                {
-                                }
-                            }
-                            List<AllQueueStats> orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
-                            
-                            if (orderedQueues.Count != 0)
-                            {
-                                switch (orderedQueues.Count)
-                                {
-                                    case 1:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]";
-                                        break;
-                                    case 2:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]";
-                                        break;
-                                    default:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
-                                                        $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]";
-                                        break;
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}");
-                        }
-
-                        EmbedBuilder embed = EmbedHandler.PlayerStatsEmbed(
-                            await hirezAPI.GetPlayer(searchPlayer[0].player_id.ToString()),
-                            await hirezAPI.GetGodRanks(searchPlayer[0].player_id),
-                            await hirezAPI.GetPlayerAchievements(searchPlayer[0].player_id),
-                            await hirezAPI.GetPlayerStatus(searchPlayer[0].player_id),
-                            matchJson,
-                            searchPlayer[0].portal_id).Result;
-
-                        embed.AddField(field =>
-                        {
-                            field.IsInline = true;
-                            field.Name = ($"<:matches:579604410569850891>**Most Played Modes**");
-                            field.Value = topMatchesValue;
-                        });
-
-                        var message = await Context.Channel.SendMessageAsync("", false, embed.Build());
-                    }
-                    catch (Exception ex)
-                    {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
-                        await ReplyAsync("Oops.. I've encountered an error. :sob:");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync($"Oops.. Either this player was not found or an unexpected error has occured.");
-                await ErrorTracker.SendError($"**Stats Command**\n" +
-                    $"**Message: **{Context.Message.Content}\n" +
-                    $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
-                    $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
-                    $"**Error: **{ex.Message}\n" +
-                    $"**InnerException: ** {ex.InnerException}");
-            }
-        }
-
         // Shit/fun commands lul
 
         [Command("rank", true, RunMode = RunMode.Async)]
+        [Summary("Gives you random ranked division.")]
         [Alias("ранк")]
         public async Task RandomRankCommand()
         {
@@ -2558,10 +2609,10 @@ namespace ThothBotCore.Modules
                 await context.Channel.SendMessageAsync($"There are more than 20 accounts({searchPlayers.Count}) with the username **{searchPlayers[0].Name}**. Please contact the bot owner for further assistance.");
                 return nz;
             }
-            var embed = EmbedHandler.MultiplePlayers(searchPlayers).Result;
+            var embed = await EmbedHandler.MultiplePlayers(searchPlayers);
             if (message == null)
             {
-                message = await context.Channel.SendMessageAsync("", false, embed.Build());
+                message = await context.Channel.SendMessageAsync(embed: embed.Build());
             }
             else
             {
@@ -2589,15 +2640,17 @@ namespace ThothBotCore.Modules
             {
                 if (searchPlayers[responseNum].privacy_flag == "y")
                 {
+                    embed = await EmbedHandler.HiddenProfileEmbed(searchPlayers[responseNum].Name);
                     await message.ModifyAsync(x =>
                     {
-                        x.Embed = EmbedHandler.HiddenProfileEmbed(searchPlayers[responseNum].Name).Result.Build();
+                        x.Embed = embed.Build();
                     });
                     return nz;
                 }
+                embed = await EmbedHandler.LoadingStats(Text.GetPortalIcon(searchPlayers[responseNum].portal_id.ToString()) + searchPlayers[responseNum].Name);
                 await message.ModifyAsync(x =>
                 {
-                    x.Embed = EmbedHandler.LoadingStats(Text.GetPortalIcon(searchPlayers[responseNum].portal_id.ToString()) + searchPlayers[responseNum].Name).Result.Build();
+                    x.Embed = embed.Build();
                 });
                 nz.searchPlayers = searchPlayers[responseNum];
                 nz.userMessage = message;
