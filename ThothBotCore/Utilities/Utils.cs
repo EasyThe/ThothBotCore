@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using ThothBotCore.Connections;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
-using ThothBotCore.Storage.Models;
 
 namespace ThothBotCore.Utilities
 {

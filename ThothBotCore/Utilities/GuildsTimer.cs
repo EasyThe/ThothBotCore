@@ -14,8 +14,6 @@ namespace ThothBotCore.Utilities
         private static Timer GuildCountTimer;
         internal int joinedGuilds = 0;
 
-        DiscordBotList dblcom = new DiscordBotList();
-
         public Task StartGuildsCountTimer()
         {
             GuildCountTimer = new Timer() // Timer for Guilds Count
@@ -122,7 +120,6 @@ namespace ThothBotCore.Utilities
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.BotsOnDiscordAPI);
                         HttpResponseMessage response = await webclient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/454145330347376651/guilds", content);
-                        Console.WriteLine(response.StatusCode);
                     }
                 }
                 catch (Exception ex)
@@ -131,6 +128,21 @@ namespace ThothBotCore.Utilities
                         $"**Error Message:** {ex.Message}");
                 }
 
+                //DiscordServices
+                try
+                {
+                    using (var webclient = new HttpClient())
+                    using (var content = new StringContent($"{{ \"servers\": {Connection.Client.Guilds.Count} }}", Encoding.UTF8, "application/json"))
+                    {
+                        webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.DiscordServicesAPI);
+                        HttpResponseMessage response = await webclient.PostAsync("https://api.discordservices.net/bot/454145330347376651/stats", content);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordServices.**\n" +
+                        $"**Error Message:** {ex.Message}");
+                }
 
                 Console.WriteLine($"{DateTime.Now.ToString("[HH:mm]")} Guilds count updated! New count: {joinedGuilds}");
             }
@@ -138,12 +150,6 @@ namespace ThothBotCore.Utilities
             GuildCountTimer.Interval = 60000;
             GuildCountTimer.AutoReset = true;
             GuildCountTimer.Enabled = true;
-        }
-
-        internal class DiscordBotList
-        {
-            internal int guilds { get; set; }
-            internal int users { get; set; }
         }
     }
 }

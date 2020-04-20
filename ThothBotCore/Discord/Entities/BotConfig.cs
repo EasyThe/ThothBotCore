@@ -53,5 +53,6 @@ namespace ThothBotCore.Discord.Entities
         public string dblAPI { get; set; } = "DiscordBotListAPIkey";
         public string dbggAPI { get; set; } = "DiscordBotsGGAPIkey";
         public string BotsOnDiscordAPI { get; set; } = "BotsOnDiscordAPIkey";
+        public string DiscordServicesAPI { get; set; } = "DiscordServicesAPI";
     }
 }

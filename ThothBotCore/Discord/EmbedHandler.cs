@@ -1052,7 +1052,6 @@ namespace ThothBotCore.Discord
                 x.Url = $"https://smite.guru/profile/{player.player_id}";
             });
             int count = 0;
-            int fieldsCounter = 1;
             for (int i = 0; i < ranks.Count; i++)
             {
                 sb.AppendLine($"{Text.GetRankEmoji(ranks[i].Rank)} {ranks[i].god} [{ranks[i].Worshippers}]");
@@ -1062,12 +1061,11 @@ namespace ThothBotCore.Discord
                     embed.AddField(x =>
                     {
                         x.IsInline = true;
-                        x.Name = Text.NumberEmojies(fieldsCounter);
+                        x.Name = "\u200b";
                         x.Value = sb.ToString();
                     });
                     sb.Clear();
                     count = 0;
-                    fieldsCounter++;
                 }
             }
             if (sb.Length != 0)
@@ -1075,7 +1073,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = Text.NumberEmojies(fieldsCounter);
+                    x.Name = "\u200b";
                     x.Value = sb.ToString();
                 });
             }

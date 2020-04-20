@@ -17,7 +17,6 @@ using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
-using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
 using ThothBotCore.Utilities.Smite;
 using static ThothBotCore.Connections.Models.Player;
@@ -1329,7 +1328,8 @@ namespace ThothBotCore.Modules
         [Command("statusupdates")]
         [Summary("When SMITE incidents and scheduled maintenances appear in the status page they will be sent to #channel")]
         [Alias("statusupd", "su")]
-        [RequireUserPermission(GuildPermission.Administrator)]
+        [RequireUserPermission(GuildPermission.Administrator, Group = "Owner")]
+        [RequireOwner(Group = "Owner")]
         public async Task SetStatusUpdatesChannel(SocketChannel message)
         {
             await SetNotifChannel(Context.Guild.Id, Context.Guild.Name, message.Id);
@@ -1368,7 +1368,8 @@ namespace ThothBotCore.Modules
         [Command("stopstatusupdates", true)]
         [Summary("Stops sending messages from the SMITE status page.")]
         [Alias("ssu")]
-        [RequireUserPermission(GuildPermission.Administrator)]
+        [RequireUserPermission(GuildPermission.Administrator, Group = "Owner")]
+        [RequireOwner(Group = "Owner")]
         public async Task StopStatusUpdates()
         {
             await StopNotifs(Context.Guild.Id);
@@ -1562,7 +1563,6 @@ namespace ThothBotCore.Modules
 
             embed.WithColor(210, 144, 52);
             embed.WithTitle("All Platforms Top Issues");
-            Console.WriteLine(topIssues.Length);
             if (!(topIssues.ToString().Length > 2048))
             {
                 embed.WithDescription(topIssues.ToString());
@@ -1958,7 +1958,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("motd", true)]
+        [Command("motd", true, RunMode = RunMode.Async)]
         [Summary("Information about upcoming MOTDs in the game.")]
         [Alias("motds", "мотд", "мотдс")]
         public async Task MotdCommand()
@@ -2353,6 +2353,92 @@ namespace ThothBotCore.Modules
                 }
 
                 await ReplyAsync("", false, embed.Build());
+            }
+        }
+
+        [Command("p", true, RunMode = RunMode.Async)]
+        [RequireOwner]
+        public async Task PaginatedGodsbro(int god, int ability = 1)
+        {
+            //var gods = JsonConvert.DeserializeObject<List<Gods.God>>(await hirezAPI.GetGods());
+            var json = await File.ReadAllTextAsync("getgods.json");
+            var gods = JsonConvert.DeserializeObject<List<Gods.God>>(json);
+            var embed = new EmbedBuilder();
+            //var json = JsonConvert.SerializeObject(gods, Formatting.Indented);
+            //await File.WriteAllTextAsync("getgods.json", json);
+            
+            try
+            {
+                if (gods.Count == 0)
+                {
+                    //titlecasegod was not found imashe tuk nz
+                    return;
+                }
+                else
+                {
+                    embed.WithAuthor(author =>
+                    {
+                        author.WithName(gods[god].Name);
+                        author.WithIconUrl(gods[god].godIcon_URL);
+                    });
+                    embed.WithTitle(gods[god].Ability5);
+                    embed.WithDescription(gods[god].abilityDescription5.itemDescription.description);
+                    for (int z = 0; z < gods[god].abilityDescription5.itemDescription.menuitems.Count; z++)
+                    {
+                        if (gods[god].abilityDescription5.itemDescription.menuitems[z].value.Length != 0)
+                        {
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = gods[god].abilityDescription5.itemDescription.menuitems[z].description;
+                                field.Value = gods[god].abilityDescription5.itemDescription.menuitems[z].value;
+                            });
+                        }
+                    }
+                    for (int a = 0; a < gods[god].abilityDescription5.itemDescription.rankitems.Count; a++)
+                    {
+                        if (gods[god].abilityDescription5.itemDescription.rankitems[a].value.Length != 0)
+                        {
+                            embed.AddField(field =>
+                            {
+                                field.IsInline = true;
+                                field.Name = gods[god].abilityDescription5.itemDescription.rankitems[a].description;
+                                field.Value = gods[god].abilityDescription5.itemDescription.rankitems[a].value;
+                            });
+                        }
+                    }
+                    if (gods[god].abilityDescription5.itemDescription.cooldown.Length != 0)
+                    {
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = "Cooldown";
+                            field.Value = gods[god].abilityDescription5.itemDescription.cooldown;
+                        });
+                    }
+                    if (gods[god].abilityDescription5.itemDescription.cost.Length != 0)
+                    {
+                        embed.AddField(field =>
+                        {
+                            field.IsInline = true;
+                            field.Name = "Cost";
+                            field.Value = gods[god].abilityDescription5.itemDescription.cost;
+                        });
+                    }
+                    embed.WithThumbnailUrl(gods[god].godAbility5_URL);
+                    if (gods[god].DomColor != 0)
+                    {
+                        embed.WithColor(new Color((uint)gods[god].DomColor));
+                    }
+
+
+                }
+                var pages = new[] { "Page 1", "Page 2", "Page 3", "aaaaaa", "Page 5" };
+                await ReplyAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}\n{ex.StackTrace}");
             }
         }
 

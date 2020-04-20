@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using ColorThiefDotNet;
 using System.Globalization;
-using ThothBotCore.Storage.Models;
 using ThothBotCore.Storage;
 using System.Drawing;
 using System.IO;
@@ -40,7 +38,7 @@ namespace ThothBotCore.Utilities
 
         public void DoAllGodColors()
         {
-            List<Gods.God> godsList = Database.LoadGodsDomColor();
+            var godsList = Database.LoadGodsDomColor();
             int c = godsList.Capacity;
 
             for (int i = 0; i < c; i++)

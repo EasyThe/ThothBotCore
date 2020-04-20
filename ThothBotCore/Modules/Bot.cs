@@ -168,7 +168,8 @@ namespace ThothBotCore.Modules
 
         [Command("prefix")] // Custom Prefix
         [Summary("Set custom prefix for your server.")]
-        [RequireUserPermission(GuildPermission.Administrator)]
+        [RequireUserPermission(GuildPermission.Administrator, Group = "Owner")]
+        [RequireOwner(Group = "Owner")]
         public async Task SetPrefix([Remainder] string prefix)
         {
             if (prefix.Length > 5)

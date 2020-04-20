@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Storage;
-using ThothBotCore.Storage.Models;
 
 namespace ThothBotCore.Utilities
 {

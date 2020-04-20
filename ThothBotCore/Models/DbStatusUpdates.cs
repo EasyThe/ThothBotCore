@@ -1,5 +1,5 @@
 ﻿
-namespace ThothBotCore.Storage.Models
+namespace ThothBotCore.Models
 {
     public class DbStatusUpdates
     {

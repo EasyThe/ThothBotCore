@@ -8,11 +8,8 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ThothBotCore.Connections;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Models;
-using ThothBotCore.Modules;
-using ThothBotCore.Storage.Models;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.Player;
 
