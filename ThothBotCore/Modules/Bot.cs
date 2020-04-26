@@ -24,11 +24,11 @@ namespace ThothBotCore.Modules
         public async Task Help([Remainder] string command = null)
         {
             string prefix = Credentials.botConfig.prefix;
-            if (GetServerConfig(Context.Guild).Result.Count > 0)
+            if (GetServerConfig(Context.Guild.Id).Result.Count > 0)
             {
-                if (GetServerConfig(Context.Guild).Result[0].prefix != "!!")
+                if (GetServerConfig(Context.Guild.Id).Result[0].prefix != "!!")
                 {
-                    var conf = await GetServerConfig(Context.Guild);
+                    var conf = await GetServerConfig(Context.Guild.Id);
                     prefix = conf[0].prefix;
                 }
             }
@@ -87,7 +87,7 @@ namespace ThothBotCore.Modules
             {
                 author
                     .WithName("Statistics for ThothBot")
-                    .WithIconUrl(Global.botIcon);
+                    .WithIconUrl(Constants.botIcon);
             });
             embed.WithDescription("Creator: EasyThe#2836");
             embed.WithColor(Constants.DefaultBlueColor);
@@ -202,13 +202,11 @@ namespace ThothBotCore.Modules
         public async Task ChangelogCommand()
         {
             var channel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(567192879026536448);
-            var messages = await channel.GetMessagesAsync(1).FlattenAsync();
-
-            var nz = messages;
+            var messages = await channel.GetMessagesAsync(1).FlattenAsync().ConfigureAwait(false);
 
             var embed = new EmbedBuilder();
             embed.Title = "Latest Update of ThothBot";
-            foreach (var item in nz)
+            foreach (var item in messages)
             {
                 embed.Description = item.Content;
             }

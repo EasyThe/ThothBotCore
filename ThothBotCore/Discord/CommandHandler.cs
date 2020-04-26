@@ -50,7 +50,7 @@ namespace ThothBotCore.Discord
             try
             {
                 if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
-                || msg.HasStringPrefix(Database.GetServerConfig(context.Guild).Result[0].prefix, ref argPos)
+                || msg.HasStringPrefix(Database.GetServerConfig(context.Guild.Id).Result[0].prefix, ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
                 {
                     var result = await _commands.ExecuteAsync(context, argPos, _services);
@@ -99,7 +99,8 @@ namespace ThothBotCore.Discord
             {
                 await context.Channel.SendMessageAsync($"Please check the command usage with **{Credentials.botConfig.prefix}help**");
             }
-            else if (errorString.ToLowerInvariant().Contains("user requires guild permission administrator"))
+            else if (errorString.ToLowerInvariant().Contains("user requires guild permission administrator") ||
+                errorString.ToLowerInvariant().Contains("group owner failed"))
             {
                 await context.Channel.SendMessageAsync("You must to have **Administrator** permission in this server to use this command.");
             }
@@ -109,7 +110,7 @@ namespace ThothBotCore.Discord
             }
             else if (errorString.ToLowerInvariant().Contains("command must be used in a guild channel"))
             {
-                await context.Channel.SendMessageAsync("Command must be used in a guild channel.");
+                await context.Channel.SendMessageAsync("Command must be used in a server channel.");
             }
             else if (errorString.ToLowerInvariant().Contains("50013") || errorString.ToLowerInvariant().Contains("embedlinks"))
             {

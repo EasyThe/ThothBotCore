@@ -350,24 +350,38 @@ namespace ThothBotCore.Discord
             {
                 string[] splitName = playerStats[0].Name.Split(']');
                 rPlayerName = splitName[1];
-                if (playerStats[0].hz_player_name != null)
+                if (rPlayerName == null || rPlayerName == "")
                 {
-                    rPlayerName = playerStats[0].hz_player_name + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                    if (playerStats[0].hz_player_name != null)
+                    {
+                        rPlayerName = playerStats[0].hz_player_name + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                    }
+                    else
+                    {
+                        rPlayerName = playerStats[0].hz_gamer_tag + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                    }
                 }
                 else
                 {
-                    rPlayerName = playerStats[0].hz_gamer_tag + $", {splitName[0]}]{playerStats[0].Team_Name}";
+                    rPlayerName += $", {splitName[0]}]{playerStats[0].Team_Name}";
                 }
             }
             else
             {
-                if (playerStats[0].hz_player_name != null)
+                if (playerStats[0].Name == null || playerStats[0].Name == "")
                 {
-                    rPlayerName = playerStats[0].hz_player_name;
+                    rPlayerName = playerStats[0].Name;
                 }
                 else
                 {
-                    rPlayerName = playerStats[0].hz_gamer_tag;
+                    if (playerStats[0].hz_player_name != null)
+                    {
+                        rPlayerName = playerStats[0].hz_player_name;
+                    }
+                    else
+                    {
+                        rPlayerName = playerStats[0].hz_gamer_tag;
+                    }
                 }
             }
             double rWinRate = 0;
@@ -434,7 +448,7 @@ namespace ThothBotCore.Discord
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = ($"<:wp:552579445475508229>**Total Worshippers**");
+                field.Name = ($"<:wp:552579445475508229>**Total Worshipers**");
                 field.Value = ($"{defaultEmoji}{playerStats[0].Total_Worshippers}");
             });
             embed.AddField(field =>
@@ -1040,7 +1054,7 @@ namespace ThothBotCore.Discord
             }
             return embed.Build();
         }
-        public static async Task<Embed> BuildWorshippersEmbedAsync(List<GodRanks> ranks, SearchPlayers player)
+        public static async Task<Embed> BuildWorshipersEmbedAsync(List<GodRanks> ranks, SearchPlayers player)
         {
             var sb = new StringBuilder();
             var embed = new EmbedBuilder();
@@ -1079,7 +1093,7 @@ namespace ThothBotCore.Discord
             }
             embed.WithFooter(x =>
             {
-                x.Text = "Rank God [Worshippers]";
+                x.Text = "Rank God [Worshipers]";
             });
             return await Task.FromResult(embed.Build());
         }

@@ -92,11 +92,11 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task<List<ServerConfig>> GetServerConfig(SocketGuild guild) // Get prefix for guild. Working as intended
+        public static async Task<List<ServerConfig>> GetServerConfig(ulong id) // Get prefix for guild. Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                var output = await cnn.QueryAsync<ServerConfig>($"SELECT * FROM serverConfig WHERE serverID LIKE '%{guild.Id}%'", new DynamicParameters());
+                var output = await cnn.QueryAsync<ServerConfig>($"SELECT * FROM serverConfig WHERE serverID LIKE '%{id}%'", new DynamicParameters());
                 return output.ToList();
             }
         }

@@ -157,7 +157,7 @@ namespace ThothBotCore.Utilities
             var sb = new StringBuilder();
             if (message.ToLowerInvariant().Contains("the api is unavailable"))
             {
-                sb.Append("Sorry, the Hi-Rez API is unavailable. Please try again later.");
+                sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
             }
             else
             {

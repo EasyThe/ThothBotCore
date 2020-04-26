@@ -80,13 +80,13 @@ namespace ThothBotCore.Modules
                     }
 
                     var embed = new EmbedBuilder();
-                    embed.WithThumbnailUrl(Global.botIcon);
+                    embed.WithThumbnailUrl(Constants.botIcon);
                     embed.WithAuthor(author =>
                     {
                         author
                             .WithName($"{rPlayerName}")
                             .WithUrl($"https://paladins.guru/profile/{playerStats[0].ActivePlayerId}")
-                            .WithIconUrl(Global.botIcon);
+                            .WithIconUrl(Constants.botIcon);
                     });
                     if (playerStatus[0].status == 0)
                     {
@@ -202,7 +202,7 @@ namespace ThothBotCore.Modules
                     {
                         footer
                             .WithText(playerStats[0].Personal_Status_Message)
-                            .WithIconUrl(Global.botIcon);
+                            .WithIconUrl(Constants.botIcon);
                     });
 
                     await ReplyAsync("", false, embed.Build());

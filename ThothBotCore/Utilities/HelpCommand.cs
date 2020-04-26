@@ -91,7 +91,7 @@ namespace ThothBotCore.Utilities
         {
             var helpEmbedBuilder = new EmbedBuilder();
             var commandModules = commandService.GetModulesWithCommands();
-            helpEmbedBuilder.WithAuthor(x => { x.IconUrl = Global.botIcon; x.Name = "Available commands"; });
+            helpEmbedBuilder.WithAuthor(x => { x.IconUrl = Constants.botIcon; x.Name = "Available commands"; });
 
             foreach (var module in commandModules)
             {

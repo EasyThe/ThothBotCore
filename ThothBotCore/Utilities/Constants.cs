@@ -5,6 +5,7 @@ namespace ThothBotCore.Utilities
 {
     public class Constants
     {
+        public static readonly string botIcon = "https://i.imgur.com/8qNdxse.png";
         public static string JoinedMessage { get; set; } = ":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
                 $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +

@@ -79,6 +79,17 @@ namespace ThothBotCore.Modules
                         return;
                     }
                 }
+                if (PlayerName.Contains("\\") || PlayerName.Contains("/"))
+                {
+                    if (PlayerName.Contains("\\"))
+                    {
+                        PlayerName = PlayerName.Replace("\\", String.Empty);
+                    }
+                    if (PlayerName.Contains("/"))
+                    {
+                        PlayerName = PlayerName.Replace("/", String.Empty);
+                    }
+                }
                 // Finding all occurences of provided username and adding them in a list
                 var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
                 var realSearchPlayers = new List<SearchPlayers>();
@@ -335,12 +346,15 @@ namespace ThothBotCore.Modules
             {
                 var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
                 await ReplyAsync(embed: embed);
-                await ErrorTracker.SendError($"**Stats Command**\n" +
+                if (!(ex.Message.ToLowerInvariant().Contains("api is unavailable")))
+                {
+                    await ErrorTracker.SendError($"**Stats Command**\n" +
                     $"**Message: **{Context.Message.Content}\n" +
                     $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
                     $"**Error: **{ex.Message}\n" +
                     $"**InnerException: ** {ex.InnerException}");
+                }
             }
         }
 
@@ -860,7 +874,7 @@ namespace ThothBotCore.Modules
                     {
                         footer
                             .WithText($"{playerStats[0].Personal_Status_Message}")
-                            .WithIconUrl(Global.botIcon);
+                            .WithIconUrl(Constants.botIcon);
                     });
                     await Context.Channel.SendFileAsync(fileName, embed: embed.Build());
                 }
@@ -1095,7 +1109,7 @@ namespace ThothBotCore.Modules
                 }
                 embed.WithFooter(x =>
                 {
-                    x.IconUrl = Global.botIcon;
+                    x.IconUrl = Constants.botIcon;
                     x.Text = "More info soon™..";
                 });
 
@@ -1388,7 +1402,7 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(author =>
             {
                 author.WithName(clanList[0].Name);
-                author.WithIconUrl(Global.botIcon);
+                author.WithIconUrl(Constants.botIcon);
             });
             embed.WithColor(0, 255, 0);
             embed.AddField(field =>
@@ -1976,7 +1990,7 @@ namespace ThothBotCore.Modules
                 embed.WithAuthor(x =>
                 {
                     x.Name = "Matches Of The Day";
-                    x.IconUrl = Global.botIcon;
+                    x.IconUrl = Constants.botIcon;
                 });
                 Motd motdDay = new Motd();
                 for (int i = 0; i < 5; i++)
@@ -2016,106 +2030,114 @@ namespace ThothBotCore.Modules
 
         [Command("wp", RunMode = RunMode.Async)]
         [Summary("Shows all masteries for gods played by the provided `PlayerName`.")]
-        [Alias("wps", "worshippers", "mastery", "masteries")]
-        public async Task WorshippersCommand([Remainder]string PlayerName = "")
+        [Alias("wps", "worshipers", "mastery", "masteries")]
+        public async Task WorshipersCommand([Remainder]string PlayerName = "")
         {
-            int playerID = 0;
-            var getPlayerByDiscordID = new List<PlayerSpecial>();
+            try
+            {
+                int playerID = 0;
+                var getPlayerByDiscordID = new List<PlayerSpecial>();
 
-            // Checking if we are searching for Player who linked his Discord with SMITE account
-            if (PlayerName == "")
-            {
-                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
+                // Checking if we are searching for Player who linked his Discord with SMITE account
+                if (PlayerName == "")
+                {
+                    getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
 
-                if (getPlayerByDiscordID.Count != 0)
-                {
-                    playerID = getPlayerByDiscordID[0].active_player_id;
-                    PlayerName = getPlayerByDiscordID[0].Name;
-                }
-                else
-                {
-                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Command usage: `!!wp InGameName`");
-                    await ReplyAsync(embed: embed);
-                    return;
-                }
-            }
-            else if (Context.Message.MentionedUsers.Count != 0 && PlayerName == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
-            {
-                var mentionedUser = Context.Message.MentionedUsers.Last();
-                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
-                if (getPlayerByDiscordID.Count != 0)
-                {
-                    playerID = getPlayerByDiscordID[0].active_player_id;
-                    PlayerName = getPlayerByDiscordID[0].Name;
-                }
-                else
-                {
-                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
-                    await ReplyAsync(embed: embed);
-                    return;
-                }
-            }
-            // Finding all occurences of provided username and adding them in a list
-            var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
-            var realSearchPlayers = new List<SearchPlayers>();
-            if (searchPlayer.Count != 0)
-            {
-                foreach (var player in searchPlayer)
-                {
-                    if (player.Name.ToLowerInvariant() == PlayerName.ToLowerInvariant())
+                    if (getPlayerByDiscordID.Count != 0)
                     {
-                        realSearchPlayers.Add(player);
+                        playerID = getPlayerByDiscordID[0].active_player_id;
+                        PlayerName = getPlayerByDiscordID[0].Name;
+                    }
+                    else
+                    {
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Command usage: `!!wp InGameName`");
+                        await ReplyAsync(embed: embed);
+                        return;
                     }
                 }
-            }
-            // Checking the new list for count of users in it
-            if (realSearchPlayers.Count == 0)
-            {
-                // Profile doesn't exist
-                var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                await ReplyAsync(embed: embed.Build());
-            }
-            else if (!(realSearchPlayers.Count > 1))
-            {
-                if (realSearchPlayers[0].privacy_flag != "n")
+                else if (Context.Message.MentionedUsers.Count != 0 && PlayerName == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
                 {
-                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
-                    await ReplyAsync(embed: embed);
-                    return;
+                    var mentionedUser = Context.Message.MentionedUsers.Last();
+                    getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
+                    if (getPlayerByDiscordID.Count != 0)
+                    {
+                        playerID = getPlayerByDiscordID[0].active_player_id;
+                        PlayerName = getPlayerByDiscordID[0].Name;
+                    }
+                    else
+                    {
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
+                        await ReplyAsync(embed: embed);
+                        return;
+                    }
                 }
-                await Context.Channel.TriggerTypingAsync();
-                if (playerID == 0)
+                // Finding all occurences of provided username and adding them in a list
+                var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
+                var realSearchPlayers = new List<SearchPlayers>();
+                if (searchPlayer.Count != 0)
                 {
-                    playerID = realSearchPlayers[0].player_id;
+                    foreach (var player in searchPlayer)
+                    {
+                        if (player.Name.ToLowerInvariant() == PlayerName.ToLowerInvariant())
+                        {
+                            realSearchPlayers.Add(player);
+                        }
+                    }
                 }
-                string json = await hirezAPI.GetGodRanks(playerID);
-                var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
-                var embedz = await EmbedHandler.BuildWorshippersEmbedAsync(ranks, realSearchPlayers[0]);
-                var message = await Context.Channel.SendMessageAsync(embed: embedz);
-            }
-            else
-            {
-                // Multiple Players?
-                var result = await MultiplePlayersHandler(realSearchPlayers, Context);
-                if (result.searchPlayers != null && result.searchPlayers.player_id == 0)
+                // Checking the new list for count of users in it
+                if (realSearchPlayers.Count == 0)
                 {
-                    var embedz = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await ReplyAsync(embed: embedz.Build());
-                    return;
+                    // Profile doesn't exist
+                    var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                    await ReplyAsync(embed: embed.Build());
                 }
-                else if (result.searchPlayers == null && result.userMessage == null)
+                else if (!(realSearchPlayers.Count > 1))
                 {
-                    return;
+                    if (realSearchPlayers[0].privacy_flag != "n")
+                    {
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
+                        await ReplyAsync(embed: embed);
+                        return;
+                    }
+                    await Context.Channel.TriggerTypingAsync();
+                    if (playerID == 0)
+                    {
+                        playerID = realSearchPlayers[0].player_id;
+                    }
+                    string json = await hirezAPI.GetGodRanks(playerID);
+                    var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
+                    var embedz = await EmbedHandler.BuildWorshipersEmbedAsync(ranks, realSearchPlayers[0]);
+                    var message = await Context.Channel.SendMessageAsync(embed: embedz);
                 }
-                playerID = result.searchPlayers.player_id;
+                else
+                {
+                    // Multiple Players?
+                    var result = await MultiplePlayersHandler(realSearchPlayers, Context);
+                    if (result.searchPlayers != null && result.searchPlayers.player_id == 0)
+                    {
+                        var embedz = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                        await ReplyAsync(embed: embedz.Build());
+                        return;
+                    }
+                    else if (result.searchPlayers == null && result.userMessage == null)
+                    {
+                        return;
+                    }
+                    playerID = result.searchPlayers.player_id;
 
-                string json = await hirezAPI.GetGodRanks(playerID);
-                var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
-                var embed = await EmbedHandler.BuildWorshippersEmbedAsync(ranks, result.searchPlayers);
-                await result.userMessage.ModifyAsync(x =>
-                {
-                    x.Embed = embed;
-                });
+                    string json = await hirezAPI.GetGodRanks(playerID);
+                    var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
+                    var embed = await EmbedHandler.BuildWorshipersEmbedAsync(ranks, result.searchPlayers);
+                    await result.userMessage.ModifyAsync(x =>
+                    {
+                        x.Embed = embed;
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                await ReplyAsync(embed: embed);
             }
         }
 
@@ -2127,16 +2149,21 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(x =>
             {
                 x.Name = "Thoth Account Linking";
-                x.IconUrl = Global.botIcon;
+                x.IconUrl = Constants.botIcon;
             });
-            embed.WithDescription($"Thoth Account Linking will link your Discord and SMITE account in our database which will allow executing commands without providing InGameName. \nCommands using this feature are:\n" +
-                $"`{Credentials.botConfig.prefix}stats`, `{Credentials.botConfig.prefix}livematch`, `{Credentials.botConfig.prefix}matchdetails`, `{Credentials.botConfig.prefix}matchhistory`\n" +
-                $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! Linking requires changing your Personal Status Message in-game to verify that the said account is yours.**" +
+            embed.WithDescription($"Thoth Account Linking will link your Discord and SMITE account in our database which will " +
+                $"allow executing commands without providing InGameName. \nCommands using this feature are:\n" +
+                $"`{Credentials.botConfig.prefix}stats`, `{Credentials.botConfig.prefix}livematch`, " +
+                $"`{Credentials.botConfig.prefix}matchdetails`, `{Credentials.botConfig.prefix}matchhistory`, " +
+                $"`{Credentials.botConfig.prefix}wp`\n" +
+                $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! " +
+                $"Linking requires changing your Personal Status Message in-game to verify that the said account is yours.** " +
+                $"You can change it to your previous status message after linking is completed." +
                 $"\n\n__To start the linking process write **{Credentials.botConfig.prefix}startlink** and follow the instructions.__");
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithFooter(x => x.Text = "This is not official Hi-Rez linking!");
 
-            await ReplyAsync("", false, embed.Build());
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("startlink", true, RunMode = RunMode.Async)]
@@ -2149,11 +2176,12 @@ namespace ThothBotCore.Modules
                 var onMultiplePlayersResult = new MultiplePlayersStruct();
 
                 var embed = new EmbedBuilder();
-                embed.WithDescription("Please enter your ingame name and **make sure your account is not hidden and you are logged in SMITE**\n*you have 120 seconds to respond*");
+                embed.WithDescription("Please enter your ingame name and **make sure your account is not hidden and you are logged in SMITE**" +
+                    "\n*you have 120 seconds to respond*");
                 embed.WithAuthor(x =>
                 {
                     x.Name = "Thoth Account Linking";
-                    x.IconUrl = Global.botIcon;
+                    x.IconUrl = Constants.botIcon;
                 });
                 embed.WithColor(Constants.DefaultBlueColor);
                 embed.WithFooter(x => x.Text = "This is not official Hi-Rez linking!");
@@ -2170,7 +2198,8 @@ namespace ThothBotCore.Modules
                     });
                     return;
                 }
-                else if (response.Content.StartsWith(Credentials.botConfig.prefix) || response.Content.StartsWith(GetServerConfig(Context.Guild).Result[0].prefix))
+                else if (response.Content.StartsWith(Credentials.botConfig.prefix) || 
+                    response.Content.StartsWith(GetServerConfig(Context.Guild.Id).Result[0].prefix))
                 {
                     embed.WithDescription(Text.UserNotFound(response.Content) + "\n🔴 Linking cancelled.");
                     await message.ModifyAsync(x =>
@@ -2207,7 +2236,8 @@ namespace ThothBotCore.Modules
                 {
                     if (realSearchPlayers[0].privacy_flag == "y")
                     {
-                        embed.WithDescription($"{realSearchPlayers[0].Name} is hidden. Please unhide your profile by unchecking the \"Hide my Profile\" under the Profile tab and try again.");
+                        embed.WithDescription($"{realSearchPlayers[0].Name} is hidden. " +
+                            $"Please unhide your profile by unchecking the \"Hide my Profile\" under the Profile tab and try again.");
                         await message.ModifyAsync(x =>
                         {
                             x.Embed = embed.Build();
@@ -2245,7 +2275,9 @@ namespace ThothBotCore.Modules
                 embed.WithTitle(getplayerList[0].hz_player_name + " " + getplayerList[0].hz_gamer_tag);
                 embed.WithDescription($"<:level:529719212017451008>**Level**: {getplayerList[0].Level}\n" +
                     $"📅**Account Created**: {getplayerList[0].Created_Datetime}\n\n" +
-                    $"**If this is your account, change your __Personal Status Message__ to: `{generatedString}` (you can Ctrl+C Ctrl+V) so we can be sure it's your account.**\n*You have 120 seconds to perform this action.*\n" +
+                    $"**If this is your account, change your __Personal Status Message__ to: `{generatedString}` so we can be sure " +
+                    $"it's your account. You can change it to your previous status message after linking is completed. " +
+                    $"**\n*You have 120 seconds to perform this action.*\n" +
                     $"\nWhen you are done, write `done` or anything else to cancel.");
                 embed.ImageUrl = "https://media.discordapp.net/attachments/528621646626684928/656237343405244416/Untitled-1.png";
 

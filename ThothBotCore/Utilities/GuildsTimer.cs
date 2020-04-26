@@ -12,6 +12,7 @@ namespace ThothBotCore.Utilities
     public class GuildsTimer
     {
         private static Timer GuildCountTimer;
+        private static Timer HourTimer;
         internal int joinedGuilds = 0;
 
         public Task StartGuildsCountTimer()
@@ -23,7 +24,68 @@ namespace ThothBotCore.Utilities
             GuildCountTimer.Elapsed += GuildCountTimer_Elapsed;
             GuildCountTimer.Start();
 
+            // Hourly timer for DiscordLabs...
+            HourTimer = new Timer()
+            {
+                AutoReset = false
+            };
+            HourTimer.Elapsed += HourTimer_Elapsed;
+            HourTimer.Start();
+
             return Task.CompletedTask;
+        }
+
+        internal async void HourTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (Connection.Client.CurrentUser.Id == 587623068461957121)
+            {
+                return;
+            }
+
+            //DiscordLabs
+            try
+            {
+                using (var webclient = new HttpClient())
+                using (var content = new StringContent(
+                    $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
+                    $"\"server_count\": \"{Connection.Client.Guilds.Count}\" }}", Encoding.UTF8, "application/json"))
+                {
+                    await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
+                }
+            }
+            catch (Exception ex)
+            {
+                await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordLabs.**\n" +
+                    $"**Error Message:** {ex.Message}");
+            }
+
+            int totalUsers = 0;
+            foreach (var guild in Connection.Client.Guilds)
+            {
+                totalUsers = totalUsers + guild.Users.Count;
+            }
+            // StatCord
+            try
+            {
+                using (var webclient = new HttpClient())
+                using (var content = new StringContent(
+                    $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
+                    $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
+                    $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
+                    $"\"users\": \"{totalUsers}\" }}", Encoding.UTF8, "application/json"))
+                {
+                    await webclient.PostAsync("https://statcord.com/apollo/post/stats", content);
+                }
+            }
+            catch (Exception ex)
+            {
+                await ErrorTracker.SendError("**Something happened when I tried to update guilds count for StatCord.**\n" +
+                    $"**Error Message:** {ex.Message}");
+            }
+
+            HourTimer.Interval = 3600000;
+            HourTimer.AutoReset = true;
+            HourTimer.Enabled = true;
         }
 
         internal async void GuildCountTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -54,7 +116,7 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.botsAPI);
-                        HttpResponseMessage response = await webclient.PostAsync("https://discordbots.org/api/bots/454145330347376651/stats", content);
+                        await webclient.PostAsync("https://discordbots.org/api/bots/454145330347376651/stats", content);
                     }
                 }
                 catch (Exception ex)
@@ -70,7 +132,7 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.bfdAPI);
-                        HttpResponseMessage response = await webclient.PostAsync("https://botsfordiscord.com/api/bot/454145330347376651", content);
+                        await webclient.PostAsync("https://botsfordiscord.com/api/bot/454145330347376651", content);
                     }
                 }
                 catch (Exception ex)
@@ -86,7 +148,7 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"guilds\": {Connection.Client.Guilds.Count}, \"users\": {totalUsers} }}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Add("Authorization", $"Bot {Credentials.botConfig.dblAPI}");
-                        HttpResponseMessage response = await webclient.PostAsync("https://discordbotlist.com/api/bots/454145330347376651/stats", content);
+                        await webclient.PostAsync("https://discordbotlist.com/api/bots/454145330347376651/stats", content);
                     }
                     
                 }
@@ -103,7 +165,7 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.dbggAPI);
-                        HttpResponseMessage response = await webclient.PostAsync("https://discord.bots.gg/api/v1/bots/454145330347376651/stats", content);
+                        await webclient.PostAsync("https://discord.bots.gg/api/v1/bots/454145330347376651/stats", content);
                     }
                 }
                 catch (Exception ex)
@@ -119,7 +181,7 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.BotsOnDiscordAPI);
-                        HttpResponseMessage response = await webclient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/454145330347376651/guilds", content);
+                        await webclient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/454145330347376651/guilds", content);
                     }
                 }
                 catch (Exception ex)
@@ -135,7 +197,7 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"servers\": {Connection.Client.Guilds.Count} }}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.DiscordServicesAPI);
-                        HttpResponseMessage response = await webclient.PostAsync("https://api.discordservices.net/bot/454145330347376651/stats", content);
+                        await webclient.PostAsync("https://api.discordservices.net/bot/454145330347376651/stats", content);
                     }
                 }
                 catch (Exception ex)

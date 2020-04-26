@@ -1,12 +1,14 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using Discord.Webhook;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -216,7 +218,7 @@ namespace ThothBotCore.Modules
             {
                 author
                     .WithName("Thoth Stats")
-                    .WithIconUrl(Global.botIcon);
+                    .WithIconUrl(Constants.botIcon);
             });
             embed.WithColor(new Color(0, 255, 0));
             embed.AddField(field =>
@@ -278,7 +280,7 @@ namespace ThothBotCore.Modules
             {
                 footer
                     .WithText($"{pingResArr[0]} {pingResArr[1]}. {pingResArr[2]} & Discord.NET (API version: {DiscordConfig.APIVersion} | Version: {DiscordConfig.Version})")
-                    .WithIconUrl(Global.botIcon);
+                    .WithIconUrl(Constants.botIcon);
             });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
@@ -313,6 +315,60 @@ namespace ThothBotCore.Modules
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        [Command("zxc", RunMode = RunMode.Async)]
+        public async Task ReadAllMessagesInChannel()
+        {
+            var messages = await Context.Channel.GetMessagesAsync(2000).FlattenAsync();
+            var allembeds = messages.Where(x => x.Embeds.Count != 0);
+
+            Console.WriteLine($"Found {allembeds.Count()} messages.");
+            int count = 0;
+            StringBuilder sb = new StringBuilder();
+            StringBuilder scount = new StringBuilder();
+            StringBuilder sdate = new StringBuilder();
+            sb.AppendLine("Count,Date");
+            foreach (var message in allembeds.Reverse())
+            {
+                if (message.Embeds.FirstOrDefault().Color.Value.RawValue == 16777215)
+                {
+                    // Join
+                    count++;
+                }
+                else
+                {
+                    // Leave
+                    count--;
+                }
+                scount.Append($"{count-2}, ");
+                sdate.Append($"\"{message.Timestamp.ToString("d", CultureInfo.InvariantCulture)}\", ");
+
+                sb.AppendLine($"{count-2},{message.Timestamp.ToString("dd-MM-yyyy")}");
+            }
+            StringBuilder nzbr = new StringBuilder();
+            nzbr.AppendLine(scount.ToString());
+            nzbr.AppendLine(sdate.ToString());
+            await File.AppendAllTextAsync("spimise.txt", nzbr.ToString());
+            await File.AppendAllTextAsync("zxc.csv", sb.ToString());
+            Console.WriteLine((count - 2).ToString());
+        }
+
+        [Command("guild", true, RunMode = RunMode.Async)]
+        public async Task CheckGuildOwnerCommand(ulong id = 0)
+        {
+            if (id == 0)
+            {
+                id = Context.Guild.Id;
+            }
+            var embed = new EmbedBuilder();
+            var guildinfo = await Database.GetServerConfig(id);
+            embed.WithDescription($"Name: {guildinfo[0].serverName}\n" +
+                $"ID: {guildinfo[0].serverID}\n" +
+                $"Prefix: {guildinfo[0].prefix}\n" +
+                $"Status Updates Enabled: {guildinfo[0].statusBool}\n" +
+                $"Status Updates Channel: {guildinfo[0].statusChannel}");
+            await ReplyAsync(embed: embed.Build());
         }
 
         private class DataUsed
