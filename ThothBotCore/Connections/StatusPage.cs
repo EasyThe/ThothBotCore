@@ -1,6 +1,5 @@
 ﻿using System.Net.Http;
 using System.Threading.Tasks;
-using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Connections
 {
@@ -22,7 +21,7 @@ namespace ThothBotCore.Connections
             }
             catch (System.Exception ex)
             {
-                await ErrorTracker.SendError("**GetStatusSummary** Error\n" + ex.Message);
+                System.Console.WriteLine($"===\nGetStatusSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
                 return "";
             }
         }
@@ -42,7 +41,7 @@ namespace ThothBotCore.Connections
             }
             catch (System.Exception ex)
             {
-                await ErrorTracker.SendError("**GetStatusSummary** Error\n" + ex.Message);
+                System.Console.WriteLine($"===\nGetDiscordSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
                 return "";
             }
         }

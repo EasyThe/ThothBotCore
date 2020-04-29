@@ -371,6 +371,13 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("shtc")]
+        public async Task StopHourlyTimerCommand()
+        {
+            await GuildsTimer.StopHourlyTimer();
+            await ReplyAsync("done i guess");
+        }
+
         private class DataUsed
         {
             public int Active_Sessions { get; set; }

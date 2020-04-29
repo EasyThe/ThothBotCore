@@ -9,13 +9,13 @@ using ThothBotCore.Discord.Entities;
 
 namespace ThothBotCore.Utilities
 {
-    public class GuildsTimer
+    public static class GuildsTimer
     {
         private static Timer GuildCountTimer;
         private static Timer HourTimer;
-        internal int joinedGuilds = 0;
+        static internal int joinedGuilds = 0;
 
-        public Task StartGuildsCountTimer()
+        public static Task StartGuildsCountTimer()
         {
             GuildCountTimer = new Timer() // Timer for Guilds Count
             {
@@ -24,6 +24,11 @@ namespace ThothBotCore.Utilities
             GuildCountTimer.Elapsed += GuildCountTimer_Elapsed;
             GuildCountTimer.Start();
 
+            return Task.CompletedTask;
+        }
+
+        public static Task StartHourlyTimer()
+        {
             // Hourly timer for DiscordLabs...
             HourTimer = new Timer()
             {
@@ -31,17 +36,26 @@ namespace ThothBotCore.Utilities
             };
             HourTimer.Elapsed += HourTimer_Elapsed;
             HourTimer.Start();
+            Console.WriteLine("[HourTimer.Enabled]" + HourTimer.Enabled);
 
             return Task.CompletedTask;
         }
 
-        internal async void HourTimer_Elapsed(object sender, ElapsedEventArgs e)
+        public static Task StopHourlyTimer()
+        {
+            HourTimer.Stop();
+            Console.WriteLine("[HourTimer.Enabled]" + HourTimer.Enabled);
+            return Task.CompletedTask;
+        }
+
+        internal static async void HourTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (Connection.Client.CurrentUser.Id == 587623068461957121)
             {
                 return;
             }
 
+            Console.WriteLine("=== HourTimer Elapsed ===");
             //DiscordLabs
             try
             {
@@ -50,7 +64,8 @@ namespace ThothBotCore.Utilities
                     $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
                     $"\"server_count\": \"{Connection.Client.Guilds.Count}\" }}", Encoding.UTF8, "application/json"))
                 {
-                    await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
+                    var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/454145330347376651/stats", content);
+                    Console.WriteLine($"===\nDiscordLabs: {response.ReasonPhrase}\n===\n");
                 }
             }
             catch (Exception ex)
@@ -74,7 +89,8 @@ namespace ThothBotCore.Utilities
                     $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
                     $"\"users\": \"{totalUsers}\" }}", Encoding.UTF8, "application/json"))
                 {
-                    await webclient.PostAsync("https://statcord.com/apollo/post/stats", content);
+                    var response = await webclient.PostAsync("https://statcord.com/apollo/post/stats", content);
+                    Console.WriteLine($"===\nStatCord: {response.ReasonPhrase}\n===\n");
                 }
             }
             catch (Exception ex)
@@ -83,12 +99,12 @@ namespace ThothBotCore.Utilities
                     $"**Error Message:** {ex.Message}");
             }
 
-            HourTimer.Interval = 3600000;
+            HourTimer.Interval = 4000000;
             HourTimer.AutoReset = true;
             HourTimer.Enabled = true;
         }
 
-        internal async void GuildCountTimer_Elapsed(object sender, ElapsedEventArgs e)
+        internal static async void GuildCountTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (joinedGuilds != Connection.Client.Guilds.Count)
             {

@@ -13,7 +13,6 @@ namespace ThothBotCore.Discord
         private readonly DiscordLogger _logger;
 
         public static DiscordSocketClient Client;
-        private GuildsTimer guildsTimer = new GuildsTimer();
 
         public Connection(DiscordLogger logger, DiscordSocketClient client)
         {
@@ -47,7 +46,8 @@ namespace ThothBotCore.Discord
         private Task ClientReadyTask()
         {
             StatusTimer.StartServerStatusTimer();
-            guildsTimer.StartGuildsCountTimer();
+            GuildsTimer.StartGuildsCountTimer();
+            GuildsTimer.StartHourlyTimer();
             _client.DownloadUsersAsync(Client.Guilds);
 
             return Task.CompletedTask;

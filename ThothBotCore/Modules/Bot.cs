@@ -59,7 +59,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("botstats", true)]
+        [Command("botstats", true, RunMode = RunMode.Async)]
         [Summary("Bot statistics, invite link, support server etc.")]
         [Alias("bi", "botinfo", "about", "info")]
         public async Task BotInfoCommand()
@@ -145,11 +145,11 @@ namespace ThothBotCore.Modules
                 x.Name = "Linked Players";
                 x.Value = LinkedPlayersInDBCount()[0];
             });
-            embed.AddField(field =>
+            embed.AddField(x =>
             {
-                field.IsInline = true;
-                field.Name = "Smite Patch Version";
-                field.Value = patch;
+                x.IsInline = true;
+                x.Name = "Smite Patch Version";
+                x.Value = patch;
             });
             embed.AddField(x =>
             {
