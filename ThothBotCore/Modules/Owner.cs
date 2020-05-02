@@ -423,15 +423,21 @@ namespace ThothBotCore.Modules
             foreach (var guild in guilds)
             {
                 var config = await Database.GetServerConfig(guild.Id);
+                string gname;
 
                 if (config.Count == 0)
                 {
-                    await Database.SetGuild(guild.Id, guild.Name);
+                    gname = guild.Name;
+                    if (gname.Contains("'"))
+                    {
+                        gname.Replace("'", "''");
+                    }
+                    Console.WriteLine($"{guild.Name} [{guild.Id}]");
+                    await Database.SetGuild(guild.Id, gname);
                     missingCount++;
                     sb.AppendLine($"{guild.Name} [{guild.Id}]");
                 }
             }
-
             await ReplyAsync($"Finished!\n" +
                 $"Missing: {missingCount}\n" +
                 $"{sb.ToString()}");
