@@ -64,7 +64,7 @@ namespace ThothBotCore.Utilities
                     $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
                     $"\"server_count\": \"{Connection.Client.Guilds.Count}\" }}", Encoding.UTF8, "application/json"))
                 {
-                    var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/454145330347376651/stats", content);
+                    var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
                     Console.WriteLine($"===\nDiscordLabs: {response.ReasonPhrase}\n===\n");
                 }
             }
@@ -82,14 +82,18 @@ namespace ThothBotCore.Utilities
             // StatCord
             try
             {
+
                 using (var webclient = new HttpClient())
                 using (var content = new StringContent(
                     $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
                     $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
                     $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
-                    $"\"users\": \"{totalUsers}\" }}", Encoding.UTF8, "application/json"))
+                    $"\"users\": \"{totalUsers}\", " +
+                    $"\"active\": \"0\", " +
+                    $"\"commands\": \"0\", " +
+                    $"\"popular\": [] }}", Encoding.UTF8, "application/json"))
                 {
-                    var response = await webclient.PostAsync("https://statcord.com/apollo/post/stats", content);
+                    var response = await webclient.PostAsync("https://statcord.com/mason/stats", content);
                     Console.WriteLine($"===\nStatCord: {response.ReasonPhrase}\n===\n");
                 }
             }
@@ -226,7 +230,6 @@ namespace ThothBotCore.Utilities
             }
 
             GuildCountTimer.Interval = 60000;
-            GuildCountTimer.AutoReset = true;
             GuildCountTimer.Enabled = true;
         }
     }

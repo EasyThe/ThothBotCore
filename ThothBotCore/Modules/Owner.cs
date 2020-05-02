@@ -362,13 +362,47 @@ namespace ThothBotCore.Modules
                 id = Context.Guild.Id;
             }
             var embed = new EmbedBuilder();
+            var guild = Connection.Client.GetGuild(id);
             var guildinfo = await Database.GetServerConfig(id);
             embed.WithDescription($"Name: {guildinfo[0].serverName}\n" +
                 $"ID: {guildinfo[0].serverID}\n" +
                 $"Prefix: {guildinfo[0].prefix}\n" +
                 $"Status Updates Enabled: {guildinfo[0].statusBool}\n" +
                 $"Status Updates Channel: {guildinfo[0].statusChannel}");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "More";
+                x.Value = $"Name: {guild.Name} [{guild.Id}]\n" +
+                $"Description: {guild.Description}\n" +
+                $"Owner: {guild.Owner}[{guild.OwnerId}]\n" +
+                $"Preferred Culture: {guild.PreferredCulture}\n" +
+                $"Channels: {guild.TextChannels.Count}\n" +
+                $"Users: {guild.Users.Count}\n" +
+                $"Description: {guild.Description}";
+            });
+            if (guild.IconUrl != null)
+            {
+                embed.WithThumbnailUrl(guild.IconUrl);
+            }
             await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("sguild")]
+        public async Task SearchGuildCommand([Remainder]string term)
+        {
+            var guilds = Connection.Client.Guilds;
+            var sb = new StringBuilder();
+            int count = 0;
+            foreach (var g in guilds)
+            {
+                if (g.Name.Contains(term))
+                {
+                    sb.AppendLine($"{g.Name} [{g.Id}]");
+                    count++;
+                }
+            }
+            await ReplyAsync($"{count} results\n{sb.ToString()}");
         }
 
         [Command("shtc")]
@@ -376,6 +410,30 @@ namespace ThothBotCore.Modules
         {
             await GuildsTimer.StopHourlyTimer();
             await ReplyAsync("done i guess");
+        }
+
+        [Command("statcord")]
+        public async Task StatCordTestCommand()
+        {
+            int totalUsers = 0;
+            foreach (var guild in Connection.Client.Guilds)
+            {
+                totalUsers = totalUsers + guild.Users.Count;
+            }
+
+            using (var webclient = new HttpClient())
+            using (var content = new StringContent(
+                $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
+                $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
+                $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
+                $"\"users\": \"{totalUsers}\", " +
+                $"\"active\": \"0\", " +
+                $"\"commands\": \"0\", " +
+                $"\"popular\": [] }}", Encoding.UTF8, "application/json"))
+            {
+                var response = await webclient.PostAsync("https://statcord.com/mason/stats", content);
+                Console.WriteLine($"===\nStatCord: {response.ReasonPhrase}\n===\n");
+            }
         }
 
         private class DataUsed

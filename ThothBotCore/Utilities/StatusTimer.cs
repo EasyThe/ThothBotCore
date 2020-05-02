@@ -313,7 +313,6 @@ namespace ThothBotCore.Utilities
             //await channel.SendMessageAsync(result);
 
             ServerStatusTimer.Interval = 60000;
-            ServerStatusTimer.AutoReset = true;
             ServerStatusTimer.Enabled = true;
         }
     }

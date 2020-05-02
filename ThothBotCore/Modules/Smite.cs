@@ -1285,7 +1285,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("status", true)] // SMITE Server Status 
+        [Command("status", true, RunMode = RunMode.Async)] // SMITE Server Status 
         [Summary("Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.")]
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се", "serverstatus")]
         public async Task ServerStatusCheck()
@@ -1512,7 +1512,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("trello", true)]
+        [Command("trello", true, RunMode = RunMode.Async)]
         [Summary("Checks the [SMITE Community Issues Trello Board](https://trello.com/b/d4fJtBlo/smite-community-issues).")]
         [Alias("issues", "bugs", "board")]
         public async Task TrelloBoardCommand()

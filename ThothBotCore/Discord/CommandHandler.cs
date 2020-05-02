@@ -53,7 +53,7 @@ namespace ThothBotCore.Discord
                 || msg.HasStringPrefix(Database.GetServerConfig(context.Guild.Id).Result[0].prefix, ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
                 {
-                    var result = await _commands.ExecuteAsync(context, argPos, _services);
+                    var result = await _commands.ExecuteAsync(context, argPos, _services).ConfigureAwait(false);
                     if (result.IsSuccess)
                     {
                         Global.CommandsRun++;
@@ -78,7 +78,7 @@ namespace ThothBotCore.Discord
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Guild: " + context.Guild.Name + $"\nMessage: {context.Message.Content}");
+                Console.WriteLine($"Guild: {context.Guild.Name} [{context.Guild.Id}]\nMessage: {context.Message.Content}");
                 await ErrorHandler(context, null, ex);
             }
         }
