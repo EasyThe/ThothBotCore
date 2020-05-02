@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,8 +16,6 @@ namespace ThothBotCore.Discord
 {
     public class EmbedHandler
     {
-        static string botIcon = "https://i.imgur.com/8qNdxse.png";
-
         public static EmbedBuilder ServerStatusEmbed(ServerStatus smiteServerStatus, ServerStatus discordServerStatus)
         {
             var foundPC = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant() == "smite pc");
@@ -32,7 +29,7 @@ namespace ThothBotCore.Discord
             {
                 author.WithName("Server Status");
                 author.WithUrl("http://status.hirezstudios.com/");
-                author.WithIconUrl("https://i.imgur.com/8qNdxse.png");
+                author.WithIconUrl(Constants.botIcon);
             });
             if (foundPC.status.Contains("operational") &&
                 foundPS4.status.Contains("operational") &&
@@ -135,31 +132,31 @@ namespace ThothBotCore.Discord
                             $"{serverStatus.incidents[n].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
                             $"{serverStatus.incidents[n].incident_updates[c].body}\n";
                     }
-                    string incidentPlatIcons = "";
+                    var incidentPlatIcons = new StringBuilder();
 
                     for (int z = 0; z < serverStatus.incidents[n].components.Count; z++) // cycle for platform icons
                     {
                         if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite switch"))
                         {
-                            incidentPlatIcons += "<:SW:537752006719176714> ";
+                            incidentPlatIcons.Append("<:SW:537752006719176714> ");
                         }
                         if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite xbox"))
                         {
-                            incidentPlatIcons += "<:XB:537749895029850112> ";
+                            incidentPlatIcons.Append("<:XB:537749895029850112> ");
                         }
                         if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite ps4"))
                         {
-                            incidentPlatIcons += "<:PS4:537745670518472714> ";
+                            incidentPlatIcons.Append("<:PS4:537745670518472714> ");
                         }
                         if (serverStatus.incidents[n].components[z].name.ToLowerInvariant().Contains("smite pc"))
                         {
-                            incidentPlatIcons += "<:PC:537746891610259467> ";
+                            incidentPlatIcons.Append("<:PC:537746891610259467> ");
                         }
                     }
 
                     if (incidentValue.Length > 1024)
                     {
-                        incidentEmbed.WithTitle($"{incidentPlatIcons} {serverStatus.incidents[n].name}");
+                        incidentEmbed.WithTitle($"{incidentPlatIcons.ToString()} {serverStatus.incidents[n].name}");
                         incidentEmbed.WithDescription(incidentValue);
                     }
                     else
@@ -167,7 +164,7 @@ namespace ThothBotCore.Discord
                         incidentEmbed.AddField(field =>
                         {
                             field.IsInline = false;
-                            field.Name = $"{incidentPlatIcons} {serverStatus.incidents[n].name}";
+                            field.Name = $"{incidentPlatIcons.ToString()} {serverStatus.incidents[n].name}";
                             field.Value = incidentValue;
                         });
                     }
@@ -197,9 +194,9 @@ namespace ThothBotCore.Discord
                         footer.Text = $"Current UTC: " + DateTime.UtcNow.ToString("dd MMM, HH:mm:ss", CultureInfo.InvariantCulture);
                     });
 
-                    string platIcon = "";
-                    string maintValue = "";
-                    string expectedDtime = "";
+                    var platIcon = new StringBuilder();
+                    var maintValue = new StringBuilder();
+                    var expectedDtime = new StringBuilder();
 
                     if (serverStatus.scheduled_maintenances[i].incident_updates.Count > 1)
                     {
@@ -207,19 +204,19 @@ namespace ThothBotCore.Discord
                         {
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite switch"))
                             {
-                                platIcon += "<:SW:537752006719176714> ";
+                                platIcon.Append("<:SW:537752006719176714> ");
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite xbox"))
                             {
-                                platIcon += "<:XB:537749895029850112> ";
+                                platIcon.Append("<:XB:537749895029850112> ");
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite ps4"))
                             {
-                                platIcon += "<:PS4:537745670518472714> ";
+                                platIcon.Append("<:PS4:537745670518472714> ");
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite pc"))
                             {
-                                platIcon += "<:PC:537746891610259467> ";
+                                platIcon.Append("<:PC:537746891610259467> ");
                             }
                         }
                         TimeSpan expDwntime = serverStatus.scheduled_maintenances[i].scheduled_until - serverStatus.scheduled_maintenances[i].scheduled_for;
@@ -228,42 +225,44 @@ namespace ThothBotCore.Discord
                         {
                             if (expDwntime.Hours == 1)
                             {
-                                expectedDtime += $"{expDwntime.Hours} hour";
+                                expectedDtime.Append($"{expDwntime.Hours} hour");
                             }
                             else
                             {
-                                expectedDtime += $"{expDwntime.Hours} hours";
+                                expectedDtime.Append($"{expDwntime.Hours} hours");
                             }
                         }
                         if (expDwntime.Minutes != 0)
                         {
-                            expectedDtime += " and ";
+                            expectedDtime.Append(" and ");
                             if (expDwntime.Minutes == 1)
                             {
-                                expectedDtime += $"{expDwntime.Minutes} minute";
+                                expectedDtime.Append($"{expDwntime.Minutes} minute");
                             }
                             else
                             {
-                                expectedDtime += $"{expDwntime.Minutes} minutes";
+                                expectedDtime.Append($"{expDwntime.Minutes} minutes");
                             }
                         }
-                        if (expectedDtime == "")
+                        if (expectedDtime.Length == 0)
                         {
-                            expectedDtime = "n/a";
+                            expectedDtime.Append("n/a");
                         }
 
                         for (int j = 0; j < serverStatus.scheduled_maintenances[i].incident_updates.Count; j++)
                         {
                             string maintStatus = serverStatus.scheduled_maintenances[i].incident_updates[j].status.Contains("_") ? Text.ToTitleCase(serverStatus.scheduled_maintenances[i].incident_updates[j].status.Replace("_", " ")) : Text.ToTitleCase(serverStatus.scheduled_maintenances[i].incident_updates[j].status);
 
-                            maintValue = maintValue + $"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})** - {serverStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{serverStatus.scheduled_maintenances[i].incident_updates[j].body}\n";
+                            maintValue.Append($"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})** - " +
+                                $"{serverStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n" +
+                                $"{serverStatus.scheduled_maintenances[i].incident_updates[j].body}\n");
                         }
 
                         embed.AddField(field =>
                         {
                             field.IsInline = false;
-                            field.Name = $"{platIcon}{serverStatus.scheduled_maintenances[i].name}";
-                            field.Value = $"**__Expected downtime: {expectedDtime}__**, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue;
+                            field.Name = $"{platIcon.ToString()}{serverStatus.scheduled_maintenances[i].name}";
+                            field.Value = $"**__Expected downtime: {expectedDtime.ToString()}__**, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue.ToString();
                         });
                     }
 
@@ -273,19 +272,19 @@ namespace ThothBotCore.Discord
                         {
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite switch"))
                             {
-                                platIcon += "<:SW:537752006719176714> ";
+                                platIcon.Append("<:SW:537752006719176714> ");
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite xbox"))
                             {
-                                platIcon += "<:XB:537749895029850112> ";
+                                platIcon.Append("<:XB:537749895029850112> ");
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite ps4"))
                             {
-                                platIcon += "<:PS4:537745670518472714> ";
+                                platIcon.Append("<:PS4:537745670518472714> ");
                             }
                             if (serverStatus.scheduled_maintenances[i].components[k].name.ToLowerInvariant().Contains("smite pc"))
                             {
-                                platIcon += "<:PC:537746891610259467> ";
+                                platIcon.Append("<:PC:537746891610259467> ");
                             }
                         }
 
@@ -297,34 +296,34 @@ namespace ThothBotCore.Discord
                             {
                                 if (expDwntime.Hours == 1)
                                 {
-                                    expectedDtime += $"{expDwntime.Hours} hour";
+                                    expectedDtime.Append($"{expDwntime.Hours} hour");
                                 }
                                 else
                                 {
-                                    expectedDtime += $"{expDwntime.Hours} hours";
+                                    expectedDtime.Append($"{expDwntime.Hours} hours");
                                 }
                             }
                             if (expDwntime.Minutes != 0)
                             {
-                                expectedDtime += " and ";
+                                expectedDtime.Append(" and ");
                                 if (expDwntime.Minutes == 1)
                                 {
-                                    expectedDtime += $"{expDwntime.Minutes} minute";
+                                    expectedDtime.Append($"{expDwntime.Minutes} minute");
                                 }
                                 else
                                 {
-                                    expectedDtime += $"{expDwntime.Minutes} minutes";
+                                    expectedDtime.Append($"{expDwntime.Minutes} minutes");
                                 }
                             }
-                            if (expectedDtime == "")
+                            if (expectedDtime.Length == 0)
                             {
-                                expectedDtime = "n/a";
+                                expectedDtime.Append("n/a");
                             }
 
                             embed.AddField(field =>
                             {
                                 field.IsInline = false;
-                                field.Name = $"{platIcon}{serverStatus.scheduled_maintenances[i].name}";
+                                field.Name = $"{platIcon.ToString()}{serverStatus.scheduled_maintenances[i].name}";
                                 field.Value = $"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})**\n__**Expected downtime: {expectedDtime}**__, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n{serverStatus.scheduled_maintenances[i].incident_updates[j].body}";
                             });
                         }
@@ -722,7 +721,7 @@ namespace ThothBotCore.Discord
             {
                 footer
                     .WithText(playerStats[0].Personal_Status_Message)
-                    .WithIconUrl(playerStats[0].Avatar_URL == "" ? botIcon : playerStats[0].Avatar_URL);
+                    .WithIconUrl(playerStats[0].Avatar_URL == "" ? Constants.botIcon : playerStats[0].Avatar_URL);
             });
 
             // Saving to the database
@@ -767,7 +766,7 @@ namespace ThothBotCore.Discord
             var sb = new StringBuilder();
             embed.WithAuthor(x =>
             {
-                x.IconUrl = botIcon;
+                x.IconUrl = Constants.botIcon;
                 x.Name = "Multiple players found";
             });//<:Hidden:591666971234402320>
             embed.WithColor(240, 71, 71);
@@ -794,7 +793,7 @@ namespace ThothBotCore.Discord
             embed.WithAuthor(author =>
             {
                 author.WithName($"{Text.GetQueueName(Int32.Parse(matchPlayerDetails[0].Queue))}");
-                author.WithIconUrl(botIcon);
+                author.WithIconUrl(Constants.botIcon);
             });
             embed.WithFooter(x =>
             {
@@ -885,7 +884,7 @@ namespace ThothBotCore.Discord
             embed.WithAuthor(author =>
             {
                 author.WithName($"{matchdetailsList[0].name} | {matchTime.Minutes} mins");
-                author.WithIconUrl(botIcon);
+                author.WithIconUrl(Constants.botIcon);
                 author.WithUrl($"https://smite.guru/match/{matchdetailsList[0].Match}");
             });
             embed.WithFooter(x =>
@@ -1038,7 +1037,7 @@ namespace ThothBotCore.Discord
             {
                 x.Name = $"Match History of {matchHistory[9].playerName}";
                 x.Url = $"https://smite.guru/profile/{matchHistory[0].playerId}/matches";
-                x.IconUrl = botIcon;
+                x.IconUrl = Constants.botIcon;
             });
             embed.WithColor(Constants.DefaultBlueColor);
             string godemoji = "";

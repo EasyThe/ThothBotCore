@@ -77,7 +77,7 @@ namespace ThothBotCore.Utilities
             int totalUsers = 0;
             foreach (var guild in Connection.Client.Guilds)
             {
-                totalUsers = totalUsers + guild.Users.Count;
+                totalUsers += guild.Users.Count;
             }
             // StatCord
             try
@@ -103,8 +103,7 @@ namespace ThothBotCore.Utilities
                     $"**Error Message:** {ex.Message}");
             }
 
-            HourTimer.Interval = 4000000;
-            HourTimer.AutoReset = true;
+            HourTimer.Interval = 3600000;
             HourTimer.Enabled = true;
         }
 
@@ -124,12 +123,11 @@ namespace ThothBotCore.Utilities
                 if (Connection.Client.CurrentUser.Id == 587623068461957121)
                 {
                     GuildCountTimer.Interval = 60000;
-                    GuildCountTimer.AutoReset = true;
                     GuildCountTimer.Enabled = true;
                     return;
                 }
 
-                //DiscordBots.org
+                //Top.GG
                 try
                 {
                     using (var webclient = new HttpClient())

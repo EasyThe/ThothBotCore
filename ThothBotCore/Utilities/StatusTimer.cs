@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using ThothBotCore.Connections;
@@ -63,47 +64,47 @@ namespace ThothBotCore.Utilities
                                         string json = JsonConvert.SerializeObject(ServerStatus, Formatting.Indented);
                                         File.WriteAllText($"Status/{ServerStatus.incidents[i].id}.json", json);
 
-                                        string incidentValue = "";
+                                        var incidentValue = new StringBuilder();
                                         for (int c = 0; c < ServerStatus.incidents[i].incident_updates.Count; c++)
                                         {
-                                            incidentValue += $"**[{Text.ToTitleCase(ServerStatus.incidents[i].incident_updates[c].status)}]({ServerStatus.incidents[i].shortlink})** - " +
+                                            incidentValue.Append($"**[{Text.ToTitleCase(ServerStatus.incidents[i].incident_updates[c].status)}]({ServerStatus.incidents[i].shortlink})** - " +
                                                 $"{ServerStatus.incidents[i].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
-                                                $"{ServerStatus.incidents[i].incident_updates[c].body}\n";
+                                                $"{ServerStatus.incidents[i].incident_updates[c].body}\n");
                                         }
-                                        string incidentPlatIcons = "";
+                                        var incidentPlatIcons = new StringBuilder();
 
                                         for (int z = 0; z < ServerStatus.incidents[i].components.Count; z++) // cycle for platform icons
                                         {
                                             if (ServerStatus.incidents[i].components[z].name.ToLowerInvariant().Contains("smite switch"))
                                             {
-                                                incidentPlatIcons += "<:SW:537752006719176714> ";
+                                                incidentPlatIcons.Append("<:SW:537752006719176714> ");
                                             }
                                             if (ServerStatus.incidents[i].components[z].name.ToLowerInvariant().Contains("smite xbox"))
                                             {
-                                                incidentPlatIcons += "<:XB:537749895029850112> ";
+                                                incidentPlatIcons.Append("<:XB:537749895029850112> ");
                                             }
                                             if (ServerStatus.incidents[i].components[z].name.ToLowerInvariant().Contains("smite ps4"))
                                             {
-                                                incidentPlatIcons += "<:PS4:537745670518472714> ";
+                                                incidentPlatIcons.Append("<:PS4:537745670518472714> ");
                                             }
                                             if (ServerStatus.incidents[i].components[z].name.ToLowerInvariant().Contains("smite pc"))
                                             {
-                                                incidentPlatIcons += "<:PC:537746891610259467> ";
+                                                incidentPlatIcons.Append("<:PC:537746891610259467> ");
                                             }
                                         }
 
                                         if (incidentValue.Length > 1024)
                                         {
-                                            incidentEmbed.WithTitle($"{incidentPlatIcons} {ServerStatus.incidents[i].name}");
-                                            incidentEmbed.WithDescription(incidentValue);
+                                            incidentEmbed.WithTitle($"{incidentPlatIcons.ToString()} {ServerStatus.incidents[i].name}");
+                                            incidentEmbed.WithDescription(incidentValue.ToString());
                                         }
                                         else
                                         {
                                             incidentEmbed.AddField(field =>
                                             {
                                                 field.IsInline = false;
-                                                field.Name = $"{incidentPlatIcons} {ServerStatus.incidents[i].name}";
-                                                field.Value = incidentValue;
+                                                field.Name = $"{incidentPlatIcons.ToString()} {ServerStatus.incidents[i].name}";
+                                                field.Value = incidentValue.ToString();
                                             });
                                         }
 

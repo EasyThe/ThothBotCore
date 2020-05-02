@@ -303,6 +303,13 @@ namespace ThothBotCore.Modules
             Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")}: Game was changed to {game}");
         }
 
+        [Command("desc")]
+        public async Task EmbedDescriptionOwnerCommand([Remainder] string text)
+        {
+            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(text);
+            await ReplyAsync(embed: embed);
+        }
+
         [Command("notes", RunMode = RunMode.Async)]
         public async Task PatchNotesTestCommand(string url)
         {
@@ -364,6 +371,7 @@ namespace ThothBotCore.Modules
             var embed = new EmbedBuilder();
             var guild = Connection.Client.GetGuild(id);
             var guildinfo = await Database.GetServerConfig(id);
+            embed.WithTitle("Database");
             embed.WithDescription($"Name: {guildinfo[0].serverName}\n" +
                 $"ID: {guildinfo[0].serverID}\n" +
                 $"Prefix: {guildinfo[0].prefix}\n" +
@@ -374,12 +382,11 @@ namespace ThothBotCore.Modules
                 x.IsInline = true;
                 x.Name = "More";
                 x.Value = $"Name: {guild.Name} [{guild.Id}]\n" +
-                $"Description: {guild.Description}\n" +
                 $"Owner: {guild.Owner}[{guild.OwnerId}]\n" +
                 $"Preferred Culture: {guild.PreferredCulture}\n" +
+                $"Preferred Locale: {guild.PreferredLocale}\n" +
                 $"Channels: {guild.TextChannels.Count}\n" +
-                $"Users: {guild.Users.Count}\n" +
-                $"Description: {guild.Description}";
+                $"Users: {guild.Users.Count}";
             });
             if (guild.IconUrl != null)
             {
@@ -388,7 +395,7 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("sguild")]
+        [Command("searchguild")]
         public async Task SearchGuildCommand([Remainder]string term)
         {
             var guilds = Connection.Client.Guilds;
@@ -396,13 +403,38 @@ namespace ThothBotCore.Modules
             int count = 0;
             foreach (var g in guilds)
             {
-                if (g.Name.Contains(term))
+                if (g.Name.ToLowerInvariant().Contains(term.ToLowerInvariant()))
                 {
                     sb.AppendLine($"{g.Name} [{g.Id}]");
                     count++;
                 }
             }
             await ReplyAsync($"{count} results\n{sb.ToString()}");
+        }
+
+        [Command("checkguilds")]
+        public async Task CheckAllGuilds()
+        {
+            await ReplyAsync("Starting now...");
+            var guilds = Connection.Client.Guilds;
+            var sb = new StringBuilder();
+            int missingCount = 0;
+
+            foreach (var guild in guilds)
+            {
+                var config = await Database.GetServerConfig(guild.Id);
+
+                if (config.Count == 0)
+                {
+                    await Database.SetGuild(guild.Id, guild.Name);
+                    missingCount++;
+                    sb.AppendLine($"{guild.Name} [{guild.Id}]");
+                }
+            }
+
+            await ReplyAsync($"Finished!\n" +
+                $"Missing: {missingCount}\n" +
+                $"{sb.ToString()}");
         }
 
         [Command("shtc")]
@@ -412,7 +444,7 @@ namespace ThothBotCore.Modules
             await ReplyAsync("done i guess");
         }
 
-        [Command("statcord")]
+        [Command("statcord")]//test command idk
         public async Task StatCordTestCommand()
         {
             int totalUsers = 0;
