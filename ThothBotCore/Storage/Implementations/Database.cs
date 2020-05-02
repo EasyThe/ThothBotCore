@@ -87,6 +87,10 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
+                if (serverName.Contains("\""))
+                {
+                    serverName = serverName.Replace("\"", "\"\"");
+                }
                 await cnn.ExecuteAsync($"INSERT OR IGNORE INTO serverConfig(serverID, serverName) " +
                     $"VALUES({serverID}, \"{serverName}\")");
             }

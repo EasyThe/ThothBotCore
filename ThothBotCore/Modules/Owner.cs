@@ -450,28 +450,10 @@ namespace ThothBotCore.Modules
             await ReplyAsync("done i guess");
         }
 
-        [Command("statcord")]//test command idk
-        public async Task StatCordTestCommand()
+        [Command("testtt")]//test command idk
+        public async Task StatCordTestCommand([Remainder]string name)
         {
-            int totalUsers = 0;
-            foreach (var guild in Connection.Client.Guilds)
-            {
-                totalUsers = totalUsers + guild.Users.Count;
-            }
-
-            using (var webclient = new HttpClient())
-            using (var content = new StringContent(
-                $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
-                $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
-                $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
-                $"\"users\": \"{totalUsers}\", " +
-                $"\"active\": \"0\", " +
-                $"\"commands\": \"0\", " +
-                $"\"popular\": [] }}", Encoding.UTF8, "application/json"))
-            {
-                var response = await webclient.PostAsync("https://statcord.com/mason/stats", content);
-                Console.WriteLine($"===\nStatCord: {response.ReasonPhrase}\n===\n");
-            }
+            await Database.SetGuild(374504161833648129, name);
         }
 
         private class DataUsed
