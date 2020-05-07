@@ -53,7 +53,7 @@ namespace ThothBotCore.Discord
                 || msg.HasStringPrefix(Database.GetServerConfig(context.Guild.Id).Result[0].prefix, ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
                 {
-                    var result = await _commands.ExecuteAsync(context, argPos, _services).ConfigureAwait(false);
+                    var result = await _commands.ExecuteAsync(context, argPos, _services);
                     if (result.IsSuccess)
                     {
                         Global.CommandsRun++;

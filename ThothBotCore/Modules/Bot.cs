@@ -67,7 +67,7 @@ namespace ThothBotCore.Modules
             int totalUsers = 0;
             foreach (var guild in Context.Client.Guilds)
             {
-                totalUsers = totalUsers + guild.Users.Count;
+                totalUsers += guild.Users.Count;
             }
             string patch = "";
             try

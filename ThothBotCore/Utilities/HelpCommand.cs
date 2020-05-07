@@ -22,7 +22,6 @@ namespace ThothBotCore.Utilities
         public static Embed GetHelpEmbed(this CommandService commandService, string command, string prefix)
         {
             EmbedBuilder helpEmbedBuilder;
-            var commandModules = commandService.GetModulesWithCommands();
 
             if (string.IsNullOrEmpty(command))
             {
@@ -120,7 +119,8 @@ namespace ThothBotCore.Utilities
                             sb.AppendLine($"🔹`{prefix}{command.Name} {parameters}` - {command.Summary}");
                         }
                     }
-                    sb.AppendLine("[Support server](http://discord.gg/hU6MTbQ)");
+                    sb.AppendLine("\n‼**Commands are used __without__ the <> or []‼**" +
+                        "\n🆘 [Support server](http://discord.gg/hU6MTbQ)");
                     helpEmbedBuilder.AddField("🤖 Bot", sb.ToString());
                 }
             }
@@ -130,7 +130,6 @@ namespace ThothBotCore.Utilities
         public static string GetCommandInfo(this CommandInfo command, string prefix)
         {
             var aliases = string.Join(", ", command.Aliases);
-            var module = command.Module.Name;
             var parameters = string.Join(", ", command.GetCommandParameters());
             var name = command.GetCommandNameWithGroup();
             var summary = command.Summary;

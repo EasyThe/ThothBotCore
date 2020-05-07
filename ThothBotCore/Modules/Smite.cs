@@ -175,21 +175,15 @@ namespace ThothBotCore.Modules
                             string topMatchesValue = "";
                             if (orderedQueues.Count != 0)
                             {
-                                switch (orderedQueues.Count)
+                                topMatchesValue = orderedQueues.Count switch
                                 {
-                                    case 1:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]";
-                                        break;
-                                    case 2:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]";
-                                        break;
-                                    default:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
-                                                        $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]";
-                                        break;
-                                }
+                                    1 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]",
+                                    2 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                         $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]",
+                                    _ => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                         $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
+                                         $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]",
+                                };
                                 embed.AddField(field =>
                                 {
                                     field.IsInline = true;
@@ -215,13 +209,13 @@ namespace ThothBotCore.Modules
                         }
                         catch (Exception ex)
                         {
-                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}");
+                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to contact the bot owner for further assistance.");
+                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                        var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
                         await ReplyAsync(embed: embed);
                     }
                 }
@@ -332,12 +326,12 @@ namespace ThothBotCore.Modules
                         }
                         catch (Exception ex)
                         {
-                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}");
+                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
+                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**StackTrace: **{ex.StackTrace}");
                         await ReplyAsync("Oops.. I've encountered an error. :sob:");
                     }
                 }
@@ -823,36 +817,18 @@ namespace ThothBotCore.Modules
                     borderNum = 8;
                 }
 
-                switch (borderNum)
+                rAvatarBorderURL = borderNum switch
                 {
-                    case 1:
-                        rAvatarBorderURL = "https://i.imgur.com/amtJ0Lo.png";
-                        break;
-                    case 2:
-                        rAvatarBorderURL = "https://i.imgur.com/noDuPCV.png";
-                        break;
-                    case 3:
-                        rAvatarBorderURL = "https://i.imgur.com/7RpvKLe.png";
-                        break;
-                    case 4:
-                        rAvatarBorderURL = "https://i.imgur.com/P4pj6QN.png";
-                        break;
-                    case 5:
-                        rAvatarBorderURL = "https://i.imgur.com/x89o9On.png";
-                        break;
-                    case 6:
-                        rAvatarBorderURL = "https://i.imgur.com/OT6CfFI.png";
-                        break;
-                    case 7:
-                        rAvatarBorderURL = "https://i.imgur.com/PLhAqbN.png";
-                        break;
-                    case 8:
-                        rAvatarBorderURL = "https://i.imgur.com/0eHoWT1.png";
-                        break;
-                    default:
-                        rAvatarBorderURL = "";
-                        break;
-                }
+                    1 => "https://i.imgur.com/amtJ0Lo.png",
+                    2 => "https://i.imgur.com/noDuPCV.png",
+                    3 => "https://i.imgur.com/7RpvKLe.png",
+                    4 => "https://i.imgur.com/P4pj6QN.png",
+                    5 => "https://i.imgur.com/x89o9On.png",
+                    6 => "https://i.imgur.com/OT6CfFI.png",
+                    7 => "https://i.imgur.com/PLhAqbN.png",
+                    8 => "https://i.imgur.com/0eHoWT1.png",
+                    _ => "",
+                };
                 var css = "<html>\n\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css\" integrity=\"sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO\"\n        crossorigin=\"anonymous\">\n    <style>\n        html {\n            height: 100%;\n        }\n        \n        body {\n            background-color: transparent;\n            color: white;\n            background-image: url(https://web2.hirez.com/smite/v3/s5/HarpyNest_S4.jpg);\n            background-repeat: no-repeat;\n            background-size: cover;\n            background-position: top;\n            margin: 5px;\n        }\n\n        .avatarPos {\n            position: absolute;\n            top: 25px;\n            left: 25px;\n        }\n\n        .imgA1 {\n            z-index: 1;\n            width: 70px;\n            left: 8px;\n            top: 8px;\n        }\n\n        .imgB1 {\n            z-index: 3;\n            width: 110px;\n            left: -12;\n            top: -11px;\n        }\n\n        .row {\n            border: 2px solid #26728d;\n            background-color: rgba(14, 25, 38, .9);\n            color: #c9f9fb;\n            padding: 10px;\n        }\n\n        .col {\n            border: 2px solid #26728d;\n        }\n\n        .AccStats {\n            font-size: 18px;\n        }\n\n        .names {\n            padding-left: 100px;\n        }\n\n        .levels {\n            position: fixed;\n            top: 18;\n            right: 18px;\n        }\n\n        .left-col {\n            float: left;\n            width: 50%;\n            background-color: rgba(14, 25, 38, .9);\n            background-image: url(https://i.imgur.com/MfBC9I6.png);\n            background-position: right;\n            background-repeat: no-repeat;\n            background-size: contain;\n            height: 140px;\n            padding-left: 10px;\n        }\n        \n        .right-col {\n            float: right;\n            width: 50%;\n            background-color: rgba(14, 25, 38, .9);\n            background-image: url(https://i.imgur.com/skbL9IZ.png);\n            background-position: left;\n            background-repeat: no-repeat;\n            background-size: contain;\n            height: 140px;\n            text-align: right;\n            padding-right: 10px;\n        }\n\n        .conquest-col {\n            width: 100%;\n            height: 140px;\n            background-image: url(https://i.imgur.com/ayyGCkZ.png);\n            background-size: cover;\n            background-position: center;\n            background-repeat: no-repeat;\n            border-bottom: 2px solid #26728d;\n            padding-left: 10px;\n        }\n    </style>\n</head>";
                 var html = $"<body>\n    <div class=\"container-fluid\">\n        <div class=\"row\" style=\"height: 112px; border-bottom: 1px solid #26728d;\">\n            <div class=\"col-1\">\n                <img class=\"avatarPos imgA1\" src=\"{rAvatarURL}\">\n                <img class=\"avatarPos imgB1\" src=\"{rAvatarBorderURL}\">\n            </div>\n            <div class=\"names col-11\">\n                <h2>{rPlayerName}</h2>\n                <h5>{rTeamName}</h5>\n                <div class=\"levels\">\n                    <img src=\"https://i.imgur.com/8IluUqL.png\" />{rPlayerLevel}<br>\n                    <img src=\"https://i.imgur.com/cSFMiWX.png\" />{rPlayerMasteryLevel}<br>\n                    <img src=\"https://i.imgur.com/baSKFnW.png\" width=\"28px\" />{rTotalWorsh} \n                    <div style=\"position: fixed; top: 25px; right: 120; text-align: center; border-left: 1px solid #26728d; border-right: 1px solid #26728d; padding-left: 10px; padding-right: 10px;\">\n                            <h3>Playtime</h3>\n                            <h5>{rHoursPlayed}</h5>\n                    </div>\n                </div>\n            </div>\n        </div>\n        <div class=\"row\" style=\"border-top: 0px !important; padding-top: 5px !important; padding-bottom: 5px !important;\">\n            <div class=\"col-12\" style=\"padding-top: 0px !important; padding-bottom: 0px !important; text-align: center;\">\n                <h5 style=\"margin-bottom: 5px !important;\">{rPlayerStatus}</h5>\n            </div>\n        </div>\n        <div class=\"row\" style=\"margin-top: 3px; padding: 0; height: 284px;\">\n            <div class=\"conquest-col\" style=\"border-right: 1px solid #26728d;\">\n                <img src=\"{rConquestTierImg}\" />\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Conquest<br>{rConquestTier}</h5>\n            </div>\n            <div class=\"left-col\">\n                <img src=\"{rJoustTierImg}\" />\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Joust<br>{rJoustTier}</h5>\n            </div>\n            <div class=\"right-col\">\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Duel<br>{rDuelTier}</h5>\n                <img src=\"{rDuelTierImg}\" />\n            </div>\n        </div>\n    </div>\n</body>\n\n</html>";
                 try
@@ -1517,77 +1493,85 @@ namespace ThothBotCore.Modules
         [Alias("issues", "bugs", "board")]
         public async Task TrelloBoardCommand()
         {
-            var embed = new EmbedBuilder();
-            var result = await trelloAPI.GetTrelloCards();
-
-            StringBuilder topIssues = new StringBuilder(2048);
-            StringBuilder hotfixNotes = new StringBuilder(1024);
-            StringBuilder incominghotfix = new StringBuilder(1024);
-
-            foreach (var item in result) // Top Issues
+            try
             {
-                if (item.idList == "5c740d7d4e18c107890167ea")
+                var embed = new EmbedBuilder();
+                var result = await trelloAPI.GetTrelloCards();
+
+                StringBuilder topIssues = new StringBuilder(2048);
+                StringBuilder hotfixNotes = new StringBuilder(1024);
+                StringBuilder incominghotfix = new StringBuilder(1024);
+
+                foreach (var item in result) // Top Issues
                 {
-                    topIssues.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    if (item.idList == "5c740d7d4e18c107890167ea")
+                    {
+                        topIssues.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    }
                 }
-            }
-            foreach (var item in result) // Hotfix PatchNotes
-            {
-                if (item.idList == "5c740da2ff81b93a4039da81")
+                foreach (var item in result) // Hotfix PatchNotes
                 {
-                    hotfixNotes.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    if (item.idList == "5c740da2ff81b93a4039da81")
+                    {
+                        hotfixNotes.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    }
                 }
-            }
-            foreach (var item in result) // Incoming hotfix
-            {
-                if (item.idList == "5c804623d75e55500472cf9a")
+                foreach (var item in result) // Incoming hotfix
                 {
-                    incominghotfix.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    if (item.idList == "5c804623d75e55500472cf9a")
+                    {
+                        incominghotfix.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    }
                 }
-            }
 
-            embed.WithAuthor(x =>
-            {
-                x.Name = "SMITE Community Issues Trello Board";
-                x.Url = "https://trello.com/b/d4fJtBlo/smite-community-issues";
-                x.IconUrl = "https://cdn3.iconfinder.com/data/icons/popular-services-brands-vol-2/512/trello-512.png";
-            });
-
-            // Incoming Hotfix
-            if (incominghotfix.ToString() != "")
-            {
-                embed.AddField(x =>
+                embed.WithAuthor(x =>
                 {
-                    x.IsInline = true;
-                    x.Name = "Incoming Hotfix";
-                    x.Value = incominghotfix.ToString();
+                    x.Name = "SMITE Community Issues Trello Board";
+                    x.Url = "https://trello.com/b/d4fJtBlo/smite-community-issues";
+                    x.IconUrl = "https://cdn3.iconfinder.com/data/icons/popular-services-brands-vol-2/512/trello-512.png";
                 });
-            }
 
-            // Hotfix Patch Notes
-            if (hotfixNotes.ToString() != "")
-            {
-                embed.AddField(x =>
+                // Incoming Hotfix
+                if (incominghotfix.ToString() != "")
                 {
-                    x.IsInline = true;
-                    x.Name = "Hotfix Patch Notes";
-                    x.Value = hotfixNotes.ToString();
-                });
-            }
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "Incoming Hotfix";
+                        x.Value = incominghotfix.ToString();
+                    });
+                }
 
-            embed.WithColor(210, 144, 52);
-            embed.WithTitle("All Platforms Top Issues");
-            if (!(topIssues.ToString().Length > 2048))
-            {
-                embed.WithDescription(topIssues.ToString());
-            }
-            else
-            {
-                // Its longer than 2048
-                embed.WithDescription(Text.Truncate(topIssues.ToString(), 2048));
-            }
+                // Hotfix Patch Notes
+                if (hotfixNotes.ToString() != "")
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "Hotfix Patch Notes";
+                        x.Value = hotfixNotes.ToString();
+                    });
+                }
 
-            await ReplyAsync("", false, embed.Build());
+                embed.WithColor(210, 144, 52);
+                embed.WithTitle("All Platforms Top Issues");
+                if (!(topIssues.ToString().Length > 2048))
+                {
+                    embed.WithDescription(topIssues.ToString());
+                }
+                else
+                {
+                    // Its longer than 2048
+                    embed.WithDescription(Text.Truncate(topIssues.ToString(), 2048));
+                }
+
+                await ReplyAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the Trello API is down.");
+                await ErrorTracker.SendError($"**Trello Error: **\n{ex.StackTrace}");
+            }
         }
 
         [Command("livematch", RunMode = RunMode.Async)]
@@ -2325,6 +2309,23 @@ namespace ThothBotCore.Modules
                 await ErrorTracker.SendError($"**LINKING ERROR**\n{ex.Message}\n{ex.StackTrace}\n{ex.InnerException}\n{ex.Source}\n{ex.Data}");
             }
         }
+        
+        [Command("unlink", true, RunMode = RunMode.Async)]
+        [Summary("Unlink your SMITE and Discord accounts in Thoth's database")]
+        public async Task UnlinkAccountsCommand()
+        {
+            var db = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
+            if (db.Count == 0)
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"You don't have linked SMITE account in the database.");
+                await ReplyAsync(embed: embed);
+                return;
+            }
+            Database.RemoveLinkedAccount(Context.Message.Author.Id);
+            await ErrorTracker.SendError($"{Context.Message.Author.Username} just unlinked an account.");
+            var em = await EmbedHandler.BuildDescriptionEmbedAsync("You have successfully unlinked your account!");
+            await ReplyAsync(embed: em);
+        }
 
         // test
         [Command("test")] // Get specific God information
@@ -2719,9 +2720,11 @@ namespace ThothBotCore.Modules
         }
         public async Task<MultiplePlayersStruct> MultiplePlayersHandler(List<SearchPlayers> searchPlayers, SocketCommandContext context, IUserMessage message = null)
         {
-            var nz = new MultiplePlayersStruct();
-            nz.searchPlayers = null;
-            nz.userMessage = null;
+            var nz = new MultiplePlayersStruct
+            {
+                searchPlayers = null,
+                userMessage = null
+            };
             if (searchPlayers.Count > 20)
             {
                 await context.Channel.SendMessageAsync($"There are more than 20 accounts({searchPlayers.Count}) with the username **{searchPlayers[0].Name}**. Please contact the bot owner for further assistance.");

@@ -343,46 +343,34 @@ namespace ThothBotCore.Discord
 
             string defaultEmoji = ""; //🔹 <:gems:443919192748589087>
 
-            string rPlayerName = "";
+            var rPlayerName = new StringBuilder();
+            string[] clanName = { };
 
+            // Checking if the player is in a clan
             if (playerStats[0].Name.Contains("]"))
             {
-                string[] splitName = playerStats[0].Name.Split(']');
-                rPlayerName = splitName[1];
-                if (rPlayerName == null || rPlayerName == "")
-                {
-                    if (playerStats[0].hz_player_name != null)
-                    {
-                        rPlayerName = playerStats[0].hz_player_name + $", {splitName[0]}]{playerStats[0].Team_Name}";
-                    }
-                    else
-                    {
-                        rPlayerName = playerStats[0].hz_gamer_tag + $", {splitName[0]}]{playerStats[0].Team_Name}";
-                    }
-                }
-                else
-                {
-                    rPlayerName += $", {splitName[0]}]{playerStats[0].Team_Name}";
-                }
+                clanName = playerStats[0].Name.Split(']');
+            }
+
+            if (playerStats[0].hz_player_name == null || playerStats[0].hz_player_name.Length == 0)
+            {
+                rPlayerName.Append(playerStats[0].hz_gamer_tag);
+            }
+            else if (playerStats[0].hz_player_name.Length != 0)
+            {
+                rPlayerName.Append(playerStats[0].hz_player_name);
             }
             else
             {
-                if (playerStats[0].Name == null || playerStats[0].Name == "")
-                {
-                    rPlayerName = playerStats[0].Name;
-                }
-                else
-                {
-                    if (playerStats[0].hz_player_name != null)
-                    {
-                        rPlayerName = playerStats[0].hz_player_name;
-                    }
-                    else
-                    {
-                        rPlayerName = playerStats[0].hz_gamer_tag;
-                    }
-                }
+                rPlayerName.Append(playerStats[0].Name + " 🆘");
             }
+
+            // Add clan to rPlayerName
+            if (clanName.Length != 0)
+            {
+                rPlayerName.Append($", {clanName[0]}]{playerStats[0].Team_Name}");
+            }
+
             double rWinRate = 0;
             if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
             {
@@ -392,7 +380,7 @@ namespace ThothBotCore.Discord
             embed.WithAuthor(author =>
             {
                 author
-                    .WithName($"{rPlayerName}")
+                    .WithName($"{rPlayerName.ToString()}")
                     .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
                     .WithIconUrl(Text.GetPortalIconLinks(portal.ToString()));
             });
@@ -738,8 +726,10 @@ namespace ThothBotCore.Discord
         }
         public static async Task<EmbedBuilder> LoadingStats(string username)
         {
-            var embed = new EmbedBuilder();
-            embed.Description = $"Loading {username}...";
+            var embed = new EmbedBuilder
+            {
+                Description = $"Loading {username}..."
+            };
             return embed;
         }
         public static async Task<EmbedBuilder> HiddenProfileEmbed(string username)
@@ -750,14 +740,18 @@ namespace ThothBotCore.Discord
         }
         public static async Task<EmbedBuilder> ProfileNotFoundEmbed(string username)
         {
-            var embed = new EmbedBuilder();
-            embed.Description = Text.UserNotFound(username);
+            var embed = new EmbedBuilder
+            {
+                Description = Text.UserNotFound(username)
+            };
             return embed;
         }
         public static Task<Embed> BuildDescriptionEmbedAsync(string description)
         {
-            var embed = new EmbedBuilder();
-            embed.Description = description;
+            var embed = new EmbedBuilder
+            {
+                Description = description
+            };
             return Task.FromResult(embed.Build());
         }
         public static async Task<EmbedBuilder> MultiplePlayers(List<SearchPlayers> players)
@@ -800,8 +794,21 @@ namespace ThothBotCore.Discord
                 x.Text = $"Match ID: {matchPlayerDetails[0].Match}";
             });
 
+            if (matchPlayerDetails.Count == 1)
+            {
+                string ge = await Database.GetGodEmoji(matchPlayerDetails[0].GodName);
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = $"{ge} {Text.HiddenProfileCheck(matchPlayerDetails[0].playerName)}";
+                    x.Value = $":video_game:Account Created: \n{(matchPlayerDetails[0].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(matchPlayerDetails[0].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}";
+                });
+                return embed;
+            }
+
             var team1 = new List<PlayerMatchDetails>();
             var team2 = new List<PlayerMatchDetails>();
+
             foreach (var item in matchPlayerDetails)
             {
                 if (item.taskForce == 1)
@@ -915,7 +922,7 @@ namespace ThothBotCore.Discord
             embed.AddField(x =>
             {
                 x.IsInline = true;
-                x.Name = $":green_circle: **{winners[0].Win_Status}** :green_circle:";
+                x.Name = $"🏆 **{winners[0].Win_Status}** 🏆";
                 x.Value = $"{team1emo}{Text.SideName(winners[0].TaskForce)}";
             });
             if (winners[0].Ban1.Length != 0)

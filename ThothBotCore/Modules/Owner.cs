@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -151,7 +150,7 @@ namespace ThothBotCore.Modules
         {
             var chn = Discord.Connection.Client.GetGuild(server).GetTextChannel(channel);
 
-            var sentMessage = await chn.SendMessageAsync(message);
+            await chn.SendMessageAsync(message);
             await ReplyAsync("I guess it worked, idk.");
         }
 

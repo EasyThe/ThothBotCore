@@ -117,7 +117,7 @@ namespace ThothBotCore.Utilities
                 int totalUsers = 0;
                 foreach (var guild in Connection.Client.Guilds)
                 {
-                    totalUsers = totalUsers + guild.Users.Count;
+                    totalUsers += guild.Users.Count;
                 }
                 Console.WriteLine("Users: " + totalUsers);
                 if (Connection.Client.CurrentUser.Id == 587623068461957121)

@@ -446,6 +446,14 @@ namespace ThothBotCore.Storage
             }
         }
 
+        public static async void RemoveLinkedAccount(ulong id)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"DELETE FROM playersSpecial WHERE discordID = {id}");
+            }
+        }
+
         public static async Task<List<PlayerStats>> GetAllPlayers()
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
