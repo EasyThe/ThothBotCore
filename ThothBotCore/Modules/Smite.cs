@@ -1498,29 +1498,34 @@ namespace ThothBotCore.Modules
                 var embed = new EmbedBuilder();
                 var result = await trelloAPI.GetTrelloCards();
 
-                StringBuilder topIssues = new StringBuilder(2048);
-                StringBuilder hotfixNotes = new StringBuilder(1024);
-                StringBuilder incominghotfix = new StringBuilder(1024);
+                StringBuilder topIssues = new StringBuilder();
+                StringBuilder hotfixNotes = new StringBuilder();
+                StringBuilder incominghotfix = new StringBuilder();
+                StringBuilder alreadyFixedInLIVE = new StringBuilder();
 
-                foreach (var item in result) // Top Issues
+                int count = 0;
+                foreach (var item in result)
                 {
+                    // Top Issues
                     if (item.idList == "5c740d7d4e18c107890167ea")
                     {
                         topIssues.Append($"🔹[{item.name}]({item.shortUrl})\n");
                     }
-                }
-                foreach (var item in result) // Hotfix PatchNotes
-                {
-                    if (item.idList == "5c740da2ff81b93a4039da81")
+                    // Hotfix PatchNotes
+                    if (item.idList == "5c740da2ff81b93a4039da81" && count != 10)
                     {
+                        count++;
                         hotfixNotes.Append($"🔹[{item.name}]({item.shortUrl})\n");
                     }
-                }
-                foreach (var item in result) // Incoming hotfix
-                {
+                    // Incoming hotfix
                     if (item.idList == "5c804623d75e55500472cf9a")
                     {
                         incominghotfix.Append($"🔹[{item.name}]({item.shortUrl})\n");
+                    }
+                    // Fixed in LIVE
+                    if (item.idList == "5c7e9e5e30dbfd27cb7c4442")
+                    {
+                        alreadyFixedInLIVE.Append($"🔹[{item.name}]({item.shortUrl})\n");
                     }
                 }
 
@@ -1539,6 +1544,17 @@ namespace ThothBotCore.Modules
                         x.IsInline = true;
                         x.Name = "Incoming Hotfix";
                         x.Value = incominghotfix.ToString();
+                    });
+                }
+
+                // Already in LIVE
+                if (alreadyFixedInLIVE.ToString() != "")
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "Already fixed";
+                        x.Value = alreadyFixedInLIVE.ToString();
                     });
                 }
 
@@ -1570,7 +1586,7 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the Trello API is down.");
-                await ErrorTracker.SendError($"**Trello Error: **\n{ex.StackTrace}");
+                await ErrorTracker.SendError($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
             }
         }
 
