@@ -411,7 +411,7 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"{count} results\n{sb.ToString()}");
         }
 
-        [Command("checkguilds")]
+        [Command("checkguilds", true, RunMode = RunMode.Async)]
         public async Task CheckAllGuilds()
         {
             await ReplyAsync("Starting now...");
@@ -452,7 +452,8 @@ namespace ThothBotCore.Modules
         [Command("testtt")]//test command idk
         public async Task StatCordTestCommand([Remainder]string name)
         {
-            await Database.SetGuild(374504161833648129, name);
+            // add this to EmbedHandler.Loading() if it works
+            await ReplyAsync("<a:typing:393848431413559296>");
         }
 
         private class DataUsed

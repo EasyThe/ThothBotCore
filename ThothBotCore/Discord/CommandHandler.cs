@@ -51,7 +51,7 @@ namespace ThothBotCore.Discord
             {
                 if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
                 || msg.HasStringPrefix(Database.GetServerConfig(context.Guild.Id).Result[0].prefix, ref argPos)
-                || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) && !msg.Author.IsBot)
+                || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 {
                     var result = await _commands.ExecuteAsync(context, argPos, _services);
                     if (result.IsSuccess)
@@ -62,9 +62,9 @@ namespace ThothBotCore.Discord
                     {
                         await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
                     }
-                    if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != 518408306415632384 && context.Message.Author.Id != 171675309177831424)
+                    if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != 518408306415632384 && context.Message.Author.Id != Constants.OwnerID)
                     {
-                        await ErrorTracker.SendSuccessCommands("**Result: **" +
+                        await Reporter.SendSuccessCommands("**Result: **" +
                                 (result.IsSuccess ? ":white_check_mark:" : ":negative_squared_cross_mark:") +
                                 $"\n**Message: **{context.Message.Content}\n" +
                                 $"**User: **{context.Message.Author}\n" +
@@ -135,7 +135,7 @@ namespace ThothBotCore.Discord
             else
             {
                 Console.WriteLine("Error Tracker: " + errorString);
-                await ErrorTracker.SendError($"**Message: **{context.Message.Content}\n" +
+                await Reporter.SendError($"**Message: **{context.Message.Content}\n" +
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Error: **{result.Error}\n" +

@@ -42,7 +42,7 @@ namespace ThothBotCore.Notifications
                     }
                     else
                     {
-                        await ErrorTracker.SendError("Another StatusNotifier error:\n" +
+                        await Reporter.SendError("Another StatusNotifier error:\n" +
                             $"{ex.Message}\n" +
                             $"{ex.TargetSite}\n" +
                             $"{ex.Data}\n" +

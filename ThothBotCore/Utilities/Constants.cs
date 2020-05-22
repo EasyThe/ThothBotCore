@@ -6,6 +6,7 @@ namespace ThothBotCore.Utilities
     public class Constants
     {
         public static readonly string botIcon = "https://i.imgur.com/8qNdxse.png";
+        public static readonly ulong OwnerID = 171675309177831424;
         public static string JoinedMessage { get; set; } = ":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
                 $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +
@@ -17,6 +18,8 @@ namespace ThothBotCore.Utilities
         public static Emoji CheckMarkEmoji { get; set; } = new Emoji("✅");
         public static Color DefaultBlueColor { get; set; } = new Color(85, 172, 238);
         public static Color VulpisColor { get; set; } = new Color(230, 175, 43);
+        public static Color ErrorColor { get; set; } = new Color(255, 148, 148);
+        public static Color FeedbackColor = new Color(107, 70, 147);
 
         // Vulpis
         public static string VulpisDescription { get; set; } = "European Smite organisation focused on organizing regular Conquest, Arena, Assault, Joust & Duel tournaments.";

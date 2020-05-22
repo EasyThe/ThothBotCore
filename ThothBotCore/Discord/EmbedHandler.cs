@@ -601,57 +601,21 @@ namespace ThothBotCore.Discord
                 field.Name = $":video_game:**Playing SMITE since**";
                 field.Value = $"{defaultEmoji}{(playerStats[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
             });
-            switch (playerStats[0].Region)
+            string regionValue = playerStats[0].Region switch
             {
-                case "Europe":
-                    embed.AddField(field =>
-                    {
-                        field.IsInline = true;
-                        field.Name = ($":globe_with_meridians:**Region**");
-                        field.Value = ($":flag_eu:{playerStats[0].Region}");
-                    });
-                    break;
-                case "North America":
-                    embed.AddField(field =>
-                    {
-                        field.IsInline = true;
-                        field.Name = $":globe_with_meridians:**Region**";
-                        field.Value = $":flag_us:{playerStats[0].Region}";
-                    });
-                    break;
-                case "Brazil":
-                    embed.AddField(field =>
-                    {
-                        field.IsInline = true;
-                        field.Name = $":globe_with_meridians:**Region**";
-                        field.Value = $":flag_br:{playerStats[0].Region}";
-                    });
-                    break;
-                case "Australia":
-                    embed.AddField(field =>
-                    {
-                        field.IsInline = true;
-                        field.Name = $":globe_with_meridians:**Region**";
-                        field.Value = $":flag_au:{playerStats[0].Region}";
-                    });
-                    break;
-                case "":
-                    embed.AddField(field =>
-                    {
-                        field.IsInline = true;
-                        field.Name = $":globe_with_meridians:**Region**";
-                        field.Value = $"{defaultEmoji}n/a";
-                    });
-                    break;
-                default:
-                    embed.AddField(x =>
-                    {
-                        x.IsInline = true;
-                        x.Name = $":globe_with_meridians:**Region**";
-                        x.Value = $"{defaultEmoji}{playerStats[0].Region}";
-                    });
-                    break;
-            } // Region
+                "Europe" => $":flag_eu:{playerStats[0].Region}",
+                "North America" => $":flag_us:{playerStats[0].Region}",
+                "Brazil" => $":flag_br:{playerStats[0].Region}",
+                "Australia" => $":flag_au:{playerStats[0].Region}",
+                "" => $"{defaultEmoji}n/a",
+                _ => $"{defaultEmoji}{playerStats[0].Region}",
+            };
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ":globe_with_meridians:**Region**";
+                field.Value = regionValue;
+            });
             embed.AddField(x =>
             {
                 x.IsInline = true;
@@ -661,36 +625,21 @@ namespace ThothBotCore.Discord
             // Top Gods
             if (godRanks.Count != 0)
             {
-                switch (godRanks.Count)
+                string godRanksValue = godRanks.Count switch
                 {
-                    case 1:
-                        embed.AddField(field =>
-                        {
-                            field.IsInline = true;
-                            field.Name = "<:Gods:567146088985919498>**Top Gods**";
-                            field.Value = $":first_place:{godRanks[0].god} [{godRanks[0].Worshippers}]\n";
-                        });
-                        break;
-                    case 2:
-                        embed.AddField(field =>
-                        {
-                            field.IsInline = true;
-                            field.Name = "<:Gods:567146088985919498>**Top Gods**";
-                            field.Value = $":first_place:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
-                            $":second_place:{godRanks[1].god} [{godRanks[1].Worshippers}]\n";
-                        });
-                        break;
-                    default:
-                        embed.AddField(field =>
-                        {
-                            field.IsInline = true;
-                            field.Name = "<:Gods:567146088985919498>**Top Gods**";
-                            field.Value = $":first_place:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
-                            $":second_place:{godRanks[1].god} [{godRanks[1].Worshippers}]\n" +
-                            $":third_place:{godRanks[2].god} [{godRanks[2].Worshippers}]";
-                        });
-                        break;
-                }
+                    1 => $":first_place:{godRanks[0].god} [{godRanks[0].Worshippers}]",
+                    2 => $":first_place:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                         $":second_place:{godRanks[1].god} [{godRanks[1].Worshippers}]",
+                    _ => $":first_place:{godRanks[0].god} [{godRanks[0].Worshippers}]\n" +
+                         $":second_place:{godRanks[1].god} [{godRanks[1].Worshippers}]\n" +
+                         $":third_place:{godRanks[2].god} [{godRanks[2].Worshippers}]",
+                };
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "<:Gods:567146088985919498>**Top Gods**";
+                    field.Value = godRanksValue;
+                });
             } 
             // KDA
             if (playerAchievements.PlayerKills != 0 && playerAchievements.AssistedKills != 0 && playerAchievements.Deaths != 0)
@@ -724,34 +673,40 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
-        public static async Task<EmbedBuilder> LoadingStats(string username)
+        public static Task<EmbedBuilder> LoadingStats(string username)
         {
             var embed = new EmbedBuilder
             {
                 Description = $"Loading {username}..."
             };
-            return embed;
+            return Task.FromResult(embed);
         }
-        public static async Task<EmbedBuilder> HiddenProfileEmbed(string username)
+        public static Task<EmbedBuilder> HiddenProfileEmbed(string username)
         {
-            var embed = new EmbedBuilder();
-            embed.Description = Text.UserIsHidden(username);
-            return embed;
+            var embed = new EmbedBuilder
+            {
+                Description = Text.UserIsHidden(username)
+            };
+            return Task.FromResult(embed);
         }
-        public static async Task<EmbedBuilder> ProfileNotFoundEmbed(string username)
+        public static Task<EmbedBuilder> ProfileNotFoundEmbed(string username)
         {
             var embed = new EmbedBuilder
             {
                 Description = Text.UserNotFound(username)
             };
-            return embed;
+            return Task.FromResult(embed);
         }
-        public static Task<Embed> BuildDescriptionEmbedAsync(string description)
+        public static Task<Embed> BuildDescriptionEmbedAsync(string description, int r = 0, int g = 0, int b = 0)
         {
             var embed = new EmbedBuilder
             {
                 Description = description
             };
+            if (r != 0 || g != 00 || b != 0)
+            {
+                embed.WithColor(new Color(r, g, b));
+            }
             return Task.FromResult(embed.Build());
         }
         public static async Task<EmbedBuilder> MultiplePlayers(List<SearchPlayers> players)
@@ -827,14 +782,19 @@ namespace ThothBotCore.Discord
             string godemoji = "";
             for (int i = 0; i < team1.Count; i++)
             {
-                if ((team1[0].Queue == "440") || (team1[0].Queue == "450") || (team1[0].Queue == "451"))
+                if ((team1[0].Queue == "440") || 
+                    (team1[0].Queue == "450") || 
+                    (team1[0].Queue == "451") ||
+                    (team1[0].Queue == "502") ||
+                    (team1[0].Queue == "503") ||
+                    (team1[0].Queue == "504"))
                 {
-                    if (team1[0].Queue == "451")
+                    if (team1[0].Queue == "451" || team1[0].Queue == "504")
                     {
                         player1.Append($"{Text.GetRankedConquest(team1[i].Tier).Item2} {Text.GetRankedConquest(team1[i].Tier).Item1}\n");
                         player2.Append($"{Text.GetRankedConquest(team2[i].Tier).Item2} {Text.GetRankedConquest(team2[i].Tier).Item1}\n");
                     }
-                    else if (team1[0].Queue == "450")
+                    else if (team1[0].Queue == "450" || team1[0].Queue == "503")
                     {
                         player1.Append($"{Text.GetRankedJoust(team1[i].Tier).Item2} {Text.GetRankedJoust(team1[i].Tier).Item1}\n");
                         player2.Append($"{Text.GetRankedJoust(team2[i].Tier).Item2} {Text.GetRankedJoust(team2[i].Tier).Item1}\n");
@@ -914,7 +874,7 @@ namespace ThothBotCore.Discord
                 }
                 else
                 {
-                    await ErrorTracker.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
+                    await Reporter.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
                 }
             }
             string team1emo = Text.SideEmoji(winners[0].TaskForce);
@@ -971,9 +931,14 @@ namespace ThothBotCore.Discord
             string godemoji = "";
             for (int i = 0; i < winners.Count; i++)
             {
-                if ((winners[0].match_queue_id == 440) || (winners[0].match_queue_id == 450) || (winners[0].match_queue_id == 451))
+                if ((winners[0].match_queue_id == 440) || 
+                    (winners[0].match_queue_id == 450) || 
+                    (winners[0].match_queue_id == 451) ||
+                    (winners[0].match_queue_id == 502) ||
+                    (winners[0].match_queue_id == 503) ||
+                    (winners[0].match_queue_id == 504))
                 {
-                    if (winners[0].match_queue_id == 451)
+                    if (winners[0].match_queue_id == 451 || winners[0].match_queue_id == 504) // Conquest
                     {
                         player1.Append($"{Text.GetRankedConquest(winners[i].Conquest_Tier).Item2}{Text.GetRankedConquest(winners[i].Conquest_Tier).Item1}\n");
                         player1.Append($"{team1emo}W/L: {winners[i].Conquest_Wins}/{winners[i].Conquest_Losses}\n");
@@ -983,7 +948,7 @@ namespace ThothBotCore.Discord
                         player2.Append($"{team2emo}W/L: {losers[i].Conquest_Wins}/{losers[i].Conquest_Losses}\n");
                         player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Conquest, 0)}\n");
                     }
-                    else if (winners[0].match_queue_id == 450)
+                    else if (winners[0].match_queue_id == 450 || winners[0].match_queue_id == 503) // Joust
                     {
                         player1.Append($"{Text.GetRankedJoust(winners[i].Joust_Tier).Item2}{Text.GetRankedJoust(winners[i].Joust_Tier).Item1}\n");
                         player1.Append($"{team1emo}W/L: {winners[i].Joust_Wins}/{winners[i].Joust_Losses}\n");
@@ -1054,7 +1019,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(x =>
                 {
                     x.IsInline = false;
-                    x.Name = $"{godemoji} **{matchHistory[i].Win_Status}**  {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(matchHistory[i].Match_Time)} [{matchHistory[i].Match}]";
+                    x.Name = $"{godemoji} **{matchHistory[i].Win_Status}**  {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} [{matchHistory[i].Match}]";
                     x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | 🗡Damage: {matchHistory[i].Damage}";
                 });
             }

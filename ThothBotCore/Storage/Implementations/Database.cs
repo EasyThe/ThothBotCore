@@ -29,7 +29,7 @@ namespace ThothBotCore.Storage
             }
             catch (Exception ex)
             {
-                await ErrorTracker.SendError($"**Error in InsertServerStatusUpdates\n{ex.Message}");
+                await Reporter.SendError($"**Error in InsertServerStatusUpdates\n{ex.Message}");
             }
         }
 
@@ -400,7 +400,7 @@ namespace ThothBotCore.Storage
             }
             catch (Exception ex)
             {
-                await ErrorTracker.SendError("Error in AddMatchInDB");
+                await Reporter.SendError("Error in AddMatchInDB");
                 Console.WriteLine("Error in AddMatchInDB()\n" + ex.Message);
             }
         }
@@ -446,7 +446,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async void RemoveLinkedAccount(ulong id)
+        public static async Task RemoveLinkedAccount(ulong id)
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
@@ -538,7 +538,7 @@ namespace ThothBotCore.Storage
                 var returnlist = output.ToList();
                 if (returnlist[0].Emoji == null || returnlist[0].Emoji == "")
                 {
-                    await ErrorTracker.SendError("Found missing emoji for " + godname);
+                    await Reporter.SendError("Found missing emoji for " + godname);
 
                     // do tuk stignahme, ne uspqh da izmislq kak da vzema hirezapi za da pusna updatedb ot utils..
                     //Utils.UpdateDb

@@ -31,7 +31,7 @@ namespace ThothBotCore.Utilities
         {
             ServerStatusTimer.Enabled = false;
             Console.WriteLine(message);
-            await ErrorTracker.SendError(message);
+            await Reporter.SendError(message);
         }
         private static async void ServerStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -121,7 +121,7 @@ namespace ThothBotCore.Utilities
                                         }
                                         catch (Exception ex)
                                         {
-                                            await ErrorTracker.SendError(":warning:**Exception in StatusTimer (DB SAVE):** \n" +
+                                            await Reporter.SendError(":warning:**Exception in StatusTimer (DB SAVE):** \n" +
                                                 $"**Message: **{ex.Message}\n" +
                                                 $"**StackTrace: **`{ex.StackTrace}`");
                                             ServerStatusTimer.Enabled = false;

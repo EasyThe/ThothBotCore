@@ -70,7 +70,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordLabs.**\n" +
+                await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordLabs.**\n" +
                     $"**Error Message:** {ex.Message}");
             }
 
@@ -99,7 +99,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await ErrorTracker.SendError("**Something happened when I tried to update guilds count for StatCord.**\n" +
+                await Reporter.SendError("**Something happened when I tried to update guilds count for StatCord.**\n" +
                     $"**Error Message:** {ex.Message}");
             }
 
@@ -139,7 +139,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordBotsList.**\n" +
+                    await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordBotsList.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -155,7 +155,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for BotsForDiscord.**\n" +
+                    await Reporter.SendError("**Something happened when I tried to update guilds count for BotsForDiscord.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -172,7 +172,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordBotList.**\n" +
+                    await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordBotList.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -188,7 +188,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for Discord.Bots.GG.**\n" +
+                    await Reporter.SendError("**Something happened when I tried to update guilds count for Discord.Bots.GG.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -204,7 +204,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for BotsOnDiscord.**\n" +
+                    await Reporter.SendError("**Something happened when I tried to update guilds count for BotsOnDiscord.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -220,11 +220,11 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await ErrorTracker.SendError("**Something happened when I tried to update guilds count for DiscordServices.**\n" +
+                    await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordServices.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
-                Console.WriteLine($"{DateTime.Now.ToString("[HH:mm]")} Guilds count updated! New count: {joinedGuilds}");
+                Console.WriteLine($"{DateTime.Now:[HH:mm]} Guilds count updated! New count: {joinedGuilds}");
             }
 
             GuildCountTimer.Interval = 60000;

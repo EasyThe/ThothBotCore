@@ -44,7 +44,7 @@ namespace ThothBotCore.Modules
             {
                 stopWatch.Start();
                 int playerID = 0;
-                var getPlayerByDiscordID = new List<PlayerSpecial>();
+                List<PlayerSpecial> getPlayerByDiscordID;
 
                 // Checking if we are searching for Player who linked his Discord with SMITE account
                 if (PlayerName == "")
@@ -90,7 +90,7 @@ namespace ThothBotCore.Modules
                         PlayerName = PlayerName.Replace("/", String.Empty);
                     }
                 }
-                // Finding all occurences of provided username and adding them in a list
+                // Finding all occurrences of provided username and adding them in a list
                 var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
                 var realSearchPlayers = new List<SearchPlayers>();
                 if (searchPlayer.Count != 0)
@@ -209,13 +209,13 @@ namespace ThothBotCore.Modules
                         }
                         catch (Exception ex)
                         {
-                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                            await Reporter.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\nStack Trace: {ex.StackTrace}");
-                        var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                        await Reporter.SendError($"Stats Error: \n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                        var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                         await ReplyAsync(embed: embed);
                     }
                 }
@@ -276,24 +276,17 @@ namespace ThothBotCore.Modules
                                 }
                             }
                             var orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
-                            string topMatchesValue = "";
                             if (orderedQueues.Count != 0)
                             {
-                                switch (orderedQueues.Count)
+                                string topMatchesValue = orderedQueues.Count switch
                                 {
-                                    case 1:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]";
-                                        break;
-                                    case 2:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]";
-                                        break;
-                                    default:
-                                        topMatchesValue = $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                                        $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
-                                                        $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]";
-                                        break;
-                                }
+                                    1 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]",
+                                    2 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                         $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]",
+                                    _ => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                         $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
+                                         $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]",
+                                };
                                 embed.AddField(field =>
                                 {
                                     field.IsInline = true;
@@ -326,23 +319,23 @@ namespace ThothBotCore.Modules
                         }
                         catch (Exception ex)
                         {
-                            await ErrorTracker.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                            await Reporter.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**StackTrace: **{ex.StackTrace}");
+                        await Reporter.SendError($"Stats Error: \n{ex.Message}\n**StackTrace: **{ex.StackTrace}");
                         await ReplyAsync("Oops.. I've encountered an error. :sob:");
                     }
                 }
             }
             catch (Exception ex)
             {
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
                 if (!(ex.Message.ToLowerInvariant().Contains("api is unavailable")))
                 {
-                    await ErrorTracker.SendError($"**Stats Command**\n" +
+                    await Reporter.SendError($"**Stats Command**\n" +
                     $"**Message: **{Context.Message.Content}\n" +
                     $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
@@ -531,8 +524,6 @@ namespace ThothBotCore.Modules
                         rConquestTier = "Grandmaster";
                         rConquestTierImg = "https://i.imgur.com/MOPNkd0.png";
                         break;
-                    default:
-                        break;
                 }
 
                 switch (playerStats[0].Tier_Joust)
@@ -649,8 +640,6 @@ namespace ThothBotCore.Modules
                         rJoustTier = "Grandmaster";
                         rJoustTierImg = "https://i.imgur.com/dDrGirx.png";
                         break;
-                    default:
-                        break;
                 }
 
                 switch (playerStats[0].Tier_Duel)
@@ -766,8 +755,6 @@ namespace ThothBotCore.Modules
                     case 27:
                         rDuelTier = "Grandmaster";
                         rDuelTierImg = "https://i.imgur.com/1JDyPJb.png";
-                        break;
-                    default:
                         break;
                 }
 
@@ -947,7 +934,7 @@ namespace ThothBotCore.Modules
                     }
                     catch (Exception ex)
                     {
-                        await ErrorTracker.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
+                        await Reporter.SendError($"Stats Error: \n{ex.Message}\n**InnerException: **{ex.InnerException}");
                         await ReplyAsync("Oops.. I've encountered an error. :sob:");
                     }
                 }
@@ -955,7 +942,7 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 await ReplyAsync($"Oops.. Either this player was not found or an unexpected error has occured.");
-                await ErrorTracker.SendError($"**Stats Command**\n" +
+                await Reporter.SendError($"**Stats Command**\n" +
                     $"**Message: **{Context.Message.Content}\n" +
                     $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
@@ -1347,7 +1334,7 @@ namespace ThothBotCore.Modules
                 else
                 {
                     await ReplyAsync(":warning: Something went wrong. This error was reported to the bot creator and will soon be checked.");
-                    await ErrorTracker.SendError($"**Error in StatusUpdates command**\n" +
+                    await Reporter.SendError($"**Error in StatusUpdates command**\n" +
                         $"{ex.Message}\n**Message: **{message}\n" +
                         $"**Server: **{Context.Guild.Name}[{Context.Guild.Id}]\n" +
                         $"**Channel: **{Context.Channel.Name}[{Context.Channel.Id}]");
@@ -1586,7 +1573,8 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the Trello API is down.");
-                await ErrorTracker.SendError($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
+                await ReplyAsync(embed: embed);
+                await Reporter.SendError($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -1733,8 +1721,7 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                await ErrorTracker.SendException(ex, Context);
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
             }
         }
@@ -1841,7 +1828,7 @@ namespace ThothBotCore.Modules
                 if (matchDetailsString.ToLowerInvariant().Contains("<"))
                 {
                     await ReplyAsync("Hi-Rez API sent a weird response...");
-                    await ErrorTracker.SendError(matchDetailsString);
+                    await Reporter.SendError(matchDetailsString);
                     return;
                 }
                 var matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(matchDetailsString);
@@ -1861,7 +1848,7 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
             }
         }
@@ -1961,13 +1948,19 @@ namespace ThothBotCore.Modules
                     }
                 }
 
+                if (matchHistory[0].ret_msg != null && matchHistory[0].ret_msg.ToString().ToLowerInvariant().Contains("no match history"))
+                {
+                    var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"{PlayerName} has no recent matches.");
+                    await ReplyAsync(embed: emb);
+                    return;
+                }
                 var finalembed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
                 await ReplyAsync(embed: finalembed);
                 // do dat
             }
             catch (Exception ex)
             {
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
             }
         }
@@ -2023,7 +2016,7 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
             }
         }
@@ -2071,7 +2064,7 @@ namespace ThothBotCore.Modules
                         return;
                     }
                 }
-                // Finding all occurences of provided username and adding them in a list
+                // Finding all occurrences of provided username and adding them in a list
                 var searchPlayer = await hirezAPI.SearchPlayer(PlayerName);
                 var realSearchPlayers = new List<SearchPlayers>();
                 if (searchPlayer.Count != 0)
@@ -2136,7 +2129,7 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
             }
         }
@@ -2320,9 +2313,9 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                var embed = await ErrorTracker.RespondToCommandOnErrorAsync(ex.Message);
+                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
-                await ErrorTracker.SendError($"**LINKING ERROR**\n{ex.Message}\n{ex.StackTrace}\n{ex.InnerException}\n{ex.Source}\n{ex.Data}");
+                await Reporter.SendError($"**LINKING ERROR**\n{ex.Message}\n{ex.StackTrace}\n{ex.InnerException}\n{ex.Source}\n{ex.Data}");
             }
         }
         
@@ -2337,8 +2330,8 @@ namespace ThothBotCore.Modules
                 await ReplyAsync(embed: embed);
                 return;
             }
-            Database.RemoveLinkedAccount(Context.Message.Author.Id);
-            await ErrorTracker.SendError($"{Context.Message.Author.Username} just unlinked an account.");
+            await Database.RemoveLinkedAccount(Context.Message.Author.Id);
+            await Reporter.SendError($"{Context.Message.Author.Username} just unlinked an account.");
             var em = await EmbedHandler.BuildDescriptionEmbedAsync("You have successfully unlinked your account!");
             await ReplyAsync(embed: em);
         }

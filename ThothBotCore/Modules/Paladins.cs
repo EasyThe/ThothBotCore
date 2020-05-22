@@ -215,7 +215,7 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 await ReplyAsync($"Oops.. Either this player was not found or an unexpected error has occured.");
-                await ErrorTracker.SendError($"**__Paladins__Stats Command**\n" +
+                await Reporter.SendError($"**__Paladins__Stats Command**\n" +
                     $"**Message: **{Context.Message.Content}\n" +
                     $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +

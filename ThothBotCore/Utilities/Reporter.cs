@@ -2,18 +2,20 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
 
 namespace ThothBotCore.Utilities
 {
-    public static class ErrorTracker
+    public static class Reporter
     {
         private static SocketTextChannel reportsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(557974702941798410);
         private static SocketTextChannel joinsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(567495039622709268);
         private static SocketTextChannel commandsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(569710679796482068);
-        private static IUser ownerUser = Connection.Client.GetUser(171675309177831424);
+        private static SocketTextChannel feedbackChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(713183236238344193);
+        private static IUser ownerUser = Connection.Client.GetUser(Constants.OwnerID);
 
         public static async Task SendDMtoOwner(string message)
         {
@@ -131,13 +133,21 @@ namespace ThothBotCore.Utilities
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Exception Message: **{ex.Message}\n" +
-                    $"**Data: **{ex.Data}\n" +
-                    $"**Stack Trace:** {ex.StackTrace}\n" +
-                    $"**Source: **{ex.Source}");
+                    $"**Stack Trace:** {ex.StackTrace}");
             }
             catch (Exception exc)
             {
-                Console.WriteLine(exc.Message);
+                Console.WriteLine("\t===" +
+                    "\n\tCouldn't send error to reports channnel." +
+                    "\n" +
+                    $"\t\tMessage: **{context.Message.Content}\n" +
+                    $"\t\tUser: **{context.Message.Author}\n" +
+                    $"\t\tServer and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
+                    $"\t\tException Message: **{ex.Message}\n" +
+                    $"\t\tData: **{ex.Data}\n" +
+                    $"\t\tStack Trace:** {ex.StackTrace}\n" +
+                    $"\t\tSource: {ex.Source}" +
+                    "\n\t===\n" + exc.Message);
             }
         }
 
@@ -145,29 +155,47 @@ namespace ThothBotCore.Utilities
         {
             try
             {
-                await reportsChannel.SendMessageAsync("", false, embed.Build());
+                await reportsChannel.SendMessageAsync(embed: embed.Build());
             }
             catch (Exception ex)
             {
-                await reportsChannel.SendMessageAsync($"Error in SendEmbedError.\n{ex.Message}");
+                await reportsChannel.SendMessageAsync($"Error in SendEmbedError().\n{ex.Message}");
             }
         }
-        public static async Task<Embed> RespondToCommandOnErrorAsync(string message)
+        public static async Task<Embed> RespondToCommandOnErrorAsync(Exception ex, SocketCommandContext context)
         {
             var sb = new StringBuilder();
-            if (message.ToLowerInvariant().Contains("the api is unavailable"))
+            if (ex.Message.ToLowerInvariant().Contains("the api is unavailable"))
             {
                 sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
             }
             else
             {
                 sb.Append("An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to contact the bot owner for further assistance.");
+                await SendException(ex, context);
             }
             if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
             {
                 sb.Append("\n" + Global.ErrorMessageByOwner);
             }
-            return await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString());
+            return await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 183, 0, 0);
+        }
+
+        public static async Task SendFeedback(string message, SocketUser user)
+        {
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.Name = $"{user.Username}#{user.DiscriminatorValue}";
+                x.IconUrl = user.GetAvatarUrl();
+            });
+            embed.WithColor(Constants.FeedbackColor);
+            embed.WithDescription(message);
+            embed.WithFooter(x =>
+            {
+                x.Text = $"ID: {user.Id} | First Mutual Guild: {user.MutualGuilds.First().Id}";
+            });
+            await feedbackChannel.SendMessageAsync(embed: embed.Build());
         }
     }
 }

@@ -79,9 +79,10 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 patch = "n/a";
-                await ErrorTracker.SendError($"Error in PatchInfo from **botinfo** command.\n{ex.Message}");
+                await Reporter.SendError($"Error in PatchInfo from **botinfo** command.\n{ex.Message}");
             }
-
+            //https://api.github.com/repos/EasyThe/ThothBotCore
+            //updated_at
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
             {
@@ -163,6 +164,11 @@ namespace ThothBotCore.Modules
                 x.Name = "Buy Gems";
                 x.Value = $"[SMITE Store](https://link.xsolla.com/M43fjVPi)";
             });
+            embed.WithFooter(x =>
+            {
+                x.Text = $"Discord.NET (API version: {DiscordConfig.APIVersion} | Version: {DiscordConfig.Version})\n" +
+                $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
+            });
             await ReplyAsync("", false, embed.Build());
         }
 
@@ -182,6 +188,14 @@ namespace ThothBotCore.Modules
                 // Consider adding a check if the prefix was set successfully.
                 await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to `{prefix}`");
             }
+        }
+
+        [Command("feedback")]
+        [Summary("If you have got feedback for the bot, this is the command.")]
+        public async Task FeedbackCommand([Remainder] string FeedbackMessage)
+        {
+            await Reporter.SendFeedback(FeedbackMessage, Context.Message.Author);
+            await ReplyAsync("♥ Thanks for the feedback! The bot owner got you message. ");
         }
 
         [Command("ping", true)]

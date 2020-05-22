@@ -16,7 +16,7 @@ namespace ThothBotCore.Modules
         {
             string pishka = "";
             var embed = new EmbedBuilder();
-            if (Context.Message.Author.Id == 171675309177831424)
+            if (Context.Message.Author.Id == Constants.OwnerID)
             {
                 pishka = $"{Context.Message.Author.Username}'s pishka\n8=====================D";
             }

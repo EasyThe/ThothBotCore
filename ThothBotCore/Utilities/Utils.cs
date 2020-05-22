@@ -19,7 +19,7 @@ namespace ThothBotCore.Utilities
             string[] secondsplit = firstsplit[firstsplit.Length - 1].Split('.');
             var image = new Image($"Storage\\Gods\\{firstsplit[firstsplit.Length - 1]}");
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
-            await ErrorTracker.SendError($"**ADDED NEW EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
+            await Reporter.SendError($"**ADDED NEW EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
             await Database.InsertEmojiForGod(secondsplit[0], $"<:{createdEmote.Name}:{createdEmote.Id}>");
         }
 
@@ -29,18 +29,18 @@ namespace ThothBotCore.Utilities
             await Database.SaveGods(gods);
             string newjson = JsonConvert.SerializeObject(gods, Formatting.Indented);
             domColor.DoAllGodColors();
-            await ErrorTracker.SendError($"{gods.Count} Gods were found and saved to the DB.");
+            await Reporter.SendError($"{gods.Count} Gods were found and saved to the DB.");
             try
             {
                 List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hiRezAPI.GetItems());
                 await Database.InsertItems(itemsList);
                 domColor.DoAllItemColors();
 
-                await ErrorTracker.SendError($"{itemsList.Count} Items were found and saved to the DB.");
+                await Reporter.SendError($"{itemsList.Count} Items were found and saved to the DB.");
             }
             catch (Exception ex)
             {
-                await ErrorTracker.SendException(ex, null);
+                await Reporter.SendException(ex, null);
             }
         }
     }

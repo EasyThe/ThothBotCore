@@ -109,18 +109,20 @@ namespace ThothBotCore.Tournament
                     nz.Append($"{player.Name} {player.PrimaryRole}/{player.SecondaryRole}\n");
                 }
                 await context.Channel.SendMessageAsync("**Unassigned players: **\n" +
-                    $"{nz.ToString()}");
+                    $"{nz}");
             }
         }
         public static async Task SoloQConquest(SocketCommandContext context)
         {
             var tournamentObj = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(await File.ReadAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq")));
+            var mainTournObj = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(await File.ReadAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq")));
             var teamsList = new List<VulpisConquestTeamModel>();
 
             try
             {
-                while (tournamentObj.Players.Count > 5)
+                while (tournamentObj.Players.Count > 4)
                 {
+                    
                     var fillPlayers = tournamentObj.Players.FindAll(x => x.PrimaryRole.ToLowerInvariant().Contains("fill"));
 
                     for (int i = 0; i < tournamentObj.Players.Count / 5; i++)
@@ -219,14 +221,14 @@ namespace ThothBotCore.Tournament
                         tournamentObj.Players.RemoveAll(x => x.Name == mid);
 
                         //SUPP
-                        var suppPlayers = tournamentObj.Players.FindAll(x => x.PrimaryRole.ToLowerInvariant().Contains("supp"));
+                        var suppPlayers = tournamentObj.Players.FindAll(x => x.PrimaryRole.ToLowerInvariant().Contains("sup"));
                         if (suppPlayers.Count != 0)
                         {
                             support = suppPlayers[rnd.Next(suppPlayers.Count)].Name;
                         }
                         else
                         {
-                            fillPlayers = tournamentObj.Players.FindAll(x => x.SecondaryRole.ToLowerInvariant().Contains("supp"));
+                            fillPlayers = tournamentObj.Players.FindAll(x => x.SecondaryRole.ToLowerInvariant().Contains("sup"));
                             if (fillPlayers.Count != 0)
                             {
                                 support = fillPlayers[rnd.Next(fillPlayers.Count)].Name;
@@ -255,7 +257,7 @@ namespace ThothBotCore.Tournament
                         }
                         else
                         {
-                            fillPlayers = tournamentObj.Players.FindAll(x => x.SecondaryRole.ToLowerInvariant().Contains("supp"));
+                            fillPlayers = tournamentObj.Players.FindAll(x => x.SecondaryRole.ToLowerInvariant().Contains("adc"));
                             if (fillPlayers.Count != 0)
                             {
                                 adc = fillPlayers[rnd.Next(fillPlayers.Count)].Name;
@@ -276,6 +278,16 @@ namespace ThothBotCore.Tournament
                         }
                         tournamentObj.Players.RemoveAll(x => x.Name == adc);
 
+                        if (solo != "n/a" && jungle != "n/a" && mid != "n/a" && support != "n/a" && adc != "n/a")
+                        {
+                            mainTournObj.Players.RemoveAll(x => x.Name == solo);
+                            mainTournObj.Players.RemoveAll(x => x.Name == jungle);
+                            mainTournObj.Players.RemoveAll(x => x.Name == mid);
+                            mainTournObj.Players.RemoveAll(x => x.Name == support);
+                            mainTournObj.Players.RemoveAll(x => x.Name == adc);
+                            Console.WriteLine(mainTournObj.Players.Count);
+                        }
+
                         //Add players into teamsList list
                         teamsList.Add(new VulpisConquestTeamModel
                         {
@@ -294,7 +306,7 @@ namespace ThothBotCore.Tournament
             {
                 Console.WriteLine("ERROR BRAT : " + ex.Message);
             }
-            await GetConquestTeams(context, tournamentObj.Players, teamsList);
+            await GetConquestTeams(context, mainTournObj.Players, teamsList);
         }
     }
 }

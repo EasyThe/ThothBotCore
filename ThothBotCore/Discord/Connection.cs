@@ -40,7 +40,7 @@ namespace ThothBotCore.Discord
         private async Task ClientLeftGuildTask(SocketGuild arg)
         {
             await Database.DeleteServerConfig(arg.Id);
-            await ErrorTracker.SendLeftServers(arg);
+            await Reporter.SendLeftServers(arg);
         }
 
         private Task ClientReadyTask()
@@ -48,14 +48,13 @@ namespace ThothBotCore.Discord
             StatusTimer.StartServerStatusTimer();
             GuildsTimer.StartGuildsCountTimer();
             GuildsTimer.StartHourlyTimer();
-            _client.DownloadUsersAsync(Client.Guilds);
 
             return Task.CompletedTask;
         }
 
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            await ErrorTracker.SendJoinedServers(guild);
+            await Reporter.SendJoinedServers(guild);
             await Database.SetGuild(guild.Id, guild.Name);
             var channel = guild.DefaultChannel;
             foreach (var chnl in guild.TextChannels)
@@ -71,7 +70,7 @@ namespace ThothBotCore.Discord
             }
             catch (System.Exception)
             {
-                await ErrorTracker.SendError(Constants.FailedToSendJoinedMessage);
+                await Reporter.SendError(Constants.FailedToSendJoinedMessage);
             }
         }
     }

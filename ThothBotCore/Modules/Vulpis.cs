@@ -6,6 +6,8 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Models;
@@ -91,7 +93,7 @@ namespace ThothBotCore.Modules
                 }
 
                 // Date and time
-                await ReplyAsync("**Okay, okay gimme a date!**\n*Date format:* **dd-MM-yyyy HH:mm**");
+                await ReplyAsync("**Okay, okay gimme a date!**\n*Date format:* **MM-dd-yyyy HH:mm**");
                 response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
                 var tourneyDate = DateTime.Parse(response.Content);
 
@@ -105,7 +107,7 @@ namespace ThothBotCore.Modules
                 // SAving
                 
                 string json = JsonConvert.SerializeObject(meganz, Formatting.Indented);
-                await File.WriteAllTextAsync($"Tourneys/{tourneyDate.ToString("dd-MM-yyyy")}{filename}.json", json);
+                await File.WriteAllTextAsync($"Tourneys/{tourneyDate:dd-MM-yyyy}{filename}.json", json);
             }
             catch (Exception ex)
             {
@@ -230,7 +232,7 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"Checkins and signups closed.\nChecked in players: {tourney.Players.FindAll(x => x.CheckedIn == true).Count}");
         }
 
-        [Command("checkin")]
+        [Command("checkin", true)]
         public async Task CheckinCommand()
         {
             if (Context.Channel.Name.Contains("soloq-conquest") && Context.Guild.Id == 321367254983770112)
@@ -332,6 +334,119 @@ namespace ThothBotCore.Modules
             await TeamGenerator.SoloQConquest(Context);
         }
 
+        [Command("addteam", true, RunMode = RunMode.Async)]
+        public async Task AddTeamEmbed()
+        {
+            var message = await ReplyAsync("Okay, give me the ID of the message the embed is at...");
+            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            var embedmessage = await Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(Context.Channel.Id).GetMessageAsync(Convert.ToUInt64(response.Content));
+            if (embedmessage.Embeds.Count != 0)
+            {
+                await message.ModifyAsync(x => 
+                {
+                    x.Content = "Found this one:\nIs it the right one? Type yes if so.";
+                    x.Embed = embedmessage.Embeds.First().ToEmbedBuilder().Build();
+                });
+                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                if (response.Content.ToLowerInvariant().Contains("yes"))
+                {
+                    var finalembed = embedmessage.Embeds.First().ToEmbedBuilder();
+                    string footer = finalembed.Footer.Text;
+                    string[] split = footer.Split(' ');
+                    int teamnumber = Int16.Parse(split[0]);
+                    teamnumber++;
+                    var sb = new StringBuilder();
+                    var embed = new EmbedBuilder();
+                    embed.WithTitle($"Team {teamnumber}");
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Okay then, let's start adding a team...\nTell me the IGN of the **SOLO** laner now";
+                        x.Embed = embed.Build();
+                    });
+                    // solo
+                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Warrior:607990144338886658>{response.Content}");
+                    embed.WithDescription(sb.ToString());
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Tell me the IGN of the **Jungle** now";
+                        x.Embed = embed.Build();
+                    });
+                    // jungle
+                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Assassin:607990143915261983>{response.Content}");
+                    embed.WithDescription(sb.ToString());
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Tell me the IGN of the **Mid** laner now";
+                        x.Embed = embed.Build();
+                    });
+                    // MID
+                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Mage:607990144380698625>{response.Content}");
+                    embed.WithDescription(sb.ToString());
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Tell me the IGN of the **Support** now";
+                        x.Embed = embed.Build();
+                    });
+                    // Support
+                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Guardian:607990144385024000>{response.Content}");
+                    embed.WithDescription(sb.ToString());
+                    // ADC
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Tell me the IGN of the **ADC** now";
+                        x.Embed = embed.Build();
+                    });
+                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Hunter:607990144271646740>{response.Content}");
+                    embed.WithDescription(sb.ToString());
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Okay. If everything seems fine, write **okay** to add it to the embed, or anything else to cancel.";
+                        x.Embed = embed.Build();
+                    });
+                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    if (response.Content.ToLowerInvariant().Contains("okay"))
+                    {
+                        finalembed.Footer.Text = $"{teamnumber} Teams";
+                        finalembed.AddField(x =>
+                        {
+                            x.IsInline = true;
+                            x.Name = $"Team {teamnumber}";
+                            x.Value = sb;
+                        });
+                        await message.ModifyAsync(x=>
+                        {
+                            x.Content = "There we go!";
+                            x.Embed = finalembed.Build();
+                        });
+                    }
+                    else
+                    {
+                        await message.ModifyAsync(x =>
+                        {
+                            x.Content = "**Cancelled!**";
+                        });
+                    }
+                }
+                else
+                {
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "Oh well.. Can't do much, sorry!";
+                        x.Embed = null;
+                    });
+                }
+            }
+            else
+            {
+                await message.ModifyAsync(x=> x.Content = "Sorry, couldn't find that message. :(");
+            }
+        }
+
         [Command("dothemagic")]
         [Alias("dtm")]
         public async Task DoTheMagic()
@@ -362,7 +477,7 @@ namespace ThothBotCore.Modules
         [Command("rsem")]
         public async Task ResendTeamsEmbed(SocketTextChannel channel, ulong messageID, SocketTextChannel channelToSendTo)
         {
-            if (Context.Guild.Id != 321367254983770112 || Context.Message.Author.Id != 171675309177831424)
+            if (Context.Guild.Id != 321367254983770112 || Context.Message.Author.Id != Constants.OwnerID)
             {
                 return;
             }
