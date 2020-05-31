@@ -113,8 +113,8 @@ namespace ThothBotCore.Modules
                 {
                     if (realSearchPlayers[0].privacy_flag != "n")
                     {
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
-                        await ReplyAsync(embed: embed);
+                        var embed = await EmbedHandler.HiddenProfileEmbed(PlayerName);
+                        await ReplyAsync(embed: embed.Build());
                         return;
                     }
                     await Context.Channel.TriggerTypingAsync();
@@ -1671,16 +1671,16 @@ namespace ThothBotCore.Modules
                     // Checking the new list for count of users in it
                     if (realSearchPlayers.Count == 0)
                     {
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
-                        await ReplyAsync(embed: embed);
+                        var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                        await ReplyAsync(embed: embed.Build());
                         return;
                     }
                     else if (!(realSearchPlayers.Count > 1))
                     {
                         if (realSearchPlayers[0].privacy_flag == "y")
                         {
-                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
-                            await ReplyAsync(embed: embed);
+                            var embed = await EmbedHandler.HiddenProfileEmbed(PlayerName);
+                            await ReplyAsync(embed: embed.Build());
                             return;
                         }
                         playerIDint = realSearchPlayers[0].player_id;
@@ -1692,8 +1692,8 @@ namespace ThothBotCore.Modules
                         onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context);
                         if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                         {
-                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
-                            await ReplyAsync(embed: embed);
+                            var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                            await ReplyAsync(embed: embed.Build());
                             return;
                         }
                         else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
@@ -1818,14 +1818,16 @@ namespace ThothBotCore.Modules
                     // Checking the new list for count of users in it
                     if (realSearchPlayers.Count == 0)
                     {
-                        await ReplyAsync(Text.UserNotFound(MatchID));
+                        var embed = await EmbedHandler.ProfileNotFoundEmbed(MatchID);
+                        await ReplyAsync(embed: embed.Build());
                         return;
                     }
                     else if (!(realSearchPlayers.Count > 1))
                     {
                         if (realSearchPlayers[0].privacy_flag == "y")
                         {
-                            await ReplyAsync(Text.UserIsHidden(MatchID));
+                            var embed = await EmbedHandler.HiddenProfileEmbed(MatchID);
+                            await ReplyAsync(embed: embed.Build());
                             return;
                         }
                         matchHistory = await hirezAPI.GetMatchHistory(realSearchPlayers[0].player_id);
@@ -1837,7 +1839,8 @@ namespace ThothBotCore.Modules
                         onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context);
                         if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                         {
-                            await ReplyAsync(Text.UserNotFound(MatchID));
+                            var embed = await EmbedHandler.ProfileNotFoundEmbed(MatchID);
+                            await ReplyAsync(embed: embed.Build());
                             return;
                         }
                         else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
@@ -1850,7 +1853,8 @@ namespace ThothBotCore.Modules
                 }
                 if (MatchID == "0")
                 {
-                    await ReplyAsync($"{MatchID} has no recent matches in record.");
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{MatchID} has no recent matches in record.");
+                    await ReplyAsync(embed: embed);
                     return;
                 }
                 string matchDetailsString = await hirezAPI.GetMatchDetails(Int32.Parse(MatchID));
@@ -1952,16 +1956,16 @@ namespace ThothBotCore.Modules
                     // Checking the new list for count of users in it
                     if (realSearchPlayers.Count == 0)
                     {
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
-                        await ReplyAsync(embed: embed);
+                        var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                        await ReplyAsync(embed: embed.Build());
                         return;
                     }
                     else if (!(realSearchPlayers.Count > 1))
                     {
                         if (realSearchPlayers[0].privacy_flag == "y")
                         {
-                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
-                            await ReplyAsync(embed: embed);
+                            var embed = await EmbedHandler.HiddenProfileEmbed(PlayerName);
+                            await ReplyAsync(embed: embed.Build());
                             return;
                         }
                         matchHistory = await hirezAPI.GetMatchHistory(realSearchPlayers[0].player_id);
@@ -1972,8 +1976,8 @@ namespace ThothBotCore.Modules
                         onMultiplePlayersResult = await MultiplePlayersHandler(realSearchPlayers, Context);
                         if (onMultiplePlayersResult.searchPlayers != null && onMultiplePlayersResult.searchPlayers.player_id == 0)
                         {
-                            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserNotFound(PlayerName));
-                            await ReplyAsync(embed: embed);
+                            var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
+                            await ReplyAsync(embed: embed.Build());
                             return;
                         }
                         else if (onMultiplePlayersResult.searchPlayers == null && onMultiplePlayersResult.userMessage == null)
@@ -2124,8 +2128,8 @@ namespace ThothBotCore.Modules
                 {
                     if (realSearchPlayers[0].privacy_flag != "n")
                     {
-                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Text.UserIsHidden(PlayerName));
-                        await ReplyAsync(embed: embed);
+                        var embed = await EmbedHandler.HiddenProfileEmbed(PlayerName);
+                        await ReplyAsync(embed: embed.Build());
                         return;
                     }
                     await Context.Channel.TriggerTypingAsync();

@@ -678,7 +678,7 @@ namespace ThothBotCore.Discord
         {
             var embed = new EmbedBuilder
             {
-                Description = $"Loading {username}..."
+                Description = $"<a:typing:393848431413559296> Loading {username}..."
             };
             return Task.FromResult(embed);
         }
@@ -686,7 +686,8 @@ namespace ThothBotCore.Discord
         {
             var embed = new EmbedBuilder
             {
-                Description = Text.UserIsHidden(username)
+                Description = Text.UserIsHidden(username),
+                Color = new Color(254,255,255)
             };
             return Task.FromResult(embed);
         }
@@ -781,7 +782,8 @@ namespace ThothBotCore.Discord
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
             string godemoji = "";
-            for (int i = 0; i < team1.Count + team2.Count / 2; i++)
+            int nz = (team1.Count + team2.Count) / 2;
+            for (int i = 0; i < nz; i++)
             {
                 if ((team1[0].Queue == "440") || 
                     (team1[0].Queue == "450") || 

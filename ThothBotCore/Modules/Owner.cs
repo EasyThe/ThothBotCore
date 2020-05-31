@@ -484,7 +484,8 @@ namespace ThothBotCore.Modules
         public async Task StatCordTestCommand([Remainder]string name)
         {
             // add this to EmbedHandler.Loading() if it works
-            await ReplyAsync("<a:typing:393848431413559296> Loading <:windows:587119127953670159>EasyThe...");
+            var embed = await EmbedHandler.BuildDescriptionEmbedAsync("<:Hidden:591666971234402320>Seitr is hidden!", 254, 255, 255);
+            await ReplyAsync(embed: embed);
         }
 
         private class DataUsed
