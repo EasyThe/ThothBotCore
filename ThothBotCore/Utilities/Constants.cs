@@ -7,6 +7,7 @@ namespace ThothBotCore.Utilities
     {
         public static readonly string botIcon = "https://i.imgur.com/8qNdxse.png";
         public static readonly ulong OwnerID = 171675309177831424;
+        public static readonly ulong SupportServerID = 518408306415632384;
         public static string JoinedMessage { get; set; } = ":wave:**Hi. Thanks for adding me!**\n" +
                 $":small_orange_diamond:My prefix is `{Credentials.botConfig.prefix}`\n" +
                 $":small_orange_diamond:You can set a custom prefix for your server with {Credentials.botConfig.prefix}prefix `your-prefix-here`\n" +

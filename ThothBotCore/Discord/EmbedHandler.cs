@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Models;
@@ -780,7 +781,7 @@ namespace ThothBotCore.Discord
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
             string godemoji = "";
-            for (int i = 0; i < team1.Count; i++)
+            for (int i = 0; i < team1.Count + team2.Count / 2; i++)
             {
                 if ((team1[0].Queue == "440") || 
                     (team1[0].Queue == "450") || 
@@ -1007,21 +1008,30 @@ namespace ThothBotCore.Discord
 
             embed.WithAuthor(x =>
             {
-                x.Name = $"Match History of {matchHistory[9].playerName}";
+                x.Name = $"Match History of {matchHistory[0].playerName}";
                 x.Url = $"https://smite.guru/profile/{matchHistory[0].playerId}/matches";
                 x.IconUrl = Constants.botIcon;
             });
             embed.WithColor(Constants.DefaultBlueColor);
             string godemoji = "";
-            for (int i = 0; i < 5; i++)
+            int i = 0;
+            foreach (var match in matchHistory)
             {
-                godemoji = await Database.GetGodEmoji(matchHistory[i].God);
-                embed.AddField(x =>
+                if (i != 6)
                 {
-                    x.IsInline = false;
-                    x.Name = $"{godemoji} **{matchHistory[i].Win_Status}**  {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} [{matchHistory[i].Match}]";
-                    x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | 🗡Damage: {matchHistory[i].Damage}";
-                });
+                    godemoji = await Database.GetGodEmoji(matchHistory[i].God);
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = false;
+                        x.Name = $"{godemoji} **{matchHistory[i].Win_Status}**  {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} [{matchHistory[i].Match}]";
+                        x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | 🗡Damage: {matchHistory[i].Damage}";
+                    });
+                }
+                else
+                {
+                    break;
+                }
+                i++;
             }
             return embed.Build();
         }

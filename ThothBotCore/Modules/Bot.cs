@@ -90,7 +90,7 @@ namespace ThothBotCore.Modules
                     .WithName("Statistics for ThothBot")
                     .WithIconUrl(Constants.botIcon);
             });
-            embed.WithDescription("Creator: EasyThe#2836");
+            embed.WithDescription($"Creator: EasyThe#2836 ({Connection.Client.GetUser(171675309177831424).Mention})");
             embed.WithColor(Constants.DefaultBlueColor);
             embed.AddField(field =>
             {
@@ -166,8 +166,7 @@ namespace ThothBotCore.Modules
             });
             embed.WithFooter(x =>
             {
-                x.Text = $"Discord.NET (API version: {DiscordConfig.APIVersion} | Version: {DiscordConfig.Version})\n" +
-                $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
+                x.Text = $"Discord.NET {DiscordConfig.Version} | {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
             });
             await ReplyAsync("", false, embed.Build());
         }
@@ -215,7 +214,7 @@ namespace ThothBotCore.Modules
         [Summary("Latest changes to ThothBot.")]
         public async Task ChangelogCommand()
         {
-            var channel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(567192879026536448);
+            var channel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567192879026536448);
             var messages = await channel.GetMessagesAsync(1).FlattenAsync().ConfigureAwait(false);
 
             var embed = new EmbedBuilder();

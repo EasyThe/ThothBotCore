@@ -100,10 +100,9 @@ namespace ThothBotCore.Utilities
                     var sb = new StringBuilder();
                     foreach (var command in module.Commands)
                     {
-                        var parameters = string.Join(", ", command.GetCommandParameters());
                         if (command.Summary != null)
                         {
-                            sb.AppendLine($"🔹`{prefix}{command.Name} {parameters}` - {command.Summary}");
+                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}` - {command.Summary}");
                         }
                     }
                     helpEmbedBuilder.WithDescription(sb.ToString());
@@ -116,11 +115,10 @@ namespace ThothBotCore.Utilities
                         var parameters = string.Join(", ", command.GetCommandParameters());
                         if (command.Summary != null)
                         {
-                            sb.AppendLine($"🔹`{prefix}{command.Name} {parameters}` - {command.Summary}");
+                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}` - {command.Summary}");
                         }
                     }
-                    sb.AppendLine("\n‼**Commands are used __without__ the <> or []‼**" +
-                        "\n🆘 [Support server](http://discord.gg/hU6MTbQ)");
+                    sb.AppendLine("\n🆘 [Support server](http://discord.gg/hU6MTbQ)");
                     helpEmbedBuilder.AddField("🤖 Bot", sb.ToString());
                 }
             }
@@ -130,11 +128,10 @@ namespace ThothBotCore.Utilities
         public static string GetCommandInfo(this CommandInfo command, string prefix)
         {
             var aliases = string.Join(", ", command.Aliases);
-            var parameters = string.Join(", ", command.GetCommandParameters());
             var name = command.GetCommandNameWithGroup();
             var summary = command.Summary;
             var sb = new StringBuilder()
-                .AppendLine($"**Usage**: {prefix}{name} {parameters}")
+                .AppendLine($"**Usage**: {prefix}{name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}")
                 .AppendLine($"**Description**: {summary}")
                 .Append($"**Aliases**: {aliases}");
             return sb.ToString();

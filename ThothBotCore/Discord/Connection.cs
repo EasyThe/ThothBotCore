@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
@@ -62,6 +63,7 @@ namespace ThothBotCore.Discord
                 if (chnl.Name.ToLowerInvariant().Contains("bot"))
                 {
                     channel = chnl;
+                    break;
                 }
             }
             try

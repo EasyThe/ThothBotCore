@@ -360,6 +360,22 @@ namespace ThothBotCore.Modules
             Console.WriteLine((count - 2).ToString());
         }
 
+        [Command("users", true, RunMode = RunMode.Async)]
+        public async Task GetUsersCommand(ulong id = 0)
+        {
+            if (id == 0)
+            {
+                id = Context.Guild.Id;
+            }
+            var guild = Connection.Client.GetGuild(id);
+            var sb = new StringBuilder();
+            foreach (var user in guild.Users)
+            {
+                sb.AppendLine($"{user.Username}#{user.DiscriminatorValue} [{user.Id}]");
+            }
+            await ReplyAsync(sb.ToString());
+        }
+
         [Command("guild", true, RunMode = RunMode.Async)]
         public async Task CheckGuildOwnerCommand(ulong id = 0)
         {
@@ -408,7 +424,7 @@ namespace ThothBotCore.Modules
                     count++;
                 }
             }
-            await ReplyAsync($"{count} results\n{sb.ToString()}");
+            await ReplyAsync($"{count} results\n{sb}");
         }
 
         [Command("checkguilds", true, RunMode = RunMode.Async)]
@@ -439,7 +455,7 @@ namespace ThothBotCore.Modules
             }
             await ReplyAsync($"Finished!\n" +
                 $"Missing: {missingCount}\n" +
-                $"{sb.ToString()}");
+                $"{sb}");
         }
 
         [Command("shtc")]
@@ -449,11 +465,26 @@ namespace ThothBotCore.Modules
             await ReplyAsync("done i guess");
         }
 
+        [Command("temb")]
+        public async Task TestingEmbeds()
+        {
+            var date = new DateTime(2020, 5, 31, 18, 00, 00);
+            var embed = new EmbedBuilder();
+            embed.WithTitle("Free Game!");
+            embed.WithDescription("whatever, whatever");
+            embed.WithFooter(x =>
+            {
+                x.Text = "Offer ends in: ";
+            });
+            embed.WithTimestamp(date);
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("testtt")]//test command idk
         public async Task StatCordTestCommand([Remainder]string name)
         {
             // add this to EmbedHandler.Loading() if it works
-            await ReplyAsync("<a:typing:393848431413559296>");
+            await ReplyAsync("<a:typing:393848431413559296> Loading <:windows:587119127953670159>EasyThe...");
         }
 
         private class DataUsed

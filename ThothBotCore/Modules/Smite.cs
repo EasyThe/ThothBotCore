@@ -151,13 +151,12 @@ namespace ThothBotCore.Modules
                         try
                         {
                             var allQueue = new List<AllQueueStats>();
-                            int legitQueueCount = Text.LegitQueueIDs().Count;
-                            for (int i = 0; i < legitQueueCount; i++)
+                            for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
                             {
                                 int matches = 0;
-                                try
+                                var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(playerID, Text.LegitQueueIDs()[i]));
+                                if (queueStats.Count != 0)
                                 {
-                                    var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(playerID, Text.LegitQueueIDs()[i]).ConfigureAwait(false));
                                     for (int c = 0; c < queueStats.Count; c++)
                                     {
                                         if (queueStats[c].Matches != 0)
@@ -167,28 +166,23 @@ namespace ThothBotCore.Modules
                                     }
                                     allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
                                 }
-                                catch (Exception)
-                                {
-                                }
                             }
                             var orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
-                            string topMatchesValue = "";
                             if (orderedQueues.Count != 0)
                             {
-                                topMatchesValue = orderedQueues.Count switch
-                                {
-                                    1 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]",
-                                    2 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                         $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]",
-                                    _ => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
-                                         $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
-                                         $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]",
-                                };
                                 embed.AddField(field =>
                                 {
                                     field.IsInline = true;
                                     field.Name = $"<:matches:579604410569850891>**Most Played Modes**";
-                                    field.Value = topMatchesValue;
+                                    field.Value = orderedQueues.Count switch
+                                    {
+                                        1 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]",
+                                        2 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                             $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]",
+                                        _ => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
+                                             $":second_place:{orderedQueues[1].queueName} [{orderedQueues[1].matches}]\n" +
+                                             $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]",
+                                    };
                                 });
 
                                 await message.ModifyAsync(x =>
@@ -259,9 +253,9 @@ namespace ThothBotCore.Modules
                             for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
                             {
                                 int matches = 0;
-                                try
+                                var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(playerID, Text.LegitQueueIDs()[i]));
+                                if (queueStats.Count != 0)
                                 {
-                                    var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(playerID, Text.LegitQueueIDs()[i]));
                                     for (int c = 0; c < queueStats.Count; c++)
                                     {
                                         if (queueStats[c].Matches != 0)
@@ -270,9 +264,6 @@ namespace ThothBotCore.Modules
                                         }
                                     }
                                     allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
-                                }
-                                catch (Exception)
-                                {
                                 }
                             }
                             var orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
@@ -333,16 +324,54 @@ namespace ThothBotCore.Modules
             {
                 var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
                 await ReplyAsync(embed: embed);
-                if (!(ex.Message.ToLowerInvariant().Contains("api is unavailable")))
+            }
+        }
+
+        [Command("queues", RunMode = RunMode.Async)]
+        public async Task StatsTwo(int id)
+        {
+            int allmatchescount = 0;
+            double totalminutes = 0;
+            var embed = new EmbedBuilder
+            {
+                Title = $"{id}"
+            };
+            await Context.Channel.TriggerTypingAsync();
+            for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
+            {
+                int matches = 0, kills = 0, deaths = 0, assists = 0, minutes = 0, wins = 0, losses = 0;
+                var queueStats = JsonConvert.DeserializeObject<List<QueueStats>>(await hirezAPI.GetQueueStats(id, Text.LegitQueueIDs()[i]));
+                if (queueStats.Count != 0)
                 {
-                    await Reporter.SendError($"**Stats Command**\n" +
-                    $"**Message: **{Context.Message.Content}\n" +
-                    $"**User: **{Context.Message.Author.Username}[{Context.Message.Author.Id}]\n" +
-                    $"**Server and Channel: **ID:{Context.Guild.Id}[{Context.Channel.Id}]\n" +
-                    $"**Error: **{ex.Message}\n" +
-                    $"**InnerException: ** {ex.InnerException}");
+                    for (int c = 0; c < queueStats.Count; c++)
+                    {
+                        matches += queueStats[c].Matches;
+                        allmatchescount += queueStats[c].Matches;
+                        totalminutes += queueStats[c].Minutes;
+                        kills += queueStats[c].Kills;
+                        deaths += queueStats[c].Deaths;
+                        assists += queueStats[c].Assists;
+                        minutes += queueStats[c].Minutes;
+                        wins += queueStats[c].Wins;
+                        losses += queueStats[c].Losses;
+                    }
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = queueStats[0].Queue;
+                        x.Value = $"**Matches: **{matches}\n" +
+                        $"**Kills: **{kills}\n" +
+                        $"**Deaths: **{deaths}\n" +
+                        $"**Assists: **{assists}\n" +
+                        $"**Minutes: **{minutes}\n" +
+                        $"**Wins: ** {wins}\n" +
+                        $"**Losses: **{losses}";
+                    });
                 }
             }
+            embed.WithDescription($"Total Matches: {allmatchescount}\n" +
+                                  $"Total Minutes: {totalminutes}");
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("istats")]
@@ -1829,6 +1858,13 @@ namespace ThothBotCore.Modules
                 {
                     await ReplyAsync("Hi-Rez API sent a weird response...");
                     await Reporter.SendError(matchDetailsString);
+                    return;
+                }
+                else if (matchDetailsString == "[]")
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, this match does not exist in the API anymore.\n" +
+                        "You can try Smite.Guru instead");
+                    await ReplyAsync(embed: embed);
                     return;
                 }
                 var matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(matchDetailsString);

@@ -534,6 +534,10 @@ namespace ThothBotCore.Storage
                 {
                     godname = godname.Replace("'", "''");
                 }
+                if (godname.ToLowerInvariant().Contains("change"))
+                {
+                    godname = "chang";
+                }
                 var output = await cnn.QueryAsync<Gods.God>($"SELECT Emoji,godIcon_URL FROM Gods WHERE Name LIKE '%{godname}%'", new DynamicParameters());
                 var returnlist = output.ToList();
                 if (returnlist[0].Emoji == null || returnlist[0].Emoji == "")

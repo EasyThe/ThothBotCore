@@ -61,8 +61,9 @@ namespace ThothBotCore.Discord
                     else if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && msg.Content.ToLowerInvariant().Contains("love"))
                     {
                         await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
+                        await Reporter.SendSuccessCommands($"{context.Message.Author.Username}#{context.Message.Author.DiscriminatorValue} loves me ♥");
                     }
-                    if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != 518408306415632384 && context.Message.Author.Id != Constants.OwnerID)
+                    if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != Constants.SupportServerID && context.Message.Author.Id != Constants.OwnerID)
                     {
                         await Reporter.SendSuccessCommands("**Result: **" +
                                 (result.IsSuccess ? ":white_check_mark:" : ":negative_squared_cross_mark:") +
@@ -134,7 +135,7 @@ namespace ThothBotCore.Discord
             }
             else
             {
-                Console.WriteLine("Error Tracker: " + errorString);
+                Console.WriteLine("Error Tracker(CommandHandler): " + errorString);
                 await Reporter.SendError($"**Message: **{context.Message.Content}\n" +
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +

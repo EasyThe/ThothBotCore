@@ -11,10 +11,10 @@ namespace ThothBotCore.Utilities
 {
     public static class Reporter
     {
-        private static SocketTextChannel reportsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(557974702941798410);
-        private static SocketTextChannel joinsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(567495039622709268);
-        private static SocketTextChannel commandsChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(569710679796482068);
-        private static SocketTextChannel feedbackChannel = Connection.Client.GetGuild(518408306415632384).GetTextChannel(713183236238344193);
+        private static SocketTextChannel reportsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(557974702941798410);
+        private static SocketTextChannel joinsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567495039622709268);
+        private static SocketTextChannel commandsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(569710679796482068);
+        private static SocketTextChannel feedbackChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(713183236238344193);
         private static IUser ownerUser = Connection.Client.GetUser(Constants.OwnerID);
 
         public static async Task SendDMtoOwner(string message)

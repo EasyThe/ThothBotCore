@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace ThothBotCore.Connections.Models
 {
     public class QueueStats
