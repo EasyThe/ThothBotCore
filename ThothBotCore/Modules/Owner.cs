@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
-using Discord.Webhook;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
+using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
@@ -119,7 +119,7 @@ namespace ThothBotCore.Modules
         public async Task UpdateDBFromSmiteAPI()
         {
             // oppaa
-            Utils.UpdateDb(hirezAPI);
+            await Utils.UpdateDb(hirezAPI, Context);
         }
 
         [Command("ae")]
@@ -286,11 +286,11 @@ namespace ThothBotCore.Modules
 
         [Command("sac")]
         [Summary("Sets a'Activity' for the bot (Accessible only by the bot owner)")]
-        public async Task SetActivityCommand([Remainder] string game)
+        public async Task SetActivityCommand(string url, [Remainder] string game)
         {
-            await Connection.Client.SetGameAsync(game, "https://www.twitch.tv/smitegame");
+            await Connection.Client.SetGameAsync(game, url);
             await Context.Channel.SendMessageAsync($"Successfully set the activity to '**{game}**'");
-            Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")}: Activity was changed to {game}");
+            await Reporter.SendError($"{DateTime.Now:[HH:mm, d.MM.yyyy]}: Activity was changed to {game}");
         }
 
         [Command("sg")]
@@ -299,7 +299,7 @@ namespace ThothBotCore.Modules
         {
             await Connection.Client.SetGameAsync(game);
             await Context.Channel.SendMessageAsync($"Successfully set the game to '**{game}**'");
-            Console.WriteLine($"{DateTime.Now.ToString("[HH:mm, d.MM.yyyy]")}: Game was changed to {game}");
+            await Reporter.SendError($"{DateTime.Now:[HH:mm, d.MM.yyyy]}: Game was changed to {game}");
         }
 
         [Command("desc")]
@@ -486,6 +486,95 @@ namespace ThothBotCore.Modules
             // add this to EmbedHandler.Loading() if it works
             var embed = await EmbedHandler.BuildDescriptionEmbedAsync("<:Hidden:591666971234402320>Seitr is hidden!", 254, 255, 255);
             await ReplyAsync(embed: embed);
+        }
+
+        [Command("sendDM")]
+        public async Task SendDMasOwner(ulong userID, [Remainder] string message)
+        {
+            IUser targetUser = Connection.Client.GetUser(userID);
+            var channel = await targetUser.GetOrCreateDMChannelAsync();
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(Context.Message.Author);
+            embed.Author.Url = Constants.SupportServerInvite;
+            embed.WithColor(Constants.FeedbackColor);
+            embed.AddField(x =>
+            {
+                x.IsInline = false;
+                x.Name = "-";
+                x.Value = $"If you want to answer to this message you can use the `{Credentials.botConfig.prefix}feedback` command or " +
+                $"[join the support server]({Constants.SupportServerInvite}) of Thoth and chat with the developer directly!";
+            });
+            embed.WithDescription(message);
+            embed.WithFooter(x =>
+            {
+                x.Text = "This message was sent from the developer of the bot";
+                x.IconUrl = Constants.botIcon;
+            });
+        }
+
+        [Command("cee", true, RunMode = RunMode.Async)]
+        public async Task CreateAnEmbedAsOwnerCommand()
+        {
+            var embed = new EmbedBuilder();
+            var mainMessage = await ReplyAsync("Author?", embed: embed.Build());
+            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            
+            // With author
+            if (response.Content.ToLowerInvariant().Contains("y"))
+            {
+                await response.DeleteAsync();
+                await mainMessage.ModifyAsync(x =>
+                {
+                    x.Content = "Provide Author name: ";
+                });
+                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                embed.WithAuthor(x =>
+                {
+                    x.IconUrl = Constants.VulpisLogoLink;
+                    x.Name = response.Content;
+                });
+                embed.WithColor(Constants.VulpisColor);
+                await mainMessage.ModifyAsync(x =>
+                {
+                    x.Embed = embed.Build();
+                });
+                await response.DeleteAsync();
+            }
+
+            // Description
+            await mainMessage.ModifyAsync(x =>
+            {
+                x.Content = "**Description?**";
+            });
+            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response.Content.ToLowerInvariant().Contains("y"))
+            {
+                await response.DeleteAsync();
+                await mainMessage.ModifyAsync(x =>
+                {
+                    x.Content = "**Write Description now:**";
+                });
+                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            }
+            await response.DeleteAsync();
+
+            await mainMessage.ModifyAsync(x =>
+            {
+                x.Content = "**Content**";
+            });
+            // Content
+            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            await mainMessage.ModifyAsync(x =>
+            {
+                x.Content = response.Content;
+            });
+            await response.DeleteAsync();
+        }
+
+        [Command("addfield", true, RunMode = RunMode.Async)]
+        public async Task AddFieldToExistingEmbedCommand(ulong messageID)
+        {
+            
         }
 
         private class DataUsed

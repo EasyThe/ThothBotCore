@@ -301,7 +301,6 @@ namespace ThothBotCore.Utilities
                             if (embed.Fields.Count != 0)
                             {
                                 await StatusNotifier.SendServerStatus(embed);
-                                //await ErrorTracker.SendEmbedError(embed); // Debugging
                             }
                         }
                     }
@@ -311,7 +310,6 @@ namespace ThothBotCore.Utilities
             {
                 Console.WriteLine($"\nStatusTimer\n{ex.Message}\n{ex.StackTrace}\n");
             }
-            //await channel.SendMessageAsync(result);
 
             ServerStatusTimer.Interval = 60000;
             ServerStatusTimer.Enabled = true;

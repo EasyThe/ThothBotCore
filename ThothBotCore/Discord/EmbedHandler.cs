@@ -334,13 +334,14 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
-        public static async Task<EmbedBuilder> PlayerStatsEmbed(string getplayerjson, string godranksjson, string achievementsjson, string playerstatusjson, string matchjson, int portal)
+        public static async Task<EmbedBuilder> PlayerStatsEmbed(string getplayerjson, string godranksjson, string achievementsjson, string playerstatusjson, string matchjson)
         {
             var playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerjson); // GetPlayer
             var godRanks = JsonConvert.DeserializeObject<List<GodRanks>>(godranksjson); //GodRanks
             var playerAchievements = JsonConvert.DeserializeObject<PlayerAchievements>(achievementsjson);
             var playerStatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(playerstatusjson);
             var embed = new EmbedBuilder();
+            int portal = Text.GetPortalNumber(playerStats[0].Platform);
 
             string defaultEmoji = ""; //🔹 <:gems:443919192748589087>
 
@@ -381,9 +382,9 @@ namespace ThothBotCore.Discord
             embed.WithAuthor(author =>
             {
                 author
-                    .WithName($"{rPlayerName.ToString()}")
+                    .WithName(rPlayerName.ToString())
                     .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
-                    .WithIconUrl(Text.GetPortalIconLinks(portal.ToString()));
+                    .WithIconUrl(Text.GetPortalIconLinksByPortalName(playerStats[0].Platform));
             });
             string embedTitle = await Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString());
             embed.WithTitle(embedTitle);
@@ -848,12 +849,10 @@ namespace ThothBotCore.Discord
         {
             var embed = new EmbedBuilder();
 
-            TimeSpan matchTime = TimeSpan.FromSeconds(matchdetailsList[0].Time_In_Match_Seconds);
-
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
-                author.WithName($"{matchdetailsList[0].name} | {matchTime.Minutes} mins");
+                author.WithName($"{matchdetailsList[0].name} | {matchdetailsList[0].Minutes} mins");
                 author.WithIconUrl(Constants.botIcon);
                 author.WithUrl($"https://smite.guru/match/{matchdetailsList[0].Match}");
             });
@@ -1007,7 +1006,6 @@ namespace ThothBotCore.Discord
         public static async Task<Embed> BuildMatchHistoryEmbedAsync(List<MatchHistoryModel> matchHistory)
         {
             var embed = new EmbedBuilder();
-
             embed.WithAuthor(x =>
             {
                 x.Name = $"Match History of {matchHistory[0].playerName}";
@@ -1045,7 +1043,7 @@ namespace ThothBotCore.Discord
             embed.WithAuthor(x =>
             {
                 x.Name = $"{player.Name}'s masteries [{ranks.Count}]";
-                x.IconUrl = Text.GetPortalIconLinks(player.portal_id.ToString());
+                x.IconUrl = Text.GetPortalIconLinksByPortalID(player.portal_id.ToString());
                 x.Url = $"https://smite.guru/profile/{player.player_id}";
             });
             int count = 0;

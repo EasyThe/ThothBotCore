@@ -61,20 +61,20 @@ namespace ThothBotCore.Discord
                     else if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && msg.Content.ToLowerInvariant().Contains("love"))
                     {
                         await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
-                        await Reporter.SendSuccessCommands($"{context.Message.Author.Username}#{context.Message.Author.DiscriminatorValue} loves me ♥");
+                        await Reporter.SendSuccessCommands(context, null);
                     }
                     if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != Constants.SupportServerID && context.Message.Author.Id != Constants.OwnerID)
                     {
-                        await Reporter.SendSuccessCommands("**Result: **" +
-                                (result.IsSuccess ? ":white_check_mark:" : ":negative_squared_cross_mark:") +
-                                $"\n**Message: **{context.Message.Content}\n" +
-                                $"**User: **{context.Message.Author}\n" +
-                                $"**Server: **{context.Guild.Name} **[**{context.Guild.Id}**] **(**{context.Guild.Users.Count}**)");
+                        await Reporter.SendSuccessCommands(context, result);
                     }
                     if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                     {
-                        await ErrorHandler(context, result).ConfigureAwait(false);
+                        await ErrorHandler(context, result);
                     }
+                }
+                else if (msg.Content == $"<@!{_client.CurrentUser.Id}>")
+                {
+                    await context.Channel.SendMessageAsync($"{context.Message.Author.Mention}, my prefix is `{Credentials.botConfig.prefix}`");
                 }
             }
             catch (Exception ex)
@@ -86,7 +86,7 @@ namespace ThothBotCore.Discord
 
         public static async Task ErrorHandler(SocketCommandContext context, IResult result = null, Exception exception = null)
         {
-            string errorString = "";
+            string errorString;
             if (result == null)
             {
                 errorString = exception.Message;
@@ -98,7 +98,8 @@ namespace ThothBotCore.Discord
 
             if (errorString.ToLowerInvariant().Contains("few parameters"))
             {
-                await context.Channel.SendMessageAsync($"Please check the command usage with **{Credentials.botConfig.prefix}help**");
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Please check the command usage with **{Credentials.botConfig.prefix}help**", 254);
+                await context.Channel.SendMessageAsync(embed: embed);
             }
             else if (errorString.ToLowerInvariant().Contains("user requires guild permission administrator") ||
                 errorString.ToLowerInvariant().Contains("group owner failed"))
@@ -125,24 +126,29 @@ namespace ThothBotCore.Discord
                     await user.SendMessageAsync($"I don't have **Send Messages** or **Embed Links** permissions in #{context.Channel.Name}");
                 }
             }
+            else if (errorString.ToLowerInvariant().Contains("missing access"))
+            {
+                IUser user = Connection.Client.GetUser(context.User.Id);
+                await user.SendMessageAsync($"Hey! 👋\nPlease make sure I have **Read Messages**, **Send Messages**, **Embed Links** and **Use External Emojis** permissions in #{context.Channel.Name} and try again.");
+            }
             else if (errorString.ToLowerInvariant().Contains("1024"))
             {
-                await context.Channel.SendMessageAsync("Oops. The text is too long so, I was not able to fit the help command in one field.");
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Oops. The content of this message was too long. If you think this was an error, please [contact]({Constants.SupportServerInvite}) my developer!", 254);
+                await context.Channel.SendMessageAsync(embed: embed);
             }
             else if (errorString.ToLowerInvariant().Contains("command can only be run by the owner of the bot."))
             {
                 return;
             }
+            else if (errorString.ToLowerInvariant().Contains("failed to parse int32"))
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Please provide a valid number!", 254);
+                await context.Channel.SendMessageAsync(embed: embed);
+            }
             else
             {
-                Console.WriteLine("Error Tracker(CommandHandler): " + errorString);
-                await Reporter.SendError($"**Message: **{context.Message.Content}\n" +
-                    $"**User: **{context.Message.Author}\n" +
-                    $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
-                    $"**Error: **{result.Error}\n" +
-                    $"**Error Reason: **{result.ErrorReason}\n" +
-                    $"{(exception != null ? $"**Stack Trace:** {exception.StackTrace}\n**Source: **{exception.Source}" : "")}");
-                await context.Channel.SendMessageAsync("Something went wrong. Bot owner was notified about this error and will take care of it as soon as possible. Sorry for the inconvenience caused.");
+                Console.WriteLine($"{DateTime.Now:[HH:mm]}\tError Tracker(CommandHandler): " + errorString);
+                await Reporter.RespondToCommandOnErrorAsync(exception, context, errorString);
             }
         }
     }

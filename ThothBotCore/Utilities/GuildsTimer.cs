@@ -70,7 +70,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordLabs.**\n" +
+                await Reporter.SendError("**DiscordLabs.**\n" +
                     $"**Error Message:** {ex.Message}");
             }
 
@@ -99,7 +99,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await Reporter.SendError("**Something happened when I tried to update guilds count for StatCord.**\n" +
+                await Reporter.SendError("**StatCord.**\n" +
                     $"**Error Message:** {ex.Message}");
             }
 
@@ -139,7 +139,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordBotsList.**\n" +
+                    await Reporter.SendError("**DiscordBotsList.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -155,7 +155,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**Something happened when I tried to update guilds count for BotsForDiscord.**\n" +
+                    await Reporter.SendError("**BotsForDiscord.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -172,7 +172,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordBotList.**\n" +
+                    await Reporter.SendError("**DiscordBotList.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -183,12 +183,15 @@ namespace ThothBotCore.Utilities
                     using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
                     {
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.dbggAPI);
+                        webclient.DefaultRequestHeaders.UserAgent.TryParseAdd($"{Connection.Client.CurrentUser.Username}-" +
+                            $"{Connection.Client.CurrentUser.DiscriminatorValue}/1.0 (Discord.NET; +https://github.com/EasyThe/ThothBotCore) " +
+                            $"DBots/{Connection.Client.CurrentUser.Id}");
                         await webclient.PostAsync("https://discord.bots.gg/api/v1/bots/454145330347376651/stats", content);
                     }
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**Something happened when I tried to update guilds count for Discord.Bots.GG.**\n" +
+                    await Reporter.SendError("**Discord.Bots.GG.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -204,7 +207,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**Something happened when I tried to update guilds count for BotsOnDiscord.**\n" +
+                    await Reporter.SendError("**BotsOnDiscord.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 
@@ -220,7 +223,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**Something happened when I tried to update guilds count for DiscordServices.**\n" +
+                    await Reporter.SendError("**DiscordServices.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
 

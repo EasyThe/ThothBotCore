@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
@@ -55,7 +54,7 @@ namespace ThothBotCore.Discord
 
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            await Reporter.SendJoinedServers(guild);
+            await Reporter.SendJoinedServerEmbedAsync(guild);
             await Database.SetGuild(guild.Id, guild.Name);
             var channel = guild.DefaultChannel;
             foreach (var chnl in guild.TextChannels)
@@ -72,7 +71,8 @@ namespace ThothBotCore.Discord
             }
             catch (System.Exception)
             {
-                await Reporter.SendError(Constants.FailedToSendJoinedMessage);
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{Constants.FailedToSendJoinedMessage}\n{guild.Name}[{guild.Id}]", 255, 165);
+                await Reporter.SendEmbedError(embed.ToEmbedBuilder());
             }
         }
     }

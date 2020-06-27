@@ -1,4 +1,6 @@
-﻿namespace ThothBotCore.Models.Vulpis
+﻿using System.Collections.Generic;
+
+namespace ThothBotCore.Models.Vulpis
 {
     public class Vulpis5v5TeamModel
     {
@@ -11,14 +13,14 @@
         public class TeamInfo
         {
             public string TeamName { get; set; }
-            public Players Players { get; set; }
+            public List<Players> Players { get; set; }
             public ulong CaptainDiscordID { get; set; }
 
         }
         public class Players
         {
-            public string Player { get; set; }
-            public ulong DiscordID { get; set; } = 0;
+            public string PlayerName { get; set; }
+            public ulong DiscordID { get; set; }
         }
         public class SoloPlayers
         {
@@ -26,15 +28,15 @@
         }
         public class DuoPlayers
         {
-            public Players Player { get; set; }
+            public List<Players> Player { get; set; }
         }
         public class TrioPlayers
         {
-            public Players Player { get; set; }
+            public List<Players> Player { get; set; }
         }
         public class FourPlayers
         {
-            public Players Player { get; set; }
+            public List<Players> Player { get; set; }
         }
     }
 }

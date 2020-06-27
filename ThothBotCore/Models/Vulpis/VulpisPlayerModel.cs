@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ThothBotCore.Models
 {
@@ -14,8 +13,8 @@ namespace ThothBotCore.Models
         public class Tournament
         {
             public string Type { get; set; }
-            public bool SignupsAllowed { get; set; } = false;
-            public bool CheckinsAllowed { get; set; } = false;
+            public bool SignupsAllowed { get; set; }
+            public bool CheckinsAllowed { get; set; }
             public ulong AnnouncementChannelID { get; set; }
         }
         public class Player
@@ -25,8 +24,8 @@ namespace ThothBotCore.Models
             public string SecondaryRole { get; set; }
             public string DiscordName { get; set; }
             public ulong DiscordID { get; set; }
-            public bool CheckedIn { get; set; } = false;
-            public bool IsPro { get; set; } = false;
+            public bool CheckedIn { get; set; }
+            public bool IsPro { get; set; }
         }
     }
 }

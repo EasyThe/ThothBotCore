@@ -29,30 +29,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync("", false, embed.Build());
         }
 
-        [Command("settimezone")]
-        [Alias("stz")]
-        [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task SetTimeZone([Remainder] string value)
-        {
-            List<TimeZoneInfo> allTimeZones = new List<TimeZoneInfo>(TimeZoneInfo.GetSystemTimeZones());
-            string timezone = allTimeZones.Find(x => x.DisplayName.Contains(Text.ToTitleCase(value))).ToSerializedString();
-
-            DateTime now = DateTime.UtcNow;
-
-            // Saving to DB
-            await Database.SetTimeZone(Context.Guild, timezone);
-
-            // Deserialize timezone string from db
-            TimeZoneInfo timeZoneInfo = TimeZoneInfo.FromSerializedString(timezone);
-
-            // utc to timezone
-            DateTime timezoned = TimeZoneInfo.ConvertTimeFromUtc(now, timeZoneInfo);
-
-            await ReplyAsync($"UTC Now: {now}\n" +
-                $"In your time: {timezoned}\n" +
-                $"{Database.GetTimeZone(Context.Guild.Id).Result[0]}");
-        }
-
         [Command("next", RunMode = RunMode.Async)]
         public async Task Test_NextMessageAsync()
         {

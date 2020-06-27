@@ -1,8 +1,11 @@
 ﻿using Discord;
+using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ThothBotCore.Connections;
+using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
 
@@ -16,31 +19,32 @@ namespace ThothBotCore.Utilities
         {
             var thothGods3guild = Discord.Connection.Client.GetGuild(591932765880975370);
             string[] firstsplit = link.Split('/');
-            string[] secondsplit = firstsplit[firstsplit.Length - 1].Split('.');
-            var image = new Image($"Storage\\Gods\\{firstsplit[firstsplit.Length - 1]}");
+            string[] secondsplit = firstsplit[^1].Split('.');
+            var image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
             await Reporter.SendError($"**ADDED NEW EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
             await Database.InsertEmojiForGod(secondsplit[0], $"<:{createdEmote.Name}:{createdEmote.Id}>");
         }
 
-        public static async void UpdateDb(HiRezAPI hiRezAPI)
+        public static async Task UpdateDb(HiRezAPI hiRezAPI, SocketCommandContext context)
         {
             List<Gods.God> gods = JsonConvert.DeserializeObject<List<Gods.God>>(await hiRezAPI.GetGods());
             await Database.SaveGods(gods);
-            string newjson = JsonConvert.SerializeObject(gods, Formatting.Indented);
             domColor.DoAllGodColors();
-            await Reporter.SendError($"{gods.Count} Gods were found and saved to the DB.");
+            var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"{gods.Count} Gods were found and saved to the DB.", g: 205);
+            await Reporter.SendEmbedError(emb.ToEmbedBuilder());
             try
             {
                 List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hiRezAPI.GetItems());
                 await Database.InsertItems(itemsList);
-                domColor.DoAllItemColors();
+                await domColor.DoAllItemColors();
 
-                await Reporter.SendError($"{itemsList.Count} Items were found and saved to the DB.");
+                emb = await EmbedHandler.BuildDescriptionEmbedAsync($"{itemsList.Count} Items were found and saved to the DB.", g: 205);
+                await Reporter.SendEmbedError(emb.ToEmbedBuilder());
             }
             catch (Exception ex)
             {
-                await Reporter.SendException(ex, null);
+                await Reporter.SendException(ex, context);
             }
         }
     }

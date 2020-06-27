@@ -80,25 +80,25 @@ namespace ThothBotCore.Tournament
                 {
                     x.IsInline = false;
                     x.Name = "Name";
-                    x.Value = tournament.Players[tournament.Players.Count - 1].Name;
+                    x.Value = tournament.Players[^1].Name;
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
                     x.Name = "Primary Role";
-                    x.Value = tournament.Players[tournament.Players.Count - 1].PrimaryRole;
+                    x.Value = tournament.Players[^1].PrimaryRole;
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
                     x.Name = "Secondary Role";
-                    x.Value = tournament.Players[tournament.Players.Count - 1].SecondaryRole;
+                    x.Value = tournament.Players[^1].SecondaryRole;
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
                     x.Name = "CheckedIn";
-                    x.Value = tournament.Players[tournament.Players.Count - 1].CheckedIn;
+                    x.Value = tournament.Players[^1].CheckedIn;
                 });
                 await context.Channel.SendMessageAsync("", false, embed.Build());
             }

@@ -21,7 +21,7 @@ namespace ThothBotCore.Modules
         [Command("help", true, RunMode = RunMode.Async)]
         [Summary("List of all available commands.")]
         [Alias("commands", "command", "cmd", "comamands", "h")]
-        public async Task Help([Remainder] string command = null)
+        public async Task Help([Remainder] string commandName = null)
         {
             string prefix = Credentials.botConfig.prefix;
             if (GetServerConfig(Context.Guild.Id).Result.Count > 0)
@@ -33,7 +33,7 @@ namespace ThothBotCore.Modules
                 }
             }
 
-            var helpEmbed = HelpCommand.GetHelpEmbed(Global.commandService, command, prefix);
+            var helpEmbed = HelpCommand.GetHelpEmbed(Global.commandService, commandName, prefix);
             try
             {
                 await ReplyAsync(embed: helpEmbed);
@@ -108,7 +108,7 @@ namespace ThothBotCore.Modules
             {
                 x.IsInline = true;
                 x.Name = "Support Server";
-                x.Value = $"[Invite](https://discord.gg/hU6MTbQ)";
+                x.Value = $"[Join]({Constants.SupportServerInvite})";
             });
             embed.AddField(field =>
             {
@@ -194,7 +194,7 @@ namespace ThothBotCore.Modules
         public async Task FeedbackCommand([Remainder] string FeedbackMessage)
         {
             await Reporter.SendFeedback(FeedbackMessage, Context.Message.Author);
-            await ReplyAsync("♥ Thanks for the feedback! The bot owner got you message. ");
+            await ReplyAsync("♥ Thanks for the feedback! The bot owner got your message. ");
         }
 
         [Command("ping", true)]

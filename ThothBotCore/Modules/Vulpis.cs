@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Tournament;
@@ -28,9 +29,9 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(x =>
             {
                 x.Name = $"Vulpis Esports";
-                x.IconUrl = "https://i.imgur.com/rzu9JNG.png";
+                x.IconUrl = Constants.VulpisLogoLink;
             });
-            embed.WithThumbnailUrl("https://i.imgur.com/rzu9JNG.png");
+            embed.WithThumbnailUrl(Constants.VulpisLogoLink);
             embed.WithColor(Constants.VulpisColor);
             embed.WithDescription(Constants.VulpisDescription);
             embed.AddField(x =>
@@ -70,7 +71,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                if (Context.Guild.Id != 321367254983770112)
+                if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
                 {
                     return;
                 }
@@ -107,6 +108,10 @@ namespace ThothBotCore.Modules
                 // SAving
                 
                 string json = JsonConvert.SerializeObject(meganz, Formatting.Indented);
+                if (!Directory.Exists("Tourneys"))
+                {
+                    Directory.CreateDirectory("Tourneys");
+                }
                 await File.WriteAllTextAsync($"Tourneys/{tourneyDate:dd-MM-yyyy}{filename}.json", json);
             }
             catch (Exception ex)
@@ -151,7 +156,7 @@ namespace ThothBotCore.Modules
         [Command("opensignups")]
         public async Task OpenSignups([Remainder]string input)
         {
-            if (Context.Guild.Id != 321367254983770112)
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
             {
                 return;
             }
@@ -170,7 +175,7 @@ namespace ThothBotCore.Modules
         [Command("closesignups")]
         public async Task CloseSignups([Remainder]string input)
         {
-            if (Context.Guild.Id != 321367254983770112)
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
             {
                 return;
             }
@@ -192,7 +197,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                if (Context.Guild.Id != 321367254983770112)
+                if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
                 {
                     return;
                 }
@@ -215,7 +220,7 @@ namespace ThothBotCore.Modules
         [Command("closecheckins")]
         public async Task CloseCheckins()
         {
-            if (Context.Guild.Id != 321367254983770112)
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
             {
                 return;
             }
@@ -275,7 +280,7 @@ namespace ThothBotCore.Modules
         [Command("checktournament")]
         public async Task CheckTournamentCommand()
         {
-            if (Context.Guild.Id != 321367254983770112)
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
             {
                 return;
             }
@@ -287,7 +292,7 @@ namespace ThothBotCore.Modules
             embed.WithColor(Constants.VulpisColor);
             embed.WithAuthor(x =>
             {
-                x.IconUrl = "https://media.discordapp.net/attachments/481545705630990337/621121723462582282/ve-1.png";
+                x.IconUrl = Constants.VulpisLogoLink;
                 x.Name = filePath;
             });
             embed.WithDescription($"**Type:** {tourney.Tournament.Type}\n**SignupsAllowed: **{tourney.Tournament.SignupsAllowed}\n" +
@@ -298,7 +303,7 @@ namespace ThothBotCore.Modules
         [Command("checkplayers")]
         public async Task PlayersInTourneyCommand()
         {
-            if (Context.Guild.Id != 321367254983770112)
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
             {
                 return;
             }
@@ -310,7 +315,7 @@ namespace ThothBotCore.Modules
             embed.WithColor(Constants.VulpisColor);
             embed.WithAuthor(x=> 
             {
-                x.IconUrl = "https://media.discordapp.net/attachments/481545705630990337/621121723462582282/ve-1.png";
+                x.IconUrl = Constants.VulpisLogoLink;
                 x.Name = "Players";
             });
             var desc = new StringBuilder();
@@ -331,12 +336,20 @@ namespace ThothBotCore.Modules
         [Command("sqmake")]
         public async Task CreateTeamsSQCq()
         {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
             await TeamGenerator.SoloQConquest(Context);
         }
 
         [Command("addteam", true, RunMode = RunMode.Async)]
         public async Task AddTeamEmbed()
         {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
             var message = await ReplyAsync("Okay, give me the ID of the message the embed is at...");
             var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
             var embedmessage = await Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(Context.Channel.Id).GetMessageAsync(Convert.ToUInt64(response.Content));
@@ -451,12 +464,20 @@ namespace ThothBotCore.Modules
         [Alias("dtm")]
         public async Task DoTheMagic()
         {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
             await TeamGenerator.SoloQConquestInfo(Context);
         }
 
         [Command("givemethemall")]
         public async Task Iwanthemall()
         {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
             var playersList = JsonConvert.DeserializeObject<List<VulpisPlayerModel.Player>>(await File.ReadAllTextAsync($"Tourneys/{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}soloqcq.json"));
             var sb = new StringBuilder();
 
@@ -471,13 +492,17 @@ namespace ThothBotCore.Modules
         [RequireOwner]
         public async Task AssaultSignCommand([Remainder]string input)
         {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
             await Signups.AssaultSignup(input, Context);
         }
 
         [Command("rsem")]
         public async Task ResendTeamsEmbed(SocketTextChannel channel, ulong messageID, SocketTextChannel channelToSendTo)
         {
-            if (Context.Guild.Id != 321367254983770112 || Context.Message.Author.Id != Constants.OwnerID)
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context) || Context.Message.Author.Id != Constants.OwnerID)
             {
                 return;
             }
@@ -490,6 +515,83 @@ namespace ThothBotCore.Modules
                 embed = em.ToEmbedBuilder();
                 await sendChannel.SendMessageAsync(chan.Content, false, embed.Build());
             }
+        }
+
+        [Command("removeplayer", RunMode = RunMode.Async)]
+        public async Task RemovePlayerFromTourneyCommand([Remainder] string username)
+        {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
+
+            var tournamentObj = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(await File.ReadAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq")));
+            IUserMessage message = null;
+            Embed embed = null;
+
+            var foundPlayer = tournamentObj.Players.Find(x => x.Name.ToLowerInvariant() == username);
+
+            if (foundPlayer != null)
+            {
+                embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Found: {foundPlayer.Name} with roles " +
+                    $"{foundPlayer.PrimaryRole}, {foundPlayer.SecondaryRole}\n" +
+                    $"If you want to remove that player respond with **yes** if not, respond with **no**.\n__You have 60 seconds to respond.__");
+                message = await ReplyAsync(embed: embed);
+            }
+
+            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null)
+            {
+                await message.ModifyAsync(x => x.Embed = null);
+                return;
+            }
+            if (response.Content.ToLowerInvariant().Contains("yes"))
+            {
+                for (int i = 0; i < tournamentObj.Players.Count; i++)
+                {
+                    if (tournamentObj.Players[i].Name == foundPlayer.Name)
+                    {
+                        tournamentObj.Players.RemoveAt(i);
+                    }
+                }
+
+                // Saving
+                string json = JsonConvert.SerializeObject(tournamentObj, Formatting.Indented);
+                await File.WriteAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq"), json);
+
+                await message.ModifyAsync(x =>
+                {
+                    x.Content = $"{foundPlayer.Name} was removed.";
+                });
+                await PlayersInTourneyCommand();
+            }
+            else
+            {
+                await message.ModifyAsync(x =>
+                {
+                    x.Content = "k";
+                    x.Embed = null;
+                });
+
+            }
+        }
+
+        [Command("removeall")]
+        public async Task RemoveAllPlayers()
+        {
+            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context))
+            {
+                return;
+            }
+
+            var tournamentObj = JsonConvert.DeserializeObject<VulpisPlayerModel.BaseTourney>(await File.ReadAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq")));
+
+            tournamentObj.Players.Clear();
+            await ReplyAsync("Removed all players");
+
+            // Saving
+            string json = JsonConvert.SerializeObject(tournamentObj, Formatting.Indented);
+            await File.WriteAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq"), json);
         }
     }
 }

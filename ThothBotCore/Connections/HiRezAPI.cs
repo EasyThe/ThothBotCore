@@ -21,7 +21,8 @@ namespace ThothBotCore.Connections
         private SessionResult sessionResult = new SessionResult();
         private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
         private readonly string PaladinsAPIurl = "http://api.paladins.com/paladinsapi.svc/";
-        private static string GetMD5Hash(string input)
+
+        private static async Task<string> GetMD5Hash(string input)
         {
             var md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
             var bytes = Encoding.UTF8.GetBytes(input);
@@ -40,7 +41,7 @@ namespace ThothBotCore.Connections
 
         private async Task CreateSession()
         {
-            string signature = GetMD5Hash(Credentials.botConfig.devId + "createsession" + Credentials.botConfig.authKey + timestamp);
+            string signature = await GetMD5Hash(Credentials.botConfig.devId + "createsession" + Credentials.botConfig.authKey + timestamp);
             string result;
 
             var handler = new HttpClientHandler();
@@ -54,16 +55,16 @@ namespace ThothBotCore.Connections
             }
             HiRezSession session = JsonConvert.DeserializeObject<HiRezSession>(result);
 
-            SaveSession(session.session_id, session.timestamp);
+            await SaveSession(session.session_id, session.timestamp);
         }
 
-        private void SaveSession(string sessionID, string timestamp)
+        private async Task SaveSession(string sessionID, string timestamp)
         {
             sessionResult.sessionID = sessionID;
             sessionResult.sessionTime = timestamp;
 
             string json = JsonConvert.SerializeObject(sessionResult, Formatting.Indented);
-            File.WriteAllText("Config/hirezapi.json", json);
+            await File.WriteAllTextAsync("Config/hirezapi.json", json);
         }
 
         private async Task CheckSession()
@@ -72,7 +73,7 @@ namespace ThothBotCore.Connections
             {
                 await CreateSession();
             }
-            string json = File.ReadAllText("Config/hirezapi.json");
+            string json = await File.ReadAllTextAsync("Config/hirezapi.json");
             sessionResult = JsonConvert.DeserializeObject<SessionResult>(json);
 
             DateTime parsedSessionTime = DateTime.Parse(sessionResult.sessionTime, CultureInfo.InvariantCulture);
@@ -87,7 +88,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getplayer" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getplayer" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -104,7 +105,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getplayerachievements" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getplayerachievements" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -121,7 +122,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + _endpoint.ToLowerInvariant() + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + _endpoint.ToLowerInvariant() + authKey + timestamp);
             
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -138,7 +139,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getplayeridbyname" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getplayeridbyname" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -155,7 +156,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getgodranks" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getgodranks" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -172,7 +173,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getqueuestats" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getqueuestats" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -189,7 +190,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -207,7 +208,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getteamdetails" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getteamdetails" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -224,7 +225,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getplayerstatus" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getplayerstatus" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -241,7 +242,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getitems" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getitems" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -258,7 +259,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getmotd" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getmotd" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -274,7 +275,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getmatchhistory" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getmatchhistory" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -291,7 +292,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getmatchdetails" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getmatchdetails" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -308,7 +309,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getmatchplayerdetails" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getmatchplayerdetails" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -325,7 +326,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getgods" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getgods" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -342,7 +343,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getesportsproleaguedetails" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getesportsproleaguedetails" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -372,7 +373,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getdataused" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getdataused" + authKey + timestamp);
 
             var dataUsedHandler = new HttpClientHandler();
             using (var httpClient = new HttpClient(dataUsedHandler, false))
@@ -389,7 +390,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getpatchinfo" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getpatchinfo" + authKey + timestamp);
 
             var dataUsedHandler = new HttpClientHandler();
             using (var httpClient = new HttpClient(dataUsedHandler, false))
@@ -408,7 +409,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + _endpoint.ToLowerInvariant() + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + _endpoint.ToLowerInvariant() + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -425,7 +426,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -447,7 +448,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getplayer" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getplayer" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -464,7 +465,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getgodranks" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getgodranks" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -481,7 +482,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getplayerstatus" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getplayerstatus" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
@@ -498,7 +499,7 @@ namespace ThothBotCore.Connections
         {
             await CheckSession();
 
-            string signature = GetMD5Hash(devID + "getmatchplayerdetails" + authKey + timestamp);
+            string signature = await GetMD5Hash(devID + "getmatchplayerdetails" + authKey + timestamp);
 
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))

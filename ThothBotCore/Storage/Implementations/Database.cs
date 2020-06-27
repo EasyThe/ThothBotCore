@@ -113,26 +113,6 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task SetTimeZone(SocketGuild guild, string timezone)
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                await cnn.ExecuteAsync($"INSERT INTO serverConfig(serverID, serverName, timezone) " +
-                    $"VALUES({guild.Id}, \"{guild.Name}\", \"{timezone}\") " +
-                    $"ON CONFLICT(serverID) " +
-                    $"DO UPDATE SET timezone = \"{timezone}\"");
-            }
-        }
-
-        public static async Task<List<string>> GetTimeZone(ulong guildID)
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                var output = await cnn.QueryAsync<string>($"SELECT timezone FROM serverConfig WHERE serverID LIKE '%{guildID}%'", new DynamicParameters());
-                return output.ToList();
-            }
-        }
-
         public static async Task AddPlayerToDb(List<PlayerStats> playerStats, int portal)
         {
             // This thing looks so bad... I hope I will find something else, possibly looking way better, smaller and performance-friendly!
@@ -546,6 +526,7 @@ namespace ThothBotCore.Storage
 
                     // do tuk stignahme, ne uspqh da izmislq kak da vzema hirezapi za da pusna updatedb ot utils..
                     //Utils.UpdateDb
+                    return "";
                     Utils.AddNewGodEmojiInGuild(returnlist[0].godIcon_URL);
                     //fix this bro pls
                     return returnlist[0].Emoji;
@@ -762,7 +743,6 @@ namespace ThothBotCore.Storage
             public string serverName { get; set; }
             public bool statusBool { get; set; }
             public ulong statusChannel { get; set; } 
-            public string timezone { get; set; }
         }
     }
 }

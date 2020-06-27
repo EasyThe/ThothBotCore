@@ -78,7 +78,7 @@ namespace ThothBotCore.Tournament
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(x =>
             {
-                x.IconUrl = "https://media.discordapp.net/attachments/481545705630990337/621121723462582282/ve-1.png";
+                x.IconUrl = Constants.VulpisLogoLink;
                 x.Name = $"Conquest 5v5 Solo Signup";
             });
             embed.WithFooter(x =>

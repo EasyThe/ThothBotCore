@@ -30,12 +30,12 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        public static async Task SendJoinedServers(SocketGuild guild)
+        public static async Task SendJoinedServerEmbedAsync(SocketGuild guild)
         {
             try
             {
                 var embed = new EmbedBuilder();
-                embed.WithColor(new Color(255, 255, 255));
+                embed.WithColor(new Color(33, 222, 124));
                 embed.WithAuthor(x =>
                 {
                     x.Name = $"Server #{Connection.Client.Guilds.Count}";
@@ -72,7 +72,7 @@ namespace ThothBotCore.Utilities
             try
             {
                 var embed = new EmbedBuilder();
-                embed.WithColor(new Color(255, 0, 0));
+                embed.WithColor(new Color(254, 0, 0));
                 string result = $"🔻{guild.Name}\n" +
                 $"🆔**Server ID:** {guild.Id}\n" +
                 $"👤**Owner:** {guild.Owner}\n" +
@@ -101,16 +101,37 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        public static async Task SendSuccessCommands(string message)
+        public static async Task SendSuccessCommands(SocketCommandContext context, IResult result)
         {
             try
             {
-                await commandsChannel.SendMessageAsync(message);
+                string message;
+                Embed embed;
+                if (result == null)
+                {
+                    message = $"{context.Message.Author.Username}#{context.Message.Author.DiscriminatorValue} loves me ♥";
+                }
+                else
+                {
+                    message = $"\n**Message: **{context.Message.Content}\n" +
+                                $"**User: **{context.Message.Author} [{context.Message.Author.Id}]\n" +
+                                $"**Server: **{context.Guild.Name} [{context.Guild.Id}]\n" +
+                                $"**Channel: **{context.Channel.Name} [{context.Channel.Id}]";
+                }
+                if (result.IsSuccess)
+                {
+                    embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 33, 222, 124);
+                }
+                else
+                {
+                    embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 254, 0, 0);
+                }
+                await commandsChannel.SendMessageAsync(embed: embed);
             }
             catch (Exception ex)
             {
 
-                await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}").ConfigureAwait(false);
+                await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
             }
         }
 
@@ -125,15 +146,16 @@ namespace ThothBotCore.Utilities
                 Console.WriteLine(ex.Message);
             }
         }
-        public static async Task SendException(Exception ex, SocketCommandContext context)
+        public static async Task SendException(Exception ex, SocketCommandContext context, string errorMessage = "")
         {
             try
             {
-                await reportsChannel.SendMessageAsync($"**Message: **{context.Message.Content}\n" +
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"**Message: **{context.Message.Content}\n" +
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
-                    $"**Exception Message: **{ex.Message}\n" +
-                    $"**Stack Trace:** {ex.StackTrace}");
+                    $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
+                    $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 254, 0, 0);
+                await reportsChannel.SendMessageAsync(embed: embed);
             }
             catch (Exception exc)
             {
@@ -148,6 +170,7 @@ namespace ThothBotCore.Utilities
                     $"\t\tStack Trace:** {ex.StackTrace}\n" +
                     $"\t\tSource: {ex.Source}" +
                     "\n\t===\n" + exc.Message);
+                await reportsChannel.SendMessageAsync($"{ownerUser.Mention} **Check the console for an error!**");
             }
         }
 
@@ -162,17 +185,17 @@ namespace ThothBotCore.Utilities
                 await reportsChannel.SendMessageAsync($"Error in SendEmbedError().\n{ex.Message}");
             }
         }
-        public static async Task<Embed> RespondToCommandOnErrorAsync(Exception ex, SocketCommandContext context)
+        public static async Task<Embed> RespondToCommandOnErrorAsync(Exception ex, SocketCommandContext context, string errorMessage = "")
         {
             var sb = new StringBuilder();
-            if (ex.Message.ToLowerInvariant().Contains("the api is unavailable"))
+            if (ex != null && ex.Message.ToLowerInvariant().Contains("the api is unavailable"))
             {
                 sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
             }
             else
             {
-                sb.Append("An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to contact the bot owner for further assistance.");
-                await SendException(ex, context);
+                sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot owner for further assistance.");
+                await SendException(ex, context, errorMessage);
             }
             if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
             {
@@ -186,7 +209,7 @@ namespace ThothBotCore.Utilities
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {
-                x.Name = $"{user.Username}#{user.DiscriminatorValue}";
+                x.Name = $"{user}";
                 x.IconUrl = user.GetAvatarUrl();
             });
             embed.WithColor(Constants.FeedbackColor);

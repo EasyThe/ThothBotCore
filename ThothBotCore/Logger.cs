@@ -6,7 +6,7 @@ namespace ThothBotCore
     {
         public void Log(string message)
         {
-            Console.WriteLine($"{DateTime.Now.ToString("[HH:mm]")} {message}");
+            Console.WriteLine($"{DateTime.Now:[HH:mm]} {message}");
         }
     }
 }

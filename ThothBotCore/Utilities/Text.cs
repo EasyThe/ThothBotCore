@@ -131,6 +131,10 @@ namespace ThothBotCore.Utilities
                 }
                 if (playerSpecial[0].streamer_bool != 0)
                 {
+                    if (specialsResult.Length != 0)
+                    {
+                        specialsResult.Append("\n");
+                    }
                     if (playerSpecial[0].streamer_link != null)
                     {
                         if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("twitch"))
@@ -149,11 +153,11 @@ namespace ThothBotCore.Utilities
                 }
                 if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("dev"))
                 {
-                    specialsResult.Append(":star: Thoth Dev");
+                    specialsResult.Append("<:verified_developer:712733195384127588> Thoth Dev");
                 }
                 if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("vulpis"))
                 {
-                    specialsResult.Append("<:VulpisEsports:621460247046782976> Vulpis Esports Owner");
+                    specialsResult.Append($"{Constants.VulpisLogoEmote} Vulpis Esports Owner");
                 }
                 return specialsResult.ToString();
             }
@@ -192,12 +196,6 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        public static DateTime TimezoneSpecific(DateTime utctime, string timezone)
-        {
-            TimeZoneInfo destionationTimeZone = TimeZoneInfo.FromSerializedString(timezone);
-            return TimeZoneInfo.ConvertTimeFromUtc(utctime, destionationTimeZone);
-        }
-
         // SMITE Portals
         public static string GetPortalName(int portal)
         {
@@ -227,7 +225,21 @@ namespace ThothBotCore.Utilities
             };
         }
 
-        public static string GetPortalIconLinks(string portal)
+        public static int GetPortalNumber(string portal)
+        {
+            return portal switch
+            {
+                "HiRez" => 1,
+                "Steam" => 5,
+                "PSN" => 9,
+                "XboxLive" => 10,
+                "Nintendo Switch" => 22,
+                "Epic Games" => 28,
+                _ => 0,
+            };
+        }
+
+        public static string GetPortalIconLinksByPortalID(string portal)
         {
             return portal switch
             {
@@ -236,7 +248,21 @@ namespace ThothBotCore.Utilities
                 "9" => "https://cdn.discordapp.com/emojis/537745670518472714.png",// PS4
                 "10" => "https://cdn.discordapp.com/emojis/537749895029850112.png",// Xbox
                 "22" => "https://i.imgur.com/f11agtV.png",// Switch
-                "28" => "https://i.imgur.com/Ekqg3pp.png",// Epic Games Store
+                "28" => "https://i.imgur.com/k9FrhA4.png",// Epic Games Store
+                _ => Constants.botIcon,
+            };
+        }
+
+        public static string GetPortalIconLinksByPortalName(string portal)
+        {
+            return portal switch
+            {
+                "HiRez" => "https://i.imgur.com/0TWCr6X.png",// PC
+                "Steam" => "https://cdn.discordapp.com/emojis/581485150043373578.png",// Steam
+                "PSN" => "https://cdn.discordapp.com/emojis/537745670518472714.png",// PS4
+                "XboxLive" => "https://cdn.discordapp.com/emojis/537749895029850112.png",// Xbox
+                "Nintendo Switch" => "https://i.imgur.com/f11agtV.png",// Switch
+                "Epic Games" => "https://i.imgur.com/k9FrhA4.png",// Epic Games Store
                 _ => Constants.botIcon,
             };
         }
@@ -472,8 +498,7 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        //Paladins Queues
-
+        //Paladins
         public static string GetQueueNamePaladins(int queueID)
         {
             return queueID switch

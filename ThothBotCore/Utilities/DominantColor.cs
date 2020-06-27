@@ -5,12 +5,16 @@ using System.Globalization;
 using ThothBotCore.Storage;
 using System.Drawing;
 using System.IO;
+using ThothBotCore.Discord;
+using System.Threading.Tasks;
+using Discord;
+using System.Text;
 
 namespace ThothBotCore.Utilities
 {
     public class DominantColor
     {
-        private Bitmap img = null;
+        private Bitmap img;
 
         public int GetDomColor(string link)
         {
@@ -52,21 +56,34 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        public void DoAllItemColors()
+        public async Task DoAllItemColors()
         {
             var items = Database.GetAllItems().Result;
+            var sb = new StringBuilder();
 
             for (int c = 0; c < items.Count; c++)
             {
-                if (items[c].DomColor == 0)
+                try
                 {
-                    if (items[c].itemIcon_URL != "" || items[c].itemIcon_URL != null)
+                    if (items[c].DomColor == 0)
                     {
-                        Console.WriteLine($"{c} {items[c].DeviceName}");
-                        int getdcolor = GetDomColor(items[c].itemIcon_URL);
-                        Database.SaveItemDomColor(items[c].ItemId, getdcolor);
+                        if (items[c].itemIcon_URL != "" || items[c].itemIcon_URL != null)
+                        {
+                            Console.WriteLine($"{c} {items[c].DeviceName}");
+                            int getdcolor = GetDomColor(items[c].itemIcon_URL);
+                            Database.SaveItemDomColor(items[c].ItemId, getdcolor);
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    sb.AppendLine($"[{items[c].ItemId}]**{items[c].DeviceName}**'s icon doesn't exist. | {ex.Message}");
+                }
+            }
+            if (sb.Length != 0)
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 254);
+                await Reporter.SendEmbedError(embed.ToEmbedBuilder());
             }
         }
     }
