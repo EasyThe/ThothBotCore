@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using Dapper;
+using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -7,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
@@ -322,7 +322,7 @@ namespace ThothBotCore.Modules
             foreach (var player in tourney.Players)
             {
                 //invis \u200b
-                desc.Append((player.CheckedIn == true ? ":green_circle:" : ":red_circle:") + player.Name);
+                desc.Append((player.CheckedIn == true ? ":green_circle:" : ":red_circle:") + player.Name + $" {player.PrimaryRole}/{player.SecondaryRole}");
                 desc.Append("\n");
                 embed.WithDescription(desc.ToString());
             }
@@ -352,7 +352,10 @@ namespace ThothBotCore.Modules
             }
             var message = await ReplyAsync("Okay, give me the ID of the message the embed is at...");
             var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            var embedmessage = await Discord.Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(Context.Channel.Id).GetMessageAsync(Convert.ToUInt64(response.Content));
+            var embedmessage = await Connection.Client
+                .GetGuild(Context.Guild.Id)
+                .GetTextChannel(Context.Channel.Id)
+                .GetMessageAsync(Convert.ToUInt64(response.Content));
             if (embedmessage.Embeds.Count != 0)
             {
                 await message.ModifyAsync(x => 
@@ -433,7 +436,7 @@ namespace ThothBotCore.Modules
                         });
                         await message.ModifyAsync(x=>
                         {
-                            x.Content = "There we go!";
+                            x.Content = "";
                             x.Embed = finalembed.Build();
                         });
                     }
@@ -592,6 +595,211 @@ namespace ThothBotCore.Modules
             // Saving
             string json = JsonConvert.SerializeObject(tournamentObj, Formatting.Indented);
             await File.WriteAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq"), json);
+        }
+
+        [Command("randomteamassault")]
+        [Alias("rta")]
+        public async Task RandomAssaultVulpisCommand()
+        {
+            if (Context.Guild.Id != 321367254983770112)
+            {
+                await ReplyAsync("This command is available only in Vulpis.");
+                return;
+            }
+            var embed = new EmbedBuilder();
+            var sb1 = new StringBuilder();
+            var sb2 = new StringBuilder();
+            bool hasHealer = false;
+            bool firstHasHealer = false;
+            //       ra, hel, guan yu, aphrodite, change, sylvanus, terra, baron, horus, yemoja
+            int[] healers = { 1698, 1718, 1763, 1898, 1921, 2030, 2147, 3518, 3611, 3811 };
+            var gods = Database.LoadAllGodsWithLessInfo();
+
+            // First team
+            for (int i = 0; i < 5; i++)
+            {
+                var current = gods[rnd.Next(gods.Count)];
+                while (hasHealer && healers.AsList().Contains(current.id))
+                {
+                    current = gods[rnd.Next(gods.Count)];
+                }
+                if (healers.AsList().Contains(current.id))
+                {
+                    hasHealer = true;
+                    firstHasHealer = true;
+                }
+
+                sb1.AppendLine($"{current.Emoji} {current.Name}");
+                gods.Remove(current);
+            }
+
+            // Second team
+            gods = Database.LoadAllGodsWithLessInfo();
+            hasHealer = false;
+            for (int i = 0; i < 5; i++)
+            {
+                var current = gods[rnd.Next(gods.Count)];
+                if (healers.AsList().Contains(current.id) && firstHasHealer)
+                {
+                    hasHealer = true;
+                }
+                else if (healers.AsList().Contains(current.id) && !firstHasHealer)
+                {
+                    while (healers.AsList().Contains(current.id))
+                    {
+                        current = gods[rnd.Next(gods.Count)];
+                    }
+                }
+                while (firstHasHealer && !hasHealer && i == 4 && !healers.AsList().Contains(current.id))
+                {
+                    current = gods[rnd.Next(gods.Count)];
+                }
+
+                sb2.AppendLine($"{current.Emoji} {current.Name}");
+                gods.Remove(current);
+            }
+
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Team 1";
+                x.Value = sb1.ToString();
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Team 2";
+                x.Value = sb2.ToString();
+            });
+            embed.WithAuthor(x =>
+            {
+                x.Name = "Random Assault Teams";
+                x.IconUrl = Constants.VulpisLogoLink;
+            });
+            embed.WithColor(Constants.VulpisColor);
+            await ReplyAsync(message: $"Two random assault teams for {Context.Message.Author.Mention}", embed: embed.Build());
+        }
+
+        [Command("reroll")]
+        public async Task RerollAssaultGodVulpisCommand(int position)
+        {
+            try
+            {
+                bool found = false;
+                IMessage foundMessage = Context.Message;
+                IEmbed foundEmbed;
+                var lastMessages = await Context.Channel.GetMessagesAsync(10).FlattenAsync();
+                foreach (var message in lastMessages)
+                {
+                    if (found)
+                    {
+                        break;
+                    }
+                    if (message.Author.Id == Connection.Client.CurrentUser.Id)
+                    {
+                        foreach (var user in message.MentionedUserIds)
+                        {
+                            if (user == Context.Message.Author.Id)
+                            {
+                                foundMessage = message;
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!found)
+                {
+                    await ReplyAsync("Couldn't find a message containing a mention to " + Context.Message.Author.Mention);
+                    return;
+                }
+
+                //debugging 
+                await ReplyAsync("We gonna work with this one", embed: foundMessage.Embeds.First().ToEmbedBuilder().Build());
+                foundEmbed = foundMessage.Embeds.First();
+                string[] lines;
+
+                // found, continue
+                var gods = Database.LoadAllGodsWithLessInfo();
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(x =>
+                {
+                    x.Name = "Random Assault Teams REROLL EDITION";
+                    x.IconUrl = Constants.VulpisLogoLink;
+                });
+                embed.WithColor(Constants.VulpisColor);
+                var nz = foundMessage.Embeds.First();
+                var fields = nz.Fields;
+                if (position > 4 && position < 10)
+                {
+                    lines = fields[1].Value.Split(
+                                    new[] { Environment.NewLine },
+                                    StringSplitOptions.None);
+                    var rerolledGod = lines[position];
+                    var newGod = gods[rnd.Next(gods.Count)];
+                    while (rerolledGod.Contains(newGod.Name))
+                    {
+                        newGod = gods[rnd.Next(gods.Count)];
+                    }
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "Team 1";
+                        x.Value = fields[0].Value;
+                    });
+                    var sbb = new StringBuilder();
+                    for (int i = 5; i < 10; i++)
+                    {
+                        if (i != position)
+                        {
+                            sbb.AppendLine(lines[i]);
+                        }
+                    }
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "Team 2";
+                        x.Value = "";
+                    });
+                }
+                else if (position < 5)
+                {
+                    lines = fields[1].Value.Split(
+                                    new[] { Environment.NewLine },
+                                    StringSplitOptions.None);
+                    var rerolledGod = lines[position];
+                    var newGod = gods[rnd.Next(gods.Count)];
+                    while (rerolledGod.Contains(newGod.Name))
+                    {
+                        newGod = gods[rnd.Next(gods.Count)];
+                    }
+                    var sbb = new StringBuilder();
+                    for (int i = 0; i < 5; i++)
+                    {
+                        if (i != position)
+                        {
+                            sbb.AppendLine(lines[i]);
+                        }
+                    }
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "Team 1";
+                        x.Value = "";
+                    });
+                }
+                else
+                {
+                    await ReplyAsync("The number you have entered an invalid number. Please try again and enter number between 0-9.");
+                    return;
+                }
+
+                await ReplyAsync(Context.Message.Author.Mention, embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                await Reporter.RespondToCommandOnErrorAsync(ex, Context);
+            }
         }
     }
 }

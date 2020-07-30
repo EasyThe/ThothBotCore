@@ -1,22 +1,27 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
-using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
+using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using ThothBotCore.Utilities.Smite;
+using static ThothBotCore.Connections.Models.Player;
+using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Modules
 {
@@ -24,6 +29,7 @@ namespace ThothBotCore.Modules
     public class Owner : InteractiveBase<SocketCommandContext>
     {
         HiRezAPI hirezAPI = new HiRezAPI();
+        Stopwatch stopWatch = new Stopwatch();
 
         [Command("setplayersspec")]
         [Alias("sps")]
@@ -200,7 +206,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("bs", true)]
-        [Summary("Information about the bot accessible only by the bot owner.")]
         public async Task BotStats()
         {
             await hirezAPI.PingAPI();
@@ -285,7 +290,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("sac")]
-        [Summary("Sets a'Activity' for the bot (Accessible only by the bot owner)")]
         public async Task SetActivityCommand(string url, [Remainder] string game)
         {
             await Connection.Client.SetGameAsync(game, url);
@@ -294,7 +298,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("sg")]
-        [Summary("Sets a'Game' for the bot :video_game: (Accessible only by the bot owner)")]
         public async Task SetGame([Remainder] string game)
         {
             await Connection.Client.SetGameAsync(game);
@@ -458,13 +461,6 @@ namespace ThothBotCore.Modules
                 $"{sb}");
         }
 
-        [Command("shtc")]
-        public async Task StopHourlyTimerCommand()
-        {
-            await GuildsTimer.StopHourlyTimer();
-            await ReplyAsync("done i guess");
-        }
-
         [Command("temb")]
         public async Task TestingEmbeds()
         {
@@ -574,8 +570,102 @@ namespace ThothBotCore.Modules
         [Command("addfield", true, RunMode = RunMode.Async)]
         public async Task AddFieldToExistingEmbedCommand(ulong messageID)
         {
-            
+            // to do
         }
+
+        [Command("permcheck", true, RunMode = RunMode.Async)]
+        public async Task PermissionsCheckCommand()
+        {
+            int count = 0;
+            var sb = new StringBuilder();
+
+            foreach (var guild in Discord.Connection.Client.Guilds)
+            {
+                var perms = guild.CurrentUser.GuildPermissions;
+                if (!perms.ManageMessages)
+                {
+                    count++;
+                    if (count < 10)
+                    {
+                        sb.AppendLine($"{guild.Name} [{guild.Id}]");
+                    }
+                }
+            }
+            await ReplyAsync($"Guilds with missing ManageMessages permission: {count}\n{sb}");
+        }
+
+
+        [Command("dblt")]
+        public async Task DBLTests()
+        {
+            try
+            {
+                int totalUsers = 0;
+                foreach (var guild in Connection.Client.Guilds)
+                {
+                    totalUsers += guild.Users.Count;
+                }
+                using (var webclient = new HttpClient())
+                using (var content = new StringContent($"{{ \"guilds\": {Connection.Client.Guilds.Count}, \"users\": {totalUsers} }}", Encoding.UTF8, "application/json"))
+                {
+                    webclient.DefaultRequestHeaders.Add("Authorization", "token here");
+                    var result = await webclient.PostAsync("https://discordbotlist.com/api/v1/bots/454145330347376651/stats", content);
+                    Console.WriteLine(result.StatusCode);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                await Reporter.SendError("**DiscordBotList.**\n" +
+                    $"**Error Message:** {ex.Message}");
+            }
+        }
+
+        [Command("domongo", RunMode = RunMode.Async)]
+        public async Task InsertSQLiteIntoMongo()
+        {
+            stopWatch.Start();
+            string elapsedTime;
+            TimeSpan ts;
+            var db = MongoConnection.GetDatabase();
+
+            // Guilds
+
+            var guilds = await Database.GetAllGuilds();
+            await db.GetCollection<ServerConfig>("guilds").InsertManyAsync(guilds);
+
+            ts = stopWatch.Elapsed;
+            elapsedTime = String.Format("{0:00}:{1:00}",
+                ts.Seconds,
+                ts.Milliseconds / 10);
+            Text.WriteLine("Guilds: " + elapsedTime, ConsoleColor.Black, ConsoleColor.White);
+
+            // Players
+
+            stopWatch.Reset();
+            var allplayers = await Database.GetAllPlayers();
+            await db.GetCollection<PlayerStats>("players").InsertManyAsync(allplayers);
+
+            ts = stopWatch.Elapsed;
+            elapsedTime = String.Format("{0:00}:{1:00}",
+                ts.Seconds,
+                ts.Milliseconds / 10);
+            Text.WriteLine("Players: " + elapsedTime, ConsoleColor.Black, ConsoleColor.White);
+
+            // Specials
+            stopWatch.Reset();
+            var specials = await Database.GetAllPlayerSpecials();
+            await db.GetCollection<PlayerSpecial>("player_specials").InsertManyAsync(specials);
+
+            ts = stopWatch.Elapsed;
+            elapsedTime = String.Format("{0:00}:{1:00}",
+                ts.Seconds,
+                ts.Milliseconds / 10);
+            Text.WriteLine("Specials: " + elapsedTime, ConsoleColor.Black, ConsoleColor.White);
+
+            Text.WriteLine("COMPLETED!", ConsoleColor.Green, ConsoleColor.Black);
+        }
+
 
         private class DataUsed
         {

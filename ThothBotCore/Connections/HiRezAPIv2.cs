@@ -105,7 +105,7 @@ namespace ThothBotCore.Connections
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync(
                     $"**== HiRezAPIv2 Reporting... ==**\nEndpoint: `{endpoint}` Value: `{value}`\n```html\n{json}```", 254);
-                await Reporter.SendEmbedError(embed: embed.ToEmbedBuilder());
+                await Reporter.SendEmbedToBotLogsChannel(embed: embed.ToEmbedBuilder());
                 return null;
             }
             else

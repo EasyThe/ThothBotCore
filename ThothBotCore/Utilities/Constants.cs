@@ -57,7 +57,7 @@ namespace ThothBotCore.Utilities
         public static string APIEmptyResponse { get; set; } = "Sorry, the SmiteAPI sent an empty response.\nTry again later.";
         public static Emoji CheckMarkEmoji { get; set; } = new Emoji("✅");
         public static Color DefaultBlueColor { get; set; } = new Color(85, 172, 238);
-        public static Color VulpisColor { get; set; } = new Color(230, 175, 43);
+        public static Color VulpisColor { get; set; } = new Color(233, 78, 26);
         public static Color ErrorColor { get; set; } = new Color(255, 148, 148);
         public static Color FeedbackColor = new Color(107, 70, 147);
 

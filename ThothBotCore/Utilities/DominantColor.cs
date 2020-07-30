@@ -83,7 +83,7 @@ namespace ThothBotCore.Utilities
             if (sb.Length != 0)
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 254);
-                await Reporter.SendEmbedError(embed.ToEmbedBuilder());
+                await Reporter.SendEmbedToBotLogsChannel(embed.ToEmbedBuilder());
             }
         }
     }

@@ -17,7 +17,7 @@ namespace ThothBotCore.Utilities
 
         public static async void AddNewGodEmojiInGuild(string link)
         {
-            var thothGods3guild = Discord.Connection.Client.GetGuild(591932765880975370);
+            var thothGods3guild = Connection.Client.GetGuild(591932765880975370);
             string[] firstsplit = link.Split('/');
             string[] secondsplit = firstsplit[^1].Split('.');
             var image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
@@ -32,7 +32,7 @@ namespace ThothBotCore.Utilities
             await Database.SaveGods(gods);
             domColor.DoAllGodColors();
             var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"{gods.Count} Gods were found and saved to the DB.", g: 205);
-            await Reporter.SendEmbedError(emb.ToEmbedBuilder());
+            await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
             try
             {
                 List<GetItems.Item> itemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hiRezAPI.GetItems());
@@ -40,12 +40,17 @@ namespace ThothBotCore.Utilities
                 await domColor.DoAllItemColors();
 
                 emb = await EmbedHandler.BuildDescriptionEmbedAsync($"{itemsList.Count} Items were found and saved to the DB.", g: 205);
-                await Reporter.SendEmbedError(emb.ToEmbedBuilder());
+                await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
             }
             catch (Exception ex)
             {
                 await Reporter.SendException(ex, context);
             }
+        }
+
+        public static async Task CommandStatsHandler()
+        {
+            // todo for command usage stats
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Connections.Models
 {
@@ -9,6 +10,7 @@ namespace ThothBotCore.Connections.Models
             public int ActivePlayerId { get; set; }
             public string Avatar_URL { get; set; }
             public string Created_Datetime { get; set; }
+            public string Last_Updated { get; set; } = Text.InvariantDefaultDate(DateTime.UtcNow);
             public int HoursPlayed { get; set; }
             public int Id { get; set; }
             public string Last_Login_Datetime { get; set; }
@@ -17,6 +19,7 @@ namespace ThothBotCore.Connections.Models
             public int Losses { get; set; }
             public int MasteryLevel { get; set; }
             public object MergedPlayers { get; set; }
+            public int MinutesPlayed { get; set; }
             public string Name { get; set; }
             public string Personal_Status_Message { get; set; }
             public string Platform { get; set; }

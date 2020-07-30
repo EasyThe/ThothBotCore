@@ -75,8 +75,6 @@ namespace ThothBotCore.Utilities
 
             var commandInformation = commandsInfoWeNeed[pageNum - 1].GetCommandInfo(prefix);
 
-
-
             helpEmbedBuilder.WithDescription(commandInformation);
 
             if (commandsInfoWeNeed.Count >= 2)

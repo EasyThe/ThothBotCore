@@ -62,7 +62,7 @@ namespace ThothBotCore.Utilities
                                         incidentEmbed.WithColor(new Color(239, 167, 32));
 
                                         string json = JsonConvert.SerializeObject(ServerStatus, Formatting.Indented);
-                                        File.WriteAllText($"Status/{ServerStatus.incidents[i].id}.json", json);
+                                        await File.WriteAllTextAsync($"Status/{ServerStatus.incidents[i].id}.json", json);
 
                                         var incidentValue = new StringBuilder();
                                         for (int c = 0; c < ServerStatus.incidents[i].incident_updates.Count; c++)
@@ -95,7 +95,7 @@ namespace ThothBotCore.Utilities
 
                                         if (incidentValue.Length > 1024)
                                         {
-                                            incidentEmbed.WithTitle($"{incidentPlatIcons.ToString()} {ServerStatus.incidents[i].name}");
+                                            incidentEmbed.WithTitle($"{incidentPlatIcons} {ServerStatus.incidents[i].name}");
                                             incidentEmbed.WithDescription(incidentValue.ToString());
                                         }
                                         else
@@ -103,7 +103,7 @@ namespace ThothBotCore.Utilities
                                             incidentEmbed.AddField(field =>
                                             {
                                                 field.IsInline = false;
-                                                field.Name = $"{incidentPlatIcons.ToString()} {ServerStatus.incidents[i].name}";
+                                                field.Name = $"{incidentPlatIcons} {ServerStatus.incidents[i].name}";
                                                 field.Value = incidentValue.ToString();
                                             });
                                         }
@@ -192,7 +192,7 @@ namespace ThothBotCore.Utilities
                                                 expectedDtime += $"{expDwntime.Hours} hours";
                                             }
                                         }
-                                        if (expDwntime.Minutes != 0 || expDwntime.Hours != 0)
+                                        if (expDwntime.Minutes != 0)
                                         {
                                             expectedDtime += " and ";
                                             if (expDwntime.Minutes == 1)

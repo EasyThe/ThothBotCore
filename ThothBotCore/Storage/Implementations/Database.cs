@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -443,6 +442,24 @@ namespace ThothBotCore.Storage
             }
         }
 
+        public static async Task<List<PlayerSpecial>> GetAllPlayerSpecials()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<PlayerSpecial>($"SELECT * FROM playersSpecial", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
+        public static async Task<List<ServerConfig>> GetAllGuilds()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                var output = await cnn.QueryAsync<ServerConfig>($"SELECT * FROM serverConfig", new DynamicParameters());
+                return output.ToList();
+            }
+        }
+
         public static List<string> PlayersInDbCount() // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
@@ -492,7 +509,7 @@ namespace ThothBotCore.Storage
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
-                var output = cnn.Query<Gods.God>($"SELECT Name, godIcon_URL, Pantheon, Roles, Title, Type, DomColor, Emoji FROM Gods", new DynamicParameters());
+                var output = cnn.Query<Gods.God>($"SELECT Name, godIcon_URL, Pantheon, Roles, Title, Type, DomColor, Emoji, id FROM Gods", new DynamicParameters());
                 return output.ToList();
             }
         }
@@ -728,6 +745,14 @@ namespace ThothBotCore.Storage
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
             {
                 await cnn.ExecuteAsync($"UPDATE Items SET Emoji = '{emoji}' WHERE DeviceName LIKE '%{itemName}%' AND ItemTier = 3");
+            }
+        }
+
+        public static async Task GetOrCreateCommandsUsageAsync()
+        {
+            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
+            {
+                await cnn.ExecuteAsync($"CREATE  Items SET Emoji = '' WHERE DeviceName LIKE '%%' AND ItemTier = 3");
             }
         }
 

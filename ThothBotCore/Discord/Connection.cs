@@ -47,7 +47,6 @@ namespace ThothBotCore.Discord
         {
             StatusTimer.StartServerStatusTimer();
             GuildsTimer.StartGuildsCountTimer();
-            GuildsTimer.StartHourlyTimer();
 
             return Task.CompletedTask;
         }
@@ -72,7 +71,7 @@ namespace ThothBotCore.Discord
             catch (System.Exception)
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{Constants.FailedToSendJoinedMessage}\n{guild.Name}[{guild.Id}]", 255, 165);
-                await Reporter.SendEmbedError(embed.ToEmbedBuilder());
+                await Reporter.SendEmbedToBotLogsChannel(embed.ToEmbedBuilder());
             }
         }
     }

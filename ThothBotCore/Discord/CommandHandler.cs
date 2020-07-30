@@ -63,7 +63,7 @@ namespace ThothBotCore.Discord
                         await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
                         await Reporter.SendSuccessCommands(context, null);
                     }
-                    if ((result.IsSuccess || !result.IsSuccess) && context.Guild.Id != Constants.SupportServerID && context.Message.Author.Id != Constants.OwnerID)
+                    if ((result.IsSuccess || !result.IsSuccess) && context.Message.Author.Id != Constants.OwnerID)
                     {
                         await Reporter.SendSuccessCommands(context, result);
                     }

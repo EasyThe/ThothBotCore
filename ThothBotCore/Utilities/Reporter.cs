@@ -15,20 +15,8 @@ namespace ThothBotCore.Utilities
         private static SocketTextChannel joinsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567495039622709268);
         private static SocketTextChannel commandsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(569710679796482068);
         private static SocketTextChannel feedbackChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(713183236238344193);
+        private static SocketTextChannel botlogs = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(734987439353102426);
         private static IUser ownerUser = Connection.Client.GetUser(Constants.OwnerID);
-
-        public static async Task SendDMtoOwner(string message)
-        {
-            try
-            {
-                await UserExtensions.SendMessageAsync(ownerUser, message);
-            }
-            catch (Exception ex)
-            {
-
-                await SendError($"Error in SendDMtoOwner\n**Message**: {ex.Message}").ConfigureAwait(false);
-            }
-        }
 
         public static async Task SendJoinedServerEmbedAsync(SocketGuild guild)
         {
@@ -174,11 +162,11 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        public static async Task SendEmbedError(EmbedBuilder embed)
+        public static async Task SendEmbedToBotLogsChannel(EmbedBuilder embed)
         {
             try
             {
-                await reportsChannel.SendMessageAsync(embed: embed.Build());
+                await botlogs.SendMessageAsync(embed: embed.Build());
             }
             catch (Exception ex)
             {
@@ -192,7 +180,7 @@ namespace ThothBotCore.Utilities
             {
                 sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
             }
-            else
+            else if (ex != null && !(ex.Message.ToLowerInvariant().Contains("database")))
             {
                 sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot owner for further assistance.");
                 await SendException(ex, context, errorMessage);

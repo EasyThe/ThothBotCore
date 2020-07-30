@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Models;
@@ -17,14 +16,8 @@ namespace ThothBotCore.Discord
 {
     public class EmbedHandler
     {
-        public static EmbedBuilder ServerStatusEmbed(ServerStatus smiteServerStatus, ServerStatus discordServerStatus)
+        public static async Task<Embed> ServerStatusEmbedAsync(ServerStatus smiteStatus, ServerStatus discordStatus)
         {
-            var foundPC = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant() == "smite pc");
-            var foundXBO = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant() == "smite xbox");
-            var foundPS4 = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite ps4"));
-            var foundSwi = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant().Contains("smite switch"));
-            var foundAPI = smiteServerStatus.components.Find(x => x.name.ToLowerInvariant().Contains("api"));
-
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
             {
@@ -32,71 +25,56 @@ namespace ThothBotCore.Discord
                 author.WithUrl("http://status.hirezstudios.com/");
                 author.WithIconUrl(Constants.botIcon);
             });
-            if (foundPC.status.Contains("operational") &&
-                foundPS4.status.Contains("operational") &&
-                foundXBO.status.Contains("operational") &&
-                foundSwi.status.Contains("operational"))
+            var smiteCat = smiteStatus.components.Find(x => x.id == "542zlqj9nwr6");
+            if (smiteCat.status == "operational")
             {
                 embed.WithColor(new Color(0, 255, 0));
             }
-            else if (smiteServerStatus.incidents.Count >= 1)
+            else if (smiteCat.status == "under_maintenance")
             {
-                for (int i = 0; i < smiteServerStatus.incidents.Count; i++)
-                {
-                    if (smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite"))
-                    {
-                        // Incident color
-                        embed.WithColor(new Color(239, 167, 32));
-                    }
-                }
+                embed.WithColor(new Color(52, 152, 219));
             }
-            else if (smiteServerStatus.scheduled_maintenances.Count >= 1)
+            else
             {
-                for (int i = 0; i < smiteServerStatus.scheduled_maintenances.Count; i++)
-                {
-                    if (smiteServerStatus.scheduled_maintenances[i].name.ToLowerInvariant().Contains("smite"))
-                    {
-                        // Maintenance color
-                        embed.WithColor(new Color(52, 152, 219));
-                    }
-                }
+                // Incident color
+                embed.WithColor(new Color(239, 167, 32));
             }
-            string pcValue = foundPC.status.Contains("_") ? Text.ToTitleCase(foundPC.status.Replace("_", " ")) : Text.ToTitleCase(foundPC.status);
-            embed.AddField(field =>
+
+            foreach (var item in smiteCat.components)
             {
-                field.IsInline = true;
-                field.Name = "<:PC:537746891610259467> " + foundPC.name; // PC
-                field.Value = Text.StatusEmoji(foundPC.status) + pcValue;
-            });
-            string ps4Value = foundPS4.status.Contains("_") ? Text.ToTitleCase(foundPS4.status.Replace("_", " ")) : Text.ToTitleCase(foundPS4.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:PS4:537745670518472714> " + foundPS4.name; // PS4
-                field.Value = Text.StatusEmoji(foundPS4.status) + ps4Value;
-            });
-            string xbValue = foundXBO.status.Contains("_") ? Text.ToTitleCase(foundXBO.status.Replace("_", " ")) : Text.ToTitleCase(foundXBO.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:XB:537749895029850112> " + foundXBO.name; // Xbox
-                field.Value = Text.StatusEmoji(foundXBO.status) + xbValue;
-            });
-            string swValue = foundSwi.status.Contains("_") ? Text.ToTitleCase(foundSwi.status.Replace("_", " ")) : Text.ToTitleCase(foundSwi.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "<:SW:537752006719176714> " + foundSwi.name; // Switch
-                field.Value = Text.StatusEmoji(foundSwi.status) + swValue;
-            });
-            string apiValue = foundAPI.status.Contains("_") ? Text.ToTitleCase(foundAPI.status.Replace("_", " ")) : Text.ToTitleCase(foundAPI.status);
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = foundAPI.name; // Hi-Rez API
-                field.Value = Text.StatusEmoji(foundAPI.status) + apiValue;
-            });
-            var foundDiscAPI = discordServerStatus.components.Find(x => x.name.ToLowerInvariant() == "api");
+                var comp = smiteStatus.components.Find(x => x.id == item);
+                var sb = new StringBuilder();
+
+                if (comp.name.ToLowerInvariant().Contains("pc"))
+                {
+                    sb.Append("<:PC:537746891610259467> ");
+                }
+                else if (comp.name.ToLowerInvariant().Contains("xbox"))
+                {
+                    sb.Append("<:XB:537749895029850112> ");
+                }
+                else if (comp.name.ToLowerInvariant().Contains("ps4"))
+                {
+                    sb.Append("<:PS4:537745670518472714> ");
+                }
+                else if (comp.name.ToLowerInvariant().Contains("switch"))
+                {
+                    sb.Append("<:SW:537752006719176714> ");
+                }
+                else if (comp.name.ToLowerInvariant().Contains("epic"))
+                {
+                    sb.Append("<:egs:705963938340274247> ");
+                }
+                sb.Append(comp.name);
+                embed.AddField(x=>
+                {
+                    x.IsInline = true;
+                    x.Name = sb.ToString();
+                    x.Value = $"{Text.StatusEmoji(comp.status)}" +
+                    $"{(comp.status.Contains("_") ? Text.ToTitleCase(comp.status.Replace("_", " ")) : Text.ToTitleCase(comp.status))}";
+                });
+            }
+            var foundDiscAPI = discordStatus.components.Find(x => x.name.ToLowerInvariant() == "api");
             embed.AddField(field =>
             {
                 field.IsInline = true;
@@ -108,7 +86,7 @@ namespace ThothBotCore.Discord
                 x.Text = $"If you want to be notified for Server Status Updates use !!statusupdates #desired-channel";
             });
 
-            return embed;
+            return await Task.FromResult(embed.Build());
         }
         public static EmbedBuilder StatusIncidentEmbed(ServerStatus serverStatus)
         {
@@ -262,8 +240,8 @@ namespace ThothBotCore.Discord
                         embed.AddField(field =>
                         {
                             field.IsInline = false;
-                            field.Name = $"{platIcon.ToString()}{serverStatus.scheduled_maintenances[i].name}";
-                            field.Value = $"**__Expected downtime: {expectedDtime.ToString()}__**, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue.ToString();
+                            field.Name = $"{platIcon}{serverStatus.scheduled_maintenances[i].name}";
+                            field.Value = $"**__Expected downtime: {expectedDtime}__**, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue.ToString();
                         });
                     }
 
@@ -324,7 +302,7 @@ namespace ThothBotCore.Discord
                             embed.AddField(field =>
                             {
                                 field.IsInline = false;
-                                field.Name = $"{platIcon.ToString()}{serverStatus.scheduled_maintenances[i].name}";
+                                field.Name = $"{platIcon}{serverStatus.scheduled_maintenances[i].name}";
                                 field.Value = $"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})**\n__**Expected downtime: {expectedDtime}**__, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n{serverStatus.scheduled_maintenances[i].incident_updates[j].body}";
                             });
                         }
@@ -425,37 +403,37 @@ namespace ThothBotCore.Discord
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = ($"<:level:529719212017451008>**Level**");
+                field.Name = ($"<:level:529719212017451008>Level");
                 field.Value = ($"{defaultEmoji}{playerStats[0].Level}");
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = ($"<:mastery:529719212076433418>**Mastery Level**");
+                field.Name = ($"<:mastery:529719212076433418>Mastery Level");
                 field.Value = ($"{defaultEmoji}{playerStats[0].MasteryLevel}");
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = ($"<:wp:552579445475508229>**Total Worshipers**");
+                field.Name = ($"<:wp:552579445475508229>Total Worshipers");
                 field.Value = ($"{defaultEmoji}{playerStats[0].Total_Worshippers}");
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $":trophy:**Wins** [{Math.Round(rWinRate, 2)}%]";
+                field.Name = $":trophy:Wins [{Math.Round(rWinRate, 2)}%]";
                 field.Value = $"{defaultEmoji}{playerStats[0].Wins}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $":flag_white:**Losses**";
+                field.Name = $":flag_white:Losses";
                 field.Value = $"{defaultEmoji}{playerStats[0].Losses}";
             });
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $":runner:**Leaves**";
+                field.Name = $":runner:Leaves";
                 field.Value = $"{defaultEmoji}{playerStats[0].Leaves}";
             });
             // Ranked Modes check for PC or Console
@@ -465,7 +443,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**🎮";
+                    field.Name = "<:conquesticon:528673820060418061>Ranked Conquest🎮";
                     field.Value = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedConquestController.Wins}/{playerStats[0].RankedConquestController.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedConquestController.Rank_Stat, 0)}\n" +
@@ -475,7 +453,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:jousticon:528673820018737163>**Ranked Joust**🎮";
+                    field.Name = "<:jousticon:528673820018737163>Ranked Joust🎮";
                     field.Value = $"{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item2}**{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedJoustController.Wins}/{playerStats[0].RankedJoustController.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedJoustController.Rank_Stat, 0)}\n" +
@@ -485,7 +463,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:jousticon:528673820018737163>**Ranked Duel**🎮";
+                    field.Name = "<:jousticon:528673820018737163>Ranked Duel🎮";
                     field.Value = $"{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item2}**{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedDuelController.Wins}/{playerStats[0].RankedDuelController.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedDuelController.Rank_Stat, 0)}\n" +
@@ -499,7 +477,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**";
+                        field.Name = "<:conquesticon:528673820060418061>Ranked Conquest";
                         field.Value = $"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}**\n" +
                         $"{defaultEmoji}W/L: {playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}\n" +
                         $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Conquest, 0)}\n" +
@@ -509,7 +487,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = "<:jousticon:528673820018737163>**Ranked Joust**";
+                        field.Name = "<:jousticon:528673820018737163>Ranked Joust";
                         field.Value = $"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}**\n" +
                         $"{defaultEmoji}W/L: {playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}\n" +
                         $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Joust, 0)}\n" +
@@ -519,7 +497,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = "<:jousticon:528673820018737163>**Ranked Duel**";
+                        field.Name = "<:jousticon:528673820018737163>Ranked Duel";
                         field.Value = $"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}**\n" +
                         $"{defaultEmoji}W/L: {playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}\n" +
                         $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Duel, 0)}\n" +
@@ -534,7 +512,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**";
+                    field.Name = "<:conquesticon:528673820060418061>Ranked Conquest";
                     field.Value = $"{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item2}**{Text.GetRankedConquest(playerStats[0].Tier_Conquest).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedConquest.Wins}/{playerStats[0].RankedConquest.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Conquest, 0)}\n" +
@@ -544,7 +522,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:jousticon:528673820018737163>**Ranked Joust**";
+                    field.Name = "<:jousticon:528673820018737163>Ranked Joust";
                     field.Value = $"{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item2}**{Text.GetRankedJoust(playerStats[0].Tier_Joust).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedJoust.Wins}/{playerStats[0].RankedJoust.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Joust, 0)}\n" +
@@ -554,7 +532,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:jousticon:528673820018737163>**Ranked Duel**";
+                    field.Name = "<:jousticon:528673820018737163>Ranked Duel";
                     field.Value = $"{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item2}**{Text.GetRankedDuel(playerStats[0].Tier_Duel).Item1}**\n" +
                     $"{defaultEmoji}W/L: {playerStats[0].RankedDuel.Wins}/{playerStats[0].RankedDuel.Losses}\n" +
                     $"{defaultEmoji}MMR: {Math.Round(playerStats[0].Rank_Stat_Duel, 0)}\n" +
@@ -568,7 +546,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = "<:conquesticon:528673820060418061>**Ranked Conquest**🎮";
+                        field.Name = "<:conquesticon:528673820060418061>Ranked Conquest🎮";
                         field.Value = $"{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item2}**{Text.GetRankedConquest(playerStats[0].RankedConquestController.Tier).Item1}**\n" +
                         $"{defaultEmoji}W/L: {playerStats[0].RankedConquestController.Wins}/{playerStats[0].RankedConquestController.Losses}\n" +
                         $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedConquestController.Rank_Stat, 0)}\n" +
@@ -578,7 +556,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = "<:jousticon:528673820018737163>**Ranked Joust**🎮";
+                        field.Name = "<:jousticon:528673820018737163>Ranked Joust🎮";
                         field.Value = $"{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item2}**{Text.GetRankedJoust(playerStats[0].RankedJoustController.Tier).Item1}**\n" +
                         $"{defaultEmoji}W/L: {playerStats[0].RankedJoustController.Wins}/{playerStats[0].RankedJoustController.Losses}\n" +
                         $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedJoustController.Rank_Stat, 0)}\n" +
@@ -588,7 +566,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(field =>
                     {
                         field.IsInline = true;
-                        field.Name = "<:jousticon:528673820018737163>**Ranked Duel**🎮";
+                        field.Name = "<:jousticon:528673820018737163>Ranked Duel🎮";
                         field.Value = $"{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item2}**{Text.GetRankedDuel(playerStats[0].RankedDuelController.Tier).Item1}**\n" +
                         $"{defaultEmoji}W/L: {playerStats[0].RankedDuelController.Wins}/{playerStats[0].RankedDuelController.Losses}\n" +
                         $"{defaultEmoji}MMR: {Math.Round(playerStats[0].RankedDuelController.Rank_Stat, 0)}\n" +
@@ -600,7 +578,7 @@ namespace ThothBotCore.Discord
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = $":video_game:**Playing SMITE since**";
+                field.Name = $":video_game:Playing SMITE since";
                 field.Value = $"{defaultEmoji}{(playerStats[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
             });
             string regionValue = playerStats[0].Region switch
@@ -615,13 +593,13 @@ namespace ThothBotCore.Discord
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = ":globe_with_meridians:**Region**";
+                field.Name = ":globe_with_meridians:Region";
                 field.Value = regionValue;
             });
             embed.AddField(x =>
             {
                 x.IsInline = true;
-                x.Name = $":hourglass:**Playtime**";
+                x.Name = $":hourglass:Playtime";
                 x.Value = $"{defaultEmoji}{playerStats[0].HoursPlayed.ToString()} hours";
             });
             // Top Gods
@@ -639,7 +617,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = "<:Gods:567146088985919498>**Top Gods**";
+                    field.Name = "<:Gods:567146088985919498>Top Gods";
                     field.Value = godRanksValue;
                 });
             } 
@@ -650,7 +628,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":crossed_swords:**KDA** [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
+                    field.Name = ($":crossed_swords:KDA [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
                     field.Value = ($":dagger:Kills: {playerAchievements.PlayerKills}\n" +
                     $":skull_crossbones:Deaths: {playerAchievements.Deaths}\n" +
                     $":handshake:Assists: {playerAchievements.AssistedKills}");
@@ -662,17 +640,6 @@ namespace ThothBotCore.Discord
                     .WithText(playerStats[0].Personal_Status_Message)
                     .WithIconUrl(playerStats[0].Avatar_URL == "" ? Constants.botIcon : playerStats[0].Avatar_URL);
             });
-
-            // Saving to the database
-            try
-            {
-                await Database.AddPlayerToDb(playerStats, portal).ConfigureAwait(false);//tuk butnahme nz
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("DB Error: " + ex.Message);
-            }
-
             return embed;
         }
         public static Task<EmbedBuilder> LoadingStats(string username)
@@ -681,6 +648,7 @@ namespace ThothBotCore.Discord
             {
                 Description = $"<a:typing:393848431413559296> Loading {username}..."
             };
+            embed.WithColor(Constants.DefaultBlueColor);
             return Task.FromResult(embed);
         }
         public static Task<EmbedBuilder> HiddenProfileEmbed(string username)
@@ -720,7 +688,7 @@ namespace ThothBotCore.Discord
             {
                 x.IconUrl = Constants.botIcon;
                 x.Name = "Multiple players found";
-            });//<:Hidden:591666971234402320>
+            });
             embed.WithColor(240, 71, 71);
             for (int i = 0; i < players.Count; i++)
             {
@@ -1035,16 +1003,16 @@ namespace ThothBotCore.Discord
             }
             return embed.Build();
         }
-        public static async Task<Embed> BuildWorshipersEmbedAsync(List<GodRanks> ranks, SearchPlayers player)
+        public static async Task<Embed> BuildWorshipersEmbedAsync(List<GodRanks> ranks, PlayerStats player)
         {
             var sb = new StringBuilder();
             var embed = new EmbedBuilder();
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(x =>
             {
-                x.Name = $"{player.Name}'s masteries [{ranks.Count}]";
-                x.IconUrl = Text.GetPortalIconLinksByPortalID(player.portal_id.ToString());
-                x.Url = $"https://smite.guru/profile/{player.player_id}";
+                x.Name = $"{(player.hz_player_name ?? player.hz_gamer_tag)}'s masteries [{ranks.Count}]";
+                x.IconUrl = Text.GetPortalIconLinksByPortalName(player.Platform);
+                x.Url = $"https://smite.guru/profile/{ranks[0].player_id}";
             });
             int count = 0;
             for (int i = 0; i < ranks.Count; i++)

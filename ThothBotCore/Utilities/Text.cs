@@ -22,6 +22,10 @@ namespace ThothBotCore.Utilities
         {
             return dateTime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture);
         }
+        public static string InvariantDefaultDate(DateTime dateTime)
+        {
+            return dateTime.ToString(CultureInfo.InvariantCulture);
+        }
         public static string UserNotFound(string username)
         {
             return $"<:X_:579151621502795777>*{username}* is not found!";
@@ -29,6 +33,13 @@ namespace ThothBotCore.Utilities
         public static string UserIsHidden(string username)
         {
             return $"<:Hidden:591666971234402320>*{username}* is hidden!";
+        }
+        public static void WriteLine(string message, ConsoleColor backColor, ConsoleColor textColor)
+        {
+            Console.BackgroundColor = backColor;
+            Console.ForegroundColor = textColor;
+            Console.WriteLine(message);
+            Console.ResetColor();
         }
         public static string AbbreviationRegions(string region)
         {
@@ -229,7 +240,7 @@ namespace ThothBotCore.Utilities
         {
             return portal switch
             {
-                "HiRez" => 1,
+                "Hirez" => 1,
                 "Steam" => 5,
                 "PSN" => 9,
                 "XboxLive" => 10,
@@ -257,7 +268,7 @@ namespace ThothBotCore.Utilities
         {
             return portal switch
             {
-                "HiRez" => "https://i.imgur.com/0TWCr6X.png",// PC
+                "Hirez" => "https://i.imgur.com/0TWCr6X.png",// PC
                 "Steam" => "https://cdn.discordapp.com/emojis/581485150043373578.png",// Steam
                 "PSN" => "https://cdn.discordapp.com/emojis/537745670518472714.png",// PS4
                 "XboxLive" => "https://cdn.discordapp.com/emojis/537749895029850112.png",// Xbox

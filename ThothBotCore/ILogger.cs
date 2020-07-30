@@ -1,7 +1,8 @@
-﻿namespace ThothBotCore
+﻿
+namespace ThothBotCore
 {
     public interface ILogger
     {
-        void Log(string message);
+        void Log(string severity, string message);
     }
 }
