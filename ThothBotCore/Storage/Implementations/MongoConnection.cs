@@ -12,7 +12,7 @@ namespace ThothBotCore.Storage.Implementations
         {
             if (client == null)
             {
-                client = new MongoClient("mongodb+srv://ThothBot:o7y78ipHV3eOPu3S@thothcluster-iveqi.gcp.mongodb.net/thothbot?retryWrites=true&w=majority");
+                client = new MongoClient("mongoURL");
             }
             if (database == null)
             {
