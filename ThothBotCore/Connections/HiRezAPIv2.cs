@@ -82,13 +82,16 @@ namespace ThothBotCore.Connections
             string signature = await GetMD5Hash(Credentials.botConfig.devId + endpoint + Credentials.botConfig.authKey + timestamp);
 
             // Remove / or \
-            if (value.EndsWith('/'))
+            if (value.Contains("\\") || value.Contains("/"))
             {
-                value = value.Replace('/', ' ');
-            }
-            else if (value.EndsWith('\\'))
-            {
-                value = value.Replace('\\', ' ');
+                if (value.Contains("\\"))
+                {
+                    value = value.Replace("\\", String.Empty);
+                }
+                if (value.Contains("/"))
+                {
+                    value = value.Replace("/", String.Empty);
+                }
             }
 
             var handler = new HttpClientHandler();
@@ -116,6 +119,12 @@ namespace ThothBotCore.Connections
         public async Task<List<Player.PlayerStats>> GetPlayerAsync(string value)
         {
             string json = await TestAndCallAsync("getplayer", value);
+            if (json == null)
+            {
+                var error = new List<Player.PlayerStats>();
+                //error[0].ret_msg =   off nz brat tva izobshto ne iskam da go mislq v momenta lol 
+                return error;
+            }
             return JsonConvert.DeserializeObject<List<Player.PlayerStats>>(json);
         }
     }

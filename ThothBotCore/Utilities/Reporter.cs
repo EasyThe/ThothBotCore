@@ -112,13 +112,12 @@ namespace ThothBotCore.Utilities
                 }
                 else
                 {
-                    embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 254, 0, 0);
+                    embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 254);
                 }
                 await commandsChannel.SendMessageAsync(embed: embed);
             }
             catch (Exception ex)
             {
-
                 await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
             }
         }
@@ -142,7 +141,7 @@ namespace ThothBotCore.Utilities
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
-                    $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 254, 0, 0);
+                    $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 254);
                 await reportsChannel.SendMessageAsync(embed: embed);
             }
             catch (Exception exc)

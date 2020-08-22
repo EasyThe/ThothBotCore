@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using System.Threading.Tasks;
 using static ThothBotCore.Connections.Models.Player;
+using ThothBotCore.Discord.Entities;
 
 namespace ThothBotCore.Storage.Implementations
 {
@@ -12,7 +13,7 @@ namespace ThothBotCore.Storage.Implementations
         {
             if (client == null)
             {
-                client = new MongoClient("mongoURL");
+                client = new MongoClient(Credentials.botConfig.MongoDbURL);
             }
             if (database == null)
             {

@@ -1335,7 +1335,7 @@ namespace ThothBotCore.Modules
                         incominghotfix.AppendLine($"🔹[{item.name}]({item.shortUrl})");
                     }
                     // Fixed in LIVE
-                    if (item.idList == "5c7e9e5e30dbfd27cb7c4442" && livecount != 10)
+                    if (item.idList == "5c7e9e5e30dbfd27cb7c4442" && livecount != 7)
                     {
                         livecount++;
                         alreadyFixedInLIVE.AppendLine($"🔹[{item.name}]({item.shortUrl})");
@@ -1361,7 +1361,7 @@ namespace ThothBotCore.Modules
                 }
 
                 // Already in LIVE
-                if (alreadyFixedInLIVE.ToString() != "")
+                if (alreadyFixedInLIVE.Length != 0)
                 {
                     embed.AddField(x =>
                     {
@@ -2239,7 +2239,7 @@ namespace ThothBotCore.Modules
                 }
             }
 
-            var realSearchPlayers = new List<SearchPlayers>();
+            var actualPlayers = new List<SearchPlayers>();
             // If the player is not linked
             if (handler.playerID == 0)
             {
@@ -2252,33 +2252,33 @@ namespace ThothBotCore.Modules
                     {
                         if (player.Name.ToLowerInvariant() == input.ToLowerInvariant())
                         {
-                            realSearchPlayers.Add(player);
+                            actualPlayers.Add(player);
                         }
                     }
                 }
                 // No players
-                if (realSearchPlayers.Count == 0)
+                if (actualPlayers.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(input);
                     await context.Channel.SendMessageAsync(embed: embed.Build());
                     return handler;
                 }
                 // Only one player
-                else if (!(realSearchPlayers.Count > 1))
+                else if (!(actualPlayers.Count > 1))
                 {
-                    if (realSearchPlayers[0].privacy_flag != "n")
+                    if (actualPlayers[0].privacy_flag != "n")
                     {
                         var embed = await EmbedHandler.HiddenProfileEmbed(input);
                         await context.Channel.SendMessageAsync(embed: embed.Build());
                         return handler;
                     }
-                    handler.playerID = realSearchPlayers[0].player_id;
-                    handler.playerName = realSearchPlayers[0].Name;
+                    handler.playerID = actualPlayers[0].player_id;
+                    handler.playerName = actualPlayers[0].Name;
                 }
                 // Multiple players
                 else
                 {
-                    var result = await MultiplePlayersHandler(realSearchPlayers, Context);
+                    var result = await MultiplePlayersHandler(actualPlayers, Context);
                     if (result.searchPlayers != null && result.searchPlayers.player_id == 0)
                     {
                         var embed = await EmbedHandler.ProfileNotFoundEmbed(input);
@@ -2306,7 +2306,8 @@ namespace ThothBotCore.Modules
             if (searchPlayers.Count > 20)
             {
                 var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"There are more than 20 accounts({searchPlayers.Count}) " +
-                    $"with the username **{searchPlayers[0].Name}**. Please [contact]({Constants.SupportServerInvite}) the bot owner " +
+                    $"with the username **{searchPlayers[0].Name}**. Due to Discord limits, I cannot fit all of them in one message." +
+                    $" Please [contact]({Constants.SupportServerInvite}) the bot owner " +
                     $"for further assistance.", 107, 70, 147);
                 await context.Channel.SendMessageAsync(embed: emb);
                 return multiplePlayersStruct;
@@ -2337,28 +2338,7 @@ namespace ThothBotCore.Modules
                 return multiplePlayersStruct;
             }
             int responseNum = Int32.Parse(response.Content);
-            --responseNum;
-            if (!(responseNum > searchPlayers.Count))
-            {
-                if (searchPlayers[responseNum].privacy_flag == "y")
-                {
-                    embed = await EmbedHandler.HiddenProfileEmbed(searchPlayers[responseNum].Name);
-                    await message.ModifyAsync(x =>
-                    {
-                        x.Embed = embed.Build();
-                    });
-                    return multiplePlayersStruct;
-                }
-                embed = await EmbedHandler.LoadingStats(Text.GetPortalIcon(searchPlayers[responseNum].portal_id.ToString()) + searchPlayers[responseNum].Name);
-                await message.ModifyAsync(x =>
-                {
-                    x.Embed = embed.Build();
-                });
-                multiplePlayersStruct.searchPlayers = searchPlayers[responseNum];
-                multiplePlayersStruct.userMessage = message;
-                return multiplePlayersStruct;
-            }
-            else
+            if (responseNum == 0 || --responseNum > searchPlayers.Count)
             {
                 await ReplyAsync("Invalid number");
                 embed.WithFooter(x =>
@@ -2371,6 +2351,25 @@ namespace ThothBotCore.Modules
                 });
                 return multiplePlayersStruct;
             }
+            // moje toq responseNum da ne trq da go minusvame, ne sum siguren...
+            --responseNum;
+            if (searchPlayers[responseNum].privacy_flag == "y")
+            {
+                embed = await EmbedHandler.HiddenProfileEmbed(searchPlayers[responseNum].Name);
+                await message.ModifyAsync(x =>
+                {
+                    x.Embed = embed.Build();
+                });
+                return multiplePlayersStruct;
+            }
+            embed = await EmbedHandler.LoadingStats(Text.GetPortalIcon(searchPlayers[responseNum].portal_id.ToString()) + searchPlayers[responseNum].Name);
+            await message.ModifyAsync(x =>
+            {
+                x.Embed = embed.Build();
+            });
+            multiplePlayersStruct.searchPlayers = searchPlayers[responseNum];
+            multiplePlayersStruct.userMessage = message;
+            return multiplePlayersStruct;
         }
         public struct MultiplePlayersStruct
         {

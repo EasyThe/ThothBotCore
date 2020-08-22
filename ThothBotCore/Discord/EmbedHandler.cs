@@ -321,7 +321,7 @@ namespace ThothBotCore.Discord
             var embed = new EmbedBuilder();
             int portal = Text.GetPortalNumber(playerStats[0].Platform);
 
-            string defaultEmoji = ""; //🔹 <:gems:443919192748589087>
+            string defaultEmoji = ""; 
 
             var rPlayerName = new StringBuilder();
             string[] clanName = { };

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using Discord.WebSocket;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using System;
@@ -664,6 +665,40 @@ namespace ThothBotCore.Modules
             Text.WriteLine("Specials: " + elapsedTime, ConsoleColor.Black, ConsoleColor.White);
 
             Text.WriteLine("COMPLETED!", ConsoleColor.Green, ConsoleColor.Black);
+        }
+
+        [Command("cleansqlite", RunMode = RunMode.Async)]
+        public async Task ClearMissingGuildsFromSqliteDBCommand()
+        {
+            var db = await Database.GetAllGuilds();
+            SocketGuild nzvrat = null;
+            foreach (var guild in db)
+            {
+                try
+                {
+                    nzvrat = Connection.Client.Guilds.Single(x => x.Id == guild.serverID);
+                }
+                catch (Exception ex)
+                {
+                    await ReplyAsync($"{nzvrat.Id} {nzvrat.Name}");
+                }
+            }
+            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response != null || response.Content.Contains("yes"))
+            {
+                foreach (var guild in db)
+                {
+                    try
+                    {
+                        nzvrat = Connection.Client.Guilds.Single(x => x.Id == guild.serverID);
+                    }
+                    catch (Exception ex)
+                    {
+                        await ReplyAsync($"{nzvrat.Id} {nzvrat.Name}");
+                        await Database.DeleteServerConfig(guild.serverID);
+                    }
+                }
+            }
         }
 
 

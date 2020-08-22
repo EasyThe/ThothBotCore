@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
+using ThothBotCore.Discord;
+using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.Player;
@@ -90,8 +92,8 @@ namespace ThothBotCore.Storage
                 {
                     serverName = serverName.Replace("\"", "\"\"");
                 }
-                await cnn.ExecuteAsync($"INSERT OR IGNORE INTO serverConfig(serverID, serverName) " +
-                    $"VALUES({serverID}, \"{serverName}\")");
+                await cnn.ExecuteAsync($"INSERT OR IGNORE INTO serverConfig(serverID, prefix, serverName) " +
+                    $"VALUES({serverID}, \"{Credentials.botConfig.prefix}\", \"{serverName}\")");
             }
         }
 
