@@ -4,7 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ThothBotCore.Storage;
+using ThothBotCore.Models;
+using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Utilities
 {
@@ -32,7 +33,7 @@ namespace ThothBotCore.Utilities
         }
         public static string UserIsHidden(string username)
         {
-            return $"<:Hidden:591666971234402320>*{username}* is hidden!";
+            return $"<:Hidden:591666971234402320>*{username}*'s account is hidden!";
         }
         public static void WriteLine(string message, ConsoleColor backColor, ConsoleColor textColor)
         {
@@ -130,47 +131,71 @@ namespace ThothBotCore.Utilities
                 _ => "🤷‍♂️",
             };
         }
-        public static async Task<string> CheckSpecialsForPlayer(string id)
+        public static async Task<string> CheckSpecialsForPlayer(int id, bool emoteOnly)
         {
-            var playerSpecial = await Database.GetPlayerSpecialsByPlayerID(id);
-            if (playerSpecial.Count != 0)
+            PlayerSpecial playerSpecial = await MongoConnection.GetPlayerSpecialsByPlayerIdAsync(id);
+            if (playerSpecial != null)
             {
-                var specialsResult = new StringBuilder();
-                if (playerSpecial[0].pro_bool != 0)
+                if (playerSpecial.special != "" || playerSpecial.pro_bool || playerSpecial.streamer_bool || playerSpecial.special != null)
                 {
-                    specialsResult.Append(":military_medal: Pro Player");
-                }
-                if (playerSpecial[0].streamer_bool != 0)
-                {
-                    if (specialsResult.Length != 0)
+                    var specialsResult = new StringBuilder();
+                    if (playerSpecial.pro_bool)
                     {
-                        specialsResult.Append("\n");
-                    }
-                    if (playerSpecial[0].streamer_link != null)
-                    {
-                        if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("twitch"))
+                        var badge = await MongoConnection.GetBadgeAsync("pro");
+                        if (emoteOnly)
                         {
-                            specialsResult.Append($"<:Twitch:579125715874742280> Streamer - {playerSpecial[0].streamer_link}");
-                        }
-                        else if (playerSpecial[0].streamer_link.ToLowerInvariant().Contains("mixer"))
-                        {
-                            specialsResult.Append($"<:Mixer:595036189224992771> Streamer - {playerSpecial[0].streamer_link}");
+                            specialsResult.Append(badge.Emote);
                         }
                         else
                         {
-                            specialsResult.Append("<:Twitch:579125715874742280> Streamer");
+                            specialsResult.Append($"{badge.Emote} {badge.Title}");
                         }
                     }
+                    if (playerSpecial.streamer_bool)
+                    {
+                        if (specialsResult.Length != 0)
+                        {
+                            if (!emoteOnly)
+                            {
+                                specialsResult.Append("\n");
+                            }
+                        }
+                        var badge = await MongoConnection.GetBadgeAsync("streamer");
+                        if (emoteOnly)
+                        {
+                            specialsResult.Append(badge.Emote);
+                        }
+                        else
+                        {
+                            specialsResult.Append($"{badge.Emote} {badge.Title}");
+                            if (playerSpecial.streamer_link != null)
+                            {
+                                specialsResult.Append($" {playerSpecial.streamer_link}");
+                            }
+                        }
+                    }
+                    // Check specials
+                    if (playerSpecial.special != "")
+                    {
+                        if (specialsResult.Length != 0)
+                        {
+                            if (!emoteOnly)
+                            {
+                                specialsResult.Append("\n");
+                            }
+                        }
+                        var badge = await MongoConnection.GetBadgeAsync(playerSpecial.special);
+                        if (emoteOnly)
+                        {
+                            specialsResult.Append(badge.Emote);
+                        }
+                        else
+                        {
+                            specialsResult.Append($"{badge.Emote} {badge.Title}");
+                        }
+                    }
+                    return specialsResult.ToString();
                 }
-                if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("dev"))
-                {
-                    specialsResult.Append("<:verified_developer:712733195384127588> Thoth Dev");
-                }
-                if (playerSpecial[0].special != null && playerSpecial[0].special.Contains("vulpis"))
-                {
-                    specialsResult.Append($"{Constants.VulpisLogoEmote} Vulpis Esports Owner");
-                }
-                return specialsResult.ToString();
             }
             return "";
         }

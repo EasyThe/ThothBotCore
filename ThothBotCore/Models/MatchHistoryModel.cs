@@ -1,6 +1,4 @@
 ﻿
-using System;
-
 namespace ThothBotCore.Models
 {
     public class MatchHistoryModel

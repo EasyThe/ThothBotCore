@@ -61,7 +61,7 @@ namespace ThothBotCore.Modules
 
         [Command("botstats", true, RunMode = RunMode.Async)]
         [Summary("Bot statistics, invite link, support server etc.")]
-        [Alias("bi", "botinfo", "about", "info")]
+        [Alias("bi", "botinfo", "about", "info", "invite")]
         public async Task BotInfoCommand()
         {
             int totalUsers = 0;
@@ -219,6 +219,7 @@ namespace ThothBotCore.Modules
 
             var embed = new EmbedBuilder();
             embed.Title = "Latest Update of ThothBot";
+            embed.WithColor(new Color(169,11,212));
             foreach (var item in messages)
             {
                 embed.Description = item.Content;

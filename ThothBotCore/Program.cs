@@ -1,6 +1,7 @@
 ﻿using ThothBotCore.Discord;
 using System;
 using System.Threading.Tasks;
+using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore
 {

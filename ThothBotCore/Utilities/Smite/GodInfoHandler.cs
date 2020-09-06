@@ -6,6 +6,6 @@ namespace ThothBotCore.Utilities.Smite
 {
     public static class GodInfoHandler
     {
-
+        // to do
     }
 }

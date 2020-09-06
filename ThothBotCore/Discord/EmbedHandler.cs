@@ -364,7 +364,7 @@ namespace ThothBotCore.Discord
                     .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
                     .WithIconUrl(Text.GetPortalIconLinksByPortalName(playerStats[0].Platform));
             });
-            string embedTitle = await Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId.ToString());
+            string embedTitle = await Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId, false);
             embed.WithTitle(embedTitle);
             if (playerStatus[0].status == 0)
             {
@@ -375,7 +375,10 @@ namespace ThothBotCore.Discord
             else
             {
                 defaultEmoji = "🔹"; // 🔹 <:blank:570291209906552848>
-                embed.WithColor(Constants.DefaultBlueColor);
+                if (playerStatus[0].status != 5)
+                {
+                    embed.WithColor(Constants.DefaultBlueColor);
+                }
                 if (playerStatus[0].Match != 0)
                 {
                     var matchPlayerDetails = JsonConvert.DeserializeObject<List<PlayerMatchDetails>>(matchjson);
@@ -674,7 +677,7 @@ namespace ThothBotCore.Discord
             {
                 Description = description
             };
-            if (r != 0 || g != 00 || b != 0)
+            if (r != 0 || g != 0 || b != 0)
             {
                 embed.WithColor(new Color(r, g, b));
             }
@@ -692,7 +695,7 @@ namespace ThothBotCore.Discord
             embed.WithColor(240, 71, 71);
             for (int i = 0; i < players.Count; i++)
             {
-                string specialscheck = await Text.CheckSpecialsForPlayer(players[i].player_id.ToString());
+                string specialscheck = await Text.CheckSpecialsForPlayer(players[i].player_id, true);
                 sb.Append($"{i+1}. {players[i].Name} {Text.GetPortalIcon(players[i].portal_id.ToString())} " +
                     $"{specialscheck}" +
                     $"{(players[i].privacy_flag == "y" ? "**Hidden Profile** <:Hidden:591666971234402320>" : "")}\n");
@@ -991,7 +994,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(x =>
                     {
                         x.IsInline = false;
-                        x.Name = $"{godemoji} **{matchHistory[i].Win_Status}**  {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} [{matchHistory[i].Match}]";
+                        x.Name = $"{godemoji} `{matchHistory[i].Win_Status}` {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} `[{matchHistory[i].Match}]`";
                         x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | 🗡Damage: {matchHistory[i].Damage}";
                     });
                 }

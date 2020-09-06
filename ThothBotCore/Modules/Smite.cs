@@ -32,7 +32,6 @@ namespace ThothBotCore.Modules
         HiRezAPI hirezAPI = new HiRezAPI();
         HiRezAPIv2 APIv2 = new HiRezAPIv2();
         TrelloAPI trelloAPI = new TrelloAPI();
-        DominantColor domColor = new DominantColor();
         private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 
         [Command("stats", true, RunMode = RunMode.Async)]
@@ -163,7 +162,7 @@ namespace ThothBotCore.Modules
                 try
                 {
                     var getPlayer = JsonConvert.DeserializeObject<List<PlayerStats>>(getPlayerJson);
-                    await MongoConnection.SavePlayer(getPlayer[0]).ConfigureAwait(false);
+                    await MongoConnection.SavePlayerAsync(getPlayer[0]).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -228,510 +227,6 @@ namespace ThothBotCore.Modules
             embed.WithDescription($"Total Matches: {allmatchescount}\n" +
                                   $"Total Minutes: {totalminutes}");
             await ReplyAsync(embed: embed.Build());
-        }
-
-        [Command("istats")]
-        [Alias("istat", "ipc", "ist", "istata", "ист", "истатс")]
-        [RequireOwner] // vremenno
-        public async Task ImageStats([Remainder] string username)
-        {
-            string json = await hirezAPI.GetPlayer(username);
-            if (json == "[]")
-            {
-                await Context.Channel.SendMessageAsync($":exclamation:*{Text.ToTitleCase(username)}* is hidden or not found!");
-            }
-            else
-            {
-                await Context.Channel.TriggerTypingAsync();
-
-                List<PlayerStats> playerStats = JsonConvert.DeserializeObject<List<PlayerStats>>(json);
-
-                string rPlayerName = "";
-                string rTeamName = "";
-
-                if (playerStats[0].Name.Contains("]"))
-                {
-                    string[] splitName = playerStats[0].Name.Split(']');
-                    rPlayerName = splitName[1];
-                    if (playerStats[0].hz_player_name != null)
-                    {
-                        rPlayerName = playerStats[0].hz_player_name;
-                        rTeamName = splitName[0] + "]" + playerStats[0].Team_Name;
-                    }
-                    else
-                    {
-                        rPlayerName = playerStats[0].hz_gamer_tag;
-                        rTeamName = splitName[0] + "]" + playerStats[0].Team_Name;
-                    }
-                }
-                else
-                {
-                    if (playerStats[0].hz_player_name != null)
-                    {
-                        rPlayerName = playerStats[0].hz_player_name;
-                    }
-                    else
-                    {
-                        rPlayerName = playerStats[0].hz_gamer_tag;
-                    }
-                }
-                int rPlayerLevel = playerStats[0].Level;
-                int rPlayerWins = playerStats[0].Wins;
-                int rPlayerLosses = playerStats[0].Losses;
-                string rPlayerRegion = playerStats[0].Region;
-                int rPlayerLeaves = playerStats[0].Leaves;
-                int rPlayerMasteryLevel = playerStats[0].MasteryLevel;
-                int rTotalWorsh = playerStats[0].Total_Worshippers;
-                string rPlayerStatus = playerStats[0].Personal_Status_Message;
-                string rPlayerCreated = playerStats[0].Created_Datetime;
-                string rHoursPlayed = playerStats[0].HoursPlayed.ToString() + " hours";
-                double rWinRate = playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
-                string rAvatarURL = playerStats[0].Avatar_URL;
-                string rAvatarBorderURL = "";
-                string rConquestTier = "";
-                string rConquestTierImg = "";
-                string rJoustTier = "";
-                string rJoustTierImg = "";
-                string rDuelTier = "";
-                string rDuelTierImg = "";
-
-                switch (playerStats[0].Tier_Conquest)
-                {
-                    case 0:
-                        rConquestTier = "Qualifying";
-                        rConquestTierImg = "https://i.imgur.com/lgtkkrX.png";
-                        break;
-                    case 1:
-                        rConquestTier = "Bronze V";
-                        rConquestTierImg = "https://i.imgur.com/MRHZNi3.png";
-                        break;
-                    case 2:
-                        rConquestTier = "Bronze IV";
-                        rConquestTierImg = "https://i.imgur.com/MRHZNi3.png";
-                        break;
-                    case 3:
-                        rConquestTier = "Bronze III";
-                        rConquestTierImg = "https://i.imgur.com/MRHZNi3.png";
-                        break;
-                    case 4:
-                        rConquestTier = "Bronze II";
-                        rConquestTierImg = "https://i.imgur.com/MRHZNi3.png";
-                        break;
-                    case 5:
-                        rConquestTier = "Bronze I";
-                        rConquestTierImg = "https://i.imgur.com/MRHZNi3.png";
-                        break;
-                    case 6:
-                        rConquestTier = "Silver V";
-                        rConquestTierImg = "https://i.imgur.com/UqcijNl.png";
-                        break;
-                    case 7:
-                        rConquestTier = "Silver IV";
-                        rConquestTierImg = "https://i.imgur.com/UqcijNl.png";
-                        break;
-                    case 8:
-                        rConquestTier = "Silver II";
-                        rConquestTierImg = "https://i.imgur.com/UqcijNl.png";
-                        break;
-                    case 9:
-                        rConquestTier = "Silver II";
-                        rConquestTierImg = "https://i.imgur.com/UqcijNl.png";
-                        break;
-                    case 10:
-                        rConquestTier = "Silver I";
-                        rConquestTierImg = "https://i.imgur.com/UqcijNl.png";
-                        break;
-                    case 11:
-                        rConquestTier = "Gold V";
-                        rConquestTierImg = "https://i.imgur.com/ZthzUZV.png";
-                        break;
-                    case 12:
-                        rConquestTier = "Gold IV";
-                        rConquestTierImg = "https://i.imgur.com/ZthzUZV.png";
-                        break;
-                    case 13:
-                        rConquestTier = "Gold III";
-                        rConquestTierImg = "https://i.imgur.com/ZthzUZV.png";
-                        break;
-                    case 14:
-                        rConquestTier = "Gold II";
-                        rConquestTierImg = "https://i.imgur.com/ZthzUZV.png";
-                        break;
-                    case 15:
-                        rConquestTier = "Gold I";
-                        rConquestTierImg = "https://i.imgur.com/ZthzUZV.png";
-                        break;
-                    case 16:
-                        rConquestTier = "Platinum V";
-                        rConquestTierImg = "https://i.imgur.com/WN3bMu8.png";
-                        break;
-                    case 17:
-                        rConquestTier = "Platinum IV";
-                        rConquestTierImg = "https://i.imgur.com/WN3bMu8.png";
-                        break;
-                    case 18:
-                        rConquestTier = "Platinum III";
-                        rConquestTierImg = "https://i.imgur.com/WN3bMu8.png";
-                        break;
-                    case 19:
-                        rConquestTier = "Platinum II";
-                        rConquestTierImg = "https://i.imgur.com/WN3bMu8.png";
-                        break;
-                    case 20:
-                        rConquestTier = "Platinum I";
-                        rConquestTierImg = "https://i.imgur.com/WN3bMu8.png";
-                        break;
-                    case 21:
-                        rConquestTier = "Diamond V";
-                        rConquestTierImg = "https://i.imgur.com/FtEARpH.png";
-                        break;
-                    case 22:
-                        rConquestTier = "Diamond IV";
-                        rConquestTierImg = "https://i.imgur.com/FtEARpH.png";
-                        break;
-                    case 23:
-                        rConquestTier = "Diamond III";
-                        rConquestTierImg = "https://i.imgur.com/FtEARpH.png";
-                        break;
-                    case 24:
-                        rConquestTier = "Diamond II";
-                        rConquestTierImg = "https://i.imgur.com/FtEARpH.png";
-                        break;
-                    case 25:
-                        rConquestTier = "Diamond I";
-                        rConquestTierImg = "https://i.imgur.com/FtEARpH.png";
-                        break;
-                    case 26:
-                        rConquestTier = "Masters";
-                        rConquestTierImg = "https://i.imgur.com/ojNo3yw.png";
-                        break;
-                    case 27:
-                        rConquestTier = "Grandmaster";
-                        rConquestTierImg = "https://i.imgur.com/MOPNkd0.png";
-                        break;
-                }
-
-                switch (playerStats[0].Tier_Joust)
-                {
-                    case 0:
-                        rJoustTier = "Qualifying";
-                        rJoustTierImg = "https://i.imgur.com/lgtkkrX.png";
-                        break;
-                    case 1:
-                        rJoustTier = "Bronze V";
-                        rJoustTierImg = "https://i.imgur.com/btuvteO.png";
-                        break;
-                    case 2:
-                        rJoustTier = "Bronze IV";
-                        rJoustTierImg = "https://i.imgur.com/btuvteO.png";
-                        break;
-                    case 3:
-                        rJoustTier = "Bronze III";
-                        rJoustTierImg = "https://i.imgur.com/btuvteO.png";
-                        break;
-                    case 4:
-                        rJoustTier = "Bronze II";
-                        rJoustTierImg = "https://i.imgur.com/btuvteO.png";
-                        break;
-                    case 5:
-                        rJoustTier = "Bronze I";
-                        rJoustTierImg = "https://i.imgur.com/btuvteO.png";
-                        break;
-                    case 6:
-                        rJoustTier = "Silver V";
-                        rJoustTierImg = "https://i.imgur.com/wfVO4If.png";
-                        break;
-                    case 7:
-                        rJoustTier = "Silver IV";
-                        rJoustTierImg = "https://i.imgur.com/wfVO4If.png";
-                        break;
-                    case 8:
-                        rJoustTier = "Silver II";
-                        rJoustTierImg = "https://i.imgur.com/wfVO4If.png";
-                        break;
-                    case 9:
-                        rJoustTier = "Silver II";
-                        rJoustTierImg = "https://i.imgur.com/wfVO4If.png";
-                        break;
-                    case 10:
-                        rJoustTier = "Silver I";
-                        rJoustTierImg = "https://i.imgur.com/wfVO4If.png";
-                        break;
-                    case 11:
-                        rJoustTier = "Gold V";
-                        rJoustTierImg = "https://i.imgur.com/1g3nDnO.png";
-                        break;
-                    case 12:
-                        rJoustTier = "Gold IV";
-                        rJoustTierImg = "https://i.imgur.com/1g3nDnO.png";
-                        break;
-                    case 13:
-                        rJoustTier = "Gold III";
-                        rJoustTierImg = "https://i.imgur.com/1g3nDnO.png";
-                        break;
-                    case 14:
-                        rJoustTier = "Gold II";
-                        rJoustTierImg = "https://i.imgur.com/1g3nDnO.png";
-                        break;
-                    case 15:
-                        rJoustTier = "Gold I";
-                        rJoustTierImg = "https://i.imgur.com/1g3nDnO.png";
-                        break;
-                    case 16:
-                        rJoustTier = "Platinum V";
-                        rJoustTierImg = "https://i.imgur.com/vXOdpiK.png";
-                        break;
-                    case 17:
-                        rJoustTier = "Platinum IV";
-                        rJoustTierImg = "https://i.imgur.com/vXOdpiK.png";
-                        break;
-                    case 18:
-                        rJoustTier = "Platinum III";
-                        rJoustTierImg = "https://i.imgur.com/vXOdpiK.png";
-                        break;
-                    case 19:
-                        rJoustTier = "Platinum II";
-                        rJoustTierImg = "https://i.imgur.com/vXOdpiK.png";
-                        break;
-                    case 20:
-                        rJoustTier = "Platinum I";
-                        rJoustTierImg = "https://i.imgur.com/vXOdpiK.png";
-                        break;
-                    case 21:
-                        rJoustTier = "Diamond V";
-                        rJoustTierImg = "https://i.imgur.com/ZelrinZ.png";
-                        break;
-                    case 22:
-                        rJoustTier = "Diamond IV";
-                        rJoustTierImg = "https://i.imgur.com/ZelrinZ.png";
-                        break;
-                    case 23:
-                        rJoustTier = "Diamond III";
-                        rJoustTierImg = "https://i.imgur.com/ZelrinZ.png";
-                        break;
-                    case 24:
-                        rJoustTier = "Diamond II";
-                        rJoustTierImg = "https://i.imgur.com/ZelrinZ.png";
-                        break;
-                    case 25:
-                        rJoustTier = "Diamond I";
-                        rJoustTierImg = "https://i.imgur.com/ZelrinZ.png";
-                        break;
-                    case 26:
-                        rJoustTier = "Masters";
-                        rJoustTierImg = "https://i.imgur.com/d9TRRg7.png";
-                        break;
-                    case 27:
-                        rJoustTier = "Grandmaster";
-                        rJoustTierImg = "https://i.imgur.com/dDrGirx.png";
-                        break;
-                }
-
-                switch (playerStats[0].Tier_Duel)
-                {
-                    case 0:
-                        rDuelTier = "Qualifying";
-                        rDuelTierImg = "https://i.imgur.com/lgtkkrX.png";
-                        break;
-                    case 1:
-                        rDuelTier = "Bronze V";
-                        rDuelTierImg = "https://i.imgur.com/zinPtsM.png";
-                        break;
-                    case 2:
-                        rDuelTier = "Bronze IV";
-                        rDuelTierImg = "https://i.imgur.com/zinPtsM.png";
-                        break;
-                    case 3:
-                        rDuelTier = "Bronze III";
-                        rDuelTierImg = "https://i.imgur.com/zinPtsM.png";
-                        break;
-                    case 4:
-                        rDuelTier = "Bronze II";
-                        rDuelTierImg = "https://i.imgur.com/zinPtsM.png";
-                        break;
-                    case 5:
-                        rDuelTier = "Bronze I";
-                        rDuelTierImg = "https://i.imgur.com/zinPtsM.png";
-                        break;
-                    case 6:
-                        rDuelTier = "Silver V";
-                        rDuelTierImg = "https://i.imgur.com/oC2wFN2.png";
-                        break;
-                    case 7:
-                        rDuelTier = "Silver IV";
-                        rDuelTierImg = "https://i.imgur.com/oC2wFN2.png";
-                        break;
-                    case 8:
-                        rDuelTier = "Silver II";
-                        rDuelTierImg = "https://i.imgur.com/oC2wFN2.png";
-                        break;
-                    case 9:
-                        rDuelTier = "Silver II";
-                        rDuelTierImg = "https://i.imgur.com/oC2wFN2.png";
-                        break;
-                    case 10:
-                        rDuelTier = "Silver I";
-                        rDuelTierImg = "https://i.imgur.com/oC2wFN2.png";
-                        break;
-                    case 11:
-                        rDuelTier = "Gold V";
-                        rDuelTierImg = "https://i.imgur.com/MOytELW.png";
-                        break;
-                    case 12:
-                        rDuelTier = "Gold IV";
-                        rDuelTierImg = "https://i.imgur.com/MOytELW.png";
-                        break;
-                    case 13:
-                        rDuelTier = "Gold III";
-                        rDuelTierImg = "https://i.imgur.com/MOytELW.png";
-                        break;
-                    case 14:
-                        rDuelTier = "Gold II";
-                        rDuelTierImg = "https://i.imgur.com/MOytELW.png";
-                        break;
-                    case 15:
-                        rDuelTier = "Gold I";
-                        rDuelTierImg = "https://i.imgur.com/MOytELW.png";
-                        break;
-                    case 16:
-                        rDuelTier = "Platinum V";
-                        rDuelTierImg = "https://i.imgur.com/0ZA0kIc.png";
-                        break;
-                    case 17:
-                        rDuelTier = "Platinum IV";
-                        rDuelTierImg = "https://i.imgur.com/0ZA0kIc.png";
-                        break;
-                    case 18:
-                        rDuelTier = "Platinum III";
-                        rDuelTierImg = "https://i.imgur.com/0ZA0kIc.png";
-                        break;
-                    case 19:
-                        rDuelTier = "Platinum II";
-                        rDuelTierImg = "https://i.imgur.com/0ZA0kIc.png";
-                        break;
-                    case 20:
-                        rDuelTier = "Platinum I";
-                        rDuelTierImg = "https://i.imgur.com/0ZA0kIc.png";
-                        break;
-                    case 21:
-                        rDuelTier = "Diamond V";
-                        rDuelTierImg = "https://i.imgur.com/QX3vj4U.png";
-                        break;
-                    case 22:
-                        rDuelTier = "Diamond IV";
-                        rDuelTierImg = "https://i.imgur.com/QX3vj4U.png";
-                        break;
-                    case 23:
-                        rDuelTier = "Diamond III";
-                        rDuelTierImg = "https://i.imgur.com/QX3vj4U.png";
-                        break;
-                    case 24:
-                        rDuelTier = "Diamond II";
-                        rDuelTierImg = "https://i.imgur.com/QX3vj4U.png";
-                        break;
-                    case 25:
-                        rDuelTier = "Diamond I";
-                        rDuelTierImg = "https://i.imgur.com/QX3vj4U.png";
-                        break;
-                    case 26:
-                        rDuelTier = "Masters";
-                        rDuelTierImg = "https://i.imgur.com/IDviWM2.png";
-                        break;
-                    case 27:
-                        rDuelTier = "Grandmaster";
-                        rDuelTierImg = "https://i.imgur.com/1JDyPJb.png";
-                        break;
-                }
-
-                if (rAvatarURL == "")
-                {
-                    rAvatarURL = "https://i.imgur.com/VZPrD8S.png";
-                }
-
-                int borderNum = 0;
-                if (rPlayerLevel >= 31 && rPlayerLevel < 51)
-                {
-                    borderNum = 1;
-                }
-
-                else if (rPlayerLevel >= 51 && rPlayerLevel < 71)
-                {
-                    borderNum = 2;
-                }
-
-                else if (rPlayerLevel >= 71 && rPlayerLevel < 91)
-                {
-                    borderNum = 3;
-                }
-
-                else if (rPlayerLevel >= 91 && rPlayerLevel < 111)
-                {
-                    borderNum = 4;
-                }
-
-                else if (rPlayerLevel >= 111 && rPlayerLevel < 131)
-                {
-                    borderNum = 5;
-                }
-
-                else if (rPlayerLevel >= 131 && rPlayerLevel < 151) // Immortal Prestige
-                {
-                    borderNum = 6;
-                }
-
-                else if (rPlayerLevel >= 151 && rPlayerLevel < 160) // Godlike Prestige
-                {
-                    borderNum = 7;
-                }
-
-                else if (rPlayerLevel == 160) // Ultimate Prestige
-                {
-                    borderNum = 8;
-                }
-
-                rAvatarBorderURL = borderNum switch
-                {
-                    1 => "https://i.imgur.com/amtJ0Lo.png",
-                    2 => "https://i.imgur.com/noDuPCV.png",
-                    3 => "https://i.imgur.com/7RpvKLe.png",
-                    4 => "https://i.imgur.com/P4pj6QN.png",
-                    5 => "https://i.imgur.com/x89o9On.png",
-                    6 => "https://i.imgur.com/OT6CfFI.png",
-                    7 => "https://i.imgur.com/PLhAqbN.png",
-                    8 => "https://i.imgur.com/0eHoWT1.png",
-                    _ => "",
-                };
-                var css = "<html>\n\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css\" integrity=\"sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO\"\n        crossorigin=\"anonymous\">\n    <style>\n        html {\n            height: 100%;\n        }\n        \n        body {\n            background-color: transparent;\n            color: white;\n            background-image: url(https://web2.hirez.com/smite/v3/s5/HarpyNest_S4.jpg);\n            background-repeat: no-repeat;\n            background-size: cover;\n            background-position: top;\n            margin: 5px;\n        }\n\n        .avatarPos {\n            position: absolute;\n            top: 25px;\n            left: 25px;\n        }\n\n        .imgA1 {\n            z-index: 1;\n            width: 70px;\n            left: 8px;\n            top: 8px;\n        }\n\n        .imgB1 {\n            z-index: 3;\n            width: 110px;\n            left: -12;\n            top: -11px;\n        }\n\n        .row {\n            border: 2px solid #26728d;\n            background-color: rgba(14, 25, 38, .9);\n            color: #c9f9fb;\n            padding: 10px;\n        }\n\n        .col {\n            border: 2px solid #26728d;\n        }\n\n        .AccStats {\n            font-size: 18px;\n        }\n\n        .names {\n            padding-left: 100px;\n        }\n\n        .levels {\n            position: fixed;\n            top: 18;\n            right: 18px;\n        }\n\n        .left-col {\n            float: left;\n            width: 50%;\n            background-color: rgba(14, 25, 38, .9);\n            background-image: url(https://i.imgur.com/MfBC9I6.png);\n            background-position: right;\n            background-repeat: no-repeat;\n            background-size: contain;\n            height: 140px;\n            padding-left: 10px;\n        }\n        \n        .right-col {\n            float: right;\n            width: 50%;\n            background-color: rgba(14, 25, 38, .9);\n            background-image: url(https://i.imgur.com/skbL9IZ.png);\n            background-position: left;\n            background-repeat: no-repeat;\n            background-size: contain;\n            height: 140px;\n            text-align: right;\n            padding-right: 10px;\n        }\n\n        .conquest-col {\n            width: 100%;\n            height: 140px;\n            background-image: url(https://i.imgur.com/ayyGCkZ.png);\n            background-size: cover;\n            background-position: center;\n            background-repeat: no-repeat;\n            border-bottom: 2px solid #26728d;\n            padding-left: 10px;\n        }\n    </style>\n</head>";
-                var html = $"<body>\n    <div class=\"container-fluid\">\n        <div class=\"row\" style=\"height: 112px; border-bottom: 1px solid #26728d;\">\n            <div class=\"col-1\">\n                <img class=\"avatarPos imgA1\" src=\"{rAvatarURL}\">\n                <img class=\"avatarPos imgB1\" src=\"{rAvatarBorderURL}\">\n            </div>\n            <div class=\"names col-11\">\n                <h2>{rPlayerName}</h2>\n                <h5>{rTeamName}</h5>\n                <div class=\"levels\">\n                    <img src=\"https://i.imgur.com/8IluUqL.png\" />{rPlayerLevel}<br>\n                    <img src=\"https://i.imgur.com/cSFMiWX.png\" />{rPlayerMasteryLevel}<br>\n                    <img src=\"https://i.imgur.com/baSKFnW.png\" width=\"28px\" />{rTotalWorsh} \n                    <div style=\"position: fixed; top: 25px; right: 120; text-align: center; border-left: 1px solid #26728d; border-right: 1px solid #26728d; padding-left: 10px; padding-right: 10px;\">\n                            <h3>Playtime</h3>\n                            <h5>{rHoursPlayed}</h5>\n                    </div>\n                </div>\n            </div>\n        </div>\n        <div class=\"row\" style=\"border-top: 0px !important; padding-top: 5px !important; padding-bottom: 5px !important;\">\n            <div class=\"col-12\" style=\"padding-top: 0px !important; padding-bottom: 0px !important; text-align: center;\">\n                <h5 style=\"margin-bottom: 5px !important;\">{rPlayerStatus}</h5>\n            </div>\n        </div>\n        <div class=\"row\" style=\"margin-top: 3px; padding: 0; height: 284px;\">\n            <div class=\"conquest-col\" style=\"border-right: 1px solid #26728d;\">\n                <img src=\"{rConquestTierImg}\" />\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Conquest<br>{rConquestTier}</h5>\n            </div>\n            <div class=\"left-col\">\n                <img src=\"{rJoustTierImg}\" />\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Joust<br>{rJoustTier}</h5>\n            </div>\n            <div class=\"right-col\">\n                <h5 style=\"display: inline-block; vertical-align: middle;\">Ranked Duel<br>{rDuelTier}</h5>\n                <img src=\"{rDuelTierImg}\" />\n            </div>\n        </div>\n    </div>\n</body>\n\n</html>";
-                try
-                {
-                    if (!Directory.Exists("Storage/PlayerImages"))
-                    {
-                        Directory.CreateDirectory("Storage/PlayerImages");
-                    }
-                    var embed = new EmbedBuilder();
-                    var fileName = $"Storage/PlayerImages/{playerStats[0].ActivePlayerId}.jpg";
-                    embed.AddField(field =>
-                    {
-                        field.IsInline = true;
-                        field.Name = ($":hourglass:Playtime");
-                        field.Value = ($"🔹{rHoursPlayed}");
-                    });
-                    embed.WithImageUrl($"attachment://{playerStats[0].ActivePlayerId}.jpg");
-                    embed.WithFooter(footer =>
-                    {
-                        footer
-                            .WithText($"{playerStats[0].Personal_Status_Message}")
-                            .WithIconUrl(Constants.botIcon);
-                    });
-                    await Context.Channel.SendFileAsync(fileName, embed: embed.Build());
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
-            }
         }
 
         [Command("gods", true)]
@@ -1021,6 +516,7 @@ namespace ThothBotCore.Modules
                         x.Name = $"{gods[rr].Emoji} {gods[rr].Name}";
                         x.Value = sb.ToString();
                     });
+                    gods.RemoveAt(rr);
                 }
 
                 await ReplyAsync($"Team of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
@@ -1037,6 +533,7 @@ namespace ThothBotCore.Modules
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се", "serverstatus")]
         public async Task ServerStatusCheck()
         {
+            await Context.Channel.TriggerTypingAsync();
             var smiteServerStatus = JsonConvert.DeserializeObject<ServerStatus>(await StatusPage.GetStatusSummary());
             string discjson = await StatusPage.GetDiscordStatusSummary();
             var discordStatus = new ServerStatus();
@@ -1156,7 +653,7 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    await ReplyAsync(":warning: Something went wrong. This error was reported to the bot creator and will soon be checked.");
+                    await ReplyAsync(":warning: Something went wrong. This error was reported to the bot creator and will be checked ASAP.");
                     await Reporter.SendError($"**Error in StatusUpdates command**\n" +
                         $"{ex.Message}\n**Message: **{channelMention}\n" +
                         $"**Server: **{Context.Guild.Name}[{Context.Guild.Id}]\n" +
@@ -1499,7 +996,7 @@ namespace ThothBotCore.Modules
                     mID = Convert.ToInt32(MatchID);
                 }
 
-                if (playerHandler.playerID == 0)
+                if (playerHandler.playerID == 0 && mID == 0)
                 {
                     return;
                 }
@@ -1537,7 +1034,7 @@ namespace ThothBotCore.Modules
                 else if (matchDetailsString == "[]")
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the API sent an empty response which most of the time means the match" +
-                        "is not available anymore.\n" +
+                        " is not available anymore.\n" +
                         "You can try Smite.Guru instead");
                     await ReplyAsync(embed: embed);
                     return;
@@ -1624,14 +1121,14 @@ namespace ThothBotCore.Modules
                 string json = await hirezAPI.GetMOTD();
                 var motdList = JsonConvert.DeserializeObject<List<Motd>>(json);
                 string desc = "";
-                string shitman = "";
+                string embedValue = "";
 
                 var embed = new EmbedBuilder();
 
                 embed.WithColor(0, 80, 188);
                 embed.WithAuthor(x =>
                 {
-                    x.Name = "Matches Of The Day";
+                    x.Name = "Upcoming Matches Of The Day";
                     x.IconUrl = Constants.botIcon;
                 });
                 Motd motdDay = new Motd();
@@ -1648,20 +1145,20 @@ namespace ThothBotCore.Modules
                     if (desc.Contains("**Map"))
                     {
                         finalDesc = desc.Split("**Map");
-                        shitman = "**Map" + finalDesc[1];
+                        embedValue = "**Map" + finalDesc[1];
                     }
                     else
                     {
-                        shitman = desc;
+                        embedValue = desc;
                     }
                     embed.AddField(x =>
                     {
                         x.Name = $":large_blue_diamond: **{motdDay.title}** - {motdDay.startDateTime.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)}";
-                        x.Value = $"{shitman}";
+                        x.Value = $"{embedValue}";
                     });
                 }
 
-                await ReplyAsync("", false, embed.Build());
+                await ReplyAsync(embed: embed.Build());
             }
             catch (Exception ex)
             {
@@ -2200,8 +1697,7 @@ namespace ThothBotCore.Modules
                 getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
                 if (getPlayerByDiscordID.Count != 0)
                 {
-                    handler.playerID = getPlayerByDiscordID[0].active_player_id;
-                    handler.playerName = getPlayerByDiscordID[0].Name;
+                    handler.playerID = getPlayerByDiscordID[0]._id;
                 }
                 else
                 {
@@ -2217,8 +1713,7 @@ namespace ThothBotCore.Modules
                 getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
                 if (getPlayerByDiscordID.Count != 0)
                 {
-                    handler.playerID = getPlayerByDiscordID[0].active_player_id;
-                    handler.playerName = getPlayerByDiscordID[0].Name;
+                    handler.playerID = getPlayerByDiscordID[0]._id;
                 }
                 else
                 {
@@ -2351,8 +1846,6 @@ namespace ThothBotCore.Modules
                 });
                 return multiplePlayersStruct;
             }
-            // moje toq responseNum da ne trq da go minusvame, ne sum siguren...
-            --responseNum;
             if (searchPlayers[responseNum].privacy_flag == "y")
             {
                 embed = await EmbedHandler.HiddenProfileEmbed(searchPlayers[responseNum].Name);

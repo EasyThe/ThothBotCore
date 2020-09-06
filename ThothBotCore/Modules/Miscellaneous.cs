@@ -2,9 +2,7 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
@@ -14,8 +12,8 @@ namespace ThothBotCore.Modules
         [Command("pishka")]
         public async Task Pishka()
         {
-            string pishka = "";
             var embed = new EmbedBuilder();
+            string pishka;
             if (Context.Message.Author.Id == Constants.OwnerID)
             {
                 pishka = $"{Context.Message.Author.Username}'s pishka\n8=====================D";

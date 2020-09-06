@@ -1,45 +1,8 @@
 ﻿using Discord;
-using Newtonsoft.Json;
-using System.IO;
 using ThothBotCore.Discord.Entities;
 
 namespace ThothBotCore.Utilities
 {
-    class ConstantsConfig
-    {
-        private static readonly string constantsFolder = "Config";
-        private static readonly string constantsFile = "Constants.json";
-
-        public static Constants constants;
-        static ConstantsConfig()
-        {
-            if (!Directory.Exists(constantsFolder))
-            {
-                Directory.CreateDirectory(constantsFolder);
-            }
-
-            if (!File.Exists(constantsFolder + "/" + constantsFile))
-            {
-                constants = new Constants();
-                string json = JsonConvert.SerializeObject(constants, Formatting.Indented);
-                File.WriteAllText(constantsFolder + "/" + constantsFile, json);
-            }
-            else
-            {
-                string json = File.ReadAllText(constantsFolder + "/" + constantsFile);
-                constants = JsonConvert.DeserializeObject<Constants>(json);
-
-                SaveConstants();
-            }
-        }
-
-        public static void SaveConstants()
-        {
-            string json = JsonConvert.SerializeObject(constants, Formatting.Indented);
-            File.WriteAllText(constantsFolder + "/" + constantsFile, json);
-        }
-    }
-
     public class Constants
     {
         public static readonly string botIcon = "https://i.imgur.com/8qNdxse.png";
@@ -63,7 +26,7 @@ namespace ThothBotCore.Utilities
 
         // Vulpis
         public static string VulpisLogoLink { get; set; } = "https://i.imgur.com/WePnHmR.png";
-        public static string VulpisLogoEmote { get; set; } = "<:VulpisEsports:717095280906076240>";
+        // tezi otivat v MongoDB beibii
         public static string VulpisDescription { get; set; } = "European Smite organisation focused on organizing regular Conquest, Arena, Assault, Joust & Duel tournaments.";
     }
 }

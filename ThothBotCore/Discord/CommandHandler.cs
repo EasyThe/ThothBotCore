@@ -4,10 +4,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
+using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Discord
@@ -75,6 +77,11 @@ namespace ThothBotCore.Discord
                 else if (msg.Content == $"<@!{_client.CurrentUser.Id}>")
                 {
                     await context.Channel.SendMessageAsync($"{context.Message.Author.Mention}, my prefix is `{Credentials.botConfig.prefix}`");
+                }
+                else if (msg.MentionedUsers.Any(x=> x.Id == Connection.Client.CurrentUser.Id) && msg.Content.ToLowerInvariant().Contains("love"))
+                {
+                    await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
+                    await Reporter.SendSuccessCommands(context, null);
                 }
             }
             catch (Exception ex)

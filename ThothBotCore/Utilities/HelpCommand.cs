@@ -116,7 +116,7 @@ namespace ThothBotCore.Utilities
                             sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}` - {command.Summary}");
                         }
                     }
-                    sb.AppendLine("\n🆘 [Support server](http://discord.gg/hU6MTbQ)");
+                    sb.AppendLine("\n🆘 **Do you need help with something? Join the** [Support server](http://discord.gg/hU6MTbQ)");
                     helpEmbedBuilder.AddField("🤖 Bot", sb.ToString());
                 }
             }

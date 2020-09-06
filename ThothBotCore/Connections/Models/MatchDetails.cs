@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ThothBotCore.Connections.Models
 {
@@ -11,7 +12,7 @@ namespace ThothBotCore.Connections.Models
             public int ActiveId2 { get; set; }
             public int ActiveId3 { get; set; }
             public int ActiveId4 { get; set; }
-            public int ActivePlayerId { get; set; }
+            public string ActivePlayerId { get; set; }
             public int Assists { get; set; }
             public string Ban1 { get; set; }
             public string Ban10 { get; set; }
@@ -100,7 +101,7 @@ namespace ThothBotCore.Connections.Models
             public int Mastery_Level { get; set; }
             public int Match { get; set; }
             public int Match_Duration { get; set; }
-            public object MergedPlayers { get; set; }
+            public List<MergedPlayer> MergedPlayers { get; set; }
             public int Minutes { get; set; }
             public int Multi_kill_Max { get; set; }
             public int Objective_Assists { get; set; }
@@ -119,6 +120,7 @@ namespace ThothBotCore.Connections.Models
             public int Team2Score { get; set; }
             public int TeamId { get; set; }
             public string Team_Name { get; set; }
+            public int Time_Dead_Seconds { get; set; }
             public int Time_In_Match_Seconds { get; set; }
             public int Towers_Destroyed { get; set; }
             public int Wards_Placed { get; set; }
@@ -134,6 +136,12 @@ namespace ThothBotCore.Connections.Models
             public string playerPortalId { get; set; }
             public string playerPortalUserId { get; set; }
             public object ret_msg { get; set; }
+        }
+        public class MergedPlayer
+        {
+            public string merge_datetime { get; set; }
+            public string playerId { get; set; }
+            public string portalId { get; set; }
         }
     }
 }

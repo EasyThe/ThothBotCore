@@ -20,15 +20,15 @@ namespace ThothBotCore.Notifications
             {
                 try
                 {
-                    channel = Connection.Client.GetGuild(notifChannels[i].serverID).GetTextChannel(notifChannels[i].statusChannel);
+                    channel = Connection.Client.GetGuild(notifChannels[i]._id).GetTextChannel(notifChannels[i].statusChannel);
                     await channel.SendMessageAsync(embed: embed.Build());
-                    System.Console.WriteLine($"Sent Status Updates to: {notifChannels[i].serverName}[{notifChannels[i].serverID}]");
+                    System.Console.WriteLine($"Sent Status Updates to: {notifChannels[i]._id}]");
                 }
                 catch (System.Exception ex)
                 {
                     if (ex.Message.Contains("Missing"))
                     {
-                        SocketGuild guild = Connection.Client.GetGuild(notifChannels[i].serverID);
+                        SocketGuild guild = Connection.Client.GetGuild(notifChannels[i]._id);
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
                         await user.SendMessageAsync($":warning: Hey! I tried to send this status update to {channel.Mention} but I am missing **Access** there.\n" +
                         $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}." +
@@ -38,7 +38,7 @@ namespace ThothBotCore.Notifications
                     }
                     else if (ex.Message.Contains("Object reference not set to an instance of an object."))
                     {
-                        await StopNotifs(notifChannels[i].serverID);
+                        await StopNotifs(notifChannels[i]._id);
                     }
                     else
                     {
@@ -46,7 +46,7 @@ namespace ThothBotCore.Notifications
                             $"{ex.Message}\n" +
                             $"{ex.TargetSite}\n" +
                             $"{ex.Data}\n" +
-                            $"{notifChannels[i].serverName} [{notifChannels[i].serverID}]");
+                            $"ID: {notifChannels[i]._id}");
                     }
                 }
             }

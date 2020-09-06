@@ -11,7 +11,9 @@ namespace ThothBotCore.Discord
             {
                 LogLevel = LogSeverity.Verbose,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
-                ExclusiveBulkDelete = true
+                ExclusiveBulkDelete = true,
+                MessageCacheSize = 100,
+                AlwaysDownloadUsers = true
             };
         }
 

@@ -198,9 +198,13 @@ namespace ThothBotCore.Utilities
                         $"\"users\": \"{totalUsers}\", " +
                         $"\"active\": \"0\", " +
                         $"\"commands\": \"0\", " +
-                        $"\"popular\": [] }}", Encoding.UTF8, "application/json"))
+                        $"\"popular\": []," +
+                        $"\"memactive\": \"0\"," +
+                        $"\"memload\": \"0\"," +
+                        $"\"cpuload\": \"0\"," +
+                        $"\"bandwidth\": \"0\" }}", Encoding.UTF8, "application/json"))
                     {
-                        var response = await webclient.PostAsync("https://statcord.com/mason/stats", content);
+                        var response = await webclient.PostAsync("https://statcord.com/logan/stats", content);
                         Console.WriteLine($"===\nStatCord: {response.ReasonPhrase}\n===\n");
                     }
                 }

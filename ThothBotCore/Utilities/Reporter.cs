@@ -106,7 +106,7 @@ namespace ThothBotCore.Utilities
                                 $"**Server: **{context.Guild.Name} [{context.Guild.Id}]\n" +
                                 $"**Channel: **{context.Channel.Name} [{context.Channel.Id}]";
                 }
-                if (result.IsSuccess)
+                if (result != null && result.IsSuccess)
                 {
                     embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 33, 222, 124);
                 }
@@ -114,7 +114,14 @@ namespace ThothBotCore.Utilities
                 {
                     embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 254);
                 }
-                await commandsChannel.SendMessageAsync(embed: embed);
+                if (embed.Description.Contains("love"))
+                {
+                    await botlogs.SendMessageAsync(embed: embed);
+                }
+                else
+                {
+                    await commandsChannel.SendMessageAsync(embed: embed);
+                }
             }
             catch (Exception ex)
             {
@@ -141,6 +148,7 @@ namespace ThothBotCore.Utilities
                     $"**User: **{context.Message.Author}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
+                    $"**Inner Exception Message: **{(ex.InnerException != null ? ex.InnerException.Message : "No Inner Exception")}\n" +
                     $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 254);
                 await reportsChannel.SendMessageAsync(embed: embed);
             }

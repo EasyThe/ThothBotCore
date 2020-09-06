@@ -25,9 +25,16 @@ namespace ThothBotCore.Utilities
                 Directory.CreateDirectory("Storage/Gods");
             }
 
-            using (WebClient client = new WebClient())
+            try
             {
-                client.DownloadFile(new Uri(link), $@"./Storage/Gods/{splitLink[5]}");
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(new Uri(link), $@"./Storage/Gods/{splitLink[5]}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
             string image = $@"./Storage/Gods/{splitLink[5]}";
             var colorThief = new ColorThief();
