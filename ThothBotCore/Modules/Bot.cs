@@ -87,82 +87,40 @@ namespace ThothBotCore.Modules
             embed.WithAuthor(author =>
             {
                 author
-                    .WithName("Statistics for ThothBot")
+                    .WithName("About Thoth Bot")
                     .WithIconUrl(Constants.botIcon);
             });
             embed.WithDescription($"Creator: EasyThe#2836 ({Connection.Client.GetUser(171675309177831424).Mention})");
             embed.WithColor(Constants.DefaultBlueColor);
-            embed.AddField(field =>
+
+            embed.AddField(x =>
             {
-                field.IsInline = true;
-                field.Name = "Uptime";
-                field.Value = GetUptime();
+                x.IsInline = true;
+                x.Name = "Statistics";
+                x.Value = $":stopwatch: Uptime: {GetUptime()}\n" +
+                $":chart_with_upwards_trend: Servers: {Connection.Client.Guilds.Count}\n" +
+                $":busts_in_silhouette: Users: {totalUsers}\n" +
+                $":1234: Commands Run: {Global.CommandsRun}";
             });
             embed.AddField(x =>
             {
                 x.IsInline = true;
-                x.Name = "Bot Invite";
-                x.Value = $"[Invite](https://discordapp.com/oauth2/authorize?client_id=454145330347376651&permissions=537259072&scope=bot)";
+                x.Name = "Thoth Database";
+                x.Value = $":video_game: Players: {PlayersInDbCount()[0]}\n" +
+                $":link: Linked Players: {LinkedPlayersInDBCount()[0]}\n" +
+                $":loudspeaker: Status Update Subs: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
+                $"<:Gods:567146088985919498> Smite Patch Version: {patch}";
             });
             embed.AddField(x =>
             {
                 x.IsInline = true;
-                x.Name = "Support Server";
-                x.Value = $"[Join]({Constants.SupportServerInvite})";
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Servers";
-                field.Value = Connection.Client.Guilds.Count;
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Users";
-                field.Value = totalUsers;
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Players";
-                field.Value = PlayersInDbCount()[0];
-            });
-            embed.AddField(field =>
-            {
-                field.IsInline = true;
-                field.Name = "Commands Run";
-                field.Value = Global.CommandsRun;
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Status Update Subs";
-                x.Value = CountOfStatusUpdatesActivatedInDB()[0];
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Linked Players";
-                x.Value = LinkedPlayersInDBCount()[0];
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Smite Patch Version";
-                x.Value = patch;
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Donate";
-                x.Value = $"[PayPal](https://www.paypal.me/EasyThe)";
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Buy Gems";
-                x.Value = $"[SMITE Store](https://link.xsolla.com/M43fjVPi)";
+                x.Name = "Links";
+                x.Value = $"[Bot Invite](https://discordapp.com/oauth2/authorize?client_id=454145330347376651&permissions=537259072&scope=bot) | " +
+                $"[Support Server]({Constants.SupportServerInvite})\n" +
+                $"[Website](http://thothbot.tk) | " +
+                $"[Privacy Policy](http://thothbot.tk/privacy-policy.html)\n" +
+                $"[PayPal](https://www.paypal.me/EasyThe) | " +
+                $"[Referral Link to SMITE Store](https://link.xsolla.com/M43fjVPi)";
             });
             embed.WithFooter(x =>
             {
