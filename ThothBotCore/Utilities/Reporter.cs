@@ -137,7 +137,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Text.WriteLine(ex.Message);
             }
         }
         public static async Task SendException(Exception ex, SocketCommandContext context, string errorMessage = "")
@@ -154,7 +154,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception exc)
             {
-                Console.WriteLine("\t===" +
+                Text.WriteLine("\t===" +
                     "\n\tCouldn't send error to reports channnel." +
                     "\n" +
                     $"\t\tMessage: **{context.Message.Content}\n" +

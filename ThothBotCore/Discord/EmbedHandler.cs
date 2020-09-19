@@ -603,7 +603,7 @@ namespace ThothBotCore.Discord
             {
                 x.IsInline = true;
                 x.Name = $":hourglass:Playtime";
-                x.Value = $"{defaultEmoji}{playerStats[0].HoursPlayed.ToString()} hours";
+                x.Value = $"{defaultEmoji}{playerStats[0].HoursPlayed} hours";
             });
             // Top Gods
             if (godRanks.Count != 0)
@@ -637,12 +637,22 @@ namespace ThothBotCore.Discord
                     $":handshake:Assists: {playerAchievements.AssistedKills}");
                 });
             }
-            embed.WithFooter(footer =>
+            if (playerStats[0].Personal_Status_Message == "")
             {
-                footer
-                    .WithText(playerStats[0].Personal_Status_Message)
-                    .WithIconUrl(playerStats[0].Avatar_URL == "" ? Constants.botIcon : playerStats[0].Avatar_URL);
-            });
+                embed.WithFooter(x =>
+                {
+                    x.Text = Text.GetRandomTip();
+                });
+            }
+            else
+            {
+                embed.WithFooter(footer =>
+                {
+                    footer
+                        .WithText(playerStats[0].Personal_Status_Message)
+                        .WithIconUrl(playerStats[0].Avatar_URL == "" ? Constants.botIcon : playerStats[0].Avatar_URL);
+                });
+            }
             return embed;
         }
         public static Task<EmbedBuilder> LoadingStats(string username)
@@ -677,6 +687,19 @@ namespace ThothBotCore.Discord
             {
                 Description = description
             };
+            if (r != 0 || g != 0 || b != 0)
+            {
+                embed.WithColor(new Color(r, g, b));
+            }
+            return Task.FromResult(embed.Build());
+        }
+        public static Task<Embed> BuildDescriptionEmbedAsync(string description, string footerText, int r = 0, int g = 0, int b = 0)
+        {
+            var embed = new EmbedBuilder
+            {
+                Description = description,
+            };
+            embed.WithFooter(footerText);
             if (r != 0 || g != 0 || b != 0)
             {
                 embed.WithColor(new Color(r, g, b));
@@ -1004,6 +1027,10 @@ namespace ThothBotCore.Discord
                 }
                 i++;
             }
+            embed.WithFooter(x =>
+            {
+                x.Text = Text.GetRandomTip();
+            });
             return embed.Build();
         }
         public static async Task<Embed> BuildWorshipersEmbedAsync(List<GodRanks> ranks, PlayerStats player)

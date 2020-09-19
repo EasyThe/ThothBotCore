@@ -112,64 +112,7 @@ namespace ThothBotCore.Storage
             }
         }
 
-        public static async Task<List<PlayerSpecial>> GetPlayerSpecialsByDiscordID(ulong id) // Working as intended
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                var output = await cnn.QueryAsync<PlayerSpecial>($"SELECT * FROM playersSpecial WHERE discordID LIKE '%{id}%'", new DynamicParameters());
-                return output.ToList();
-            }
-        }
-
-        public static async Task SetPlayerSpecials(int id, string Name, ulong? discordID = null, int? strValue = null, string strLink = "", int? proValue = null)
-        {
-            try
-            {// to fix
-                if (discordID.HasValue)
-                {
-                    using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-                    {
-                        await cnn.ExecuteAsync($"INSERT INTO playersSpecial(_id, Name, discordID) " +
-                            $"VALUES({id}, \"{Name}\", {discordID}) " +
-                            $"ON CONFLICT(_id) " +
-                            $"DO UPDATE SET discordID = {discordID}");
-                    }
-                }
-                if (strValue.HasValue)
-                {
-                    using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-                    {
-                        await cnn.ExecuteAsync($"INSERT INTO playersSpecial(_id, Name, streamer_bool, streamer_link) " +
-                            $"VALUES({id}, \"{Name}\", {strValue}, \"{strLink}\") " +
-                            $"ON CONFLICT(_id) " +
-                            $"DO UPDATE SET streamer_bool = {strValue}, streamer_link = \"{strLink}\"");
-                    }
-                }
-                if (proValue.HasValue)
-                {
-                    using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-                    {
-                        await cnn.ExecuteAsync($"INSERT INTO playersSpecial(_id, Name, pro_bool) " +
-                            $"VALUES({id}, \"{Name}\", {proValue}) " +
-                            $"ON CONFLICT(_id) " +
-                            $"DO UPDATE SET pro_bool = {proValue}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("SetPlayerSpecials()\n" + ex.Message);
-            }
-        }
-
-        public static async Task RemoveLinkedAccount(ulong id)
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                await cnn.ExecuteAsync($"DELETE FROM playersSpecial WHERE discordID = {id}");
-            }
-        }
-
+        // remove those here after migration
         public static async Task<List<PlayerStats>> GetAllPlayers()
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
@@ -336,7 +279,7 @@ namespace ThothBotCore.Storage
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error in InsertItems()\n" + ex.Message);
+                Text.WriteLine("Error in InsertItems()\n" + ex.Message);
             }
         }
 

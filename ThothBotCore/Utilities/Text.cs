@@ -11,6 +11,7 @@ namespace ThothBotCore.Utilities
 {
     public class Text
     {
+        static Random rnd = new Random();
         public static string ToTitleCase(string text)
         {
             return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
@@ -42,11 +43,19 @@ namespace ThothBotCore.Utilities
             Console.WriteLine(message);
             Console.ResetColor();
         }
+        public static void WriteLine(string message)
+        {
+            Console.WriteLine(message);
+        }
         public static string AbbreviationRegions(string region)
         {
             if (region.ToLowerInvariant() == "europe")
             {
                 return "EU";
+            }
+            else if (region.ToLowerInvariant() == "oceania")
+            {
+                return "OCE";
             }
             else
             {
@@ -175,7 +184,7 @@ namespace ThothBotCore.Utilities
                         }
                     }
                     // Check specials
-                    if (playerSpecial.special != "")
+                    if (playerSpecial.special != null)
                     {
                         if (specialsResult.Length != 0)
                         {
@@ -185,13 +194,16 @@ namespace ThothBotCore.Utilities
                             }
                         }
                         var badge = await MongoConnection.GetBadgeAsync(playerSpecial.special);
-                        if (emoteOnly)
+                        if (badge != null)
                         {
-                            specialsResult.Append(badge.Emote);
-                        }
-                        else
-                        {
-                            specialsResult.Append($"{badge.Emote} {badge.Title}");
+                            if (emoteOnly)
+                            {
+                                specialsResult.Append(badge.Emote);
+                            }
+                            else
+                            {
+                                specialsResult.Append($"{badge.Emote} {badge.Title}");
+                            }
                         }
                     }
                     return specialsResult.ToString();
@@ -550,6 +562,21 @@ namespace ThothBotCore.Utilities
                 445 => "Test Maps",
                 _ => "Unknown Mode",
             };
+        }
+
+        // Tips
+        public static string GetRandomTip()
+        {
+            List<TipsModel> tips = MongoConnection.GetAllTips();
+            if (tips.Count != 0)
+            {
+                int n = rnd.Next(tips.Count);
+                return $"ℹ Tip: {tips[n].TipText}";
+            }
+            else
+            {
+                return "";
+            }
         }
     }
 }

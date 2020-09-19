@@ -34,7 +34,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Text.WriteLine(ex.Message);
             }
             string image = $@"./Storage/Gods/{splitLink[5]}";
             var colorThief = new ColorThief();
@@ -56,7 +56,7 @@ namespace ThothBotCore.Utilities
             {
                 if (godsList[i].DomColor == 0)
                 {
-                    Console.WriteLine($"{i}. {godsList[i].godIcon_URL}");
+                    Text.WriteLine($"{i}. {godsList[i].godIcon_URL}");
                     int getdcolor = GetDomColor(godsList[i].godIcon_URL);
                     Database.SaveGodDomColor(godsList[i].id, getdcolor);
                 }
@@ -76,7 +76,7 @@ namespace ThothBotCore.Utilities
                     {
                         if (items[c].itemIcon_URL != "" || items[c].itemIcon_URL != null)
                         {
-                            Console.WriteLine($"{c} {items[c].DeviceName}");
+                            Text.WriteLine($"{c} {items[c].DeviceName}");
                             int getdcolor = GetDomColor(items[c].itemIcon_URL);
                             Database.SaveItemDomColor(items[c].ItemId, getdcolor);
                         }

@@ -90,26 +90,26 @@ namespace ThothBotCore.Modules
                     .WithName("About Thoth Bot")
                     .WithIconUrl(Constants.botIcon);
             });
-            embed.WithDescription($"Creator: EasyThe#2836 ({Connection.Client.GetUser(171675309177831424).Mention})");
+            embed.WithDescription($"Creator: EasyThe#2836 - {Connection.Client.GetUser(171675309177831424).Mention}");
             embed.WithColor(Constants.DefaultBlueColor);
 
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Statistics";
-                x.Value = $":stopwatch: Uptime: {GetUptime()}\n" +
-                $":chart_with_upwards_trend: Servers: {Connection.Client.Guilds.Count}\n" +
-                $":busts_in_silhouette: Users: {totalUsers}\n" +
-                $":1234: Commands Run: {Global.CommandsRun}";
+                x.Value = $":stopwatch: **Uptime**: {GetUptime()}\n" +
+                $":chart_with_upwards_trend: **Servers**: {Connection.Client.Guilds.Count}\n" +
+                $":busts_in_silhouette: **Users**: {totalUsers}\n" +
+                $":1234: **Commands Run**: {Global.CommandsRun}";
             });
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Thoth Database";
-                x.Value = $":video_game: Players: {PlayersInDbCount()[0]}\n" +
-                $":link: Linked Players: {LinkedPlayersInDBCount()[0]}\n" +
-                $":loudspeaker: Status Update Subs: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
-                $"<:Gods:567146088985919498> Smite Patch Version: {patch}";
+                x.Value = $":video_game: **Players**: {PlayersInDbCount()[0]}\n" +
+                $":link: **Linked Players**: {LinkedPlayersInDBCount()[0]}\n" +
+                $":loudspeaker: **Status Update Subs**: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
+                $"<:Gods:567146088985919498> **Smite Patch Version**: {patch}";
             });
             embed.AddField(x =>
             {
@@ -126,7 +126,7 @@ namespace ThothBotCore.Modules
             {
                 x.Text = $"Discord.NET {DiscordConfig.Version} | {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
             });
-            await ReplyAsync("", false, embed.Build());
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("prefix")] // Custom Prefix
@@ -175,9 +175,11 @@ namespace ThothBotCore.Modules
             var channel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567192879026536448);
             var messages = await channel.GetMessagesAsync(1).FlattenAsync().ConfigureAwait(false);
 
-            var embed = new EmbedBuilder();
-            embed.Title = "Latest Update of ThothBot";
-            embed.WithColor(new Color(169,11,212));
+            var embed = new EmbedBuilder
+            {
+                Title = "Latest Update of ThothBot",
+                Color = new Color(169, 11, 212)
+            };
             foreach (var item in messages)
             {
                 embed.Description = item.Content;

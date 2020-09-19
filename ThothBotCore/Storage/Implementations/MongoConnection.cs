@@ -5,6 +5,7 @@ using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace ThothBotCore.Storage.Implementations
 {
@@ -12,6 +13,8 @@ namespace ThothBotCore.Storage.Implementations
     {
         private static MongoClient client;
         public static IMongoDatabase database;
+
+        private static ReplaceOptions replaceOptions = new ReplaceOptions { IsUpsert = true };
         public static IMongoDatabase GetDatabase()
         {
             if (client == null)
@@ -29,7 +32,11 @@ namespace ThothBotCore.Storage.Implementations
             await GetDatabase().GetCollection<PlayerStats>("players").ReplaceOneAsync(
                 filter: x => x.ActivePlayerId == playerStats.ActivePlayerId,
                 replacement: playerStats,
-                options: new ReplaceOptions { IsUpsert = true });
+                options: replaceOptions);
+        }
+        public static async Task<long> PlayersCount()
+        {//not sure if works
+            return await GetDatabase().GetCollection<PlayerStats>("players").CountDocumentsAsync(null);
         }
         // Player Specials
         public static async Task<PlayerSpecial> GetPlayerSpecialsByPlayerIdAsync(int playerID)
@@ -37,12 +44,24 @@ namespace ThothBotCore.Storage.Implementations
             var result = await GetDatabase().GetCollection<PlayerSpecial>("player_specials").FindAsync(x=> x._id == playerID);
             return await result.FirstOrDefaultAsync();
         }
+        public static async Task<PlayerSpecial> GetPlayerSpecialsByDiscordIdAsync(ulong discordID)
+        {
+            var result = await GetDatabase().GetCollection<PlayerSpecial>("player_specials").FindAsync(x => x.discordID == discordID);
+            return await result.FirstOrDefaultAsync();
+        }
         public static async Task SavePlayerSpecialsAsync(PlayerSpecial player)
         {
             await GetDatabase().GetCollection<PlayerSpecial>("player_specials").ReplaceOneAsync(
                 filter: x => x._id == player._id,
                 replacement: player,
-                options: new ReplaceOptions { IsUpsert = true });
+                options: replaceOptions);
+        }
+        public static async Task UnlinkPlayerAsync(ulong discordID)
+        {
+            ulong id = 0;
+            await GetDatabase().GetCollection<PlayerSpecial>("player_specials").UpdateOneAsync(
+                filter: x => x.discordID == discordID,
+                update: Builders<PlayerSpecial>.Update.Set(x => x.discordID, id));
         }
         // Badges
         public static async Task SaveOrCreateBadgeAsync(BadgeModel badge)
@@ -50,7 +69,7 @@ namespace ThothBotCore.Storage.Implementations
             await GetDatabase().GetCollection<BadgeModel>("badges").ReplaceOneAsync(
                 filter: x=> x.Key == badge.Key,
                 replacement: badge,
-                options: new ReplaceOptions { IsUpsert = true });
+                options: replaceOptions);
         }
         public static async Task<BadgeModel> GetBadgeAsync(string key)
         {
@@ -68,12 +87,26 @@ namespace ThothBotCore.Storage.Implementations
             await GetDatabase().GetCollection<Gods.God>("gods").ReplaceOneAsync(
                 filter: x=> x.id == god.id,
                 replacement: god,
-                options: new ReplaceOptions { IsUpsert = true });
+                options: replaceOptions);
         }
 
         public static List<Gods.God> GetAllGods()
         {
             return GetDatabase().GetCollection<Gods.God>("gods").AsQueryable().ToList();
+        }
+
+        // Tips
+        public static async Task SaveTipAsync(TipsModel tip)
+        {
+            await GetDatabase().GetCollection<TipsModel>("tips").ReplaceOneAsync(
+                filter: x=> x._id == tip._id,
+                replacement: tip,
+                options: replaceOptions);
+        }
+
+        public static List<TipsModel> GetAllTips()
+        {
+            return GetDatabase().GetCollection<TipsModel>("tips").AsQueryable().ToList();
         }
     }
 }

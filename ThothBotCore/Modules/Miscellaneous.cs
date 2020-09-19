@@ -44,5 +44,11 @@ namespace ThothBotCore.Modules
             await ReplyAndDeleteAsync("this message will delete in 10 seconds", timeout: TimeSpan.FromSeconds(10));
             return Ok();
         }
+
+        [Command("is")]
+        public async Task NoYouCommand([Remainder] string message)
+        {
+            await ReplyAsync("no u");
+        }
     }
 }

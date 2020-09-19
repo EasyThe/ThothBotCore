@@ -33,13 +33,14 @@ namespace ThothBotCore.Modules
         DominantColor domColor = new DominantColor();
 
         [Command("lookup", RunMode = RunMode.Async)]
-        public async Task SetPlayerSpecialsCommand([Remainder]string input)
+        public async Task SetPlayerSpecialsCommand([Remainder] string input)
         {
             int playerId = 0;
             if (input.Contains("id:"))
             {
                 playerId = Int32.Parse(input.Split(':').Last());
             }
+            // add discord id search ^
 
             if (playerId == 0)
             {
@@ -97,7 +98,7 @@ namespace ThothBotCore.Modules
                     x.Value = $"```\n{playerspecs.special}```{(badge != null ? $"{badge.Emote} {badge.Title}" : "**The badge is not set in the database.**")}";
                 });
             }
-            embed.WithFooter(x => 
+            embed.WithFooter(x =>
             {
                 x.Text = "You have 60 seconds to perform any action.";
             });
@@ -107,12 +108,12 @@ namespace ThothBotCore.Modules
             var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
             if (response == null)
             {
-                embed.WithColor(0,0,0);
+                embed.WithColor(0, 0, 0);
                 embed.WithFooter(x =>
                 {
                     x.Text = "Time is up!";
                 });
-                await mainMessage.ModifyAsync(x=>
+                await mainMessage.ModifyAsync(x =>
                 {
                     x.Embed = embed.Build();
                 });
@@ -157,7 +158,7 @@ namespace ThothBotCore.Modules
                                 x.Content = "Now insert id";
                             });
                             response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                            
+
                             playerspecs._id = Int32.Parse(response.Content);
                             break;
                         case "discordid":
@@ -255,7 +256,7 @@ namespace ThothBotCore.Modules
                 }
 
                 // Missing Emoji?
-                if (newGodList.Any(x=> x.Emoji == null))
+                if (newGodList.Any(x => x.Emoji == null))
                 {
                     foreach (var god in newGodList)
                     {
@@ -299,14 +300,14 @@ namespace ThothBotCore.Modules
         }
 
         [Command("ae")]
-        public async Task AddEmojiToGodCommand(string emoji, [Remainder]string godname)
+        public async Task AddEmojiToGodCommand(string emoji, [Remainder] string godname)
         {
             await Database.InsertEmojiForGod(godname, emoji);
         }
 
         [Command("aei")]
         [RequireOwner]
-        public async Task AddEmojiToItemCommand(string emoji, [Remainder]string itemName)
+        public async Task AddEmojiToItemCommand(string emoji, [Remainder] string itemName)
         {
             if (itemName.Contains("'"))
             {
@@ -322,7 +323,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("sm")]
-        public async Task SendMessageAsOwner(ulong server, ulong channel, [Remainder]string message)
+        public async Task SendMessageAsOwner(ulong server, ulong channel, [Remainder] string message)
         {
             var chn = Connection.Client.GetGuild(server).GetTextChannel(channel);
 
@@ -348,14 +349,14 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    Console.WriteLine(ex.Message);
+                    Text.WriteLine(ex.Message);
                 }
             }
         }
 
         [Command("setglobalerrormessage", true)]
         [Alias("sgem")]
-        public async Task SetGlobalErrorMessageCommand([Remainder]string message = "")
+        public async Task SetGlobalErrorMessageCommand([Remainder] string message = "")
         {
             if (message == "")
             {
@@ -369,7 +370,7 @@ namespace ThothBotCore.Modules
 
         [Command("setgameinconfig", true)]
         [Alias("sgic")]
-        public async Task SetGameInConfigCommand([Remainder]string text)
+        public async Task SetGameInConfigCommand([Remainder] string text)
         {
             Credentials.botConfig.setGame = text;
             await ReplyAsync("Ready, boss.\n" + Credentials.botConfig.setGame);
@@ -492,7 +493,7 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Text.WriteLine(ex.Message);
             }
         }
 
@@ -502,7 +503,7 @@ namespace ThothBotCore.Modules
             var messages = await Context.Channel.GetMessagesAsync(2000).FlattenAsync();
             var allembeds = messages.Where(x => x.Embeds.Count != 0);
 
-            Console.WriteLine($"Found {allembeds.Count()} messages.");
+            Text.WriteLine($"Found {allembeds.Count()} messages.");
             int count = 0;
             StringBuilder sb = new StringBuilder();
             StringBuilder scount = new StringBuilder();
@@ -520,17 +521,17 @@ namespace ThothBotCore.Modules
                     // Leave
                     count--;
                 }
-                scount.Append($"{count-2}, ");
+                scount.Append($"{count - 2}, ");
                 sdate.Append($"\"{message.Timestamp.ToString("d", CultureInfo.InvariantCulture)}\", ");
 
-                sb.AppendLine($"{count-2},{message.Timestamp:dd-MM-yyyy}");
+                sb.AppendLine($"{count - 2},{message.Timestamp:dd-MM-yyyy}");
             }
             StringBuilder nzbr = new StringBuilder();
             nzbr.AppendLine(scount.ToString());
             nzbr.AppendLine(sdate.ToString());
             await File.AppendAllTextAsync("spimise.txt", nzbr.ToString());
             await File.AppendAllTextAsync("zxc.csv", sb.ToString());
-            Console.WriteLine((count - 2).ToString());
+            Text.WriteLine((count - 2).ToString());
         }
 
         [Command("users", true, RunMode = RunMode.Async)]
@@ -583,7 +584,7 @@ namespace ThothBotCore.Modules
         }
 
         [Command("searchguild")]
-        public async Task SearchGuildCommand([Remainder]string term)
+        public async Task SearchGuildCommand([Remainder] string term)
         {
             var guilds = Connection.Client.Guilds;
             var sb = new StringBuilder();
@@ -619,7 +620,7 @@ namespace ThothBotCore.Modules
                     {
                         gname.Replace("'", "''");
                     }
-                    Console.WriteLine($"{guild.Name} [{guild.Id}]");
+                    Text.WriteLine($"{guild.Name} [{guild.Id}]");
                     await Database.SetGuild(guild.Id, gname);
                     missingCount++;
                     sb.AppendLine($"{guild.Name} [{guild.Id}]");
@@ -628,39 +629,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"Finished!\n" +
                 $"Missing: {missingCount}\n" +
                 $"{sb}");
-        }
-
-        [Command("badges")]
-        public async Task GetAllBadgesCommandAsync()
-        {
-            EmbedBuilder embed = new EmbedBuilder();
-            StringBuilder keys = new StringBuilder();
-            StringBuilder badge = new StringBuilder();
-            embed.WithAuthor(x =>
-            {
-                x.IconUrl = Constants.botIcon;
-                x.Name = "All available badges";
-            });
-            var allBadges = MongoConnection.GetAllBadges();
-            foreach (var bdg in allBadges)
-            {
-                keys.AppendLine(bdg.Key);
-                badge.AppendLine($"{bdg.Emote} {bdg.Title}");
-            }
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Key";
-                x.Value = keys.ToString();
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Badge";
-                x.Value = badge.ToString();
-            });
-            embed.WithColor(Constants.FeedbackColor);
-            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("sendDM")]
@@ -695,7 +663,7 @@ namespace ThothBotCore.Modules
             var embed = new EmbedBuilder();
             var mainMessage = await ReplyAsync("Author?", embed: embed.Build());
             var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            
+
             // With author
             if (response.Content.ToLowerInvariant().Contains("y"))
             {
@@ -795,7 +763,7 @@ namespace ThothBotCore.Modules
                 elapsedTime = String.Format("{0:00}:{1:00}",
                     ts.Seconds,
                     ts.Milliseconds / 10);
-                Text.WriteLine("Players: " + elapsedTime, ConsoleColor.Black, ConsoleColor.White);
+                Text.WriteLine("Players: " + elapsedTime);
 
                 // Specials
                 stopWatch.Reset();
@@ -806,13 +774,13 @@ namespace ThothBotCore.Modules
                 elapsedTime = String.Format("{0:00}:{1:00}",
                     ts.Seconds,
                     ts.Milliseconds / 10);
-                Text.WriteLine("Specials: " + elapsedTime, ConsoleColor.Black, ConsoleColor.White);
+                Text.WriteLine("Specials: " + elapsedTime);
 
                 Text.WriteLine("COMPLETED!", ConsoleColor.Green, ConsoleColor.Black);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Text.WriteLine(ex.Message);
             }
         }
 
@@ -831,7 +799,7 @@ namespace ThothBotCore.Modules
                     }
                     catch
                     {
-                        Console.WriteLine(guild._id);
+                        Text.WriteLine(guild._id.ToString());
                     }
                 }
                 var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
@@ -845,7 +813,7 @@ namespace ThothBotCore.Modules
                         }
                         catch
                         {
-                            Console.WriteLine($"{nzvrat.Id} {nzvrat.Name}");
+                            Text.WriteLine($"{nzvrat.Id} {nzvrat.Name}");
                             await Database.DeleteServerConfig(guild._id);
                         }
                     }
@@ -853,15 +821,92 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Text.WriteLine(ex.Message);
             }
         }
 
-        [Command("badg")]
-        public async Task GetPlayerSpecialsCommandAsync()
+        // Badges
+        [Command("badges")]
+        public async Task GetAllBadgesCommandAsync()
         {
-            BadgeModel badge = new BadgeModel { Key = "vulpis", Title = "<:VulpisEsports:747238755517202511> Vulpis Esports Owner" };
-            await MongoConnection.SaveOrCreateBadgeAsync(badge);
+            EmbedBuilder embed = new EmbedBuilder 
+            { 
+                Color = Constants.FeedbackColor
+            };
+            StringBuilder keys = new StringBuilder();
+            StringBuilder badge = new StringBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.IconUrl = Constants.botIcon;
+                x.Name = "All available badges";
+            });
+            var allBadges = MongoConnection.GetAllBadges();
+            foreach (var bdg in allBadges)
+            {
+                keys.AppendLine(bdg.Key);
+                badge.AppendLine($"{bdg.Emote} {bdg.Title}");
+            }
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Key";
+                x.Value = keys.ToString();
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Badge";
+                x.Value = badge.ToString();
+            });
+            await ReplyAsync(embed: embed.Build());
+        }
+
+        // Tips
+        [Command("addtip")]
+        public async Task InsertTipCommandAsync([Remainder] string tipText)
+        {
+            TipsModel tip = new TipsModel
+            {
+                TipText = tipText
+            };
+            await MongoConnection.SaveTipAsync(tip);
+            var alltips = MongoConnection.GetAllTips();
+            await ReplyAsync($"Tips in DB: {alltips.Count}");
+        }
+
+        [Command("tips")]
+        public async Task PrintAllTips()
+        {
+            var alltips = MongoConnection.GetAllTips();
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Color = Constants.FeedbackColor
+            };
+            StringBuilder ids = new StringBuilder();
+            StringBuilder badge = new StringBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.IconUrl = Constants.botIcon;
+                x.Name = "All tips";
+            });
+            foreach (var tip in alltips)
+            {
+                ids.AppendLine(tip._id.ToString());
+                badge.AppendLine(tip.TipText);
+            }
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "ID";
+                x.Value = ids.ToString();
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Tip Text";
+                x.Value = badge.ToString();
+            });
+            await ReplyAsync(embed: embed.Build());
         }
 
         private class DataUsed

@@ -86,7 +86,7 @@ namespace ThothBotCore.Discord
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Guild: {context.Guild.Name} [{context.Guild.Id}]\nMessage: {context.Message.Content}");
+                Text.WriteLine($"Guild: {context.Guild.Name} [{context.Guild.Id}]\nMessage: {context.Message.Content}");
                 await ErrorHandler(context, null, ex);
             }
         }
@@ -152,9 +152,14 @@ namespace ThothBotCore.Discord
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Please provide a valid number!", 254);
                 await context.Channel.SendMessageAsync(embed: embed);
             }
+            else if (errorString.Contains("permission"))
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync(errorString, 255);
+                await context.Channel.SendMessageAsync(embed: embed);
+            }
             else
             {
-                Console.WriteLine($"{DateTime.Now:[HH:mm]}\tError Tracker(CommandHandler): " + errorString);
+                Text.WriteLine($"{DateTime.Now:[HH:mm]}\tError Tracker(CommandHandler): " + errorString);
                 await Reporter.RespondToCommandOnErrorAsync(exception, context, errorString);
             }
         }

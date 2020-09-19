@@ -38,6 +38,7 @@ namespace ThothBotCore.Modules
         [Summary("Display stats for the provided `PlayerName`.")]
         [Alias("stat", "pc", "st", "stata", "ст", "статс", "ns")]
         [RequireBotPermission(ChannelPermission.EmbedLinks)]
+        [RequireBotPermission(ChannelPermission.UseExternalEmojis)]
         public async Task Stats([Remainder] string PlayerName = "")
         {
             string elapsedTime;
@@ -71,7 +72,7 @@ namespace ThothBotCore.Modules
                 elapsedTime = String.Format("{0:00}:{1:00}",
                     ts.Seconds,
                     ts.Milliseconds / 10);
-                Console.WriteLine("API CALL " + elapsedTime);
+                Text.WriteLine("API CALL " + elapsedTime);
 
                 var getPlayerJson = await hirezAPI.GetPlayer(playerID.ToString());
                 // Generating the embed and sending to channel
@@ -97,7 +98,7 @@ namespace ThothBotCore.Modules
                 elapsedTime = String.Format("{0:00}:{1:00}",
                     ts.Seconds,
                     ts.Milliseconds / 10);
-                Console.WriteLine("API CALL END AND EMBED SENT " + elapsedTime);
+                Text.WriteLine("API CALL END AND EMBED SENT " + elapsedTime);
 
                 // Getting the top queues
                 try
@@ -150,7 +151,7 @@ namespace ThothBotCore.Modules
                         elapsedTime = String.Format("{0:00}:{1:00}",
                             ts.Seconds,
                             ts.Milliseconds / 10);
-                        Console.WriteLine("Completed " + elapsedTime);
+                        Text.WriteLine("Completed " + elapsedTime);
                     }
                 }
                 catch (Exception ex)
@@ -444,6 +445,10 @@ namespace ThothBotCore.Modules
                 x.Name = "Random Build";
                 x.Value = sb.ToString();
             });
+            embed.WithFooter(x =>
+            {
+                x.Text = Text.GetRandomTip();
+            });
             await ReplyAsync($"{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
         }
 
@@ -518,6 +523,10 @@ namespace ThothBotCore.Modules
                     });
                     gods.RemoveAt(rr);
                 }
+                embed.WithFooter(x =>
+                {
+                    x.Text = Text.GetRandomTip();
+                });
 
                 await ReplyAsync($"Team of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
             }
@@ -1035,11 +1044,17 @@ namespace ThothBotCore.Modules
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the API sent an empty response which most of the time means the match" +
                         " is not available anymore.\n" +
-                        "You can try Smite.Guru instead");
+                        "You can try Smite.Guru instead", $"MatchID: {mID}");
                     await ReplyAsync(embed: embed);
                     return;
                 }
                 var matchDetails = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(matchDetailsString);
+                if (matchDetails.Count == 1 && matchDetails[0].ret_msg != null)
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync(matchDetails[0].ret_msg.ToString(), $"MatchID: {mID}", 255);
+                    await ReplyAsync(embed: embed);
+                    return;
+                }
                 var finalembed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
                 if (sentMessage != null)
                 {
@@ -1361,9 +1376,8 @@ namespace ThothBotCore.Modules
                     getplayerList = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerJSON);
                     if (getplayerList[0].Personal_Status_Message.ToLowerInvariant() == generatedString)
                     {
-                        await Database.SetPlayerSpecials(playerID,
-                            (getplayerList[0].hz_player_name == null || getplayerList[0].hz_player_name == "" ? getplayerList[0].hz_gamer_tag : getplayerList[0].hz_player_name),
-                            Context.Message.Author.Id);
+                        PlayerSpecial playerSpecial = new PlayerSpecial { _id = playerID, discordID = Context.Message.Author.Id };
+                        await MongoConnection.SavePlayerSpecialsAsync(playerSpecial);
                         embed.WithTitle(getplayerList[0].hz_player_name + " " + getplayerList[0].hz_gamer_tag);
                         embed.WithDescription($":tada: Congratulations, you've successfully linked your Discord and SMITE account into the Thoth Database.");
                         embed.ImageUrl = null;
@@ -1398,14 +1412,14 @@ namespace ThothBotCore.Modules
         [Summary("Unlink your SMITE and Discord accounts in Thoth's database")]
         public async Task UnlinkAccountsCommand()
         {
-            var db = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
-            if (db.Count == 0)
+            var db = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(Context.Message.Author.Id);
+            if (db == null)
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"You don't have a linked SMITE account in the database.");
                 await ReplyAsync(embed: embed);
                 return;
             }
-            await Database.RemoveLinkedAccount(Context.Message.Author.Id);
+            await MongoConnection.UnlinkPlayerAsync(Context.Message.Author.Id);
             var em = await EmbedHandler.BuildDescriptionEmbedAsync($"{Context.Message.Author.Username} just unlinked an account.", 0, 0, 254);
             await Reporter.SendEmbedToBotLogsChannel(em.ToEmbedBuilder());
             em = await EmbedHandler.BuildDescriptionEmbedAsync("You have successfully unlinked your account!");
@@ -1587,7 +1601,7 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    Console.WriteLine(ex.Message);
+                    Text.WriteLine(ex.Message);
                 }
             }
         }
@@ -1616,32 +1630,6 @@ namespace ThothBotCore.Modules
             }
         }
 
-        // Owner Commands
-
-        [Command("updateplayers")]
-        [RequireOwner]
-        public async Task UpdatePlayers()
-        {
-            await ReplyAsync("do not use");
-
-            var playersList = new List<PlayerStats>(await GetAllPlayers());
-
-            for (int i = 0; i < playersList.Count; i++)
-            {
-                List<PlayerStats> playerList = JsonConvert.DeserializeObject<List<PlayerStats>>(await hirezAPI.GetPlayer(playersList[i].ActivePlayerId.ToString()));
-                try
-                {
-                    Console.WriteLine($"[{playerList[0].ActivePlayerId}]{playerList[0].hz_player_name} Updated!");
-                    //adding player to DB
-                    //commented out after adding portal_id to the database
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"{playersList[i].hz_player_name}\n{ex.Message}");
-                }
-            }
-        }
-
         // Shit/fun commands lul
         [Command("rank", true, RunMode = RunMode.Async)]
         [Summary("Gives you random ranked division.")]
@@ -1666,6 +1654,10 @@ namespace ThothBotCore.Modules
                     embed.Author.IconUrl = mentionedUser.GetAvatarUrl();
                 }
                 embed.WithTitle($"{Text.GetRankedConquest(n).Item2} {Text.GetRankedConquest(n).Item1}");
+                embed.WithFooter(x =>
+                {
+                    x.Text = Text.GetRandomTip();
+                });
 
                 await ReplyAsync("", false, embed.Build());
             }
@@ -1689,15 +1681,15 @@ namespace ThothBotCore.Modules
         {
             var handler = new PlayerHandlerStruct();
 
-            List<PlayerSpecial> getPlayerByDiscordID;
+            PlayerSpecial getPlayerByDiscordID;
 
             // Checking if we are searching for Player who linked his Discord with SMITE account
             if (input == "")
             {
-                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(Context.Message.Author.Id);
-                if (getPlayerByDiscordID.Count != 0)
+                getPlayerByDiscordID = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(Context.Message.Author.Id);
+                if (getPlayerByDiscordID != null)
                 {
-                    handler.playerID = getPlayerByDiscordID[0]._id;
+                    handler.playerID = getPlayerByDiscordID._id;
                 }
                 else
                 {
@@ -1710,10 +1702,10 @@ namespace ThothBotCore.Modules
             else if (Context.Message.MentionedUsers.Count != 0 && input == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
             {
                 var mentionedUser = Context.Message.MentionedUsers.Last();
-                getPlayerByDiscordID = await GetPlayerSpecialsByDiscordID(mentionedUser.Id);
-                if (getPlayerByDiscordID.Count != 0)
+                getPlayerByDiscordID = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(mentionedUser.Id);
+                if (getPlayerByDiscordID != null)
                 {
-                    handler.playerID = getPlayerByDiscordID[0]._id;
+                    handler.playerID = getPlayerByDiscordID._id;
                 }
                 else
                 {
