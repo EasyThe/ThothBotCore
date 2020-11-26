@@ -159,6 +159,53 @@ namespace ThothBotCore.Utilities
                             $"**Error Message:** {ex.Message}");
                     }
 
+                    //DiscordLabs
+                    try
+                    {
+                        using (var webclient = new HttpClient())
+                        using (var content = new StringContent(
+                            $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
+                            $"\"server_count\": \"{Connection.Client.Guilds.Count}\" }}", Encoding.UTF8, "application/json"))
+                        {
+                            var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
+                            sb.AppendLine($"DiscordLabs -- {response.StatusCode} {response.ReasonPhrase}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await Reporter.SendError("**DiscordLabs.**\n" +
+                            $"**Error Message:** {ex.Message}");
+                    }
+                    // StatCord
+                    try
+                    {
+                        long linkedPlayers = await ThothBotCore.Storage.Implementations.MongoConnection.LinkedPlayersCount();
+                        using (var webclient = new HttpClient())
+                        using (var content = new StringContent(
+                            $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
+                            $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
+                            $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
+                            $"\"users\": \"{totalUsers}\", " +
+                            $"\"active\": [], " +
+                            $"\"commands\": \"0\", " +
+                            $"\"popular\": []," +
+                            $"\"memactive\": \"0\"," +
+                            $"\"memload\": \"0\"," +
+                            $"\"cpuload\": \"0\"," +
+                            $"\"bandwidth\": \"0\"," +
+                            $"\"custom1\": \"{linkedPlayers}\"," +
+                            $"\"custom2\": \"{ThothBotCore.Storage.Database.CountOfStatusUpdatesActivatedInDB()[0]}\" }}", Encoding.UTF8, "application/json"))
+                        {
+                            var response = await webclient.PostAsync("https://statcord.com/logan/stats", content);
+                            sb.AppendLine($"StatCord -- {response.StatusCode} {response.ReasonPhrase}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await Reporter.SendError("**StatCord.**\n" +
+                            $"**Error Message:** {ex.Message}");
+                    }
+
                     sb.AppendLine($"{DateTime.Now:[HH:mm]} Guilds count updated! New count: {joinedGuilds}");
                     var em = await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 107, 70, 147);
                     await Reporter.SendEmbedToBotLogsChannel(em.ToEmbedBuilder());
@@ -167,51 +214,6 @@ namespace ThothBotCore.Utilities
                 if (Connection.Client.CurrentUser.Id == 587623068461957121)
                 {
                     return;
-                }
-
-                //DiscordLabs
-                try
-                {
-                    using (var webclient = new HttpClient())
-                    using (var content = new StringContent(
-                        $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
-                        $"\"server_count\": \"{Connection.Client.Guilds.Count}\" }}", Encoding.UTF8, "application/json"))
-                    {
-                        var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
-                        Console.WriteLine($"===\nDiscordLabs: {response.ReasonPhrase}\n===\n");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await Reporter.SendError("**DiscordLabs.**\n" +
-                        $"**Error Message:** {ex.Message}");
-                }
-                // StatCord
-                try
-                {
-
-                    using (var webclient = new HttpClient())
-                    using (var content = new StringContent(
-                        $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
-                        $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
-                        $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
-                        $"\"users\": \"{totalUsers}\", " +
-                        $"\"active\": \"0\", " +
-                        $"\"commands\": \"0\", " +
-                        $"\"popular\": []," +
-                        $"\"memactive\": \"0\"," +
-                        $"\"memload\": \"0\"," +
-                        $"\"cpuload\": \"0\"," +
-                        $"\"bandwidth\": \"0\" }}", Encoding.UTF8, "application/json"))
-                    {
-                        var response = await webclient.PostAsync("https://statcord.com/logan/stats", content);
-                        Console.WriteLine($"===\nStatCord: {response.ReasonPhrase}\n===\n");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await Reporter.SendError("**StatCord.**\n" +
-                        $"**Error Message:** {ex.Message}");
                 }
             }
 

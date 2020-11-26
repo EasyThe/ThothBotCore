@@ -806,13 +806,20 @@ namespace ThothBotCore.Modules
         [Command("vw")]
         public async Task VulpisWarnCommand(SocketTextChannel channel, [Remainder] string text)
         {
-            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context) || Context.Message.Author.Id != Constants.OwnerID)
+            try
             {
-                return;
-            }
+                if (Context.Guild.Id != 321367254983770112 || !(TournamentUtilities.IsTournamentManagerCheck(Context)))
+                {
+                    return;
+                }
 
-            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(text, 233, 78, 26);
-            await channel.SendMessageAsync(embed: embed.ToEmbedBuilder().Build());
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync(text, 233, 78, 26);
+                await channel.SendMessageAsync(embed: embed.ToEmbedBuilder().Build());
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync(ex.Message);
+            }
         }
     }
 }
