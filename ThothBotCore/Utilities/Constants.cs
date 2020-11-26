@@ -1,7 +1,5 @@
 ﻿using Discord;
-using System.Collections.Generic;
 using ThothBotCore.Discord.Entities;
-using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Utilities
 {
@@ -25,18 +23,10 @@ namespace ThothBotCore.Utilities
         public static Color VulpisColor { get; set; } = new Color(233, 78, 26);
         public static Color ErrorColor { get; set; } = new Color(255, 148, 148);
         public static Color FeedbackColor = new Color(107, 70, 147);
-        public static List<Models.Gods.God> GodsList { get; set; } = MongoConnection.GetAllGods();
-        public static List<Models.TipsModel> TipsList { get; set; } = MongoConnection.GetAllTips();
-        public static List<Models.CommunityModel> CommList { get; set; } = MongoConnection.GetAllCommunities();
 
         // Vulpis
         public static string VulpisLogoLink { get; set; } = "https://i.imgur.com/WePnHmR.png";
-
-        public static void ReloadConstants()
-        {
-            GodsList = MongoConnection.GetAllGods(); 
-            TipsList = MongoConnection.GetAllTips();
-            CommList = MongoConnection.GetAllCommunities();
-        }
+        // tezi otivat v MongoDB beibii
+        public static string VulpisDescription { get; set; } = "European Smite organisation focused on organizing regular Conquest, Arena, Assault, Joust & Duel tournaments.";
     }
 }

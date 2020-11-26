@@ -9,7 +9,6 @@ using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
-using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Storage.Database;
 
@@ -68,7 +67,7 @@ namespace ThothBotCore.Modules
             int totalUsers = 0;
             foreach (var guild in Context.Client.Guilds)
             {
-                totalUsers += guild.MemberCount;
+                totalUsers += guild.Users.Count;
             }
             string patch = "";
             try
@@ -103,14 +102,12 @@ namespace ThothBotCore.Modules
                 $":busts_in_silhouette: **Users**: {totalUsers}\n" +
                 $":1234: **Commands Run**: {Global.CommandsRun}";
             });
-            long playersCount = await MongoConnection.PlayersCount();
-            long linkedCount = await MongoConnection.LinkedPlayersCount();
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Thoth Database";
-                x.Value = $":video_game: **Players**: {playersCount}\n" +
-                $":link: **Linked Players**: {linkedCount}\n" +
+                x.Value = $":video_game: **Players**: {PlayersInDbCount()[0]}\n" +
+                $":link: **Linked Players**: {LinkedPlayersInDBCount()[0]}\n" +
                 $":loudspeaker: **Status Update Subs**: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
                 $"<:Gods:567146088985919498> **Smite Patch Version**: {patch}";
             });
@@ -118,7 +115,7 @@ namespace ThothBotCore.Modules
             {
                 x.IsInline = true;
                 x.Name = "Links";
-                x.Value = $"[Bot Invite](https://discord.com/oauth2/authorize?client_id=454145330347376651&permissions=537259072&scope=bot) | " +
+                x.Value = $"[Bot Invite](https://discordapp.com/oauth2/authorize?client_id=454145330347376651&permissions=537259072&scope=bot) | " +
                 $"[Support Server]({Constants.SupportServerInvite})\n" +
                 $"[Website](http://thothbot.tk) | " +
                 $"[Privacy Policy](http://thothbot.tk/privacy-policy.html)\n" +

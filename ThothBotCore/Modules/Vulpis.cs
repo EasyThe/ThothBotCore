@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
-using ThothBotCore.Storage.Implementations;
+using ThothBotCore.Storage;
 using ThothBotCore.Tournament;
 using ThothBotCore.Utilities;
 
@@ -25,21 +25,20 @@ namespace ThothBotCore.Modules
         [Command("vulpis", true)]
         public async Task VulpisInfoCommand()
         {
-            var comm = await MongoConnection.GetCommunityAsync("Vulpis Esports");
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {
                 x.Name = $"Vulpis Esports";
-                x.IconUrl = comm.LogoLink;
+                x.IconUrl = Constants.VulpisLogoLink;
             });
-            embed.WithThumbnailUrl(comm.LogoLink);
+            embed.WithThumbnailUrl(Constants.VulpisLogoLink);
             embed.WithColor(Constants.VulpisColor);
-            embed.WithDescription(comm.Description);
+            embed.WithDescription(Constants.VulpisDescription);
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Invite Link";
-                x.Value = comm.Link;
+                x.Value = "https://discord.gg/CuvfhDP";
             });
             await ReplyAsync(embed: embed.Build());
         }
@@ -49,7 +48,7 @@ namespace ThothBotCore.Modules
         public async Task AssaultTeamCommand()
         {
             var embed = new EmbedBuilder();
-            var gods = Constants.GodsList;
+            var gods = Database.LoadAllGodsWithLessInfo();
 
             embed.WithColor(Constants.DefaultBlueColor);
 
@@ -614,7 +613,7 @@ namespace ThothBotCore.Modules
             bool firstHasHealer = false;
             //       ra, hel, guan yu, aphrodite, change, sylvanus, terra, baron, horus, yemoja
             int[] healers = { 1698, 1718, 1763, 1898, 1921, 2030, 2147, 3518, 3611, 3811 };
-            var gods = Constants.GodsList;
+            var gods = Database.LoadAllGodsWithLessInfo();
 
             // First team
             for (int i = 0; i < 5; i++)
@@ -635,7 +634,7 @@ namespace ThothBotCore.Modules
             }
 
             // Second team
-            gods = Constants.GodsList;
+            gods = Database.LoadAllGodsWithLessInfo();
             hasHealer = false;
             for (int i = 0; i < 5; i++)
             {
@@ -721,7 +720,7 @@ namespace ThothBotCore.Modules
                 string[] lines;
 
                 // found, continue
-                var gods = Constants.GodsList;
+                var gods = Database.LoadAllGodsWithLessInfo();
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(x =>
                 {
@@ -801,18 +800,6 @@ namespace ThothBotCore.Modules
             {
                 await Reporter.RespondToCommandOnErrorAsync(ex, Context);
             }
-        }
-
-        [Command("vw")]
-        public async Task VulpisWarnCommand(SocketTextChannel channel, [Remainder] string text)
-        {
-            if (Context.Guild.Id != 321367254983770112 || !TournamentUtilities.IsTournamentManagerCheck(Context) || Context.Message.Author.Id != Constants.OwnerID)
-            {
-                return;
-            }
-
-            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(text, 233, 78, 26);
-            await channel.SendMessageAsync(embed: embed.ToEmbedBuilder().Build());
         }
     }
 }

@@ -43,7 +43,6 @@ namespace ThothBotCore.Discord.Entities
         public string Token { get; set; } = "TOKEN-HERE";
         public string devId { get; set; } = "HiRezDevID";
         public string MongoDbURL { get; set; } = "MongoURL";
-        public string Sentry { get; set; } = "SentryURL";
         public string authKey { get; set; } = "HiRezAuthKey";
         public string challongeKey { get; set; } = "ChallongeKey";
         public string trelloKey { get; set; } = "TrelloKey";

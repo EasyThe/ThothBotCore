@@ -3,11 +3,11 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Models;
+using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.MatchPlayerDetails;
 using static ThothBotCore.Connections.Models.Player;
@@ -352,7 +352,7 @@ namespace ThothBotCore.Discord
             }
 
             double rWinRate = 0;
-            if (playerStats[0].Wins != 0)
+            if (playerStats[0].Wins != 0 && playerStats[0].Losses != 0)
             {
                 rWinRate = (double)playerStats[0].Wins * 100 / (playerStats[0].Wins + playerStats[0].Losses);
             }
@@ -364,7 +364,7 @@ namespace ThothBotCore.Discord
                     .WithUrl($"https://smite.guru/profile/{playerStats[0].ActivePlayerId}")
                     .WithIconUrl(Text.GetPortalIconLinksByPortalName(playerStats[0].Platform));
             });
-            string embedTitle = await Utils.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId, false);
+            string embedTitle = await Text.CheckSpecialsForPlayer(playerStats[0].ActivePlayerId, false);
             embed.WithTitle(embedTitle);
             if (playerStatus[0].status == 0)
             {
@@ -718,7 +718,7 @@ namespace ThothBotCore.Discord
             embed.WithColor(240, 71, 71);
             for (int i = 0; i < players.Count; i++)
             {
-                string specialscheck = await Utils.CheckSpecialsForPlayer(players[i].player_id, true);
+                string specialscheck = await Text.CheckSpecialsForPlayer(players[i].player_id, true);
                 sb.Append($"{i+1}. {players[i].Name} {Text.GetPortalIcon(players[i].portal_id.ToString())} " +
                     $"{specialscheck}" +
                     $"{(players[i].privacy_flag == "y" ? "**Hidden Profile** <:Hidden:591666971234402320>" : "")}\n");
@@ -734,7 +734,6 @@ namespace ThothBotCore.Discord
         public static async Task<EmbedBuilder> LiveMatchEmbed(List<MatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails)
         {
             var embed = new EmbedBuilder();
-            var gods = Constants.GodsList;
 
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
@@ -749,7 +748,7 @@ namespace ThothBotCore.Discord
 
             if (matchPlayerDetails.Count == 1)
             {
-                string ge = gods.Find(x => x.id == matchPlayerDetails[0].GodId).Emoji;
+                string ge = await Database.GetGodEmoji(matchPlayerDetails[0].GodName);
                 embed.AddField(x =>
                 {
                     x.IsInline = false;
@@ -758,21 +757,6 @@ namespace ThothBotCore.Discord
                 });
                 return embed;
             }
-            else if (matchPlayerDetails.Count != 0 && matchPlayerDetails[0].mapGame.Contains("AI"))
-            {
-                foreach (var player in matchPlayerDetails)
-                {
-                    string ge = gods.Find(x => x.id == player.GodId).Emoji;
-                    embed.AddField(x =>
-                    {
-                        x.IsInline = false;
-                        x.Name = $"{ge} {Text.HiddenProfileCheck(player.playerName)}";
-                        x.Value = $":video_game:Account Created: \n{(player.playerCreated != "" ? Text.InvariantDate(DateTime.Parse(player.playerCreated, CultureInfo.InvariantCulture)) : "n/a")}";
-                    });
-                }
-            }
-
-            // Averages
 
             var team1 = new List<PlayerMatchDetails>();
             var team2 = new List<PlayerMatchDetails>();
@@ -828,7 +812,7 @@ namespace ThothBotCore.Discord
                     player1.Append($":video_game:Account Created: \n{team1force}{(team1[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team1[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
                     player2.Append($":video_game:Account Created: \n{team2force}{(team2[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team2[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
                 }
-                godemoji = gods.Find(x => x.id == team1[i].GodId).Emoji;
+                godemoji = await Database.GetGodEmoji(team1[i].GodName);
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
@@ -841,7 +825,7 @@ namespace ThothBotCore.Discord
                     x.Name = $"**{team1[i].Account_Level} **<:level:529719212017451008>** {team2[i].Account_Level}**";
                     x.Value = $" {Text.AbbreviationRegions(team1[i].playerRegion)} 🌐 {Text.AbbreviationRegions(team2[i].playerRegion)}";
                 });
-                godemoji = gods.Find(x => x.id == team2[i].GodId).Emoji;
+                godemoji = await Database.GetGodEmoji(team2[i].GodName);
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
@@ -858,43 +842,18 @@ namespace ThothBotCore.Discord
         public static async Task<EmbedBuilder> MatchDetailsEmbed(List<MatchDetails.MatchDetailsPlayer> matchdetailsList)
         {
             var embed = new EmbedBuilder();
-            string godemoji = "";
-            var gods = Constants.GodsList;
-
-            if (matchdetailsList.Count == 1 && matchdetailsList[0].ActivePlayerId == "0")
-            {
-                embed.WithTitle("Hi-Rez API error:");
-                embed.WithDescription(matchdetailsList[0].ret_msg.ToString());
-                return embed;
-            }
 
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
-                author.WithName($"{Text.GetQueueName(matchdetailsList[0].match_queue_id)} | {matchdetailsList[0].Minutes} mins");
+                author.WithName($"{matchdetailsList[0].name} | {matchdetailsList[0].Minutes} mins");
                 author.WithIconUrl(Constants.botIcon);
                 author.WithUrl($"https://smite.guru/match/{matchdetailsList[0].Match}");
             });
             embed.WithFooter(x =>
             {
-                x.Text = $"Match ID: {matchdetailsList[0].Match}";
+                x.Text = $"Match ID: {matchdetailsList[0].Match.ToString()}";
             });
-
-            if (matchdetailsList[0].name.Contains("AI"))
-            {
-                foreach (var player in matchdetailsList)
-                {
-                    godemoji = gods.Find(x => x.id == player.GodId).Emoji;
-                    embed.AddField(x =>
-                    {
-                        x.IsInline = true;
-                        x.Name = $"{godemoji} {(player.hz_player_name == null || player.hz_player_name == "" ? player.hz_gamer_tag : player.hz_player_name)}";
-                        x.Value = $":crossed_swords:KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
-                    $"🗡Damage: {player.Damage_Player}";
-                    });
-                }
-                return embed;
-            }
 
             var winners = new List<MatchDetails.MatchDetailsPlayer>();
             var losers = new List<MatchDetails.MatchDetailsPlayer>();
@@ -925,17 +884,17 @@ namespace ThothBotCore.Discord
             if (winners[0].Ban1.Length != 0)
             {
                 var bans = new StringBuilder();
-                bans.Append(gods.Find(x => x.id == winners[0].Ban1Id) != null ? gods.Find(x => x.id == winners[0].Ban1Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban2Id) != null ? gods.Find(x => x.id == winners[0].Ban2Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban3Id) != null ? gods.Find(x => x.id == winners[0].Ban3Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban4Id) != null ? gods.Find(x => x.id == winners[0].Ban4Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban5Id) != null ? gods.Find(x => x.id == winners[0].Ban5Id).Emoji : "");
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban1));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban2));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban3));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban4));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban5));
                 bans.Append("\n");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban6Id) != null ? gods.Find(x => x.id == winners[0].Ban6Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban7Id) != null ? gods.Find(x => x.id == winners[0].Ban7Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban8Id) != null ? gods.Find(x => x.id == winners[0].Ban8Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban9Id) != null ? gods.Find(x => x.id == winners[0].Ban9Id).Emoji : "");
-                bans.Append(gods.Find(x => x.id == winners[0].Ban10Id) != null ? gods.Find(x => x.id == winners[0].Ban10Id).Emoji : "");
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban6));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban7));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban8));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban9));
+                bans.Append(await Database.GetGodEmoji(winners[0].Ban10));
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -965,7 +924,7 @@ namespace ThothBotCore.Discord
 
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
-            
+            string godemoji = "";
             for (int i = 0; i < winners.Count; i++)
             {
                 if ((winners[0].match_queue_id == 440) || 
@@ -1012,7 +971,7 @@ namespace ThothBotCore.Discord
                 player2.Append($":crossed_swords:KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
                     $"🗡Damage: {losers[i].Damage_Player}");
 
-                godemoji = gods.Find(x => x.id == winners[i].GodId).Emoji;
+                godemoji = await Database.GetGodEmoji(winners[i].Reference_Name);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -1025,7 +984,7 @@ namespace ThothBotCore.Discord
                     x.Name = $"**{winners[i].Account_Level} **<:level:529719212017451008>** {losers[i].Account_Level}**";
                     x.Value = $"{Text.AbbreviationRegions(winners[i].Region)} 🌐 {Text.AbbreviationRegions(losers[i].Region)}";
                 });
-                godemoji = gods.Find(x => x.id == losers[i].GodId).Emoji;
+                godemoji = await Database.GetGodEmoji(losers[i].Reference_Name);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -1050,12 +1009,11 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.DefaultBlueColor);
             string godemoji = "";
             int i = 0;
-            var gods = Constants.GodsList;
             foreach (var match in matchHistory)
             {
                 if (i != 6)
                 {
-                    godemoji = gods.Find(x => x.id == matchHistory[i].GodId).Emoji;
+                    godemoji = await Database.GetGodEmoji(matchHistory[i].God);
                     embed.AddField(x =>
                     {
                         x.IsInline = false;
@@ -1084,7 +1042,7 @@ namespace ThothBotCore.Discord
             {
                 x.Name = $"{(player.hz_player_name ?? player.hz_gamer_tag)}'s masteries [{ranks.Count}]";
                 x.IconUrl = Text.GetPortalIconLinksByPortalName(player.Platform);
-                x.Url = $"https://smite.guru/profile/{ranks[0].player_id}/champions";
+                x.Url = $"https://smite.guru/profile/{ranks[0].player_id}";
             });
             int count = 0;
             for (int i = 0; i < ranks.Count; i++)
@@ -1115,56 +1073,6 @@ namespace ThothBotCore.Discord
             embed.WithFooter(x =>
             {
                 x.Text = "Rank God [Worshipers]";
-            });
-            return await Task.FromResult(embed.Build());
-        }
-        public static async Task<Embed> BuildWinRatesEmbedAsync(List<GodRanks> ranks, PlayerStats player)
-        {
-            var sb = new StringBuilder();
-            var embed = new EmbedBuilder();
-            embed.WithColor(Constants.DefaultBlueColor);
-            embed.WithAuthor(x =>
-            {
-                x.Name = $"{(player.hz_player_name ?? player.hz_gamer_tag)}'s God Win Rates";
-                x.IconUrl = Text.GetPortalIconLinksByPortalName(player.Platform);
-                x.Url = $"https://smite.guru/profile/{ranks[0].player_id}/champions";
-            });
-            int count = 0;
-            var gods = Constants.GodsList;
-            foreach (var god in ranks)
-            {
-                god.WinRate = (double)god.Wins * 100 / (god.Wins + god.Losses);
-            }
-            var sortedRanksByWinRate = ranks.OrderByDescending(x=>x.WinRate).ToList();
-            for (int i = 0; i < sortedRanksByWinRate.Count; i++)
-            {
-                string godEmoji = gods.Find(x => x.id.ToString() == sortedRanksByWinRate[i].god_id).Emoji;
-                sb.AppendLine($"{godEmoji} {sortedRanksByWinRate[i].god} [**{Math.Round(sortedRanksByWinRate[i].WinRate, 2)}%**]");
-                count++;
-                if (count == 19)
-                {
-                    embed.AddField(x =>
-                    {
-                        x.IsInline = true;
-                        x.Name = "\u200b";
-                        x.Value = sb.ToString();
-                    });
-                    sb.Clear();
-                    count = 0;
-                }
-            }
-            if (sb.Length != 0)
-            {
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = "\u200b";
-                    x.Value = sb.ToString();
-                });
-            }
-            embed.WithFooter(x =>
-            {
-                x.Text = "God [Win Rate]";
             });
             return await Task.FromResult(embed.Build());
         }

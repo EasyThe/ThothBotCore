@@ -34,7 +34,7 @@ namespace ThothBotCore.Utilities
                 int totalUsers = 0;
                 foreach (var guild in Connection.Client.Guilds)
                 {
-                    totalUsers += guild.MemberCount;
+                    totalUsers += guild.Users.Count;
                 }
                 if (joinedGuilds != Connection.Client.Guilds.Count)
                 {

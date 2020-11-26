@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ThothBotCore.Models
 {
@@ -15,12 +14,11 @@ namespace ThothBotCore.Models
         {
             public string Description { get; set; }
             public List<Menuitem> Menuitems { get; set; }
-            public string SecondaryDescription { get; set; }
+            public object SecondaryDescription { get; set; }
         }
 
         public class Item
         {
-            public ObjectId _id { get; set; } = ObjectId.GenerateNewId();
             public string ActiveFlag { get; set; }
             public int ChildItemId { get; set; }
             public string DeviceName { get; set; }
@@ -36,9 +34,6 @@ namespace ThothBotCore.Models
             public string Type { get; set; }
             public string itemIcon_URL { get; set; }
             public object ret_msg { get; set; }
-            public string Emoji { get; set; }
-            public string GodType { get; set; }
-            public int DomColor { get; set; }
         }
     }
 }

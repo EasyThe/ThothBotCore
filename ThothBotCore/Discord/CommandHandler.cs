@@ -3,13 +3,13 @@ using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using Sentry;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
+using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Discord
@@ -86,7 +86,6 @@ namespace ThothBotCore.Discord
             }
             catch (Exception ex)
             {
-                SentrySdk.CaptureException(ex);
                 Text.WriteLine($"Guild: {context.Guild.Name} [{context.Guild.Id}]\nMessage: {context.Message.Content}");
                 await ErrorHandler(context, null, ex);
             }

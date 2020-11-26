@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -17,6 +16,7 @@ using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
+using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Connections.Models.Player;
@@ -41,6 +41,8 @@ namespace ThothBotCore.Modules
         [RequireBotPermission(ChannelPermission.UseExternalEmojis)]
         public async Task Stats([Remainder] string PlayerName = "")
         {
+            string elapsedTime;
+            TimeSpan ts;
             try
             {
                 stopWatch.Start();
@@ -66,6 +68,12 @@ namespace ThothBotCore.Modules
                     matchJson = await hirezAPI.GetMatchPlayerDetails(playerStatus[0].Match);
                 }
 
+                ts = stopWatch.Elapsed;
+                elapsedTime = String.Format("{0:00}:{1:00}",
+                    ts.Seconds,
+                    ts.Milliseconds / 10);
+                Text.WriteLine("API CALL " + elapsedTime);
+
                 var getPlayerJson = await hirezAPI.GetPlayer(playerID.ToString());
                 // Generating the embed and sending to channel
                 finalEmbed = await EmbedHandler.PlayerStatsEmbed(
@@ -85,6 +93,12 @@ namespace ThothBotCore.Modules
                 {
                     sentMessage = await Context.Channel.SendMessageAsync(embed: finalEmbed.Build());
                 }
+
+                ts = stopWatch.Elapsed;
+                elapsedTime = String.Format("{0:00}:{1:00}",
+                    ts.Seconds,
+                    ts.Milliseconds / 10);
+                Text.WriteLine("API CALL END AND EMBED SENT " + elapsedTime);
 
                 // Getting the top queues
                 try
@@ -128,6 +142,16 @@ namespace ThothBotCore.Modules
                         {
                             x.Embed = finalEmbed.Build();
                         });
+
+                        stopWatch.Stop();
+                        // Get the elapsed time as a TimeSpan value.
+                        ts = stopWatch.Elapsed;
+
+                        // Format and display the TimeSpan value.
+                        elapsedTime = String.Format("{0:00}:{1:00}",
+                            ts.Seconds,
+                            ts.Milliseconds / 10);
+                        Text.WriteLine("Completed " + elapsedTime);
                     }
                 }
                 catch (Exception ex)
@@ -211,7 +235,7 @@ namespace ThothBotCore.Modules
         [Alias("годс")]
         public async Task GodsCommand()
         {
-            List<Gods.God> gods = Constants.GodsList;
+            List<Gods.God> gods = LoadAllGods();
 
             if (gods.Count != 0)
             {
@@ -236,11 +260,11 @@ namespace ThothBotCore.Modules
                 {
                     x.IsInline = true;
                     x.Name = $"Gods: {gods.Count}";
-                    x.Value = $"<:Mage:607990144380698625>Mages: {mages.Count}\n" +
-                    $"<:Hunter:607990144271646740>Hunters: {hunters.Count}\n" +
-                    $"<:Guardian:607990144385024000>Guardians: {guardians.Count}\n" +
-                    $"<:Assassin:607990143915261983>Assassins: {assassins.Count}\n" +
-                    $"<:Warrior:607990144338886658>Warriors: {warriors.Count}";
+                    x.Value = $"<:Mage:607990144380698625> {mages.Count}\n" +
+                    $"<:Hunter:607990144271646740> {hunters.Count}\n" +
+                    $"<:Guardian:607990144385024000> {guardians.Count}\n" +
+                    $"<:Assassin:607990143915261983> {assassins.Count}\n" +
+                    $"<:Warrior:607990144338886658> {warriors.Count}";
                 });
                 embed.AddField(x =>
                 {
@@ -278,9 +302,9 @@ namespace ThothBotCore.Modules
             {
                 titleCaseGod = titleCaseGod.Replace("'", "''");
             }
-            Gods.God gods = await MongoConnection.LoadGod(titleCaseGod);
+            List<Gods.God> gods = LoadGod(titleCaseGod);
 
-            if (gods == null)
+            if (gods.Count == 0)
             {
                 await ReplyAsync($"{titleCaseGod} was not found.");
             }
@@ -289,40 +313,40 @@ namespace ThothBotCore.Modules
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(author =>
                 {
-                    author.WithName(gods.Name);
-                    author.WithIconUrl(gods.godIcon_URL);
+                    author.WithName(gods[0].Name);
+                    author.WithIconUrl(gods[0].godIcon_URL);
                 });
-                embed.WithTitle(gods.Title);
-                embed.WithThumbnailUrl(gods.godIcon_URL);
-                if (gods.DomColor != 0)
+                embed.WithTitle(gods[0].Title);
+                embed.WithThumbnailUrl(gods[0].godIcon_URL);
+                if (gods[0].DomColor != 0)
                 {
-                    embed.WithColor(new Color((uint)gods.DomColor));
+                    embed.WithColor(new Color((uint)gods[0].DomColor));
                 }
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
                     field.Name = "Pantheon";
-                    field.Value = gods.Pantheon;
+                    field.Value = gods[0].Pantheon;
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
                     field.Name = "Type";
-                    field.Value = gods.Type;
+                    field.Value = gods[0].Type;
                 });
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
                     field.Name = "Role";
-                    field.Value = gods.Roles;
+                    field.Value = gods[0].Roles;
                 });
-                if (gods.Pros != null || gods.Pros != " " || gods.Pros != "")
+                if (gods[0].Pros != null || gods[0].Pros != " " || gods[0].Pros != "")
                 {
                     embed.AddField(field =>
                     {
                         field.IsInline = false;
                         field.Name = "Pros";
-                        field.Value = gods.Pros + "\u200b";
+                        field.Value = gods[0].Pros + "\u200b";
                     });
                 }
                 embed.WithFooter(x =>
@@ -340,9 +364,56 @@ namespace ThothBotCore.Modules
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod()
         {
-            List<Gods.God> gods = Constants.GodsList;
+            List<Gods.God> gods = Database.LoadAllGodsWithLessInfo();
+
             int rr = rnd.Next(gods.Count);
-            string rbuild = await Utils.RandomBuilderAsync(gods[rr]);
+            string godType = "";
+            StringBuilder sb = new StringBuilder();
+
+            // Random Build START
+
+            if (gods[rr].Roles.Contains("Mage") || gods[rr].Roles.Contains("Guardian"))
+            {
+                godType = "magical";
+            }
+            else
+            {
+                godType = "physical";
+            }
+
+            // Random Relics
+            var active = await Database.GetActiveActives();
+            for (int a = 0; a < 2; a++)
+            {
+                int ar = rnd.Next(active.Count);
+                sb.Append(active[ar].Emoji);
+                active.RemoveAt(ar);
+            }
+
+            // Boots or Shoes depending on the god type
+            if (!gods[rr].Name.Contains("Ratatoskr"))
+            {
+                var boots = await Database.GetBootsOrShoes(godType);
+                int boot = rnd.Next(boots.Count);
+                sb.Append(boots[boot].Emoji);
+            }
+            else
+            {
+                var boots = await Database.GetBootsOrShoes(gods[rr].Name);
+                sb.Append(boots[0].Emoji);
+            }
+
+            var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles.ToLowerInvariant().Trim());
+
+            // Finishing the build with 5 items
+            for (int i = 0; i < 5; i++)
+            {
+                int r = rnd.Next(items.Count);
+                sb.Append(items[r].Emoji);
+                items.RemoveAt(r);
+            }
+
+            // Random Build END
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
@@ -372,7 +443,7 @@ namespace ThothBotCore.Modules
             {
                 x.IsInline = false;
                 x.Name = "Random Build";
-                x.Value = rbuild;
+                x.Value = sb.ToString();
             });
             embed.WithFooter(x =>
             {
@@ -389,20 +460,66 @@ namespace ThothBotCore.Modules
             if (!(number > 5))
             {
                 var embed = new EmbedBuilder();
-                var gods = Constants.GodsList;
+                var gods = Database.LoadAllGodsWithLessInfo();
 
                 embed.WithColor(Constants.DefaultBlueColor);
 
                 for (int i = 0; i < number; i++)
                 {
                     int rr = rnd.Next(gods.Count);
-                    string rbuild = await Utils.RandomBuilderAsync(gods[rr]);
+                    string godType = "";
+                    StringBuilder sb = new StringBuilder();
+
+                    // Random Build START
+
+                    if (gods[rr].Roles.Contains("Mage") || gods[rr].Roles.Contains("Guardian"))
+                    {
+                        godType = "magical";
+                    }
+                    else
+                    {
+                        godType = "physical";
+                    }
+
+                    // Random Relics
+                    var active = await Database.GetActiveActives();
+                    for (int a = 0; a < 2; a++)
+                    {
+                        int ar = rnd.Next(active.Count);
+                        sb.Append(active[ar].Emoji);
+                        active.RemoveAt(ar);
+                    }
+
+                    // Boots or Shoes depending on the god type
+                    if (!gods[rr].Name.Contains("Ratatoskr"))
+                    {
+                        var boots = await Database.GetBootsOrShoes(godType);
+                        int boot = rnd.Next(boots.Count);
+                        sb.Append(boots[boot].Emoji);
+                    }
+                    else
+                    {
+                        var boots = await Database.GetBootsOrShoes(gods[rr].Name);
+                        sb.Append(boots[0].Emoji);
+                    }
+
+                    var items = await Database.GetActiveItemsByGodType(godType, gods[rr].Roles.ToLowerInvariant().Trim());
+
+                    // Finishing the build with 5 items
+                    for (int b = 0; b < 5; b++)
+                    {
+                        int r = rnd.Next(items.Count);
+                        sb.Append(items[r].Emoji);
+                        items.RemoveAt(r);
+                    }
+
+                    // Random Build END
 
                     embed.AddField(x =>
                     {
                         x.IsInline = false;
                         x.Name = $"{gods[rr].Emoji} {gods[rr].Name}";
-                        x.Value = rbuild;
+                        x.Value = sb.ToString();
                     });
                     gods.RemoveAt(rr);
                 }
@@ -445,7 +562,7 @@ namespace ThothBotCore.Modules
                 for (int i = 0; i < smiteServerStatus.incidents.Count; i++)
                 {
                     if ((smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("smite") ||
-                         smiteServerStatus.incidents[i].incident_updates[0].body.ToLowerInvariant().Contains("smite")) &&
+                         smiteServerStatus.incidents[i].incident_updates[0].body.ToLowerInvariant().Contains("smite")) && 
                          !(smiteServerStatus.incidents[i].name.ToLowerInvariant().Contains("blitz")))
                     {
                         inci = true;
@@ -605,12 +722,16 @@ namespace ThothBotCore.Modules
         [Command("item")]
         [Summary("Provides information about `ItemName`.")]
         [Alias("i")]
-        public async Task ItemInfoCommand([Remainder] string ItemName)
+        public async Task ItemInfoCommand([Remainder]string ItemName)
         {
-            var item = await MongoConnection.GetSpecificItemAsync(ItemName);
+            if (ItemName.Contains("'"))
+            {
+                ItemName = ItemName.Replace("'", "''");
+            }
+            var item = await Database.GetSpecificItem(ItemName);
             if (item.Count != 0)
             {
-                string secondaryDesc = item[0].ItemDescription.SecondaryDescription;
+                string secondaryDesc = item[0].SecondaryDescription;
                 var embed = new EmbedBuilder();
 
                 if (secondaryDesc != null || secondaryDesc == "")
@@ -643,33 +764,23 @@ namespace ThothBotCore.Modules
                 });
                 embed.WithColor(new Color((uint)item[0].DomColor));
                 embed.WithThumbnailUrl(item[0].itemIcon_URL);
-                StringBuilder itemBenefits = new StringBuilder();
-                foreach (var benefit in item[0].ItemDescription.Menuitems)
-                {
-                    itemBenefits.AppendLine($"{benefit.Value} {benefit.Description}");
-                }
-                embed.WithTitle(itemBenefits.ToString());
-                embed.WithDescription($"{(item[0].StartingItem ? "**Starting Item**" : "")}" +
-                    $"{item[0].ItemDescription.Description}\n\n{secondaryDesc}");
+                embed.WithTitle(item[0].ItemBenefits);
+                embed.WithDescription($"{item[0].ItemDescription}\n\n{secondaryDesc}");
 
                 // we doin calculations bois
-                var itemsForPrice = new List<GetItems.Item>();
-                var itemsForPriceTwo = new List<GetItems.Item>();
+                var itemsForPrice = new List<Item>();
+                var itemsForPriceTwo = new List<Item>();
                 int itemPrice = 0;
 
                 if (item[0].ChildItemId != 0)
                 {
-                    itemsForPrice = await MongoConnection.GetSpecificItemByIDAsync(item[0].ChildItemId);
+                    itemsForPrice = await Database.GetSpecificItemByID(item[0].ChildItemId);
                     if (itemsForPrice[0].ChildItemId != 0)
                     {
-                        itemsForPriceTwo = await MongoConnection.GetSpecificItemByIDAsync(itemsForPrice[0].ChildItemId);
+                        itemsForPriceTwo = await Database.GetSpecificItemByID(itemsForPrice[0].ChildItemId);
                         itemPrice = itemsForPriceTwo[0].Price;
                     }
                     itemPrice = itemPrice + item[0].Price + itemsForPrice[0].Price;
-                }
-                else
-                {
-                    itemPrice = item[0].Price;
                 }
                 // yeah sure
 
@@ -679,20 +790,17 @@ namespace ThothBotCore.Modules
                     x.Name = "Total Price (Price)";
                     x.Value = $"<:coins:590942235474919464>{itemPrice} ({item[0].Price})";
                 });
-                if (!item[0].StartingItem || item[0].Type != "Consumable")
+                embed.AddField(x =>
                 {
-                    embed.AddField(x =>
-                    {
-                        x.IsInline = true;
-                        x.Name = "Tier";
-                        x.Value = $"{item[0].ItemTier}";
-                    });
-                }
-                await ReplyAsync(embed: embed.Build());
+                    x.IsInline = true;
+                    x.Name = "Tier";
+                    x.Value = $"{item[0].ItemTier}";
+                });
+                await ReplyAsync("", false, embed.Build());
             }
             else
             {
-                await ReplyAsync($"Sorry, I couldn't find `{ItemName}`.");
+                await ReplyAsync($"{item.Count} results found for `{ItemName}`.");
             }
         }
 
@@ -805,7 +913,7 @@ namespace ThothBotCore.Modules
         [Command("livematch", RunMode = RunMode.Async)]
         [Summary("Match details if provided `PlayerName` is in a match.")]
         [Alias("live", "lm", "l")]
-        public async Task LiveMatchCommand([Remainder] string PlayerName = "")
+        public async Task LiveMatchCommand([Remainder]string PlayerName = "")
         {
             try
             {
@@ -878,7 +986,7 @@ namespace ThothBotCore.Modules
         [Command("matchdetails", RunMode = RunMode.Async)]
         [Summary("Match details for the provided `MatchID` or latest match played of provided `PlayerName`.")]
         [Alias("md", "мд")]
-        public async Task MatchDetailsCommand([Remainder] string MatchID = "")
+        public async Task MatchDetailsCommand([Remainder]string MatchID = "")
         {
             try
             {
@@ -916,7 +1024,7 @@ namespace ThothBotCore.Modules
                     }
                     mID = matchHistory[0].Match;
                 }
-
+                
                 if (mID == 0)
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"There are no recent matches in record.");
@@ -966,11 +1074,11 @@ namespace ThothBotCore.Modules
                 await ReplyAsync(embed: embed);
             }
         }
-
+        
         [Command("matchhistory", true, RunMode = RunMode.Async)]
         [Summary("Latest match history for `PlayerName`.")]
-        [Alias("mh", "мх", "history", "matchistory")]
-        public async Task MatchHistoryCommand([Remainder] string PlayerName = "")
+        [Alias("mh", "мх", "history")]
+        public async Task MatchHistoryCommand([Remainder]string PlayerName = "")
         {
             try
             {
@@ -1076,8 +1184,8 @@ namespace ThothBotCore.Modules
 
         [Command("wp", RunMode = RunMode.Async)]
         [Summary("Shows all masteries for gods played by the provided `PlayerName`.")]
-        [Alias("wps", "worshipers", "mastery", "masteries", "worshippers", "worshipper", "worshiper")]
-        public async Task WorshipersCommand([Remainder] string PlayerName = "")
+        [Alias("wps", "worshipers", "mastery", "masteries")]
+        public async Task WorshipersCommand([Remainder]string PlayerName = "")
         {
             try
             {
@@ -1097,48 +1205,6 @@ namespace ThothBotCore.Modules
                 string json = await hirezAPI.GetGodRanks(playerID);
                 var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
                 var finalEmbed = await EmbedHandler.BuildWorshipersEmbedAsync(ranks, getplayer[0]);
-                if (sentMessage != null)
-                {
-                    await sentMessage.ModifyAsync(x =>
-                    {
-                        x.Embed = finalEmbed;
-                    });
-                }
-                else
-                {
-                    await Context.Channel.SendMessageAsync(embed: finalEmbed);
-                }
-            }
-            catch (Exception ex)
-            {
-                var embed = await Reporter.RespondToCommandOnErrorAsync(ex, Context);
-                await ReplyAsync(embed: embed);
-            }
-        }
-
-        [Command("winrates", RunMode = RunMode.Async)]
-        [Summary("Shows win rate percentage for gods played by the provided `PlayerName`.")]
-        [Alias("wr", "rates", "winrate")]
-        public async Task GodWinRatesCommand([Remainder] string PlayerName = "")
-        {
-            try
-            {
-                await Context.Channel.TriggerTypingAsync();
-                int playerID = 0;
-                var playerHandler = await PlayerHandler(PlayerName, Context);
-
-                if (playerHandler.playerID == 0)
-                {
-                    return;
-                }
-                playerID = playerHandler.playerID;
-                var sentMessage = playerHandler.userMessage;
-
-                string getplayerjson = await hirezAPI.GetPlayer(playerID.ToString());
-                var getplayer = JsonConvert.DeserializeObject<List<Player.PlayerStats>>(getplayerjson);
-                string json = await hirezAPI.GetGodRanks(playerID);
-                var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
-                var finalEmbed = await EmbedHandler.BuildWinRatesEmbedAsync(ranks, getplayer[0]);
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
@@ -1189,16 +1255,6 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                // Check if the api is available
-                string check = await hirezAPI.GetPatchInfo();
-                if (check.ToLowerInvariant().Contains("the api is unavailable"))
-                {
-                    var unavailableEmbed = await EmbedHandler.BuildDescriptionEmbedAsync(
-                        "Sorry, we cannot link your accounts right now, because the Hi-Rez API is unavailable right now. Please try again later.", 163);
-                    await ReplyAsync(embed: unavailableEmbed);
-                    return;
-                }
-
                 int playerID = 0;
                 var onMultiplePlayersResult = new MultiplePlayersStruct();
 
@@ -1512,23 +1568,16 @@ namespace ThothBotCore.Modules
             }
             catch (Exception ex)
             {
-                Text.WriteLine($"{ex.Message}\n{ex.StackTrace}");
+                Console.WriteLine($"{ex.Message}\n{ex.StackTrace}");
             }
         }
 
         [Command("tt", true, RunMode = RunMode.Async)]
         [RequireOwner]
-        public async Task TestGetPlayer([Remainder]string name)
+        public async Task TestGetPlayer([Remainder]string username = "")
         {
-            try
-            {
-                var nz = await MongoConnection.LoadGod(name);
-                await ReplyAsync(nz.Title);
-            }
-            catch (Exception ex)
-            {
-                await ReplyAsync(ex.Message);
-            }
+            var nz = await APIv2.GetPlayerAsync(username);
+            await ReplyAsync(nz[0].Personal_Status_Message);
         }
 
         [Command("nz")] // keep it simple pls
@@ -1557,23 +1606,28 @@ namespace ThothBotCore.Modules
             }
         }
 
-        // Esports
-        [Command("schedule", true)]
-        public async Task SPLScheduleCommandAsync()
+        [Command("bitems", RunMode = RunMode.Async)]
+        [RequireOwner]
+        public async Task NewStats()
         {
-            string json;
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
+            try
             {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, "https://esports.hirezstudios.com/esportsAPI/smite/schedule/7118"))
+                var items = await Database.GetActiveTierItems(3);
+                var sb = new StringBuilder();
+                foreach (var item in items)
                 {
-                    var response = await httpClient.SendAsync(request);
-                    json = await response.Content.ReadAsStringAsync();
+                    if (item.ItemBenefits.ToLowerInvariant().Contains("protections"))
+                    {
+                        sb.Append(item.DeviceName);
+                    }
                 }
-            }
-            SPLSchedule schedule = JsonConvert.DeserializeObject<SPLSchedule>(json);
 
-            await ReplyAsync("y");
+                await ReplyAsync(sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync($"{ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         // Shit/fun commands lul
@@ -1612,234 +1666,6 @@ namespace ThothBotCore.Modules
                 await ReplyAsync(ex.Message);
             }
         }
-
-        // OWNER
-        [Command("lookup", RunMode = RunMode.Async)]
-        [RequireOwner]
-        public async Task SetPlayerSpecialsCommand([Remainder] string input)
-        {
-            int playerId = 0;
-            ulong discordId = 0;
-            IUserMessage mainMessage = null;
-            PlayerSpecial playerspecs = new PlayerSpecial();
-            if (input.StartsWith("id:"))
-            {
-                playerId = Int32.Parse(input.Split(':').Last());
-            }
-            else if (input.StartsWith("did:"))
-            {
-                discordId = UInt64.Parse(input.Split(':').Last());
-            }
-
-            if (discordId != 0)
-            {
-                playerspecs = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(discordId);
-                playerId = playerspecs._id;
-            }
-
-            if (playerId == 0)
-            {
-                var handler = await PlayerHandler(input, Context);
-                mainMessage = handler.userMessage;
-                playerId = handler.playerID;
-            }
-
-            if (playerspecs._id == 0)
-            {
-                playerspecs = await MongoConnection.GetPlayerSpecialsByPlayerIdAsync(playerId);
-            }
-            string getplayerJson = await hirezAPI.GetPlayer(playerId.ToString()); ;
-            List<PlayerStats> getplayer = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerJson);
-
-            var embed = new EmbedBuilder();
-            embed.WithColor(Constants.DefaultBlueColor);
-            embed.WithAuthor(x =>
-            {
-                x.IconUrl = getplayer[0].Avatar_URL == "" ? Constants.botIcon : getplayer[0].Avatar_URL;
-                x.Name = getplayer[0].Name;
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = false;
-                x.Name = "Smite Account";
-                x.Value = $"🆔 ID: {getplayer[0].ActivePlayerId}\n" +
-                $"<:level:529719212017451008> Level: {getplayer[0].Level}\n" +
-                $"👀 Last Login: {(getplayer[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(getplayer[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}\n" +
-                $"🎮 Account Created: {(getplayer[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(getplayer[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}\n" +
-                $"🔹 Platform: {getplayer[0].Platform}";
-            });
-            if (playerspecs != null)
-            {
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = "Discord ID";
-                    x.Value = playerspecs.discordID;
-                });
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = "Streamer?";
-                    x.Value = $"{playerspecs.streamer_bool}\n{playerspecs.streamer_link}";
-                });
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = "Pro?";
-                    x.Value = playerspecs.pro_bool;
-                });
-                var badge = await MongoConnection.GetBadgeAsync(playerspecs.special);
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = "Special Badge";
-                    x.Value = $"```\n{playerspecs.special}```{(badge != null ? $"{badge.Emote} {badge.Title}" : "**The badge is not set in the database.**")}";
-                });
-            }
-            embed.WithFooter(x =>
-            {
-                x.Text = "You have 60 seconds to perform any action. (add/edit)";
-            });
-
-            mainMessage = await ReplyAsync(embed: embed.Build());
-
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null)
-            {
-                embed.WithColor(0, 0, 0);
-                embed.WithFooter(x =>
-                {
-                    x.Text = "Time is up!";
-                });
-                await mainMessage.ModifyAsync(x =>
-                {
-                    x.Embed = embed.Build();
-                });
-                return;
-            }
-
-            if (response.Content.Contains("add") || response.Content.Contains("edit"))
-            {
-                await mainMessage.ModifyAsync(x =>
-                {
-                    x.Content = "What would you like to add/edit?\n" +
-                    "Possible additions: **id, discordid, pro, streamerbool, streamerlink, special**\nRespond with `cancel` to cancel";
-                });
-
-                // What to add
-                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                if (response == null)
-                {
-                    embed.WithColor(0, 0, 0);
-                    embed.WithFooter(x =>
-                    {
-                        x.Text = "Time is up!";
-                    });
-                    await mainMessage.ModifyAsync(x =>
-                    {
-                        x.Content = "";
-                        x.Embed = embed.Build();
-                    });
-                }
-                if (playerspecs == null)
-                {
-                    playerspecs = new PlayerSpecial { _id = getplayer[0].ActivePlayerId };
-                }
-                // Choosing
-                while (response.Content != "cancel")
-                {
-                    switch (response.Content.ToLowerInvariant())
-                    {
-                        case "id":
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Now insert id";
-                            });
-                            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-
-                            playerspecs._id = Int32.Parse(response.Content);
-                            break;
-                        case "discordid":
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Now insert discordid";
-                            });
-                            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                            playerspecs.discordID = Convert.ToUInt64(response.Content);
-                            break;
-                        case "pro":
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Now insert pro - true or false";
-                            });
-                            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                            playerspecs.pro_bool = Convert.ToBoolean(response.Content);
-                            break;
-                        case "streamerbool":
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Now insert streamerbool - true or false";
-                            });
-                            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                            playerspecs.streamer_bool = Convert.ToBoolean(response.Content);
-                            break;
-                        case "streamerlink":
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Now insert streamerlink";
-                            });
-                            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                            playerspecs.streamer_link = response.Content;
-                            break;
-                        case "special":
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Now insert that special badge key";
-                            });
-                            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                            playerspecs.special = response.Content;
-                            break;
-                        default:
-                            await mainMessage.ModifyAsync(x =>
-                            {
-                                x.Content = "Invalid response, try again.";
-                            });
-                            break;
-                    }
-                    await mainMessage.ModifyAsync(x =>
-                    {
-                        x.Content = "Something else to add? If not, do `cancel`.\n" +
-                        "Possible additions: **id, discordid, pro, streamerbool, streamerlink, special**";
-                    });
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                }
-
-                // Saving to DB
-                if (playerspecs._id != 0)
-                {
-                    await MongoConnection.SavePlayerSpecialsAsync(playerspecs);
-                    await mainMessage.ModifyAsync(x =>
-                    {
-                        x.Content = "Saved to the DB!";
-                    });
-                }
-            }
-            else
-            {
-                embed.WithColor(0, 0, 0);
-                embed.WithFooter(x =>
-                {
-                    x.Text = "";
-                });
-                await mainMessage.ModifyAsync(x =>
-                {
-                    x.Content = "";
-                    x.Embed = embed.Build();
-                });
-            }
-        }
-
-        // OWNER
 
         private static string GenerateString()
         {
@@ -1968,7 +1794,7 @@ namespace ThothBotCore.Modules
             {
                 var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"There are more than 20 accounts({searchPlayers.Count}) " +
                     $"with the username **{searchPlayers[0].Name}**. Due to Discord limits, I cannot fit all of them in one message." +
-                    $" Please [contact]({Constants.SupportServerInvite}) the bot developer " +
+                    $" Please [contact]({Constants.SupportServerInvite}) the bot owner " +
                     $"for further assistance.", 107, 70, 147);
                 await context.Channel.SendMessageAsync(embed: emb);
                 return multiplePlayersStruct;
@@ -1998,7 +1824,7 @@ namespace ThothBotCore.Modules
                 });
                 return multiplePlayersStruct;
             }
-            int responseNum = int.Parse(response.Content);
+            int responseNum = Int32.Parse(response.Content);
             if (responseNum == 0 || --responseNum > searchPlayers.Count)
             {
                 await ReplyAsync("Invalid number");
@@ -2028,11 +1854,6 @@ namespace ThothBotCore.Modules
             });
             multiplePlayersStruct.searchPlayers = searchPlayers[responseNum];
             multiplePlayersStruct.userMessage = message;
-            try
-            {
-                await response.DeleteAsync();
-            }
-            catch {}
             return multiplePlayersStruct;
         }
         public struct MultiplePlayersStruct
