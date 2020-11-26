@@ -10,6 +10,7 @@ namespace ThothBotCore.Connections.Models
         public int MinionKills { get; set; }
         public int Rank { get; set; }
         public int Wins { get; set; }
+        public double WinRate { get; set; }
         public int Worshippers { get; set; }
         public string god { get; set; }
         public string god_id { get; set; }

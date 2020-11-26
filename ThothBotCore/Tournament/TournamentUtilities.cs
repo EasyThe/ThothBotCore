@@ -43,7 +43,7 @@ namespace ThothBotCore.Tournament
 
             foreach (var role in user.Roles)
             {
-                if (role.Name.ToLowerInvariant().Contains("tournament managers") || role.Name.ToLowerInvariant().Contains("presidency"))
+                if (role.Id == 388419600502489099 || role.Id == 351813900305563659 || role.Id == 388210991844032513)
                 {
                     return true;
                 }

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
 
@@ -30,7 +28,7 @@ namespace ThothBotCore.Utilities
         }
         public static string UserNotFound(string username)
         {
-            return $"<:X_:579151621502795777>*{username}* is not found!";
+            return $"<:X_:579151621502795777>*{username}* was not found!";
         }
         public static string UserIsHidden(string username)
         {
@@ -139,77 +137,6 @@ namespace ThothBotCore.Utilities
                 10 => "🔟",
                 _ => "🤷‍♂️",
             };
-        }
-        public static async Task<string> CheckSpecialsForPlayer(int id, bool emoteOnly)
-        {
-            PlayerSpecial playerSpecial = await MongoConnection.GetPlayerSpecialsByPlayerIdAsync(id);
-            if (playerSpecial != null)
-            {
-                if (playerSpecial.special != "" || playerSpecial.pro_bool || playerSpecial.streamer_bool || playerSpecial.special != null)
-                {
-                    var specialsResult = new StringBuilder();
-                    if (playerSpecial.pro_bool)
-                    {
-                        var badge = await MongoConnection.GetBadgeAsync("pro");
-                        if (emoteOnly)
-                        {
-                            specialsResult.Append(badge.Emote);
-                        }
-                        else
-                        {
-                            specialsResult.Append($"{badge.Emote} {badge.Title}");
-                        }
-                    }
-                    if (playerSpecial.streamer_bool)
-                    {
-                        if (specialsResult.Length != 0)
-                        {
-                            if (!emoteOnly)
-                            {
-                                specialsResult.Append("\n");
-                            }
-                        }
-                        var badge = await MongoConnection.GetBadgeAsync("streamer");
-                        if (emoteOnly)
-                        {
-                            specialsResult.Append(badge.Emote);
-                        }
-                        else
-                        {
-                            specialsResult.Append($"{badge.Emote} {badge.Title}");
-                            if (playerSpecial.streamer_link != null)
-                            {
-                                specialsResult.Append($" {playerSpecial.streamer_link}");
-                            }
-                        }
-                    }
-                    // Check specials
-                    if (playerSpecial.special != null)
-                    {
-                        if (specialsResult.Length != 0)
-                        {
-                            if (!emoteOnly)
-                            {
-                                specialsResult.Append("\n");
-                            }
-                        }
-                        var badge = await MongoConnection.GetBadgeAsync(playerSpecial.special);
-                        if (badge != null)
-                        {
-                            if (emoteOnly)
-                            {
-                                specialsResult.Append(badge.Emote);
-                            }
-                            else
-                            {
-                                specialsResult.Append($"{badge.Emote} {badge.Title}");
-                            }
-                        }
-                    }
-                    return specialsResult.ToString();
-                }
-            }
-            return "";
         }
         public static string StatusEmoji(string status)
         {
@@ -367,7 +294,8 @@ namespace ThothBotCore.Utilities
                 502 => "Ranked Duel (Console)",
                 503 => "Ranked Joust (Console)",
                 504 => "Ranked Conquest (Console)",
-                10155 => "Adventures: Heimdallr's Crossing",
+                10153 => "Classic Joust",
+                10155 => "Heimdallr's Crossing",
                 10158 => "Arena (vs AI) (Very Hard)",
                 10159 => "Assault (vs AI) (Hard)",
                 10160 => "Clash (vs AI) (Hard)",
@@ -382,6 +310,8 @@ namespace ThothBotCore.Utilities
                 10169 => "Clash Practice (Hard)",
                 10170 => "Conquest Practice (Hard)",
                 10171 => "Joust Practice (Hard)",
+                10173 => "Classic Domination",
+                10182 => "Conquest (vs AI) (Very Easy)",
                 _ => "Unknown Queue",
             };
         }
@@ -525,7 +455,7 @@ namespace ThothBotCore.Utilities
             text = text.Replace("Starting/Maximum Cooldown Reduction", "**Starting**/**Maximum Cooldown Reduction**");
             text = text.Replace("Starting Level", "**Starting Level**");
             text = text.Replace("Starting Gold", "**Starting Gold**");
-            text = text.Replace("Gods", "**Gods**");
+            text = text.Replace("Gods:", "**Gods:**");
             text = text.Replace("Selection", "**Selection**");
             text = text.Replace("Infinite Mana", "**Infinite Mana**");
             text = text.Replace("Maximum Cooldown Reduction", "**Maximum Cooldown Reduction**");
@@ -567,11 +497,19 @@ namespace ThothBotCore.Utilities
         // Tips
         public static string GetRandomTip()
         {
-            List<TipsModel> tips = MongoConnection.GetAllTips();
-            if (tips.Count != 0)
+            int hmm = rnd.Next(0, 100);
+            if (hmm <= 20)
             {
-                int n = rnd.Next(tips.Count);
-                return $"ℹ Tip: {tips[n].TipText}";
+                List<TipsModel> tips = Constants.TipsList;
+                if (tips.Count != 0)
+                {
+                    int n = rnd.Next(tips.Count);
+                    return $"ℹ Tip: {tips[n].TipText}";
+                }
+                else
+                {
+                    return "";
+                }
             }
             else
             {
