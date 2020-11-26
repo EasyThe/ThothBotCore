@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Sentry;
 using System;
 using System.Linq;
 using System.Text;
@@ -155,16 +156,21 @@ namespace ThothBotCore.Utilities
             catch (Exception exc)
             {
                 Text.WriteLine("\t===" +
-                    "\n\tCouldn't send error to reports channnel." +
-                    "\n" +
-                    $"\t\tMessage: **{context.Message.Content}\n" +
-                    $"\t\tUser: **{context.Message.Author}\n" +
-                    $"\t\tServer and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
-                    $"\t\tException Message: **{ex.Message}\n" +
-                    $"\t\tData: **{ex.Data}\n" +
-                    $"\t\tStack Trace:** {ex.StackTrace}\n" +
-                    $"\t\tSource: {ex.Source}" +
-                    "\n\t===\n" + exc.Message);
+    "\n\tCouldn't send error to reports channnel." +
+    "\n" +
+    $"\t\tMessage: **{context.Message.Content}\n" +
+    $"\t\tUser: **{context.Message.Author}\n" +
+    $"\t\tServer and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
+    $"\t\tException Message: **{ex.Message}\n" +
+    $"\t\tData: **{ex.Data}\n" +
+    $"\t\tStack Trace:** {ex.StackTrace}\n" +
+    $"\t\tSource: {ex.Source}" +
+    "\n\t===\n" + exc.Message);
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"**Message: **{context.Message.Content}\n" +
+                    $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
+                    $"**Inner Exception Message: **{(ex.InnerException != null ? ex.InnerException.Message : "No Inner Exception")}\n" +
+                    $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 254);
+                await reportsChannel.SendMessageAsync(embed: embed);
                 await reportsChannel.SendMessageAsync($"{ownerUser.Mention} **Check the console for an error!**");
             }
         }
@@ -189,8 +195,9 @@ namespace ThothBotCore.Utilities
             }
             else if (ex != null && !(ex.Message.ToLowerInvariant().Contains("database")))
             {
-                sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot owner for further assistance.");
+                sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
                 await SendException(ex, context, errorMessage);
+                SentrySdk.CaptureException(ex);
             }
             if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
             {

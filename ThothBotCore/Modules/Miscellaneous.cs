@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
-using System;
 using System.Threading.Tasks;
 using ThothBotCore.Utilities;
 
@@ -25,24 +24,6 @@ namespace ThothBotCore.Modules
             embed.WithTitle("pishka size machine");
             embed.WithDescription(pishka);
             await ReplyAsync("", false, embed.Build());
-        }
-
-        [Command("next", RunMode = RunMode.Async)]
-        public async Task Test_NextMessageAsync()
-        {
-            await ReplyAsync("What is 2+2?");
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(10));
-            if (response != null)
-                await ReplyAsync($"You replied: {response.Content}");
-            else
-                await ReplyAsync("You did not reply before the timeout");
-        }
-
-        [Command("delete")]
-        public async Task<RuntimeResult> Test_DeleteAfterAsync()
-        {
-            await ReplyAndDeleteAsync("this message will delete in 10 seconds", timeout: TimeSpan.FromSeconds(10));
-            return Ok();
         }
 
         [Command("is")]

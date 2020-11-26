@@ -1,13 +1,21 @@
 ﻿using ThothBotCore.Discord;
 using System;
 using System.Threading.Tasks;
-using ThothBotCore.Storage.Implementations;
+using Sentry;
+using ThothBotCore.Discord.Entities;
 
 namespace ThothBotCore
 {
-    internal class Program
+    class Program
     {
-        private static async Task Main()
+        private static void Main()
+        {
+            using (SentrySdk.Init(Credentials.botConfig.Sentry))
+            {
+                MainAsync().Wait();
+            }
+        }
+        private static async Task MainAsync()
         {
             var connection = Unity.Resolve<Connection>();
             await connection.ConnectAsync();

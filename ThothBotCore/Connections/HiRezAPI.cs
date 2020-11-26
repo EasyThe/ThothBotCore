@@ -25,9 +25,9 @@ namespace ThothBotCore.Connections
         private static async Task<string> GetMD5Hash(string input)
         {
             var md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
-            var bytes = Encoding.UTF8.GetBytes(input);
+            byte[] bytes = Encoding.UTF8.GetBytes(input);
             bytes = md5.ComputeHash(bytes);
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             foreach (byte b in bytes)
             {
                 sb.Append(b.ToString("x2").ToLower());
