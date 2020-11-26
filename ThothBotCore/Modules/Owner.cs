@@ -241,6 +241,7 @@ namespace ThothBotCore.Modules
                                 Text.WriteLine($"{guild.Name} is full.");
                             }
                         }
+                        count++;
                     }
                 }
             }
