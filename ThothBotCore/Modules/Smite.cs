@@ -43,7 +43,6 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                stopWatch.Start();
                 var playerHandler = await PlayerHandler(PlayerName, Context);
                 if (playerHandler.playerID == 0)
                 {
