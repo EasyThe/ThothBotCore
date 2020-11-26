@@ -22,7 +22,7 @@ namespace ThothBotCore.Utilities
             var thothGods3guild = Connection.Client.GetGuild(591932765880975370);
             string[] firstsplit = god.godIcon_URL.Split('/');
             string[] secondsplit = firstsplit[^1].Split('.');
-            var image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
+            var image = new Image($"Storage/Gods/{firstsplit[^1]}");
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
             image.Dispose();
             await Reporter.SendError($"**ADDED NEW EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
@@ -45,9 +45,9 @@ namespace ThothBotCore.Utilities
 
             string[] splitLink = item.itemIcon_URL.Split('/');
 
-            if (!Directory.Exists("Storage\\Items"))
+            if (!Directory.Exists("Storage/Items"))
             {
-                Directory.CreateDirectory("Storage\\Items");
+                Directory.CreateDirectory("Storage/Items");
             }
 
             // Downloading the image
@@ -67,7 +67,7 @@ namespace ThothBotCore.Utilities
                 if (guild.Emotes.Count != 50)
                 {
                     Thread.Sleep(200);
-                    var image = new Image($"Storage\\Items\\{splitLink[5]}");
+                    var image = new Image($"Storage/Items/{splitLink[5]}");
                     Text.WriteLine(emojiname);
                     var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
                     image.Dispose();

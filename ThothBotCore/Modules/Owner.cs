@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -22,7 +21,6 @@ using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using ThothBotCore.Utilities.Smite;
-using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Modules
 {
@@ -30,7 +28,6 @@ namespace ThothBotCore.Modules
     public class Owner : InteractiveBase<SocketCommandContext>
     {
         HiRezAPI hirezAPI = new HiRezAPI();
-        Stopwatch stopWatch = new Stopwatch();
         DominantColor domColor = new DominantColor();
 
         [Command("updatedb", true, RunMode = RunMode.Async)]
@@ -40,7 +37,7 @@ namespace ThothBotCore.Modules
             {
                 var msg = await ReplyAsync("<a:updating:403035325242540032> Working on gods...");
                 var newGodList = JsonConvert.DeserializeObject<List<Gods.God>>(await hirezAPI.GetGods());
-                var godsInDb = Constants.GodsList;
+                var godsInDb = MongoConnection.GetAllGods();
 
                 // Adding the emojis and domcolors from the old db to the new one
                 foreach (var god in godsInDb)
@@ -688,47 +685,6 @@ namespace ThothBotCore.Modules
             }
             Text.WriteLine($"Guilds with missing ManageMessages permission: {count}\n{sb}");
             await ReplyAsync($"Guilds with missing ManageMessages permission: {count}\n{sb}");
-        }
-
-        [Command("startmigration", RunMode = RunMode.Async)]
-        public async Task InsertSQLiteIntoMongo()
-        {
-            try
-            {
-                stopWatch.Start();
-                string elapsedTime;
-                TimeSpan ts;
-                var db = MongoConnection.GetDatabase();
-
-                // Players
-
-                stopWatch.Reset();
-                var allplayers = await Database.GetAllPlayers();
-                await db.GetCollection<PlayerStats>("players").InsertManyAsync(allplayers);
-
-                ts = stopWatch.Elapsed;
-                elapsedTime = String.Format("{0:00}:{1:00}",
-                    ts.Seconds,
-                    ts.Milliseconds / 10);
-                Text.WriteLine("Players: " + elapsedTime);
-
-                // Specials
-                stopWatch.Reset();
-                var specials = await Database.GetAllPlayerSpecials();
-                await db.GetCollection<PlayerSpecial>("player_specials").InsertManyAsync(specials);
-
-                ts = stopWatch.Elapsed;
-                elapsedTime = String.Format("{0:00}:{1:00}",
-                    ts.Seconds,
-                    ts.Milliseconds / 10);
-                Text.WriteLine("Specials: " + elapsedTime);
-
-                Text.WriteLine("COMPLETED!", ConsoleColor.Green, ConsoleColor.Black);
-            }
-            catch (Exception ex)
-            {
-                Text.WriteLine(ex.Message);
-            }
         }
 
         [Command("cleansqlite", RunMode = RunMode.Async)]

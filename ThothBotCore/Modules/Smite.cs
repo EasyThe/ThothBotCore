@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -27,7 +26,6 @@ namespace ThothBotCore.Modules
     public class Smite : InteractiveBase<SocketCommandContext>
     {
         static Random rnd = new Random();
-        Stopwatch stopWatch = new Stopwatch();
 
         HiRezAPI hirezAPI = new HiRezAPI();
         HiRezAPIv2 APIv2 = new HiRezAPIv2();
@@ -210,7 +208,7 @@ namespace ThothBotCore.Modules
         [Alias("годс")]
         public async Task GodsCommand()
         {
-            List<Gods.God> gods = Constants.GodsList;
+            List<Gods.God> gods = MongoConnection.GetAllGods();
 
             if (gods.Count != 0)
             {
@@ -339,7 +337,7 @@ namespace ThothBotCore.Modules
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod()
         {
-            List<Gods.God> gods = Constants.GodsList;
+            List<Gods.God> gods = MongoConnection.GetAllGods();
             int rr = rnd.Next(gods.Count);
             string rbuild = await Utils.RandomBuilderAsync(gods[rr]);
 
@@ -388,7 +386,7 @@ namespace ThothBotCore.Modules
             if (!(number > 5))
             {
                 var embed = new EmbedBuilder();
-                var gods = Constants.GodsList;
+                var gods = MongoConnection.GetAllGods();
 
                 embed.WithColor(Constants.DefaultBlueColor);
 
@@ -1853,6 +1851,7 @@ namespace ThothBotCore.Modules
         public async Task<PlayerHandlerStruct> PlayerHandler(string input, SocketCommandContext context)
         {
             var handler = new PlayerHandlerStruct();
+            handler.userMessage = null;
 
             PlayerSpecial getPlayerByDiscordID;
 

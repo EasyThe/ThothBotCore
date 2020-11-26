@@ -25,7 +25,6 @@ namespace ThothBotCore.Utilities
         public static Color VulpisColor { get; set; } = new Color(233, 78, 26);
         public static Color ErrorColor { get; set; } = new Color(255, 148, 148);
         public static Color FeedbackColor = new Color(107, 70, 147);
-        public static List<Models.Gods.God> GodsList { get; set; } = MongoConnection.GetAllGods();
         public static List<Models.TipsModel> TipsList { get; set; } = MongoConnection.GetAllTips();
         public static List<Models.CommunityModel> CommList { get; set; } = MongoConnection.GetAllCommunities();
 
@@ -34,7 +33,6 @@ namespace ThothBotCore.Utilities
 
         public static void ReloadConstants()
         {
-            GodsList = MongoConnection.GetAllGods(); 
             TipsList = MongoConnection.GetAllTips();
             CommList = MongoConnection.GetAllCommunities();
         }

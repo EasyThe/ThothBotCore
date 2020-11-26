@@ -126,6 +126,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
+                await Reporter.SendException(ex, context, ex.Message);
                 await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
             }
         }

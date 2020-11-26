@@ -734,7 +734,7 @@ namespace ThothBotCore.Discord
         public static async Task<EmbedBuilder> LiveMatchEmbed(List<MatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails)
         {
             var embed = new EmbedBuilder();
-            var gods = Constants.GodsList;
+            var gods = MongoConnection.GetAllGods();
 
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
@@ -859,7 +859,7 @@ namespace ThothBotCore.Discord
         {
             var embed = new EmbedBuilder();
             string godemoji = "";
-            var gods = Constants.GodsList;
+            var gods = MongoConnection.GetAllGods();
 
             if (matchdetailsList.Count == 1 && matchdetailsList[0].ActivePlayerId == "0")
             {
@@ -1050,7 +1050,7 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.DefaultBlueColor);
             string godemoji = "";
             int i = 0;
-            var gods = Constants.GodsList;
+            var gods = MongoConnection.GetAllGods();
             foreach (var match in matchHistory)
             {
                 if (i != 6)
@@ -1130,7 +1130,7 @@ namespace ThothBotCore.Discord
                 x.Url = $"https://smite.guru/profile/{ranks[0].player_id}/champions";
             });
             int count = 0;
-            var gods = Constants.GodsList;
+            var gods = MongoConnection.GetAllGods();
             foreach (var god in ranks)
             {
                 god.WinRate = (double)god.Wins * 100 / (god.Wins + god.Losses);

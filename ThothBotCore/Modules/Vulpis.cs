@@ -49,7 +49,7 @@ namespace ThothBotCore.Modules
         public async Task AssaultTeamCommand()
         {
             var embed = new EmbedBuilder();
-            var gods = Constants.GodsList;
+            var gods = MongoConnection.GetAllGods();
 
             embed.WithColor(Constants.DefaultBlueColor);
 
@@ -614,7 +614,7 @@ namespace ThothBotCore.Modules
             bool firstHasHealer = false;
             //       ra, hel, guan yu, aphrodite, change, sylvanus, terra, baron, horus, yemoja
             int[] healers = { 1698, 1718, 1763, 1898, 1921, 2030, 2147, 3518, 3611, 3811 };
-            var gods = Constants.GodsList;
+            var gods = MongoConnection.GetAllGods();
 
             // First team
             for (int i = 0; i < 5; i++)
@@ -635,7 +635,7 @@ namespace ThothBotCore.Modules
             }
 
             // Second team
-            gods = Constants.GodsList;
+            gods = MongoConnection.GetAllGods();
             hasHealer = false;
             for (int i = 0; i < 5; i++)
             {
@@ -721,7 +721,7 @@ namespace ThothBotCore.Modules
                 string[] lines;
 
                 // found, continue
-                var gods = Constants.GodsList;
+                var gods = MongoConnection.GetAllGods();
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(x =>
                 {
