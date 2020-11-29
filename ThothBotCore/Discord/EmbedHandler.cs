@@ -1085,7 +1085,7 @@ namespace ThothBotCore.Discord
             {
                 x.Name = $"{(player.hz_player_name ?? player.hz_gamer_tag)}'s masteries [{ranks.Count}]";
                 x.IconUrl = Text.GetPortalIconLinksByPortalName(player.Platform);
-                x.Url = $"https://smite.guru/profile/{ranks[0].player_id}/champions";
+                x.Url = $"https://smite.guru/profile/{player.ActivePlayerId}/champions";
             });
             int count = 0;
             for (int i = 0; i < ranks.Count; i++)
@@ -1103,6 +1103,10 @@ namespace ThothBotCore.Discord
                     sb.Clear();
                     count = 0;
                 }
+            }
+            if (ranks.Count == 0)
+            {
+                embed.WithTitle($"{(player.hz_player_name ?? player.hz_gamer_tag)} has not played any gods.");
             }
             if (sb.Length != 0)
             {
@@ -1128,7 +1132,7 @@ namespace ThothBotCore.Discord
             {
                 x.Name = $"{(player.hz_player_name ?? player.hz_gamer_tag)}'s God Win Rates";
                 x.IconUrl = Text.GetPortalIconLinksByPortalName(player.Platform);
-                x.Url = $"https://smite.guru/profile/{ranks[0].player_id}/champions";
+                x.Url = $"https://smite.guru/profile/{player.ActivePlayerId}/champions";
             });
             int count = 0;
             var gods = MongoConnection.GetAllGods();
@@ -1153,6 +1157,10 @@ namespace ThothBotCore.Discord
                     sb.Clear();
                     count = 0;
                 }
+            }
+            if (ranks.Count == 0)
+            {
+                embed.WithTitle($"{(player.hz_player_name ?? player.hz_gamer_tag)} has not played any gods.");
             }
             if (sb.Length != 0)
             {
