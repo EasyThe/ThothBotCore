@@ -178,8 +178,7 @@ namespace ThothBotCore.Utilities
                     }
 
                     sb.AppendLine($"{DateTime.Now:[HH:mm]} Guilds count updated! New count: {joinedGuilds}");
-                    var em = await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 107, 70, 147);
-                    await Reporter.SendEmbedToBotLogsChannel(em.ToEmbedBuilder());
+                    Text.WriteLine(sb.ToString());
                 }
 
                 // StatCord

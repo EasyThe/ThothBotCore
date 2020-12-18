@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -901,6 +902,27 @@ namespace ThothBotCore.Modules
             }
             embed.WithDescription(main.ToString());
             await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("bb")]
+        public async Task Patchovebeibi()
+        {
+            var posts = await HiRezWebAPI.FetchPostsAsync();
+            var foundPost = posts.Find(x => x.real_categories.ToLowerInvariant().Contains("notes"));
+            var actualPost = await HiRezWebAPI.GetPostBySlugAsync(foundPost.slug);
+            await ReplyAsync($"{actualPost.title}\n{actualPost.featured_image}");
+        }
+
+        [Command("gei")]
+        public async Task gei()
+        {
+            string myJson = "{ \"name\": \"rgod\", \"description\": \"Gives you a random god\", \"options\": [] }";
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", "Bot bot token");
+            var response = await client.PostAsync(
+                "https://discord.com/api/v8/applications/587623068461957121/guilds/518408306415632384/commands",
+                 new StringContent(myJson, Encoding.UTF8, "application/json"));
+            Console.WriteLine(response);
         }
 
         private class DataUsed

@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Sentry;
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
@@ -27,6 +26,18 @@ namespace ThothBotCore.Discord
             Global.commandService = _commands;
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
             _client.MessageReceived += HandleCommandAsync;
+            _commands.CommandExecuted += CommandExecuted;
+        }
+
+        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
+        {
+            /* To do
+            if (arg1.IsSpecified)
+            {
+                Console.WriteLine(arg1.Value.Name);
+            }
+            */
+            return Task.CompletedTask;
         }
 
         private IServiceProvider ConfigureServices()
@@ -77,11 +88,6 @@ namespace ThothBotCore.Discord
                 else if (msg.Content == $"<@!{_client.CurrentUser.Id}>")
                 {
                     await context.Channel.SendMessageAsync($"{context.Message.Author.Mention}, my prefix is `{Credentials.botConfig.prefix}`");
-                }
-                else if (msg.MentionedUsers.Any(x=> x.Id == Connection.Client.CurrentUser.Id) && msg.Content.ToLowerInvariant().Contains("love"))
-                {
-                    await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
-                    await Reporter.SendSuccessCommands(context, null);
                 }
             }
             catch (Exception ex)

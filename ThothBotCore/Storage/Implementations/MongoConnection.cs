@@ -192,5 +192,11 @@ namespace ThothBotCore.Storage.Implementations
         {
             return GetDatabase().GetCollection<TipsModel>("tips").AsQueryable().ToList();
         }
+
+        // Misc
+        public static BotSettingsModel GetSettings()
+        {
+            return GetDatabase().GetCollection<BotSettingsModel>("settings").AsQueryable().ToList()[0];
+        }
     }
 }

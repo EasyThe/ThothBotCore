@@ -294,6 +294,8 @@ namespace ThothBotCore.Utilities
                 502 => "Ranked Duel (Console)",
                 503 => "Ranked Joust (Console)",
                 504 => "Ranked Conquest (Console)",
+                508 => "Corrupted Arena",
+                10151 => "Custom Corrupted Arena",
                 10153 => "Classic Joust",
                 10155 => "Heimdallr's Crossing",
                 10158 => "Arena (vs AI) (Very Hard)",

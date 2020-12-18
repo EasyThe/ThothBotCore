@@ -23,6 +23,10 @@ using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Modules
 {
+    [RequireBotPermission(ChannelPermission.UseExternalEmojis)]
+    [RequireBotPermission(ChannelPermission.EmbedLinks)]
+    [RequireBotPermission(ChannelPermission.ViewChannel)]
+    [RequireBotPermission(ChannelPermission.SendMessages)]
     public class Smite : InteractiveBase<SocketCommandContext>
     {
         static Random rnd = new Random();
@@ -449,7 +453,7 @@ namespace ThothBotCore.Modules
                     }
                 }
             }
-            if (inci == true)
+            if (inci)
             {
                 var embed = EmbedHandler.StatusIncidentEmbed(smiteServerStatus);
                 if (embed != null)
@@ -468,7 +472,7 @@ namespace ThothBotCore.Modules
                     }
                 }
             }
-            if (maint == true)
+            if (maint)
             {
                 await ReplyAsync(embed: EmbedHandler.StatusMaintenanceEmbed(smiteServerStatus).Build());
             }
@@ -1169,7 +1173,7 @@ namespace ThothBotCore.Modules
                 $"allow executing commands without providing InGameName. \nCommands using this feature are:\n" +
                 $"`{Credentials.botConfig.prefix}stats`, `{Credentials.botConfig.prefix}livematch`, " +
                 $"`{Credentials.botConfig.prefix}matchdetails`, `{Credentials.botConfig.prefix}matchhistory`, " +
-                $"`{Credentials.botConfig.prefix}wp`\n" +
+                $"`{Credentials.botConfig.prefix}wp`, `{Credentials.botConfig.prefix}wr`\n" +
                 $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! " +
                 $"Linking requires changing your Personal Status Message in-game to verify that the said account is yours.** " +
                 $"You can change it to your previous status message after linking is completed." +
@@ -1837,7 +1841,6 @@ namespace ThothBotCore.Modules
         }
 
         // OWNER
-
         private static string GenerateString()
         {
             char[] chars = new char[7];
@@ -1850,8 +1853,10 @@ namespace ThothBotCore.Modules
 
         public async Task<PlayerHandlerStruct> PlayerHandler(string input, SocketCommandContext context)
         {
-            var handler = new PlayerHandlerStruct();
-            handler.userMessage = null;
+            var handler = new PlayerHandlerStruct
+            {
+                userMessage = null
+            };
 
             PlayerSpecial getPlayerByDiscordID;
 
@@ -1871,10 +1876,25 @@ namespace ThothBotCore.Modules
                     return handler;
                 }
             }
-            else if (Context.Message.MentionedUsers.Count != 0 && input == $"<@!{Context.Message.MentionedUsers.Last().Id}>")
+            else if (Context.Message.MentionedUsers.Count != 0)
             {
                 var mentionedUser = Context.Message.MentionedUsers.Last();
                 getPlayerByDiscordID = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(mentionedUser.Id);
+                if (getPlayerByDiscordID != null)
+                {
+                    handler.playerID = getPlayerByDiscordID._id;
+                }
+                else
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync(Constants.NotLinked);
+                    await context.Channel.SendMessageAsync(embed: embed);
+                    return handler;
+                }
+            }
+            else if (input.StartsWith("<@!"))
+            {
+                ulong id = (ulong)Int64.Parse(input.Split('!')[1].Split('>')[0]);
+                getPlayerByDiscordID = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(id);
                 if (getPlayerByDiscordID != null)
                 {
                     handler.playerID = getPlayerByDiscordID._id;

@@ -147,7 +147,7 @@ namespace ThothBotCore.Utilities
             try
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"**Message: **{context.Message.Content}\n" +
-                    $"**User: **{context.Message.Author}\n" +
+                    $"**User: **{context.Message.Author} [{context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
                     $"**Inner Exception Message: **{(ex.InnerException != null ? ex.InnerException.Message : "No Inner Exception")}\n" +
@@ -157,16 +157,16 @@ namespace ThothBotCore.Utilities
             catch (Exception exc)
             {
                 Text.WriteLine("\t===" +
-    "\n\tCouldn't send error to reports channnel." +
-    "\n" +
-    $"\t\tMessage: **{context.Message.Content}\n" +
-    $"\t\tUser: **{context.Message.Author}\n" +
-    $"\t\tServer and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
-    $"\t\tException Message: **{ex.Message}\n" +
-    $"\t\tData: **{ex.Data}\n" +
-    $"\t\tStack Trace:** {ex.StackTrace}\n" +
-    $"\t\tSource: {ex.Source}" +
-    "\n\t===\n" + exc.Message);
+                                "\n\tCouldn't send error to reports channnel." +
+                                "\n" +
+                                $"\t\tMessage: **{context.Message.Content}\n" +
+                                $"\t\tUser: **{context.Message.Author}\n" +
+                                $"\t\tServer and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
+                                $"\t\tException Message: **{ex.Message}\n" +
+                                $"\t\tData: **{ex.Data}\n" +
+                                $"\t\tStack Trace:** {ex.StackTrace}\n" +
+                                $"\t\tSource: {ex.Source}" +
+                                "\n\t===\n" + exc.Message);
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"**Message: **{context.Message.Content}\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Inner Exception Message: **{(ex.InnerException != null ? ex.InnerException.Message : "No Inner Exception")}\n" +

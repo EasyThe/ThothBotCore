@@ -112,17 +112,18 @@ namespace ThothBotCore.Modules
                 x.Value = $":video_game: **Players**: {playersCount}\n" +
                 $":link: **Linked Players**: {linkedCount}\n" +
                 $":loudspeaker: **Status Update Subs**: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
-                $"<:Gods:567146088985919498> **Smite Patch Version**: {patch}";
+                $"<:Gods:567146088985919498> **SMITE Version**: {patch}";
             });
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Links";
-                x.Value = $"[Bot Invite](https://discord.com/oauth2/authorize?client_id=454145330347376651&permissions=537259072&scope=bot) | " +
+                x.Value = $"[Bot Invite]({MongoConnection.GetSettings().BotInviteLink}) | " +
                 $"[Support Server]({Constants.SupportServerInvite})\n" +
-                $"[Website](http://thothbot.tk) | " +
-                $"[Privacy Policy](http://thothbot.tk/privacy-policy.html)\n" +
-                $"[PayPal](https://www.paypal.me/EasyThe) | " +
+                $"[Twitter](https://twitter.com/ThothDiscordBot) | " +
+                $"[Website](http://thothbot.tk)\n" +
+                $"[Privacy Policy](http://thothbot.tk/privacy-policy.html) | " +
+                $"[PayPal](https://www.paypal.me/EasyThe)\n" +
                 $"[Referral Link to SMITE Store](https://link.xsolla.com/M43fjVPi)";
             });
             embed.WithFooter(x =>
@@ -211,7 +212,7 @@ namespace ThothBotCore.Modules
                 str += $"{time.Minutes}m ";
             }
 
-            if (time.Seconds != 0)
+            if (time.Seconds != 0 && time.Hours !>= 0)
             {
                 str += $"{time.Seconds}s";
             }

@@ -1041,6 +1041,11 @@ namespace ThothBotCore.Discord
         }
         public static async Task<Embed> BuildMatchHistoryEmbedAsync(List<MatchHistoryModel> matchHistory)
         {
+            if (matchHistory.Count == 1 && matchHistory[0].playerId == 0)
+            {
+                var emb = await BuildDescriptionEmbedAsync("SMITE API Error: " + matchHistory[0].ret_msg, 255);
+                return emb;
+            }
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {
@@ -1108,6 +1113,20 @@ namespace ThothBotCore.Discord
             {
                 embed.WithTitle($"{(player.hz_player_name ?? player.hz_gamer_tag)} has not played any gods.");
             }
+            /*
+            embed.WithDescription($"**{ranks.Where(x => x.Rank == 10).Count()}** gods at rank {Text.GetRankEmoji(10)}, " +
+                $"**{ranks.Where(x => x.Rank == 10).OrderByDescending(x => x.Wins).FirstOrDefault().god}**");
+            var nz = ranks.GroupBy(x => x.Rank == 10);
+            int x = 0;
+            
+            foreach (var r in ranks)
+            {
+                if (r.Rank == 10)
+                {
+                    x++;
+                }
+            }
+            */
             if (sb.Length != 0)
             {
                 embed.AddField(x =>
