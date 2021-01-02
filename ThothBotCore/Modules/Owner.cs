@@ -416,20 +416,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: embed);
         }
 
-        [Command("notes", RunMode = RunMode.Async)]
-        public async Task PatchNotesTestCommand(string url)
-        {
-            try
-            {
-                var embed = await PatchPageReader.GetPatchEmbed(url);
-                await ReplyAsync(embed: embed);
-            }
-            catch (Exception ex)
-            {
-                Text.WriteLine(ex.Message);
-            }
-        }
-
         [Command("zxc", RunMode = RunMode.Async)]
         public async Task ReadAllMessagesInChannel()
         {
@@ -904,15 +890,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("bb")]
-        public async Task Patchovebeibi()
-        {
-            var posts = await HiRezWebAPI.FetchPostsAsync();
-            var foundPost = posts.Find(x => x.real_categories.ToLowerInvariant().Contains("notes"));
-            var actualPost = await HiRezWebAPI.GetPostBySlugAsync(foundPost.slug);
-            await ReplyAsync($"{actualPost.title}\n{actualPost.featured_image}");
-        }
-
         [Command("gei")]
         public async Task gei()
         {
@@ -923,6 +900,14 @@ namespace ThothBotCore.Modules
                 "https://discord.com/api/v8/applications/587623068461957121/guilds/518408306415632384/commands",
                  new StringContent(myJson, Encoding.UTF8, "application/json"));
             Console.WriteLine(response);
+        }
+
+        [Command("hack")]
+        public async Task EvalCommand([Remainder]string args)
+        {
+            System.Data.DataTable table = new System.Data.DataTable();
+            var result = Convert.ToDouble(table.Compute(args, String.Empty));
+            await ReplyAsync(result.ToString());
         }
 
         private class DataUsed

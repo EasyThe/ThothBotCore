@@ -18,6 +18,7 @@ using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
+using ThothBotCore.Utilities.Smite;
 using static ThothBotCore.Connections.Models.Player;
 using static ThothBotCore.Storage.Database;
 
@@ -38,7 +39,7 @@ namespace ThothBotCore.Modules
 
         [Command("stats", true, RunMode = RunMode.Async)]
         [Summary("Display stats for the provided `PlayerName`.")]
-        [Alias("stat", "pc", "st", "stata", "ст", "статс", "ns")]
+        [Alias("stat", "pc", "st", "stata", "ст", "статс", "ns", "smitestats")]
         [RequireBotPermission(ChannelPermission.EmbedLinks)]
         [RequireBotPermission(ChannelPermission.UseExternalEmojis)]
         public async Task Stats([Remainder] string PlayerName = "")
@@ -133,7 +134,10 @@ namespace ThothBotCore.Modules
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                    if (!ex.Message.Contains("10008"))
+                    {
+                        await Reporter.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                    }
                 }
 
                 // Saving player to DB
@@ -339,9 +343,30 @@ namespace ThothBotCore.Modules
         [Command("rgod", true)] // Random God
         [Summary("Gives you a random God and randomised build.")]
         [Alias("rg", "randomgod", "random")]
-        public async Task RandomGod()
+        public async Task RandomGod([Remainder]string godClass = "")
         {
-            List<Gods.God> gods = MongoConnection.GetAllGods();
+            List<Gods.God> godsF = MongoConnection.GetAllGods();
+            List<Gods.God> gods = null;
+            if (godClass != "")
+            {
+                Console.WriteLine(godClass);
+                godClass = godClass.ToLowerInvariant().Trim();
+                Console.WriteLine(godClass);
+                gods = godClass switch
+                {
+                    "m" or "mage" => godsF.Where(x => x.Roles.Contains("Mage")).ToList(),
+                    "w" or "warrior" => godsF.Where(x => x.Roles.Contains("Warrior")).ToList(),
+                    "h" or "hunter" => godsF.Where(x => x.Roles.Contains("Hunter")).ToList(),
+                    "g" or "tank" or "guardian" => godsF.Where(x => x.Roles.Contains("Guardian")).ToList(),
+                    "a" or "ass" or "assassin" => godsF.Where(x => x.Roles.Contains("Assassin")).ToList(),
+                    _ => godsF,
+                };
+            }
+            else
+            {
+                gods = godsF;
+            }
+            Console.WriteLine(gods.Count);
             int rr = rnd.Next(gods.Count);
             string rbuild = await Utils.RandomBuilderAsync(gods[rr]);
 
@@ -1371,6 +1396,19 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: em);
         }
 
+        [Command("patch", true, RunMode = RunMode.Async)]
+        [Summary("Sends the last patch posted on the SMITEgame.com website")]
+        [Alias("lastpatch", "notes", "patchnotes", "updatenotes")]
+        public async Task PatchNotesCommand()
+        {
+            var posts = await HiRezWebAPI.FetchPostsAsync();
+            var foundPost = posts.Find(x => x.real_categories.ToLowerInvariant().Contains("notes"));
+            var actualPost = await HiRezWebAPI.GetPostBySlugAsync(foundPost.slug);
+            string description = await PatchPageReader.ReadPatch(actualPost);
+            Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost.large_image, foundPost.slug);
+            await ReplyAsync(embed: embed);
+        }
+
         // test
         [Command("test")] // Get specific God information
         [RequireOwner]
@@ -1537,10 +1575,11 @@ namespace ThothBotCore.Modules
         public async Task NzVrat(string endpoint, [Remainder]string value)
         {
             string json = "";
+            dynamic parsedJson = null;
             try
             {
                 json = await hirezAPI.APITestMethod(endpoint, value);
-                dynamic parsedJson = JsonConvert.DeserializeObject(json);
+                parsedJson = JsonConvert.DeserializeObject(json);
 
                 await ReplyAsync($"```json\n{JsonConvert.SerializeObject(parsedJson, Formatting.Indented)}```");
             }
@@ -1548,8 +1587,12 @@ namespace ThothBotCore.Modules
             {
                 if (ex.Message.Contains("2000"))
                 {
-                    await File.WriteAllTextAsync($"{endpoint}.json", json);
-                    await Context.Channel.SendFileAsync($"{endpoint}.json");
+                    using var client = new HttpClient();
+                    var response = await client.PostAsync(
+                        "https://hastebin.com/documents",
+                         new StringContent(JsonConvert.SerializeObject(parsedJson, Formatting.Indented), Encoding.UTF8, "application/json"));
+                    var responseObj = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
+                    await ReplyAsync($"https://hastebin.com/{responseObj.key}");
                 }
                 else
                 {
@@ -1625,17 +1668,25 @@ namespace ThothBotCore.Modules
             PlayerSpecial playerspecs = new PlayerSpecial();
             if (input.StartsWith("id:"))
             {
-                playerId = Int32.Parse(input.Split(':').Last());
+                playerId = int.Parse(input.Split(':').Last());
             }
             else if (input.StartsWith("did:"))
             {
-                discordId = UInt64.Parse(input.Split(':').Last());
+                discordId = ulong.Parse(input.Split(':').Last());
             }
 
             if (discordId != 0)
             {
                 playerspecs = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(discordId);
-                playerId = playerspecs._id;
+                if (playerspecs != null)
+                {
+                    playerId = playerspecs._id;
+                }
+                else
+                {
+                    await ReplyAsync("This Discord ID is not in the database.");
+                    return;
+                }
             }
 
             if (playerId == 0)
@@ -1840,7 +1891,6 @@ namespace ThothBotCore.Modules
             }
         }
 
-        // OWNER
         private static string GenerateString()
         {
             char[] chars = new char[7];

@@ -915,13 +915,49 @@ namespace ThothBotCore.Discord
                     await Reporter.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
                 }
             }
+            if (winners.Count == 0 || losers.Count == 0)
+            {
+                foreach (var player in matchdetailsList)
+                {
+                    godemoji = gods.Find(x => x.id == player.GodId).Emoji;
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = $"{godemoji} {(player.hz_player_name == null || player.hz_player_name == "" ? player.hz_gamer_tag : player.hz_player_name)}";
+                        x.Value = $":crossed_swords:KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
+                    $"🗡Damage: {player.Damage_Player}";
+                    });
+                }
+                return embed;
+            }
             string team1emo = Text.SideEmoji(winners[0].TaskForce);
             string team2emo = Text.SideEmoji(losers[0].TaskForce);
+            double winnersAverageMMR = 0;
+            double losersAverageMMR = 0;
+            if (winners[0].match_queue_id == 451 || winners[0].match_queue_id == 504) // Conquest
+            {
+                winnersAverageMMR = winners.Where(x => x.Rank_Stat_Conquest != 0).Average(x => x.Rank_Stat_Conquest);
+                losersAverageMMR = losers.Where(x => x.Rank_Stat_Conquest != 0).Average(x => x.Rank_Stat_Conquest);
+            }
+            else if (winners[0].match_queue_id == 450 || winners[0].match_queue_id == 503) // Joust
+            {
+                winnersAverageMMR = winners.Where(x => x.Rank_Stat_Joust != 0).Average(x => x.Rank_Stat_Joust);
+                losersAverageMMR = losers.Where(x => x.Rank_Stat_Joust != 0).Average(x => x.Rank_Stat_Joust);
+            }
+            else if (winners[0].match_queue_id == 440 || winners[0].match_queue_id == 502) // Duel
+            {
+                winnersAverageMMR = winners.Where(x => x.Rank_Stat_Duel != 0).Average(x => x.Rank_Stat_Duel);
+                losersAverageMMR = losers.Where(x => x.Rank_Stat_Duel != 0).Average(x => x.Rank_Stat_Duel);
+            }
+            
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = $"🏆 **{winners[0].Win_Status}** 🏆";
-                x.Value = $"{team1emo}{Text.SideName(winners[0].TaskForce)}";
+                x.Value = $":crossed_swords:Team KDA: {winners.Sum(x => x.Kills_Player)}/{winners.Sum(x => x.Deaths)}/{winners.Sum(x => x.Assists)}\n" +
+                $"{team1emo}**Averages:**{team1emo}\n" +
+                $"{(winnersAverageMMR != 0 ? $"{team1emo}MMR: {Math.Round(winnersAverageMMR)}\n" : "")}" +
+                $"🗡Damage: {Math.Round(winners.Average(x => x.Damage_Player))}\n";
             });
             if (winners[0].Ban1.Length != 0)
             {
@@ -957,7 +993,10 @@ namespace ThothBotCore.Discord
             {
                 x.IsInline = true;
                 x.Name = $":red_circle: **{losers[0].Win_Status}** :red_circle:";
-                x.Value = $"{team2emo}{Text.SideName(losers[0].TaskForce)}";
+                x.Value = $":crossed_swords:Team KDA: {losers.Sum(x => x.Kills_Player)}/{losers.Sum(x => x.Deaths)}/{losers.Sum(x => x.Assists)}\n" +
+                $"{team2emo}**Averages:**{team2emo}\n" +
+                $"{(losersAverageMMR != 0 ? $"{team2emo}MMR: {Math.Round(losersAverageMMR)}\n" : "")}" +
+                $"🗡Damage: {Math.Round(losers.Average(x => x.Damage_Player))}\n";
             });
             if (matchdetailsList[0].Entry_Datetime != null)
             {
@@ -1043,7 +1082,7 @@ namespace ThothBotCore.Discord
         {
             if (matchHistory.Count == 1 && matchHistory[0].playerId == 0)
             {
-                var emb = await BuildDescriptionEmbedAsync("SMITE API Error: " + matchHistory[0].ret_msg, 255);
+                var emb = await BuildDescriptionEmbedAsync("SMITE API Error: " + matchHistory[0].ret_msg.ToString(), 255);
                 return emb;
             }
             var embed = new EmbedBuilder();
@@ -1193,6 +1232,22 @@ namespace ThothBotCore.Discord
             embed.WithFooter(x =>
             {
                 x.Text = "God [Win Rate]";
+            });
+            return await Task.FromResult(embed.Build());
+        }
+
+        public static async Task<Embed> BuildPatchNotesEmbedAsync(WebAPIPostModel patchPost, string description, string imageURL, string slug)
+        {
+            var embed = new EmbedBuilder();
+            embed.WithDescription(description);
+            embed.WithColor(Constants.DefaultBlueColor);
+            embed.WithTitle(patchPost.title);
+            embed.WithUrl($"https://www.smitegame.com/news/{slug}");
+            embed.WithImageUrl(imageURL);
+            embed.WithAuthor(x =>
+            {
+                x.Name = "SMITE";
+                x.IconUrl = "https://pbs.twimg.com/profile_images/1210997178786832384/ScZXulZQ_400x400.jpg";
             });
             return await Task.FromResult(embed.Build());
         }

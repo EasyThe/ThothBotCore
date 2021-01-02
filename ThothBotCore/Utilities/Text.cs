@@ -14,6 +14,16 @@ namespace ThothBotCore.Utilities
         {
             return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
         }
+
+        public static string ReplaceFirst(string text, string search, string replace)
+        {
+            int pos = text.IndexOf(search);
+            if (pos < 0)
+            {
+                return text;
+            }
+            return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
+        }
         public static string Truncate(string value, int maxChars) // Didnt try if works
         {
             return value.Length <= maxChars ? value : value.Substring(0, maxChars - 3) + "...";
