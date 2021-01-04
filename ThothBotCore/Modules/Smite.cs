@@ -349,9 +349,7 @@ namespace ThothBotCore.Modules
             List<Gods.God> gods = null;
             if (godClass != "")
             {
-                Console.WriteLine(godClass);
                 godClass = godClass.ToLowerInvariant().Trim();
-                Console.WriteLine(godClass);
                 gods = godClass switch
                 {
                     "m" or "mage" => godsF.Where(x => x.Roles.Contains("Mage")).ToList(),
@@ -366,7 +364,6 @@ namespace ThothBotCore.Modules
             {
                 gods = godsF;
             }
-            Console.WriteLine(gods.Count);
             int rr = rnd.Next(gods.Count);
             string rbuild = await Utils.RandomBuilderAsync(gods[rr]);
 
@@ -850,7 +847,7 @@ namespace ThothBotCore.Modules
 
                 var playerstatus = JsonConvert.DeserializeObject<List<PlayerStatus>>(await hirezAPI.GetPlayerStatus(playerID));
                 // Checking if the player is online and is in match
-                if (playerstatus[0].Match == 0)
+                if (playerstatus[0]?.Match == 0)
                 {
                     if (sentMessage == null)
                     {
@@ -1067,7 +1064,7 @@ namespace ThothBotCore.Modules
                 Motd motdDay = new Motd();
                 for (int i = 0; i < 5; i++)
                 {
-                    string[] finalDesc = { };
+                    string[] finalDesc = Array.Empty<string>();
                     motdDay = motdList.Find(x => x.startDateTime.Date == DateTime.Today.AddDays(i));
                     if (motdDay == null)
                     {
@@ -1602,7 +1599,7 @@ namespace ThothBotCore.Modules
         }
 
         // Esports
-        [Command("schedule", true)]
+        [Command("espsch", true)]
         public async Task SPLScheduleCommandAsync()
         {
             string json;
@@ -1655,6 +1652,41 @@ namespace ThothBotCore.Modules
             {
                 await ReplyAsync(ex.Message);
             }
+        }
+
+        [Command("swc", true)]
+        [Summary("**SWC 2021 Schedule and links**")]
+        [Alias("swcs", "swcschedule", "schedule")]
+        public async Task SWCSchedule()
+        {
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.Name = "SMITE World Championship 2021";
+                x.Url = "https://www.hirezshowcase.com/?utm_source=ThothBot&utm_campaign=swc2021";
+                x.IconUrl = "https://i.imgur.com/oLBvvGQ.png";
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "SmiteGame Twitch";
+                x.Value = "[<:Twitch:579125715874742280>SmiteGame](https://www.twitch.tv/smitegame/?utm_source=ThothBot&utm_campaign=swc2021)";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "Twitch Drops";
+                x.Value = "[⚡Info Here](https://www.smitegame.com/news/watch-swcathome-january-4-10-earn-exclusive-twitch-drops/?utm_source=ThothBot&utm_campaign=swc2021)";
+                x.IsInline = true;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "TimeZone Converter";
+                x.Value = "[🌍WorldTimeBuddy](https://www.worldtimebuddy.com)";
+                x.IsInline = true;
+            });
+            embed.WithColor(new Color(47,49,54));
+            embed.WithImageUrl("https://i.imgur.com/tVQLTzG.png");
+            await ReplyAsync(embed: embed.Build());
         }
 
         // OWNER

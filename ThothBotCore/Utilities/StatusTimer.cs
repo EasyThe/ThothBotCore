@@ -30,7 +30,7 @@ namespace ThothBotCore.Utilities
         public static async Task StopServerStatusTimer(string message)
         {
             ServerStatusTimer.Enabled = false;
-            Console.WriteLine(message);
+            Text.WriteLine(message);
             await Reporter.SendError(message);
         }
         private static async void ServerStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -308,7 +308,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\nStatusTimer\n{ex.Message}\n{ex.StackTrace}\n");
+                Text.WriteLine($"\nStatusTimer\n{ex.Message}\n{ex.StackTrace}\n");
             }
 
             ServerStatusTimer.Interval = 60000;

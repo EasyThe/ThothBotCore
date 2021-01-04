@@ -11,7 +11,7 @@ namespace ThothBotCore.Utilities.Smite
 {
     public static class PatchPageReader
     {
-        public static async Task<string> ReadPatch(WebAPIPostModel patchPost)
+        public static Task<string> ReadPatch(WebAPIPostModel patchPost)
         {
             List<Gods.God> gods = MongoConnection.GetAllGods().OrderBy(x => x.Name).ToList();
             var doc = new HtmlDocument();
@@ -20,7 +20,7 @@ namespace ThothBotCore.Utilities.Smite
             sb.AppendLine(NewGod(doc, gods)); // New God
             sb.AppendLine(NewSkins(doc, gods)); // New Skins
             sb.AppendLine(UpdateSchedule(doc, patchPost));
-            return sb.ToString();
+            return Task.FromResult(sb.ToString());
         }
         private static string NewGod(HtmlDocument doc, List<Gods.God> gods)
         {

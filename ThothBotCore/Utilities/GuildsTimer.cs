@@ -41,11 +41,11 @@ namespace ThothBotCore.Utilities
                     joinedGuilds = Connection.Client.Guilds.Count;
                     await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
 
-                    Console.WriteLine("Users: " + totalUsers);
+                    Text.WriteLine("Users: " + totalUsers);
 
                     if (Connection.Client.CurrentUser.Id == 587623068461957121)
                     {
-                        Console.WriteLine(Connection.Client.CurrentUser.Username + " is logged in, guild count update timer disabled.");
+                        Text.WriteLine(Connection.Client.CurrentUser.Username + " is logged in, guild count update timer disabled.");
                         GuildCountTimer.Interval = 60000;
                         GuildCountTimer.Enabled = false;
                         return;

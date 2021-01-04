@@ -52,7 +52,7 @@ namespace ThothBotCore.Discord
 
         private async Task HandleCommandAsync(SocketMessage s)
         {
-            if (!(s is SocketUserMessage msg) || msg.Author.IsBot)
+            if (s is not SocketUserMessage msg || msg.Author.IsBot)
             {
                 return;
             }

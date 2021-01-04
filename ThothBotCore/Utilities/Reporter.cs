@@ -31,7 +31,7 @@ namespace ThothBotCore.Utilities
                 });
                 string result = $"🆕{guild.Name}\n" +
                 $"🆔**Server ID:** {guild.Id}\n" +
-                $"👤**Owner:** {guild.Owner}\n" +
+                $"👤**Owner:** {guild.Owner} [{guild.OwnerId}]\n" +
                 $"👥**Users:** {guild.MemberCount}\n" +
                 $"💬**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}";
                 if (result.Length >= 256)
@@ -64,7 +64,7 @@ namespace ThothBotCore.Utilities
                 embed.WithColor(new Color(254, 0, 0));
                 string result = $"🔻{guild.Name}\n" +
                 $"🆔**Server ID:** {guild.Id}\n" +
-                $"👤**Owner:** {guild.Owner}\n" +
+                $"👤**Owner:** {guild.OwnerId}\n" +
                 $"👥**Users:** {guild.MemberCount}\n" +
                 $"💬**Channels:** {guild.Channels.Count - guild.CategoryChannels.Count}";
                 if (result.Length >= 256)

@@ -60,7 +60,10 @@ namespace ThothBotCore.Utilities
 
             var commandModulesList = commandService.Modules.ToList();
             var commandsInfoWeNeed = new List<CommandInfo>();
-            foreach (var c in commandModulesList) commandsInfoWeNeed.AddRange(c.Commands.Where(h => string.Equals(h.Name, command, StringComparison.CurrentCultureIgnoreCase)));
+            foreach (var c in commandModulesList)
+            {
+                commandsInfoWeNeed.AddRange(c.Commands.Where(h => string.Equals(h.Name, command, StringComparison.CurrentCultureIgnoreCase)));
+            }
 
             if (pageNum > commandsInfoWeNeed.Count || pageNum <= 0)
             {
@@ -78,8 +81,10 @@ namespace ThothBotCore.Utilities
             helpEmbedBuilder.WithDescription(commandInformation);
 
             if (commandsInfoWeNeed.Count >= 2)
+            {
                 helpEmbedBuilder.WithTitle($"Variant {pageNum}/{commandsInfoWeNeed.Count}.\n" +
                                 "_______\n");
+            }
 
             return helpEmbedBuilder;
         }
@@ -100,7 +105,7 @@ namespace ThothBotCore.Utilities
                     {
                         if (command.Summary != null)
                         {
-                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}` - {command.Summary}");
+                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters[0].Name}" : "")}` - {command.Summary}");
                         }
                     }
                     helpEmbedBuilder.WithDescription(sb.ToString());
@@ -113,7 +118,7 @@ namespace ThothBotCore.Utilities
                         var parameters = string.Join(", ", command.GetCommandParameters());
                         if (command.Summary != null)
                         {
-                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}` - {command.Summary}");
+                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters[0].Name}" : "")}` - {command.Summary}");
                         }
                     }
                     sb.AppendLine("\n🆘 **Do you need help with something? Join the** [Support server](http://discord.gg/hU6MTbQ)");
@@ -128,10 +133,12 @@ namespace ThothBotCore.Utilities
             var aliases = string.Join(", ", command.Aliases);
             var name = command.GetCommandNameWithGroup();
             var summary = command.Summary;
+            var remarks = command.Remarks;
             var sb = new StringBuilder()
-                .AppendLine($"**Usage**: {prefix}{name}{(command.Parameters.Count != 0 ? $" {command.Parameters.First().Name}" : "")}")
+                .AppendLine($"**Usage**: {prefix}{name}{(command.Parameters.Count != 0 ? $" {command.Parameters[0].Name}" : "")}")
                 .AppendLine($"**Description**: {summary}")
-                .Append($"**Aliases**: {aliases}");
+                .AppendLine($"**Remarks**: {remarks}")
+                .AppendLine($"**Aliases**: {aliases}");
             return sb.ToString();
         }
     }

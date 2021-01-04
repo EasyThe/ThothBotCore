@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
 using ThothBotCore.Utilities;
@@ -22,7 +21,7 @@ namespace ThothBotCore.Notifications
                 {
                     channel = Connection.Client.GetGuild(notifChannels[i]._id).GetTextChannel(notifChannels[i].statusChannel);
                     await channel.SendMessageAsync(embed: embed.Build());
-                    System.Console.WriteLine($"Sent Status Updates to: {notifChannels[i]._id}]");
+                    Text.WriteLine($"Sent Status Updates to: {notifChannels[i]._id}]");
                 }
                 catch (System.Exception ex)
                 {

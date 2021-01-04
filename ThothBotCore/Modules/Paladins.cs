@@ -36,7 +36,7 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    Console.WriteLine(ex.Message);
+                    Text.WriteLine(ex.Message);
                 }
             }
         }

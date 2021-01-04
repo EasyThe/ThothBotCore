@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using System.Threading.Tasks;
+using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Connections
 {
@@ -10,18 +11,14 @@ namespace ThothBotCore.Connections
             try
             {
                 var handler = new HttpClientHandler();
-                using (var httpClient = new HttpClient(handler, false))
-                {
-                    using (var request = new HttpRequestMessage(HttpMethod.Get, "http://stk4xr7r1y0r.statuspage.io/api/v2/summary.json"))
-                    {
-                        var response = await httpClient.SendAsync(request);
-                        return await response.Content.ReadAsStringAsync();
-                    }
-                }
+                using var httpClient = new HttpClient(handler, false);
+                using var request = new HttpRequestMessage(HttpMethod.Get, "http://stk4xr7r1y0r.statuspage.io/api/v2/summary.json");
+                var response = await httpClient.SendAsync(request);
+                return await response.Content.ReadAsStringAsync();
             }
             catch (System.Exception ex)
             {
-                System.Console.WriteLine($"===\nGetStatusSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
+                Text.WriteLine($"===\nGetStatusSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
                 return "";
             }
         }
@@ -30,18 +27,14 @@ namespace ThothBotCore.Connections
             try
             {
                 var handler = new HttpClientHandler();
-                using (var httpClient = new HttpClient(handler, false))
-                {
-                    using (var request = new HttpRequestMessage(HttpMethod.Get, "https://srhpyqt94yxb.statuspage.io/api/v2/summary.json"))
-                    {
-                        var response = await httpClient.SendAsync(request);
-                        return await response.Content.ReadAsStringAsync();
-                    }
-                }
+                using var httpClient = new HttpClient(handler, false);
+                using var request = new HttpRequestMessage(HttpMethod.Get, "https://srhpyqt94yxb.statuspage.io/api/v2/summary.json");
+                var response = await httpClient.SendAsync(request);
+                return await response.Content.ReadAsStringAsync();
             }
             catch (System.Exception ex)
             {
-                System.Console.WriteLine($"===\nGetDiscordSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
+                Text.WriteLine($"===\nGetDiscordSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
                 return "";
             }
         }

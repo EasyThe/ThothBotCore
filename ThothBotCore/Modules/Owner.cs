@@ -74,7 +74,7 @@ namespace ThothBotCore.Modules
                             {
                                 if (god.godIcon_URL != "")
                                 {
-                                    god.DomColor = domColor.GetDomColor(god.godIcon_URL);
+                                    god.DomColor = DominantColor.GetDomColor(god.godIcon_URL);
                                 }
                                 else
                                 {
@@ -139,7 +139,7 @@ namespace ThothBotCore.Modules
                             {
                                 try
                                 {
-                                    item.DomColor = domColor.GetDomColor(item.itemIcon_URL);
+                                    item.DomColor = DominantColor.GetDomColor(item.itemIcon_URL);
                                 }
                                 catch (Exception x)
                                 {
@@ -899,15 +899,7 @@ namespace ThothBotCore.Modules
             var response = await client.PostAsync(
                 "https://discord.com/api/v8/applications/587623068461957121/guilds/518408306415632384/commands",
                  new StringContent(myJson, Encoding.UTF8, "application/json"));
-            Console.WriteLine(response);
-        }
-
-        [Command("hack")]
-        public async Task EvalCommand([Remainder]string args)
-        {
-            System.Data.DataTable table = new System.Data.DataTable();
-            var result = Convert.ToDouble(table.Compute(args, String.Empty));
-            await ReplyAsync(result.ToString());
+            Text.WriteLine(response.StatusCode.ToString());
         }
 
         private class DataUsed

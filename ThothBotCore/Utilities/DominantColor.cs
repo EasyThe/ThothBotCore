@@ -9,11 +9,10 @@ namespace ThothBotCore.Utilities
 {
     public class DominantColor
     {
-        private Bitmap img;
-
-        public int GetDomColor(string link)
+        public static int GetDomColor(string link)
         {
             string[] splitLink = link.Split('/');
+            Bitmap img;
 
             if (!Directory.Exists("Storage/Gods"))
             {
@@ -22,10 +21,8 @@ namespace ThothBotCore.Utilities
 
             try
             {
-                using (WebClient client = new WebClient())
-                {
-                    client.DownloadFile(new Uri(link), $@"./Storage/Gods/{splitLink[5]}");
-                }
+                using WebClient client = new WebClient();
+                client.DownloadFile(new Uri(link), $@"./Storage/Gods/{splitLink[5]}");
             }
             catch (Exception ex)
             {

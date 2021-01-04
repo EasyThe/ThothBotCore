@@ -324,7 +324,7 @@ namespace ThothBotCore.Utilities
                 10171 => "Joust Practice (Hard)",
                 10173 => "Classic Domination",
                 10182 => "Conquest (vs AI) (Very Easy)",
-                _ => "Unknown Queue",
+                _ => "Unknown Queue"
             };
         }
         public static string GetRankEmoji(int rank)
@@ -341,7 +341,7 @@ namespace ThothBotCore.Utilities
                 7 => "<:7_:695991296187301948>",
                 8 => "<:8_:695991298712404038>",
                 9 => "<:9_:695991296401080330>",
-                _ => "<:10:695983354453033010>",
+                _ => "<:10:695983354453033010>"
             };
         }
 
@@ -377,7 +377,7 @@ namespace ThothBotCore.Utilities
                 25 => Tuple.Create("Diamond I", "<:cqdi:528617356625313792>"),
                 26 => Tuple.Create("Masters", "<:cqma:528617357669826560>"),
                 27 => Tuple.Create("Grandmaster", "<:cqgm:528617358500298753>"),
-                _ => Tuple.Create("This", "Report"),
+                _ => Tuple.Create("This", "Report")
             };
         }
 
