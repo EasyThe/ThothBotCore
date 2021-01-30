@@ -98,7 +98,7 @@ namespace ThothBotCore.Utilities
             foreach (var module in commandModules)
             {
                 helpEmbedBuilder.WithTitle("⚡ SMITE");
-                if (module.Name.Contains("Smite"))
+                if (module.Name == "SMITE")
                 {
                     var sb = new StringBuilder();
                     foreach (var command in module.Commands)
@@ -110,7 +110,7 @@ namespace ThothBotCore.Utilities
                     }
                     helpEmbedBuilder.WithDescription(sb.ToString());
                 }
-                if (module.Name.Contains("Bot"))
+                else if (module.Name.Contains("Bot"))
                 {
                     var sb = new StringBuilder();
                     foreach (var command in module.Commands)
@@ -122,7 +122,7 @@ namespace ThothBotCore.Utilities
                         }
                     }
                     sb.AppendLine("\n🆘 **Do you need help with something? Join the** [Support server](http://discord.gg/hU6MTbQ)");
-                    helpEmbedBuilder.AddField("🤖 Bot", sb.ToString());
+                    helpEmbedBuilder.AddField("🤖 Bot", sb.ToString(), true);
                 }
             }
             return helpEmbedBuilder;

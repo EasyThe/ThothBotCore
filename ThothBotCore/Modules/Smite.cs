@@ -28,6 +28,7 @@ namespace ThothBotCore.Modules
     [RequireBotPermission(ChannelPermission.EmbedLinks)]
     [RequireBotPermission(ChannelPermission.ViewChannel)]
     [RequireBotPermission(ChannelPermission.SendMessages)]
+    [Name("SMITE")]
     public class Smite : InteractiveBase<SocketCommandContext>
     {
         static Random rnd = new Random();
@@ -279,10 +280,6 @@ namespace ThothBotCore.Modules
         public async Task GodInfo([Remainder] string GodName)
         {
             string titleCaseGod = Text.ToTitleCase(GodName);
-            if (titleCaseGod.Contains("'"))
-            {
-                titleCaseGod = titleCaseGod.Replace("'", "''");
-            }
             Gods.God gods = await MongoConnection.LoadGod(titleCaseGod);
 
             if (gods == null)
@@ -477,10 +474,10 @@ namespace ThothBotCore.Modules
             }
             if (inci)
             {
-                var embed = EmbedHandler.StatusIncidentEmbed(smiteServerStatus);
+                var embed = await EmbedHandler.StatusIncidentEmbed(smiteServerStatus);
                 if (embed != null)
                 {
-                    await ReplyAsync(embed: EmbedHandler.StatusIncidentEmbed(smiteServerStatus).Build());
+                    await ReplyAsync(embed: embed.Build());
                 }
             }
             // Scheduled Maintenances
@@ -496,7 +493,8 @@ namespace ThothBotCore.Modules
             }
             if (maint)
             {
-                await ReplyAsync(embed: EmbedHandler.StatusMaintenanceEmbed(smiteServerStatus).Build());
+                var embed = await EmbedHandler.StatusMaintenanceEmbed(smiteServerStatus);
+                await ReplyAsync(embed: embed.Build());
             }
         }
 
@@ -505,7 +503,7 @@ namespace ThothBotCore.Modules
         [Alias("statusupd", "su")]
         [RequireUserPermission(GuildPermission.Administrator, Group = "Owner")]
         [RequireOwner(Group = "Owner")]
-        public async Task SetStatusUpdatesChannel(SocketChannel channelMention)
+        public async Task SetStatusUpdatesChannel([Name("#your-channel-here")] SocketChannel channelMention)
         {
             await SetNotifChannel(Context.Guild.Id, Context.Guild.Name, channelMention.Id);
             SocketTextChannel channel = Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channelMention.Id);
@@ -586,7 +584,7 @@ namespace ThothBotCore.Modules
         {
             await StopNotifs(Context.Guild.Id);
 
-            await ReplyAsync($"**{Context.Guild.Name}** will no longer receive SMITE Server Status updates.");
+            await ReplyAsync($":ok_hand: **{Context.Guild.Name}** will no longer receive SMITE Server Status updates.");
         }
 
         [Command("claninfo")]
@@ -901,7 +899,7 @@ namespace ThothBotCore.Modules
         [Command("matchdetails", RunMode = RunMode.Async)]
         [Summary("Match details for the provided `MatchID` or latest match played of provided `PlayerName`.")]
         [Alias("md", "мд")]
-        public async Task MatchDetailsCommand([Remainder] string MatchID = "")
+        public async Task MatchDetailsCommand([Name("MatchID or PlayerName")][Remainder] string MatchID = "")
         {
             try
             {
@@ -1217,7 +1215,7 @@ namespace ThothBotCore.Modules
                 if (check.ToLowerInvariant().Contains("the api is unavailable"))
                 {
                     var unavailableEmbed = await EmbedHandler.BuildDescriptionEmbedAsync(
-                        "Sorry, we cannot link your accounts right now, because the Hi-Rez API is unavailable right now. Please try again later.", 163);
+                        "Sorry, we cannot link your accounts, because the Hi-Rez API is unavailable right now. Please try again later.", 163);
                     await ReplyAsync(embed: unavailableEmbed);
                     return;
                 }
@@ -1567,7 +1565,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("nz")] // keep it simple pls
+        [Command("nz", RunMode = RunMode.Async)] // keep it simple pls
         [RequireOwner]
         public async Task NzVrat(string endpoint, [Remainder]string value)
         {
@@ -1587,13 +1585,19 @@ namespace ThothBotCore.Modules
                     using var client = new HttpClient();
                     var response = await client.PostAsync(
                         "https://hastebin.com/documents",
-                         new StringContent(JsonConvert.SerializeObject(parsedJson, Formatting.Indented), Encoding.UTF8, "application/json"));
+                         new StringContent(JsonConvert.SerializeObject(parsedJson, Formatting.Indented), Encoding.UTF8, "application/json")).ConfigureAwait(false);
                     var responseObj = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
+                    if (response.StatusCode.ToString().Contains("50"))
+                    {
+                        await File.WriteAllTextAsync($"{endpoint}.json", json);
+                        await Context.Channel.SendFileAsync($"{endpoint}.json");
+                        return;
+                    }
                     await ReplyAsync($"https://hastebin.com/{responseObj.key}");
                 }
                 else
                 {
-                    Text.WriteLine(ex.Message);
+                    await ReplyAsync(ex.Message);
                 }
             }
         }
@@ -1652,41 +1656,6 @@ namespace ThothBotCore.Modules
             {
                 await ReplyAsync(ex.Message);
             }
-        }
-
-        [Command("swc", true)]
-        [Summary("**SWC 2021 Schedule and links**")]
-        [Alias("swcs", "swcschedule", "schedule")]
-        public async Task SWCSchedule()
-        {
-            var embed = new EmbedBuilder();
-            embed.WithAuthor(x =>
-            {
-                x.Name = "SMITE World Championship 2021";
-                x.Url = "https://www.hirezshowcase.com/?utm_source=ThothBot&utm_campaign=swc2021";
-                x.IconUrl = "https://i.imgur.com/oLBvvGQ.png";
-            });
-            embed.AddField(x =>
-            {
-                x.Name = "SmiteGame Twitch";
-                x.Value = "[<:Twitch:579125715874742280>SmiteGame](https://www.twitch.tv/smitegame/?utm_source=ThothBot&utm_campaign=swc2021)";
-                x.IsInline = true;
-            });
-            embed.AddField(x =>
-            {
-                x.Name = "Twitch Drops";
-                x.Value = "[⚡Info Here](https://www.smitegame.com/news/watch-swcathome-january-4-10-earn-exclusive-twitch-drops/?utm_source=ThothBot&utm_campaign=swc2021)";
-                x.IsInline = true;
-            });
-            embed.AddField(x =>
-            {
-                x.Name = "TimeZone Converter";
-                x.Value = "[🌍WorldTimeBuddy](https://www.worldtimebuddy.com)";
-                x.IsInline = true;
-            });
-            embed.WithColor(new Color(47,49,54));
-            embed.WithImageUrl("https://i.imgur.com/tVQLTzG.png");
-            await ReplyAsync(embed: embed.Build());
         }
 
         // OWNER

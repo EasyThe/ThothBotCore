@@ -23,7 +23,7 @@ If you would like to contribute to this project you can join [Thoth's Support Se
 
 ## Built With :green_heart:
 
-* [.NET Core 3.1](https://docs.microsoft.com/en-us/dotnet/core/)
+* [.NET 5](https://docs.microsoft.com/en-us/dotnet/core/)
 * [Discord .NET](https://github.com/RogueException/Discord.Net)
 * SMITE Data provided by the Hi-Rez Public API
 

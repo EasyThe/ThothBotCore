@@ -25,19 +25,24 @@ namespace ThothBotCore.Notifications
                 }
                 catch (System.Exception ex)
                 {
+                    await Reporter.SendError($"Couldn't send status update to {notifChannels[i]._id}");
                     if (ex.Message.Contains("Missing"))
                     {
                         SocketGuild guild = Connection.Client.GetGuild(notifChannels[i]._id);
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
-                        await user.SendMessageAsync($":warning: Hey! I tried to send this status update to {channel.Mention} but I am missing **Access** there.\n" +
-                        $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel.Mention}." +
-                        $"You will get this message everytime I get an error by trying to send Server Status Updates in {channel.Mention}.\n" +
-                        $"If you don't want to receive Server Status Updates anymore, please use **!!stopstatusupdates** in one of your servers channels.",
-                        embed: embed.Build());
-                    }
-                    else if (ex.Message.Contains("Object reference not set to an instance of an object."))
-                    {
-                        await StopNotifs(notifChannels[i]._id);
+                        try
+                        {
+                            await user?.SendMessageAsync($":warning: Hey! I tried to send this status update to {channel?.Mention} ({guild?.Name}) but I am missing **Access** there.\n" +
+                                $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel?.Mention}." +
+                                $"You will get this message everytime I get an error by trying to send Server Status Updates in {channel?.Mention}.\n" +
+                                $"If you don't want to receive Server Status Updates anymore, please use **!!stopstatusupdates** in one of your servers channels.",
+                                embed: embed.Build());
+                        }
+                        catch (System.Exception xx)
+                        {
+                            await Reporter.SendError($"StatusNotifier.cs sending a DM failed: {xx.Message} {guild?.Name}[{guild?.Id}]");
+                            continue;
+                        }
                     }
                     else
                     {
@@ -46,6 +51,7 @@ namespace ThothBotCore.Notifications
                             $"{ex.TargetSite}\n" +
                             $"{ex.Data}\n" +
                             $"ID: {notifChannels[i]._id}");
+                        continue;
                     }
                 }
             }

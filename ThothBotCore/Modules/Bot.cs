@@ -153,7 +153,7 @@ namespace ThothBotCore.Modules
 
         [Command("feedback")]
         [Summary("If you have got feedback for the bot, this is the command.")]
-        public async Task FeedbackCommand([Remainder] string FeedbackMessage)
+        public async Task FeedbackCommand([Name("Enter your feedback here")][Remainder] string FeedbackMessage)
         {
             await Reporter.SendFeedback(FeedbackMessage, Context.Message.Author);
             await ReplyAsync("♥ Thanks for the feedback! The bot owner got your message. ");

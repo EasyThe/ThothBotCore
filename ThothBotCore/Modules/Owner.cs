@@ -9,7 +9,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -21,7 +20,6 @@ using ThothBotCore.Models;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
-using ThothBotCore.Utilities.Smite;
 
 namespace ThothBotCore.Modules
 {
@@ -103,14 +101,18 @@ namespace ThothBotCore.Modules
                 // Adding the emojis and domcolors from the old db to the new one
                 foreach (var item in itemsInDb)
                 {
-                    newItemsList.Find(x => x.ItemId == item.ItemId)._id = item._id;
-                    newItemsList.Find(x => x.ItemId == item.ItemId).Emoji = item.Emoji;
-                    newItemsList.Find(x => x.ItemId == item.ItemId).DomColor = item.DomColor;
-                    newItemsList.Find(x => x.ItemId == item.ItemId).GodType = item.GodType;
+                    var foundIndex = newItemsList.FindIndex(x => x.ItemId == item.ItemId);
+                    if (foundIndex != -1)
+                    {
+                        newItemsList[foundIndex]._id = item._id;
+                        newItemsList[foundIndex].Emoji = item.Emoji;
+                        newItemsList[foundIndex].DomColor = item.DomColor;
+                        newItemsList[foundIndex].GodType = item.GodType;
+                    }
                 }
 
                 // Missing Emoji?
-                if (newItemsList.Any(x=> x.Emoji == null))
+                if (newItemsList.Any(x => x.Emoji == null && x.ActiveFlag == "y"))
                 {
                     foreach (var item in newItemsList)
                     {
@@ -118,7 +120,7 @@ namespace ThothBotCore.Modules
                         {
                             try
                             {
-                                await Utils.AddMissingItemEmojiAsync(item);
+                                item.Emoji = await Utils.AddMissingItemEmojiAsync(item);
                             }
                             catch (Exception exx)
                             {
@@ -889,19 +891,6 @@ namespace ThothBotCore.Modules
             embed.WithDescription(main.ToString());
             await ReplyAsync(embed: embed.Build());
         }
-
-        [Command("gei")]
-        public async Task gei()
-        {
-            string myJson = "{ \"name\": \"rgod\", \"description\": \"Gives you a random god\", \"options\": [] }";
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("Authorization", "Bot bot token");
-            var response = await client.PostAsync(
-                "https://discord.com/api/v8/applications/587623068461957121/guilds/518408306415632384/commands",
-                 new StringContent(myJson, Encoding.UTF8, "application/json"));
-            Text.WriteLine(response.StatusCode.ToString());
-        }
-
         private class DataUsed
         {
             public int Active_Sessions { get; set; }

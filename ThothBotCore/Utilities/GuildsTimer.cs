@@ -185,34 +185,27 @@ namespace ThothBotCore.Utilities
                 try
                 {
                     long linkedPlayers = await Storage.Implementations.MongoConnection.LinkedPlayersCount();
-                    using (var webclient = new HttpClient())
-                    using (var content = new StringContent(
+                    using var webclient = new HttpClient();
+                    using var content = new StringContent(
                         $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
                         $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
                         $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
                         $"\"users\": \"{totalUsers}\", " +
                         $"\"active\": [], " +
-                        $"\"commands\": \"0\", " +
+                        $"\"commands\": \"{Global.CommandsRun}\", " +
                         $"\"popular\": []," +
                         $"\"memactive\": \"0\"," +
                         $"\"memload\": \"0\"," +
                         $"\"cpuload\": \"0\"," +
                         $"\"bandwidth\": \"0\"," +
                         $"\"custom1\": \"{linkedPlayers}\"," +
-                        $"\"custom2\": \"{Storage.Database.CountOfStatusUpdatesActivatedInDB()[0]}\" }}", Encoding.UTF8, "application/json"))
-                    {
-                        var response = await webclient.PostAsync("https://statcord.com/logan/stats", content);
-                    }
+                        $"\"custom2\": \"{Storage.Database.CountOfStatusUpdatesActivatedInDB()[0]}\" }}", Encoding.UTF8, "application/json");
+                    var response = await webclient.PostAsync("https://statcord.com/logan/stats", content);
                 }
                 catch (Exception ex)
                 {
                     await Reporter.SendError("**StatCord.**\n" +
                         $"**Error Message:** {ex.Message}");
-                }
-
-                if (Connection.Client.CurrentUser.Id == 587623068461957121)
-                {
-                    return;
                 }
             }
 

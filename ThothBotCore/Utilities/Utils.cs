@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
@@ -16,8 +17,8 @@ namespace ThothBotCore.Utilities
 {
     public class Utils
     {
-        private static Random rnd = new Random();
-        public static async void AddNewGodEmojiInGuild(Gods.God god)
+        private static readonly Random rnd = new Random();
+        public static async Task<string> AddNewGodEmojiInGuild(Gods.God god)
         {
             var thothGods3guild = Connection.Client.GetGuild(591932765880975370);
             string[] firstsplit = god.godIcon_URL.Split('/');
@@ -25,11 +26,10 @@ namespace ThothBotCore.Utilities
             var image = new Image($"Storage/Gods/{firstsplit[^1]}");
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
             image.Dispose();
-            await Reporter.SendError($"**ADDED NEW EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
-            god.Emoji = $"<:{createdEmote.Name}:{createdEmote.Id}>";
-            await MongoConnection.SaveGodAsync(god);
+            await Reporter.SendError($"**ADDED NEW GOD EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
+            return $"<:{createdEmote.Name}:{createdEmote.Id}>";
         }
-        public static async Task AddMissingItemEmojiAsync(GetItems.Item item)
+        public static async Task<string> AddMissingItemEmojiAsync(GetItems.Item item)
         {
             var emoteGuilds = new List<SocketGuild>
             {
@@ -38,7 +38,9 @@ namespace ThothBotCore.Utilities
                 Connection.Client.GetGuild(597444275944292372),
                 Connection.Client.GetGuild(772225334652829706),
                 Connection.Client.GetGuild(772225406195466241),
-                Connection.Client.GetGuild(772225707560140831)
+                Connection.Client.GetGuild(772225707560140831),
+                Connection.Client.GetGuild(803964049217028096),
+                Connection.Client.GetGuild(803964253576495136)
             };
             string emojiname = item.DeviceName.Trim().Replace("\'", "").ToLowerInvariant();
             emojiname = Regex.Replace(emojiname, @"\s+", "");
@@ -64,6 +66,13 @@ namespace ThothBotCore.Utilities
             // Adding the image as emoji in emojiguilds
             foreach (var guild in emoteGuilds)
             {
+                foreach (var emote in guild.Emotes)
+                {
+                    if (emote.Name == emojiname)
+                    {
+                        return $"<:{emote.Name}:{emote.Id}>";
+                    }
+                }
                 if (guild.Emotes.Count != 50)
                 {
                     Thread.Sleep(200);
@@ -71,17 +80,15 @@ namespace ThothBotCore.Utilities
                     Text.WriteLine(emojiname);
                     var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
                     image.Dispose();
-                    // Saving to DB
-                    item.Emoji = $"<:{insertedEmote.Name}:{insertedEmote.Id}>";
-                    await MongoConnection.SaveItemAsync(item);
-                    break;
+                    return $"<:{insertedEmote.Name}:{insertedEmote.Id}>";
                 }
                 else
                 {
-                    emoteGuilds.Remove(guild);
                     Text.WriteLine($"{guild.Name} is full.");
+                    continue;
                 }
             }
+            return "";
         }
         public static async Task<string> RandomBuilderAsync(Gods.God god)
         {
@@ -133,6 +140,30 @@ namespace ThothBotCore.Utilities
             // Random Build END
             return sb.ToString();
         }
+        public static async Task<string> GetItemsBuiltAsync(MatchHistoryModel match)
+        {
+            var items = MongoConnection.GetAllItems();
+            var build = new StringBuilder();
+            build.Append(items.Find(x => x.ItemId == match.ItemId1)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId2)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId3)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId4)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId5)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId6)?.Emoji);
+            return await Task.FromResult(build.ToString());
+        }
+        public static async Task<string> GetItemsBuiltAsync(MatchDetails.MatchDetailsPlayer match)
+        {
+            var items = MongoConnection.GetAllItems();
+            var build = new StringBuilder();
+            build.Append(items.Find(x => x.ItemId == match.ItemId1)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId2)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId3)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId4)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId5)?.Emoji);
+            build.Append(items.Find(x => x.ItemId == match.ItemId6)?.Emoji);
+            return await Task.FromResult(build.ToString());
+        }
         public static async Task<string> CheckSpecialsForPlayer(int id, bool emoteOnly)
         {
             PlayerSpecial playerSpecial = await MongoConnection.GetPlayerSpecialsByPlayerIdAsync(id);
@@ -159,7 +190,7 @@ namespace ThothBotCore.Utilities
                         {
                             if (!emoteOnly)
                             {
-                                specialsResult.Append("\n");
+                                specialsResult.Append('\n');
                             }
                         }
                         var badge = await MongoConnection.GetBadgeAsync("streamer");
@@ -183,7 +214,7 @@ namespace ThothBotCore.Utilities
                         {
                             if (!emoteOnly)
                             {
-                                specialsResult.Append("\n");
+                                specialsResult.Append('\n');
                             }
                         }
                         var badge = await MongoConnection.GetBadgeAsync(playerSpecial.special);
@@ -203,6 +234,62 @@ namespace ThothBotCore.Utilities
                 }
             }
             return "";
+        }
+        public static async Task<string> MaintenancePlatformsAsync(List<Component2> platforms)
+        {
+            var sb = new StringBuilder();
+            for (int i = platforms.Count-1; i >= 0; i--)
+            {
+                if (platforms[i].name.ToLowerInvariant().Contains("smite switch"))
+                {
+                    sb.Append("<:SW:537752006719176714> ");
+                }
+                if (platforms[i].name.ToLowerInvariant().Contains("smite xbox"))
+                {
+                    sb.Append("<:XB:537749895029850112> ");
+                }
+                if (platforms[i].name.ToLowerInvariant().Contains("smite ps4"))
+                {
+                    sb.Append("<:PS4:537745670518472714> ");
+                }
+                if (platforms[i].name.ToLowerInvariant().Contains("smite pc"))
+                {
+                    sb.Append("<:PC:537746891610259467> ");
+                }
+            }
+            return await Task.FromResult(sb.ToString());
+        }
+        public static async Task<string> ExpectedDowntimeAsync(TimeSpan timeSpan)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (timeSpan.Hours != 0)
+            {
+                if (timeSpan.Hours == 1)
+                {
+                    sb.Append(timeSpan.Hours + " hour");
+                }
+                else
+                {
+                    sb.Append(timeSpan.Hours + " hours");
+                }
+            }
+            if (timeSpan.Minutes != 0)
+            {
+                sb.Append(" and ");
+                if (timeSpan.Minutes == 1)
+                {
+                    sb.Append(timeSpan.Minutes + " minute");
+                }
+                else
+                {
+                    sb.Append(timeSpan.Minutes + " minutes");
+                }
+            }
+            if (sb.Length == 0)
+            {
+                sb.Append("n/a");
+            }
+            return await Task.FromResult(sb.ToString());
         }
     }
 }

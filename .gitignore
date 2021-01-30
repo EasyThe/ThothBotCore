@@ -335,3 +335,4 @@ ASALocalRun/
 .mfractor/
 ThothBotCore/Storage/ThothDb.db
 *.db
+ThothBotCore/Storage/ThothDb.db
