@@ -76,7 +76,7 @@ namespace ThothBotCore.Discord
                         await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
                         await Reporter.SendSuccessCommands(context, null);
                     }
-                    if ((result.IsSuccess || !result.IsSuccess) && context.Message.Author.Id != Constants.OwnerID)
+                    if ((result.IsSuccess || !result.IsSuccess) && context.Message.Author.Id != Utilities.Constants.OwnerID)
                     {
                         await Reporter.SendSuccessCommands(context, result);
                     }
@@ -147,7 +147,7 @@ namespace ThothBotCore.Discord
             }
             else if (errorString.ToLowerInvariant().Contains("1024"))
             {
-                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Oops. The content of this message was too long. If you think this was an error, please [contact]({Constants.SupportServerInvite}) my developer!", 254);
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Oops. The content of this message was too long. If you think this was an error, please [contact]({Utilities.Constants.SupportServerInvite}) my developer!", 254);
                 await context.Channel.SendMessageAsync(embed: embed);
             }
             else if (errorString.ToLowerInvariant().Contains("command can only be run by the owner of the bot."))

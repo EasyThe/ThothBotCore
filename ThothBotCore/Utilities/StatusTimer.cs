@@ -87,6 +87,8 @@ namespace ThothBotCore.Utilities
                                                 field.Value = incidentValue.ToString();
                                             });
                                         }
+                                        incidentEmbed.WithFooter(x => x.Text = "Since");
+                                        incidentEmbed.WithTimestamp(ServerStatus.incidents[i].created_at);
 
                                         // Saving to DB
                                         try
@@ -206,7 +208,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await Reporter.SendException(ex, null, ex.Message);
+                await Reporter.SendError($"StatusTimer.cs Line 209 Error:\n{ex.Message}\n{ex.StackTrace}");
                 Text.WriteLine($"\nStatusTimer\n{ex.Message}\n{ex.StackTrace}\n");
             }
 

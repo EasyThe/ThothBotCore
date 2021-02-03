@@ -891,6 +891,20 @@ namespace ThothBotCore.Modules
             embed.WithDescription(main.ToString());
             await ReplyAsync(embed: embed.Build());
         }
+
+        [Command("ff")]
+        public async Task Testingstufbrat()
+        {
+            var pages = new EmbedBuilder[]
+            {
+                new EmbedBuilder().WithTitle("Passive"),
+                new EmbedBuilder().WithTitle("1"),
+                new EmbedBuilder().WithTitle("2"),
+                new EmbedBuilder().WithTitle("3"),
+                new EmbedBuilder().WithTitle("4")
+            };
+        }
+
         private class DataUsed
         {
             public int Active_Sessions { get; set; }
