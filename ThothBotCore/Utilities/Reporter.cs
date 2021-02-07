@@ -200,6 +200,11 @@ namespace ThothBotCore.Utilities
                 await SendException(ex, context, errorMessage);
                 SentrySdk.CaptureException(ex);
             }
+            else if (ex == null && errorMessage != "")
+            {
+                sb.Append($"An unexpected error has occured.");
+                await SendError(errorMessage);
+            }
             if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
             {
                 sb.Append("\n" + Global.ErrorMessageByOwner);

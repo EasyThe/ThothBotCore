@@ -399,16 +399,14 @@ namespace ThothBotCore.Modules
         public async Task SetActivityCommand(string url, [Remainder] string game)
         {
             await Connection.Client.SetGameAsync(game, url);
-            await Context.Channel.SendMessageAsync($"Successfully set the activity to '**{game}**'");
-            await Reporter.SendError($"{DateTime.Now:[HH:mm, d.MM.yyyy]}: Activity was changed to {game}");
+            await ReplyAsync($"Successfully set the activity to '**{game}**'");
         }
 
         [Command("sg")]
         public async Task SetGame([Remainder] string game)
         {
             await Connection.Client.SetGameAsync(game);
-            await Context.Channel.SendMessageAsync($"Successfully set the game to '**{game}**'");
-            await Reporter.SendError($"{DateTime.Now:[HH:mm, d.MM.yyyy]}: Game was changed to {game}");
+            await ReplyAsync($"Successfully set the game to '**{game}**'");
         }
 
         [Command("desc")]

@@ -94,7 +94,6 @@ namespace ThothBotCore.Utilities
         {
             StringBuilder sb = new StringBuilder();
             string godType;
-            // Random Build START
 
             if (god.Roles.Contains("Mage") || god.Roles.Contains("Guardian"))
             {
@@ -113,6 +112,10 @@ namespace ThothBotCore.Utilities
                 sb.Append(active[ar].Emoji);
                 active.RemoveAt(ar);
             }
+
+            // Random Starter Item
+            //var allitems = MongoConnection.GetAllItems();
+            //var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.Type == "Item" && x.ItemDescription.Menuitems.Count == 0);
 
             // Boots or Shoes depending on the god type
             if (!god.Name.Contains("Ratatoskr"))

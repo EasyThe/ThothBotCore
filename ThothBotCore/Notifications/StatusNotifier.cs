@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
+using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Storage.Database;
 
@@ -9,26 +10,35 @@ namespace ThothBotCore.Notifications
 {
     public static class StatusNotifier
     {
-        private static SocketTextChannel channel;
-
         public static async Task SendServerStatus(EmbedBuilder embed)
         {
             var notifChannels = await GetNotifChannels();
+            SocketTextChannel channel = null;
+            SocketGuild guild = null;
 
             for (int i = 0; i < notifChannels.Count; i++)
             {
                 try
                 {
-                    channel = Connection.Client.GetGuild(notifChannels[i]._id).GetTextChannel(notifChannels[i].statusChannel);
-                    await channel.SendMessageAsync(embed: embed.Build());
-                    Text.WriteLine($"Sent Status Updates to: {notifChannels[i]._id}]");
+                    guild = Connection.Client.GetGuild(notifChannels[i]._id);
+                    channel = guild.GetTextChannel(notifChannels[i].statusChannel);
+                    if (channel != null)
+                    {
+                        await channel.SendMessageAsync(embed: embed.Build());
+                        Text.WriteLine($"Sent Status Updates to: {notifChannels[i]._id}]");
+                    }
+                    else
+                    {
+                        var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed {guild.Name}[{guild.Id}]");
+                        await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
+                        await Database.StopNotifs(guild.Id);
+                    }
                 }
                 catch (System.Exception ex)
                 {
                     await Reporter.SendError($"Couldn't send status update to {notifChannels[i]._id}");
                     if (ex.Message.Contains("Missing"))
                     {
-                        SocketGuild guild = Connection.Client.GetGuild(notifChannels[i]._id);
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
                         try
                         {
@@ -48,8 +58,7 @@ namespace ThothBotCore.Notifications
                     {
                         await Reporter.SendError("Another StatusNotifier error:\n" +
                             $"{ex.Message}\n" +
-                            $"{ex.TargetSite}\n" +
-                            $"{ex.Data}\n" +
+                            $"{ex.StackTrace}\n" +
                             $"ID: {notifChannels[i]._id}");
                         continue;
                     }

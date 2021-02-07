@@ -41,8 +41,6 @@ namespace ThothBotCore.Modules
         [Command("stats", true, RunMode = RunMode.Async)]
         [Summary("Display stats for the provided `PlayerName`.")]
         [Alias("stat", "pc", "st", "stata", "ст", "статс", "ns", "smitestats")]
-        [RequireBotPermission(ChannelPermission.EmbedLinks)]
-        [RequireBotPermission(ChannelPermission.UseExternalEmojis)]
         public async Task Stats([Remainder] string PlayerName = "")
         {
             try
@@ -70,6 +68,12 @@ namespace ThothBotCore.Modules
                 }
 
                 var getPlayerJson = await hirezAPI.GetPlayer(playerID.ToString());
+                if (getPlayerJson.ToLowerInvariant().Contains("privacy flag"))
+                {
+                    var embed = await EmbedHandler.HiddenProfileEmbed("*");
+                    await ReplyAsync(embed: embed.Build());
+                    return;
+                }
                 // Generating the embed and sending to channel
                 finalEmbed = await EmbedHandler.PlayerStatsEmbed(
                     getPlayerJson,
@@ -671,7 +675,7 @@ namespace ThothBotCore.Modules
                 }
                 embed.WithTitle(itemBenefits.ToString());
                 embed.WithDescription($"{(item[0].StartingItem ? "**Starting Item**" : "")}" +
-                    $"{item[0].ItemDescription.Description}\n\n{secondaryDesc}");
+                    $"{(item[0].ItemDescription.Description.Length != 0 ? $"\n{item[0].ItemDescription.Description}" : "")}\n\n{secondaryDesc}");
 
                 // we doin calculations bois
                 var itemsForPrice = new List<GetItems.Item>();
@@ -1586,13 +1590,13 @@ namespace ThothBotCore.Modules
                     var response = await client.PostAsync(
                         "https://hastebin.com/documents",
                          new StringContent(JsonConvert.SerializeObject(parsedJson, Formatting.Indented), Encoding.UTF8, "application/json")).ConfigureAwait(false);
-                    var responseObj = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
-                    if (response.StatusCode.ToString().Contains("50"))
+                    if (response.StatusCode.ToString() == "ServiceUnavailable")
                     {
                         await File.WriteAllTextAsync($"{endpoint}.json", json);
                         await Context.Channel.SendFileAsync($"{endpoint}.json");
                         return;
                     }
+                    var responseObj = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
                     await ReplyAsync($"https://hastebin.com/{responseObj.key}");
                 }
                 else

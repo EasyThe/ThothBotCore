@@ -226,7 +226,7 @@ namespace ThothBotCore.Discord
             string defaultEmoji = ""; 
 
             var rPlayerName = new StringBuilder();
-            string[] clanName = { };
+            string[] clanName = Array.Empty<string>();
 
             // Checking if the player is in a clan
             if (playerStats[0].Name.Contains("]"))
@@ -558,7 +558,7 @@ namespace ThothBotCore.Discord
         {
             var embed = new EmbedBuilder
             {
-                Description = Text.UserIsHidden(username),
+                Description = username.StartsWith('*') ? "<:Hidden:591666971234402320>Account is hidden" : Text.UserIsHidden(username),
                 Color = new Color(254,255,255)
             };
             return Task.FromResult(embed);
