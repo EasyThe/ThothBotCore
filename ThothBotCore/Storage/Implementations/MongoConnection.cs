@@ -13,7 +13,7 @@ namespace ThothBotCore.Storage.Implementations
         private static MongoClient client;
         public static IMongoDatabase database;
 
-        private static readonly ReplaceOptions replaceOptions = new ReplaceOptions { IsUpsert = true };
+        private static readonly ReplaceOptions replaceOptions = new() { IsUpsert = true };
         public static IMongoDatabase GetDatabase()
         {
             if (client == null)

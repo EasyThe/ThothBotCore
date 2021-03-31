@@ -31,11 +31,10 @@ namespace ThothBotCore.Modules
     [Name("SMITE")]
     public class Smite : InteractiveBase<SocketCommandContext>
     {
-        static Random rnd = new Random();
+        static Random rnd = new();
 
-        HiRezAPI hirezAPI = new HiRezAPI();
-        HiRezAPIv2 APIv2 = new HiRezAPIv2();
-        TrelloAPI trelloAPI = new TrelloAPI();
+        HiRezAPI hirezAPI = new();
+        TrelloAPI trelloAPI = new();
         private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 
         [Command("stats", true, RunMode = RunMode.Async)]
@@ -225,7 +224,7 @@ namespace ThothBotCore.Modules
 
             if (gods.Count != 0)
             {
-                StringBuilder onRotation = new StringBuilder();
+                StringBuilder onRotation = new();
                 var embed = new EmbedBuilder();
                 var latestGod = gods.Find(x => x.latestGod == "y");
                 var mages = gods.FindAll(x => x.Roles.Contains("Mage"));
@@ -337,12 +336,14 @@ namespace ThothBotCore.Modules
                     x.Text = "More info soon™..";
                 });
 
-                await ReplyAsync("", false, embed.Build());
+                await ReplyAsync(embed: embed.Build(),
+                    allowedMentions: AllowedMentions.None);
             }
         }
 
         [Command("rgod", true)] // Random God
         [Summary("Gives you a random God and randomised build.")]
+        [Remarks("`m` or `mage` for **mage**, `w` or `warrior` for **warrior**, `h` or `hunter` for **hunter**, `g`, `tank` or `guardian` for **guardian**, `a`, `ass` or `assassin` for **assassin**")]
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod([Remainder]string godClass = "")
         {
@@ -405,6 +406,61 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
         }
 
+        [Command("rbuild", true)] // Random Build
+        [Summary("Gives you a random build for the requested god")]
+        [Alias("rb", "randombuild")]
+        public async Task RandomBuildCommand([Remainder][Name("GodName")] string godName)
+        {
+            string titleCaseGod = Text.ToTitleCase(godName);
+            Gods.God god = await MongoConnection.LoadGod(titleCaseGod);
+
+            if (god == null)
+            {
+                var em = await EmbedHandler.BuildDescriptionEmbedAsync($"{titleCaseGod} was not found.");
+                await ReplyAsync(embed: em);
+            }
+            else
+            {
+                string rbuild = await Utils.RandomBuilderAsync(god);
+
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(author =>
+                {
+                    author.WithName(god.Name);
+                    author.WithIconUrl(god.godIcon_URL);
+                });
+                embed.WithTitle(god.Title);
+                embed.WithThumbnailUrl(god.godIcon_URL);
+                if (god.DomColor != 0)
+                {
+                    embed.WithColor(new Color((uint)god.DomColor));
+                }
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "Role";
+                    field.Value = god.Roles;
+                });
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = "Type";
+                    field.Value = god.Type;
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = "Random Build";
+                    x.Value = rbuild;
+                });
+                embed.WithFooter(x =>
+                {
+                    x.Text = Text.GetRandomTip();
+                });
+                await ReplyAsync($"{Context.Message.Author.Mention}, your random build for {god.Name} is:", embed: embed.Build());
+            }
+        }
+
         [Command("rteam", true)]
         [Summary("Gives you `number` random Gods with randomised builds for them.")]
         [Alias("team", "ртеам", "теам", "rt")]
@@ -444,6 +500,26 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [Command("ritem", true)]
+        [Alias("ri")]
+        public async Task RandomItemCommand()
+        {
+            var item = MongoConnection.GetAllItems().FindAll(x => x.ActiveFlag == "y" && x.ItemTier == 3 && x.Type == "Item");
+            int r = rnd.Next(item.Count);
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.Name = item[r].DeviceName;
+                x.IconUrl = item[r].itemIcon_URL;
+            });
+            embed.WithColor(new Color((uint)item[r].DomColor));
+            embed.WithThumbnailUrl(item[r].itemIcon_URL);
+            await ReplyAsync(
+                embed: embed.Build(),
+                messageReference: new MessageReference(Context.Message.Id,Context.Channel.Id,Context.Guild.Id),
+                allowedMentions: new AllowedMentions(){ MentionRepliedUser = false });
+        }
+
         [Command("status", true, RunMode = RunMode.Async)] // SMITE Server Status 
         [Summary("Checks the [status page](http://status.hirezstudios.com/) for the status of Smite servers.")]
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се", "serverstatus")]
@@ -451,14 +527,9 @@ namespace ThothBotCore.Modules
         {
             await Context.Channel.TriggerTypingAsync();
             var smiteServerStatus = JsonConvert.DeserializeObject<ServerStatus>(await StatusPage.GetStatusSummary());
-            string discjson = await StatusPage.GetDiscordStatusSummary();
-            var discordStatus = new ServerStatus();
-            if (discjson != "")
-            {
-                discordStatus = JsonConvert.DeserializeObject<ServerStatus>(discjson);
-            }
+            var hirezServerStatus = JsonConvert.DeserializeObject<List<HiRezServerStatus>>(await hirezAPI.GetHiRezServerStatus());
 
-            var statusEmbed = await EmbedHandler.ServerStatusEmbedAsync(smiteServerStatus, discordStatus);
+            var statusEmbed = await EmbedHandler.ServerStatusEmbedAsync(smiteServerStatus, hirezServerStatus);
             await ReplyAsync(embed: statusEmbed);
 
             bool maint = false;
@@ -632,10 +703,15 @@ namespace ThothBotCore.Modules
         [Alias("i")]
         public async Task ItemInfoCommand([Remainder] string ItemName)
         {
+            int index = 0;
             var item = await MongoConnection.GetSpecificItemAsync(ItemName);
             if (item.Count != 0)
             {
-                string secondaryDesc = item[0].ItemDescription.SecondaryDescription;
+                if (item.Any(x=> x.DeviceName.ToLowerInvariant() == ItemName.ToLowerInvariant()))
+                {
+                    index = item.FindIndex(x => x.DeviceName.ToLowerInvariant() == ItemName.ToLowerInvariant());
+                }
+                string secondaryDesc = item[index].ItemDescription.SecondaryDescription;
                 var embed = new EmbedBuilder();
 
                 if (secondaryDesc != null || secondaryDesc == "")
@@ -663,62 +739,121 @@ namespace ThothBotCore.Modules
                 }
                 embed.WithAuthor(x =>
                 {
-                    x.Name = item[0].DeviceName;
-                    x.IconUrl = item[0].itemIcon_URL;
+                    x.Name = item[index].DeviceName;
+                    x.IconUrl = item[index].itemIcon_URL;
                 });
-                embed.WithColor(new Color((uint)item[0].DomColor));
-                embed.WithThumbnailUrl(item[0].itemIcon_URL);
-                StringBuilder itemBenefits = new StringBuilder();
-                foreach (var benefit in item[0].ItemDescription.Menuitems)
+                embed.WithColor(new Color((uint)item[index].DomColor));
+                embed.WithThumbnailUrl(item[index].itemIcon_URL);
+                StringBuilder itemBenefits = new();
+                foreach (var benefit in item[index].ItemDescription.Menuitems)
                 {
                     itemBenefits.AppendLine($"{benefit.Value} {benefit.Description}");
                 }
                 embed.WithTitle(itemBenefits.ToString());
-                embed.WithDescription($"{(item[0].StartingItem ? "**Starting Item**" : "")}" +
-                    $"{(item[0].ItemDescription.Description.Length != 0 ? $"\n{item[0].ItemDescription.Description}" : "")}\n\n{secondaryDesc}");
+                embed.WithDescription($"{(item[index].StartingItem ? "**Starting Item**" : "")}" +
+                    $"{(item[index].ItemDescription?.Description?.Length != 0 ? $"\n{item[index].ItemDescription.Description}" : "")}\n\n{secondaryDesc}");
 
-                // we doin calculations bois
+                // calculating price
                 var itemsForPrice = new List<GetItems.Item>();
                 var itemsForPriceTwo = new List<GetItems.Item>();
                 int itemPrice = 0;
 
-                if (item[0].ChildItemId != 0)
+                if (item[index].ChildItemId != 0)
                 {
-                    itemsForPrice = await MongoConnection.GetSpecificItemByIDAsync(item[0].ChildItemId);
+                    itemsForPrice = await MongoConnection.GetSpecificItemByIDAsync(item[index].ChildItemId);
                     if (itemsForPrice[0].ChildItemId != 0)
                     {
                         itemsForPriceTwo = await MongoConnection.GetSpecificItemByIDAsync(itemsForPrice[0].ChildItemId);
                         itemPrice = itemsForPriceTwo[0].Price;
                     }
-                    itemPrice = itemPrice + item[0].Price + itemsForPrice[0].Price;
+                    itemPrice = itemPrice + item[index].Price + itemsForPrice[0].Price;
                 }
                 else
                 {
-                    itemPrice = item[0].Price;
+                    itemPrice = item[index].Price;
                 }
-                // yeah sure
 
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
                     x.Name = "Total Price (Price)";
-                    x.Value = $"<:coins:590942235474919464>{itemPrice} ({item[0].Price})";
+                    x.Value = $"<:coins:590942235474919464>{itemPrice} ({item[index].Price})";
                 });
-                if (!item[0].StartingItem || item[0].Type != "Consumable")
+                if (!item[index].StartingItem || item[index].Type != "Consumable")
                 {
                     embed.AddField(x =>
                     {
                         x.IsInline = true;
                         x.Name = "Tier";
-                        x.Value = $"{item[0].ItemTier}";
+                        x.Value = $"{item[index].ItemTier}";
                     });
                 }
+
+                // related items
+                try
+                {
+                    var allitems = MongoConnection.GetAllItems();
+                    List<GetItems.Item> relatedItems = new();
+                    relatedItems.AddRange(allitems.FindAll(x => x.ChildItemId == item[index].ItemId));
+                    if (item[index].ChildItemId != 0)
+                    {
+                        relatedItems.Add(allitems.Find(x => x.ItemId == item[index].ChildItemId));
+                    }
+                    if (item[index].RootItemId != 0 && !relatedItems.Any(x => x.ItemId == item[index].RootItemId))
+                    {
+                        relatedItems.Add(allitems.Find(x => x.ItemId == item[index].RootItemId));
+                    }
+                    // Remove duplicate items 
+                    if (relatedItems.Any(x=> x.ItemId == item[index].ItemId))
+                    {
+                        relatedItems.Remove(relatedItems.Find(x=> x.ItemId == item[index].ItemId));
+                    }
+                    if (relatedItems.Count != 0)
+                    {
+                        itemBenefits.Clear();
+                        foreach (var relitem in relatedItems)
+                        {
+                            itemBenefits.AppendLine($"{relitem.Emoji} {relitem.DeviceName}");
+                        }
+                        embed.AddField(x =>
+                        {
+                            x.IsInline = false;
+                            x.Name = "Related Items";
+                            x.Value = itemBenefits.ToString();
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Reporter.SendException(null, Context, $"Item command got an error on related items\n{ex.Message}\nOn item: {item[index].DeviceName}");
+                }
+
                 await ReplyAsync(embed: embed.Build());
             }
             else
             {
-                await ReplyAsync($"Sorry, I couldn't find `{ItemName}`.");
+                var em = await EmbedHandler.BuildDescriptionEmbedAsync($"Sorry, I couldn't find `{ItemName}`.");
+                await ReplyAsync(embed: em);
             }
+        }
+        
+        [Command("itemstarters", true)]
+        [Summary("Provides a list with all starting items.")]
+        [Alias("starters")]
+        public async Task ItemStartersCommand()
+        {
+            var items = MongoConnection.GetAllItems();
+            var starters = items.FindAll(x => x.StartingItem);
+            StringBuilder sb = new();
+            foreach (var item in starters)
+            {
+                sb.AppendLine($"{item.Emoji} {item.DeviceName} {item.RootItemId}");
+            }
+            EmbedBuilder embed = new();
+            embed.WithColor(Constants.DefaultBlueColor);
+            embed.WithTitle($"List of all {starters.Count} starting items");
+            embed.WithDescription(sb.ToString());
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("trello", true, RunMode = RunMode.Async)]
@@ -731,10 +866,10 @@ namespace ThothBotCore.Modules
                 var embed = new EmbedBuilder();
                 var result = await trelloAPI.GetTrelloCards();
 
-                StringBuilder topIssues = new StringBuilder();
-                StringBuilder hotfixNotes = new StringBuilder();
-                StringBuilder incominghotfix = new StringBuilder();
-                StringBuilder alreadyFixedInLIVE = new StringBuilder();
+                StringBuilder topIssues = new();
+                StringBuilder hotfixNotes = new();
+                StringBuilder incominghotfix = new();
+                StringBuilder alreadyFixedInLIVE = new();
 
                 int count = 0;
                 int livecount = 0;
@@ -908,7 +1043,7 @@ namespace ThothBotCore.Modules
             try
             {
                 await Context.Channel.TriggerTypingAsync();
-                PlayerHandlerStruct playerHandler = new PlayerHandlerStruct();
+                PlayerHandlerStruct playerHandler = new();
                 int mID = 0, playerID = 0;
                 var matchHistory = new List<MatchHistoryModel>();
 
@@ -1063,7 +1198,7 @@ namespace ThothBotCore.Modules
                     x.Name = "Upcoming Matches Of The Day";
                     x.IconUrl = Constants.botIcon;
                 });
-                Motd motdDay = new Motd();
+                Motd motdDay = new();
                 for (int i = 0; i < 5; i++)
                 {
                     string[] finalDesc = Array.Empty<string>();
@@ -1345,7 +1480,7 @@ namespace ThothBotCore.Modules
                     getplayerList = JsonConvert.DeserializeObject<List<PlayerStats>>(getplayerJSON);
                     if (getplayerList[0].Personal_Status_Message.ToLowerInvariant() == generatedString)
                     {
-                        PlayerSpecial playerSpecial = new PlayerSpecial { _id = playerID, discordID = Context.Message.Author.Id };
+                        PlayerSpecial playerSpecial = new() { _id = playerID, discordID = Context.Message.Author.Id };
                         await MongoConnection.SavePlayerSpecialsAsync(playerSpecial);
                         embed.WithTitle(getplayerList[0].hz_player_name + " " + getplayerList[0].hz_gamer_tag);
                         embed.WithDescription($":tada: Congratulations, you've successfully linked your Discord and SMITE account into the Thoth Database.");
@@ -1586,18 +1721,8 @@ namespace ThothBotCore.Modules
             {
                 if (ex.Message.Contains("2000"))
                 {
-                    using var client = new HttpClient();
-                    var response = await client.PostAsync(
-                        "https://hastebin.com/documents",
-                         new StringContent(JsonConvert.SerializeObject(parsedJson, Formatting.Indented), Encoding.UTF8, "application/json")).ConfigureAwait(false);
-                    if (response.StatusCode.ToString() == "ServiceUnavailable")
-                    {
-                        await File.WriteAllTextAsync($"{endpoint}.json", json);
-                        await Context.Channel.SendFileAsync($"{endpoint}.json");
-                        return;
-                    }
-                    var responseObj = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
-                    await ReplyAsync($"https://hastebin.com/{responseObj.key}");
+                    await File.WriteAllTextAsync($"{endpoint}.json", json);
+                    await Context.Channel.SendFileAsync($"{endpoint}.json");
                 }
                 else
                 {
@@ -1670,7 +1795,7 @@ namespace ThothBotCore.Modules
             int playerId = 0;
             ulong discordId = 0;
             IUserMessage mainMessage = null;
-            PlayerSpecial playerspecs = new PlayerSpecial();
+            PlayerSpecial playerspecs = new();
             if (input.StartsWith("id:"))
             {
                 playerId = int.Parse(input.Split(':').Last());

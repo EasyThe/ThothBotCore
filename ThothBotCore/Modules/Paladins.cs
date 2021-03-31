@@ -13,7 +13,7 @@ namespace ThothBotCore.Modules
 {
     public class Paladins : ModuleBase<SocketCommandContext>
     {
-        HiRezAPI hirezAPI = new HiRezAPI();
+        HiRezAPI hirezAPI = new();
 
         [Command("pnz")] // keep it simple pls
         [RequireOwner]

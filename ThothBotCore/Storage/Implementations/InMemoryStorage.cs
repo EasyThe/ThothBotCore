@@ -5,7 +5,7 @@ namespace ThothBotCore.Storage.Implementations
 {
     public class InMemoryStorage : IDataStorage
     {
-        private readonly Dictionary<string, object> _dictionary = new Dictionary<string, object>();
+        private readonly Dictionary<string, object> _dictionary = new();
 
         public void StoreObject(object obj, string key)
         {

@@ -18,7 +18,7 @@ namespace ThothBotCore.Connections
         private readonly string authKey = Credentials.botConfig.authKey;
         private const int language = 1;
         readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-        private SessionResult sessionResult = new SessionResult();
+        private SessionResult sessionResult = new();
         private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
         private readonly string PaladinsAPIurl = "http://api.paladins.com/paladinsapi.svc/";
 
@@ -27,7 +27,7 @@ namespace ThothBotCore.Connections
             var md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
             byte[] bytes = Encoding.UTF8.GetBytes(input);
             bytes = md5.ComputeHash(bytes);
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (byte b in bytes)
             {
                 sb.Append(b.ToString("x2").ToLower());
@@ -37,7 +37,6 @@ namespace ThothBotCore.Connections
 
         internal string pingAPI;
         internal string dataUsed;
-        internal string testing;
 
         private async Task CreateSession()
         {
@@ -47,11 +46,14 @@ namespace ThothBotCore.Connections
             var handler = new HttpClientHandler();
             using (var httpClient = new HttpClient(handler, false))
             {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}createsessionjson/{devID}/{signature}/{timestamp}"))
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}createsessionjson/{devID}/{signature}/{timestamp}");
+                var response = await httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
                 {
-                    var response = await httpClient.SendAsync(request);
-                    result = await response.Content.ReadAsStringAsync();
+                    //Service Unavailable API is down
+                    return;
                 }
+                result = await response.Content.ReadAsStringAsync();
             }
             HiRezSession session = JsonConvert.DeserializeObject<HiRezSession>(result);
 
@@ -339,7 +341,7 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task EsportsProLeagueDetails()
+        public async Task<string> EsportsProLeagueDetails()
         {
             await CheckSession();
 
@@ -351,7 +353,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getesportsproleaguedetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    testing = await response.Content.ReadAsStringAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }
@@ -359,14 +361,10 @@ namespace ThothBotCore.Connections
         public async Task PingAPI()
         {
             var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, PCAPIurl + "pingjson"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    pingAPI = await response.Content.ReadAsStringAsync();
-                }
-            }
+            using var httpClient = new HttpClient(handler, false);
+            using var request = new HttpRequestMessage(HttpMethod.Get, PCAPIurl + "pingjson");
+            var response = await httpClient.SendAsync(request);
+            pingAPI = await response.Content.ReadAsStringAsync();
         }
 
         public async Task DataUsed()
@@ -401,6 +399,19 @@ namespace ThothBotCore.Connections
                     return await response.Content.ReadAsStringAsync();
                 }
             }
+        }
+
+        public async Task<string> GetHiRezServerStatus()
+        {
+            await CheckSession();
+
+            string signature = await GetMD5Hash(devID + "gethirezserverstatus" + authKey + timestamp);
+
+            var dataUsedHandler = new HttpClientHandler();
+            using var httpClient = new HttpClient(dataUsedHandler, false);
+            using var request = new HttpRequestMessage(HttpMethod.Get, PCAPIurl + "gethirezserverstatusjson/" + devID + "/" + signature + "/" + sessionResult.sessionID + "/" + timestamp);
+            var response = await httpClient.SendAsync(request);
+            return await response.Content.ReadAsStringAsync();
         }
 
         // Paladins

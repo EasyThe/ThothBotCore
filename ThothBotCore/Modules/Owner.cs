@@ -9,6 +9,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -26,8 +28,7 @@ namespace ThothBotCore.Modules
     [RequireOwner]
     public class Owner : InteractiveBase<SocketCommandContext>
     {
-        HiRezAPI hirezAPI = new HiRezAPI();
-        DominantColor domColor = new DominantColor();
+        HiRezAPI hirezAPI = new();
 
         [Command("updatedb", true, RunMode = RunMode.Async)]
         public async Task UpdateDBFromSmiteAPI()
@@ -41,8 +42,16 @@ namespace ThothBotCore.Modules
                 // Adding the emojis and domcolors from the old db to the new one
                 foreach (var god in godsInDb)
                 {
-                    newGodList.Find(x => x.id == god.id).Emoji = god.Emoji;
-                    newGodList.Find(x => x.id == god.id).DomColor = god.DomColor;
+                    var found = newGodList.Find(x => x.id == god.id);
+                    if (found != null)
+                    {
+                        newGodList.Find(x => x.id == god.id).Emoji = god.Emoji;
+                        newGodList.Find(x => x.id == god.id).DomColor = god.DomColor;
+                    }
+                    else
+                    {
+                        await ReplyAsync($"{god.Name} is missing from the API.");
+                    }
                 }
 
                 // Missing Emoji?
@@ -52,10 +61,7 @@ namespace ThothBotCore.Modules
                     {
                         if (god.Emoji == null)
                         {
-                            // tva go proveri dali raboti kakto trqbva zashtoto
-                            // mi se struva che kogato dobavi emojito, toq method
-                            // shte go premahne kato go rugne v dbto.. shte chakame nov bog za da vidim
-                            Utils.AddNewGodEmojiInGuild(god);
+                            god.Emoji = await Utils.AddNewGodEmojiInGuild(god);
                         }
                     }
                 }
@@ -212,7 +218,7 @@ namespace ThothBotCore.Modules
                         // Downloading the image
                         try
                         {
-                            using WebClient client = new WebClient();
+                            using WebClient client = new();
                             client.DownloadFile(new Uri(item.itemIcon_URL), $@"./Storage/Items/{splitLink[5]}");
                         }
                         catch (Exception ex)
@@ -424,9 +430,9 @@ namespace ThothBotCore.Modules
 
             Text.WriteLine($"Found {allembeds.Count()} messages.");
             int count = 0;
-            StringBuilder sb = new StringBuilder();
-            StringBuilder scount = new StringBuilder();
-            StringBuilder sdate = new StringBuilder();
+            StringBuilder sb = new();
+            StringBuilder scount = new();
+            StringBuilder sdate = new();
             sb.AppendLine("Count,Date");
             foreach (var message in allembeds.Reverse())
             {
@@ -445,7 +451,7 @@ namespace ThothBotCore.Modules
 
                 sb.AppendLine($"{count - 2},{message.Timestamp:dd-MM-yyyy}");
             }
-            StringBuilder nzbr = new StringBuilder();
+            StringBuilder nzbr = new();
             nzbr.AppendLine(scount.ToString());
             nzbr.AppendLine(sdate.ToString());
             await File.AppendAllTextAsync("spimise.txt", nzbr.ToString());
@@ -727,12 +733,12 @@ namespace ThothBotCore.Modules
         [Command("badges")]
         public async Task GetAllBadgesCommandAsync()
         {
-            EmbedBuilder embed = new EmbedBuilder 
+            EmbedBuilder embed = new()
             { 
                 Color = Constants.FeedbackColor
             };
-            StringBuilder keys = new StringBuilder();
-            StringBuilder badge = new StringBuilder();
+            StringBuilder keys = new();
+            StringBuilder badge = new();
             embed.WithAuthor(x =>
             {
                 x.IconUrl = Constants.botIcon;
@@ -765,7 +771,7 @@ namespace ThothBotCore.Modules
         [Alias("addcomm")]
         public async Task InsertCommunityCommandAsync()
         {
-            CommunityModel community = new CommunityModel();
+            CommunityModel community = new();
             // Name?
             var message = await ReplyAsync("Name?");
             var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
@@ -830,7 +836,7 @@ namespace ThothBotCore.Modules
         [Alias("comms")]
         public async Task GetAllCommunitiesCommandAsync()
         {
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Constants.FeedbackColor
             };
@@ -856,7 +862,7 @@ namespace ThothBotCore.Modules
         [Command("addtip")]
         public async Task InsertTipCommandAsync([Remainder] string tipText)
         {
-            TipsModel tip = new TipsModel
+            TipsModel tip = new()
             {
                 TipText = tipText
             };
@@ -870,11 +876,11 @@ namespace ThothBotCore.Modules
         public async Task PrintAllTips()
         {
             var alltips = Constants.TipsList;
-            EmbedBuilder embed = new EmbedBuilder
+            EmbedBuilder embed = new()
             {
                 Color = Constants.FeedbackColor
             };
-            StringBuilder main = new StringBuilder();
+            StringBuilder main = new();
             embed.WithAuthor(x =>
             {
                 x.IconUrl = Constants.botIcon;
@@ -901,6 +907,38 @@ namespace ThothBotCore.Modules
                 new EmbedBuilder().WithTitle("3"),
                 new EmbedBuilder().WithTitle("4")
             };
+        }
+
+        [Command("hapi")]
+        public async Task ApiResponseToFile()
+        {
+            var json = await hirezAPI.GetHiRezServerStatus();
+            object parsedJson;
+            try
+            {
+                parsedJson = JsonConvert.DeserializeObject(json);
+
+                await ReplyAsync($"```json\n{JsonConvert.SerializeObject(parsedJson, Formatting.Indented)}```");
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("2000"))
+                {
+                    await File.WriteAllTextAsync($"testing.json", json);
+                    await Context.Channel.SendFileAsync($"testing.json");
+                }
+                else
+                {
+                    await ReplyAsync(ex.Message);
+                }
+            }
+        }
+
+        [Command("pingapi")]
+        public async Task Testindsafdsgstufbrat()
+        {
+            await hirezAPI.PingAPI();
+            await ReplyAsync(hirezAPI.pingAPI);
         }
 
         private class DataUsed

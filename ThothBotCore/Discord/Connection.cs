@@ -27,7 +27,7 @@ namespace ThothBotCore.Discord
             await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
             await _client.StartAsync();
             Client = _client;
-            CommandHandler _handler = new CommandHandler();
+            CommandHandler _handler = new();
             await _handler.InitializeAsync(_client);
 
             _client.Ready += ClientReadyTask;

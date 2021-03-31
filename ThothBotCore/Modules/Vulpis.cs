@@ -20,7 +20,7 @@ namespace ThothBotCore.Modules
 {
     public class Vulpis : InteractiveBase<SocketCommandContext>
     {
-        static Random rnd = new Random();
+        static Random rnd = new();
 
         [Command("vulpis", true)]
         public async Task VulpisInfoCommand()
@@ -54,7 +54,7 @@ namespace ThothBotCore.Modules
             embed.WithColor(Constants.DefaultBlueColor);
 
             // Team 1
-            StringBuilder team1 = new StringBuilder();
+            StringBuilder team1 = new();
             for (int i = 0; i < 5; i++)
             {
                 int rr = rnd.Next(gods.Count);

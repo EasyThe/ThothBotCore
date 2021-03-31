@@ -17,17 +17,49 @@ namespace ThothBotCore.Utilities
 {
     public class Utils
     {
-        private static readonly Random rnd = new Random();
+        private static readonly Random rnd = new();
         public static async Task<string> AddNewGodEmojiInGuild(Gods.God god)
         {
             var thothGods3guild = Connection.Client.GetGuild(591932765880975370);
+            SaveImageToFolder(god.godIcon_URL, true);
             string[] firstsplit = god.godIcon_URL.Split('/');
             string[] secondsplit = firstsplit[^1].Split('.');
-            var image = new Image($"Storage/Gods/{firstsplit[^1]}");
+            var image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
             image.Dispose();
             await Reporter.SendError($"**ADDED NEW GOD EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
             return $"<:{createdEmote.Name}:{createdEmote.Id}>";
+        }
+        private static void SaveImageToFolder(string url, bool isGod)
+        {
+            string path;
+            if (isGod)
+            {
+                if (!Directory.Exists("Storage/Gods"))
+                {
+                    Directory.CreateDirectory("Storage/Gods");
+                }
+                path = "Storage/Gods";
+            }
+            else
+            {
+                if (!Directory.Exists("Storage/Items"))
+                {
+                    Directory.CreateDirectory("Storage/Items");
+                }
+                path = "Storage/Items";
+            }
+            string[] splitLink = url.Split('/');
+            // Downloading the image
+            try
+            {
+                using WebClient client = new();
+                client.DownloadFile(new Uri(url), $"{path}/{splitLink[^1]}");
+            }
+            catch (Exception ex)
+            {
+                Text.WriteLine(ex.Message);
+            }
         }
         public static async Task<string> AddMissingItemEmojiAsync(GetItems.Item item)
         {
@@ -47,21 +79,7 @@ namespace ThothBotCore.Utilities
 
             string[] splitLink = item.itemIcon_URL.Split('/');
 
-            if (!Directory.Exists("Storage/Items"))
-            {
-                Directory.CreateDirectory("Storage/Items");
-            }
-
-            // Downloading the image
-            try
-            {
-                using WebClient client = new WebClient();
-                client.DownloadFile(new Uri(item.itemIcon_URL), $@"./Storage/Items/{splitLink[5]}");
-            }
-            catch (Exception ex)
-            {
-                Text.WriteLine(ex.Message);
-            }
+            SaveImageToFolder(item.itemIcon_URL, false);
 
             // Adding the image as emoji in emojiguilds
             foreach (var guild in emoteGuilds)
@@ -92,7 +110,7 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<string> RandomBuilderAsync(Gods.God god)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             string godType;
 
             if (god.Roles.Contains("Mage") || god.Roles.Contains("Guardian"))
@@ -114,8 +132,8 @@ namespace ThothBotCore.Utilities
             }
 
             // Random Starter Item
-            //var allitems = MongoConnection.GetAllItems();
-            //var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.Type == "Item" && x.ItemDescription.Menuitems.Count == 0);
+            var allitems = MongoConnection.GetAllItems();
+            var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.StartingItem);
 
             // Boots or Shoes depending on the god type
             if (!god.Name.Contains("Ratatoskr"))
@@ -264,7 +282,7 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<string> ExpectedDowntimeAsync(TimeSpan timeSpan)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             if (timeSpan.Hours != 0)
             {
                 if (timeSpan.Hours == 1)
@@ -293,6 +311,15 @@ namespace ThothBotCore.Utilities
                 sb.Append("n/a");
             }
             return await Task.FromResult(sb.ToString());
+        }
+
+        public static bool IsRanked(string queueID)
+        {
+            return queueID switch
+            {
+                "440" or "450" or "451" or "502" or "503" or "504" => true,
+                _ => false,
+            };
         }
     }
 }

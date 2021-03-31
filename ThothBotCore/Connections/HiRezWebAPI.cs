@@ -8,7 +8,7 @@ namespace ThothBotCore.Connections
 {
     public static class HiRezWebAPI
     {
-        private static readonly HttpClientHandler handler = new HttpClientHandler();
+        private static readonly HttpClientHandler handler = new();
 
         public static async Task<List<WebAPIPostsModel>> FetchPostsAsync()
         {

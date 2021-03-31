@@ -58,5 +58,6 @@ namespace ThothBotCore.Discord.Entities
         public string DiscordServicesAPI { get; set; } = "DiscordServicesAPI";
         public string DiscordLabsAPI { get; set; } = "DiscordLabsAPI";
         public string StatCordAPI { get; set; } = "StatCordAPI";
+        public string DelAPI { get; set; } = "DiscordExtremeListAPI";
     }
 }

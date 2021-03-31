@@ -14,7 +14,7 @@ namespace ThothBotCore.Tournament
 {
     public class TeamGenerator
     {
-        static Random rnd = new Random();
+        static Random rnd = new();
 
         public static async Task SoloQConquestInfo(SocketCommandContext context)
         {

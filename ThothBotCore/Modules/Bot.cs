@@ -17,7 +17,7 @@ namespace ThothBotCore.Modules
 {
     public class Bot : InteractiveBase<SocketCommandContext>
     {
-        readonly HiRezAPI hirezAPI = new HiRezAPI();
+        readonly HiRezAPI hirezAPI = new();
 
         [Command("help", true, RunMode = RunMode.Async)]
         [Summary("List of all available commands.")]
@@ -160,7 +160,6 @@ namespace ThothBotCore.Modules
         }
 
         [Command("ping", true)]
-        [Alias("p")]
         public async Task Ping()
         {
             await ReplyAsync(Context.Client.Latency.ToString() + " ms");

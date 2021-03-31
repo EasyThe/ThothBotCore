@@ -9,7 +9,7 @@ namespace ThothBotCore.Utilities
 {
     public class Text
     {
-        static Random rnd = new Random();
+        static Random rnd = new();
         public static string ToTitleCase(string text)
         {
             return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
@@ -152,9 +152,11 @@ namespace ThothBotCore.Utilities
         {
             return status switch
             {
-                "operational" => "<:operational:579125995618172929>",
+                "operational" or "up" => "<:operational:579125995618172929>",
                 "degraded_performance" => "<:incident:579145224522301480>",
                 "under_maintenance" => "<:maintenance:579145936396353586>",
+                "limited_access" => "🚫",
+                "down" => "🔻",
                 _ => "<:incident:579145224522301480>",
             };
         }
@@ -455,7 +457,7 @@ namespace ThothBotCore.Utilities
 
         public static List<int> LegitQueueIDs()
         {
-            List<int> list = new List<int> { 423, 426, 430, 433, 435, 440, 445, 448, 450, 451, 452, 459, 466, 502, 503, 504 };
+            List<int> list = new() { 423, 426, 430, 433, 435, 440, 445, 448, 450, 451, 452, 459, 466, 502, 503, 504 };
             return list;
         }
 
@@ -474,6 +476,15 @@ namespace ThothBotCore.Utilities
             text = text.Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
 
             return text;
+        }
+
+        public static string EmptyStringCheck(string value)
+        {
+            if (value == null || value?.Length == 0)
+            {
+                return "n/a";
+            }
+            return value;
         }
 
         public static string HiddenProfileCheck(string name)

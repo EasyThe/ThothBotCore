@@ -177,6 +177,22 @@ namespace ThothBotCore.Utilities
                             $"**Error Message:** {ex.Message}");
                     }
 
+                    //DiscordExtremeList
+                    try
+                    {
+                        using var webclient = new HttpClient();
+                        using var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count} }}", Encoding.UTF8, "application/json");
+                        webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.DelAPI);
+                        var response = await webclient.PostAsync($"https://api.discordextremelist.xyz/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
+                        sb.AppendLine($"DiscordExtremeList.xyz -- {response.StatusCode} {response.ReasonPhrase}");
+                    }
+                    catch (Exception ex)
+                    {
+                        await Reporter.SendError("**DiscordExtremeList.**\n" +
+                            $"**Error Message:** {ex.Message}");
+                    }
+
+
                     sb.AppendLine($"{DateTime.Now:[HH:mm]} Guilds count updated! New count: {joinedGuilds}");
                     Text.WriteLine(sb.ToString());
                 }
@@ -192,7 +208,7 @@ namespace ThothBotCore.Utilities
                         $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
                         $"\"users\": \"{totalUsers}\", " +
                         $"\"active\": [], " +
-                        $"\"commands\": \"{Global.CommandsRun}\", " +
+                        $"\"commands\": \"0\", " +
                         $"\"popular\": []," +
                         $"\"memactive\": \"0\"," +
                         $"\"memload\": \"0\"," +

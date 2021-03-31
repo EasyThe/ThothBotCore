@@ -194,6 +194,10 @@ namespace ThothBotCore.Utilities
             {
                 sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
             }
+            else if (ex != null && ex.Message.Contains("Value was either too large or too small for an Int32"))
+            {
+                sb.Append($"The value was either too large or too small.\nIf you believe that this is wrong, please [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
+            }
             else if (ex != null && !(ex.Message.ToLowerInvariant().Contains("database")))
             {
                 sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");

@@ -21,7 +21,7 @@ namespace ThothBotCore.Utilities
 
             try
             {
-                using WebClient client = new WebClient();
+                using WebClient client = new();
                 client.DownloadFile(new Uri(link), $@"./Storage/Gods/{splitLink[5]}");
             }
             catch (Exception ex)

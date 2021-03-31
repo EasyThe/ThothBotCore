@@ -17,7 +17,7 @@ namespace ThothBotCore.Discord
 {
     public class EmbedHandler
     {
-        public static async Task<Embed> ServerStatusEmbedAsync(ServerStatus smiteStatus, ServerStatus discordStatus)
+        public static async Task<Embed> ServerStatusEmbedAsync(ServerStatus smiteStatus, List<HiRezServerStatus> hiRezServerStatus)
         {
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
@@ -41,30 +41,48 @@ namespace ThothBotCore.Discord
                 embed.WithColor(new Color(239, 167, 32));
             }
 
+            var apiPc = hiRezServerStatus.Find(x=> x.Platform == "pc" && x.Environment == "live");
+            var apiXb = hiRezServerStatus.Find(x => x.Platform == "xbox" && x.Environment == "live");
+            var apiPs = hiRezServerStatus.Find(x => x.Platform == "ps4" && x.Environment == "live");
+            var apiSw = hiRezServerStatus.Find(x => x.Platform == "switch" && x.Environment == "live");
+            var apiPTS = hiRezServerStatus?.Find(x => x.Environment == "pts" && x.Platform == "pc");
+
             foreach (var item in smiteCat.components)
             {
                 var comp = smiteStatus.components.Find(x => x.id == item);
                 var sb = new StringBuilder();
+                string apiInfo = "";
 
                 if (comp.name.ToLowerInvariant().Contains("pc"))
                 {
                     sb.Append("<:PC:537746891610259467> ");
+                    apiInfo = $"{Text.StatusEmoji(apiPc != null && apiPc.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiPc?.Status.ToLowerInvariant()))}" +
+                        (apiPc != null && apiPc.Limited_access ? "Limited Access" :  Text.EmptyStringCheck(apiPc?.Status));
+                    
                 }
                 else if (comp.name.ToLowerInvariant().Contains("xbox"))
                 {
                     sb.Append("<:XB:537749895029850112> ");
+                    apiInfo = $"{Text.StatusEmoji(apiXb != null && apiXb.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiXb?.Status.ToLowerInvariant()))}" +
+                        (apiXb != null && apiXb.Limited_access ? "Limited Access" : Text.EmptyStringCheck(apiXb?.Status));
                 }
                 else if (comp.name.ToLowerInvariant().Contains("ps4"))
                 {
                     sb.Append("<:PS4:537745670518472714> ");
+                    apiInfo = $"{Text.StatusEmoji(apiPs != null && apiPs.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiPs?.Status.ToLowerInvariant()))}" +
+                        (apiPs != null && apiPs.Limited_access ? "Limited Access" : Text.EmptyStringCheck(apiPs?.Status));
                 }
                 else if (comp.name.ToLowerInvariant().Contains("switch"))
                 {
                     sb.Append("<:SW:537752006719176714> ");
+                    apiInfo = $"{Text.StatusEmoji(apiSw != null && apiSw.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiSw?.Status.ToLowerInvariant()))}" +
+                        (apiSw != null && apiSw.Limited_access ? "Limited Access" :  Text.EmptyStringCheck(apiSw?.Status));
                 }
                 else if (comp.name.ToLowerInvariant().Contains("epic"))
                 {
                     sb.Append("<:egs:705963938340274247> ");
+                    apiInfo = $"{Text.StatusEmoji(apiPc != null && apiPc.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiPc?.Status.ToLowerInvariant()))}" +
+                        (apiPc != null && apiPc.Limited_access ? "Limited Access" : Text.EmptyStringCheck(apiPc?.Status));
                 }
                 sb.Append(comp.name);
                 embed.AddField(x=>
@@ -72,15 +90,15 @@ namespace ThothBotCore.Discord
                     x.IsInline = true;
                     x.Name = sb.ToString();
                     x.Value = $"{Text.StatusEmoji(comp.status)}" +
-                    $"{(comp.status.Contains("_") ? Text.ToTitleCase(comp.status.Replace("_", " ")) : Text.ToTitleCase(comp.status))}";
+                    $"{(comp.status.Contains("_") ? Text.ToTitleCase(comp.status.Replace("_", " ")) : Text.ToTitleCase(comp.status))}\n" +
+                    $"{apiInfo}";
                 });
             }
-            var foundDiscAPI = discordStatus.components.Find(x => x.name.ToLowerInvariant() == "api");
             embed.AddField(field =>
             {
                 field.IsInline = true;
-                field.Name = "Discord API";
-                field.Value = Text.StatusEmoji(foundDiscAPI.status) + (foundDiscAPI.status.Contains("_") ? Text.ToTitleCase(foundDiscAPI.status.Replace("_", " ")) : Text.ToTitleCase(foundDiscAPI.status));
+                field.Name = "<:PC:537746891610259467> SMITE PTS";
+                field.Value = $"{Text.StatusEmoji(Text.EmptyStringCheck(apiPTS?.Status.ToLowerInvariant()))}{Text.EmptyStringCheck(apiPTS?.Status)}\nVersion: {Text.EmptyStringCheck(apiPTS?.Version)}";
             });
             embed.WithFooter(x =>
             {
@@ -290,7 +308,8 @@ namespace ThothBotCore.Discord
                         {
                             if (Int32.Parse(matchPlayerDetails[s].playerId) == playerStats[0].ActivePlayerId)
                             {
-                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**, playing as {matchPlayerDetails[s].GodName}");
+                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**, " +
+                                    $"playing as {matchPlayerDetails[s].GodName}");
                             }
                         }
                         else
@@ -304,6 +323,12 @@ namespace ThothBotCore.Discord
                     embed.WithDescription($":eyes: {playerStatus[0].status_string}");
                 }
             }
+            if (DateTime.Now.Day == 1 && DateTime.Now.Month == 4)
+            {
+                // April Fools
+                defaultEmoji = "<:kek:785917111884972032> ";
+            }
+            
             // invisible character \u200b
             embed.AddField(field =>
             {
@@ -521,7 +546,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = ($":crossed_swords:KDA [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
+                    field.Name = ($"⚔️KDA [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
                     field.Value = ($":dagger:Kills: {playerAchievements.PlayerKills}\n" +
                     $":skull_crossbones:Deaths: {playerAchievements.Deaths}\n" +
                     $":handshake:Assists: {playerAchievements.AssistedKills}");
@@ -648,7 +673,7 @@ namespace ThothBotCore.Discord
                 });
                 return embed;
             }
-            else if (matchPlayerDetails.Count != 0 && matchPlayerDetails[0].mapGame.Contains("AI"))
+            else if (matchPlayerDetails.Count != 0 && (matchPlayerDetails[0].mapGame.Contains("AI") || matchPlayerDetails[0].mapGame.Contains("Practice")))
             {
                 foreach (var player in matchPlayerDetails)
                 {
@@ -656,13 +681,12 @@ namespace ThothBotCore.Discord
                     embed.AddField(x =>
                     {
                         x.IsInline = false;
-                        x.Name = $"{ge} {Text.HiddenProfileCheck(player.playerName)}";
+                        x.Name = $"{ge} {Text.HiddenProfileCheck(player.playerName)}, <:level:529719212017451008>{player.Account_Level}";
                         x.Value = $":video_game:Account Created: \n{(player.playerCreated != "" ? Text.InvariantDate(DateTime.Parse(player.playerCreated, CultureInfo.InvariantCulture)) : "n/a")}";
                     });
                 }
+                return embed;
             }
-
-            // Averages
 
             var team1 = new List<PlayerMatchDetails>();
             var team2 = new List<PlayerMatchDetails>();
@@ -680,25 +704,72 @@ namespace ThothBotCore.Discord
             }
             string team1force = Text.SideEmoji(team1[0].taskForce);
             string team2force = Text.SideEmoji(team2[0].taskForce);
+            bool isRanked = Utils.IsRanked(team1[0].Queue);
+            // 0 = Duel, 1 = Conquest, 2 = Joust
+            byte queueMode = 0;
+
+            // Averages
+            if (isRanked)
+            {
+                string team1AvgTier = "";
+                string team2AvgTier = "";
+                if (team1[0].Queue == "451" || team1[0].Queue == "504")
+                {
+                    // Conquest
+                    queueMode = 1;
+                    var tuple = Text.GetRankedConquest(Convert.ToInt32(team1.Where(x => x.Tier != -1).Average(x => x.Tier)));
+                    team1AvgTier = $"{tuple.Item2} {tuple.Item1}";
+                    tuple = Text.GetRankedConquest(Convert.ToInt32(team2.Where(x => x.Tier != -1).Average(x => x.Tier)));
+                    team2AvgTier = $"{tuple.Item2} {tuple.Item1}";
+                }
+                else if (team1[0].Queue == "450" || team1[0].Queue == "503")
+                {
+                    // Joust
+                    queueMode = 2;
+                    var tuple = Text.GetRankedJoust(Convert.ToInt32(team1.Where(x => x.Tier != -1).Average(x => x.Tier)));
+                    team1AvgTier = $"{tuple.Item2}{tuple.Item1}";
+                    tuple = Text.GetRankedJoust(Convert.ToInt32(team2.Where(x => x.Tier != -1).Average(x => x.Tier)));
+                    team2AvgTier = $"{tuple.Item2} {tuple.Item1}";
+                }
+                if (team1AvgTier.Length != 0)
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = $"{team1force}**Averages:**{team1force}";
+                        x.Value = $"{team1AvgTier}\n" +
+                        $"{team1force}MMR: {Math.Round(team1.Where(x => x.Rank_Stat != 0).Average(x => x.Rank_Stat), 2)}";
+                    });
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "\u200b";
+                        x.Value = "\u200b";
+                    });
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = $"{team2force}**Averages:**{team2force}";
+                        x.Value = $"{team2AvgTier}\n" +
+                        $"{team2force}MMR: {Math.Round(team2.Where(x => x.Rank_Stat != 0).Average(x => x.Rank_Stat), 2)}";
+                    });
+                }
+            }
+
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
             string godemoji = "";
             int nz = (team1.Count + team2.Count) / 2;
             for (int i = 0; i < nz; i++)
             {
-                if ((team1[0].Queue == "440") || 
-                    (team1[0].Queue == "450") || 
-                    (team1[0].Queue == "451") ||
-                    (team1[0].Queue == "502") ||
-                    (team1[0].Queue == "503") ||
-                    (team1[0].Queue == "504"))
+                if (isRanked)
                 {
-                    if (team1[0].Queue == "451" || team1[0].Queue == "504")
+                    if (queueMode == 1)
                     {
                         player1.Append($"{Text.GetRankedConquest(team1[i].Tier).Item2} {Text.GetRankedConquest(team1[i].Tier).Item1}\n");
                         player2.Append($"{Text.GetRankedConquest(team2[i].Tier).Item2} {Text.GetRankedConquest(team2[i].Tier).Item1}\n");
                     }
-                    else if (team1[0].Queue == "450" || team1[0].Queue == "503")
+                    else if (queueMode == 2)
                     {
                         player1.Append($"{Text.GetRankedJoust(team1[i].Tier).Item2} {Text.GetRankedJoust(team1[i].Tier).Item1}\n");
                         player2.Append($"{Text.GetRankedJoust(team2[i].Tier).Item2} {Text.GetRankedJoust(team2[i].Tier).Item1}\n");
@@ -735,7 +806,7 @@ namespace ThothBotCore.Discord
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = $"{godemoji} {Text.HiddenProfileCheck(team2[i].playerName)}";// loss
+                    field.Name = $"{godemoji} {Text.HiddenProfileCheck(team2[i].playerName)}";// right
                     field.Value = player2.ToString();
                 });
 
@@ -779,7 +850,7 @@ namespace ThothBotCore.Discord
                     {
                         x.IsInline = true;
                         x.Name = $"{godemoji} {(player.hz_player_name == null || player.hz_player_name == "" ? player.hz_gamer_tag : player.hz_player_name)}";
-                        x.Value = $":crossed_swords:KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
+                        x.Value = $"⚔️KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
                     $"🗡Damage: {player.Damage_Player}";
                     });
                 }
@@ -815,7 +886,7 @@ namespace ThothBotCore.Discord
                         x.IsInline = true;
                         x.Name = $"{godemoji} {(player.hz_player_name == null || player.hz_player_name == "" ? player.hz_gamer_tag : player.hz_player_name)}\n" +
                         $"{Utils.GetItemsBuiltAsync(player)}";
-                        x.Value = $":crossed_swords:KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
+                        x.Value = $"⚔️KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
                     $"🗡Damage: {player.Damage_Player}";
                     });
                 }
@@ -841,14 +912,23 @@ namespace ThothBotCore.Discord
                 losersAverageMMR = losers.Where(x => x.Rank_Stat_Duel != 0).Average(x => x.Rank_Stat_Duel);
             }
             // Winners Main Info
+            string winnersVal = "";
+            if (winners.Count != 1)
+            {
+                winnersVal = $"⚔️Team KDA: {winners.Sum(x => x.Kills_Player)}/{winners.Sum(x => x.Deaths)}/{winners.Sum(x => x.Assists)}\n" +
+                    $"{team1emo}**Averages:**{team1emo}\n" +
+                    $"{(winnersAverageMMR != 0 ? $"{team1emo}MMR: {Math.Round(winnersAverageMMR)}\n" : "")}" +
+                    $"🗡Damage: {Math.Round(winners.Average(x => x.Damage_Player))}\n";
+            }
+            else
+            {
+                winnersVal = $"{team1emo}{Text.SideName(winners[0].TaskForce)}";
+            }
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = $"🏆 **{winners[0].Win_Status}** 🏆";
-                x.Value = $":crossed_swords:Team KDA: {winners.Sum(x => x.Kills_Player)}/{winners.Sum(x => x.Deaths)}/{winners.Sum(x => x.Assists)}\n" +
-                $"{team1emo}**Averages:**{team1emo}\n" +
-                $"{(winnersAverageMMR != 0 ? $"{team1emo}MMR: {Math.Round(winnersAverageMMR)}\n" : "")}" +
-                $"🗡Damage: {Math.Round(winners.Average(x => x.Damage_Player))}\n";
+                x.Value = winnersVal;
             });
             if (winners[0].Ban1.Length != 0)
             {
@@ -881,14 +961,23 @@ namespace ThothBotCore.Discord
                 });
             }
             // Losers Main Info
-            embed.AddField(x =>
+            string losersVal = "";
+            if (winners.Count != 1)
             {
-                x.IsInline = true;
-                x.Name = $":red_circle: **{losers[0].Win_Status}** :red_circle:";
-                x.Value = $":crossed_swords:Team KDA: {losers.Sum(x => x.Kills_Player)}/{losers.Sum(x => x.Deaths)}/{losers.Sum(x => x.Assists)}\n" +
+                losersVal = $"⚔️Team KDA: {losers.Sum(x => x.Kills_Player)}/{losers.Sum(x => x.Deaths)}/{losers.Sum(x => x.Assists)}\n" +
                 $"{team2emo}**Averages:**{team2emo}\n" +
                 $"{(losersAverageMMR != 0 ? $"{team2emo}MMR: {Math.Round(losersAverageMMR)}\n" : "")}" +
                 $"🗡Damage: {Math.Round(losers.Average(x => x.Damage_Player))}\n";
+            }
+            else
+            {
+                losersVal = $"{team2emo}{Text.SideName(losers[0].TaskForce)}";
+            }
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $"🔴 **{losers[0].Win_Status}** 🔴";
+                x.Value = losersVal;
             });
             if (matchdetailsList[0].Entry_Datetime != null)
             {
@@ -940,10 +1029,10 @@ namespace ThothBotCore.Discord
                 }
 
                 player1.Append($"{await Utils.GetItemsBuiltAsync(winners[i])}\n" +
-                    $":crossed_swords:KDA: {winners[i].Kills_Player}/{winners[i].Deaths}/{winners[i].Assists}\n" +
+                    $"⚔️KDA: {winners[i].Kills_Player}/{winners[i].Deaths}/{winners[i].Assists}\n" +
                     $"🗡Damage: {winners[i].Damage_Player}");
                 player2.Append($"{await Utils.GetItemsBuiltAsync(losers[i])}\n" +
-                    $":crossed_swords:KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
+                    $"⚔️KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
                     $"🗡Damage: {losers[i].Damage_Player}");
 
                 godemoji = gods.Find(x => x.id == winners[i].GodId).Emoji;
@@ -1047,20 +1136,14 @@ namespace ThothBotCore.Discord
             {
                 embed.WithTitle($"{(player.hz_player_name ?? player.hz_gamer_tag)} has not played any gods.");
             }
-            /*
-            embed.WithDescription($"**{ranks.Where(x => x.Rank == 10).Count()}** gods at rank {Text.GetRankEmoji(10)}, " +
-                $"**{ranks.Where(x => x.Rank == 10).OrderByDescending(x => x.Wins).FirstOrDefault().god}**");
-            var nz = ranks.GroupBy(x => x.Rank == 10);
-            int x = 0;
-            
-            foreach (var r in ranks)
+            else
             {
-                if (r.Rank == 10)
-                {
-                    x++;
-                }
+                embed.WithDescription($"**{ranks.Where(x => x.Rank == 10).Count()}** diamond " +
+                                        $"**{(ranks.Where(x => x.Rank < 10 && x.Rank >= 5).Any() ? ranks.Where(x => x.Rank < 10 && x.Rank >= 5).Count() : "0")}** legendary and " +
+                                        $"**{ranks.Where(x=> x.Rank < 5 && x.Rank >= 1).Count()}** golden.");
             }
-            */
+
+            // Add the rest of the gods
             if (sb.Length != 0)
             {
                 embed.AddField(x =>

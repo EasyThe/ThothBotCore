@@ -14,11 +14,11 @@ using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Connections
 {
-    public class HiRezAPIv2
+    public static class HiRezAPIv2
     {
-        readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-        private SessionResult sessionResult = new SessionResult();
-        private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
+        readonly static string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        private static SessionResult sessionResult = new();
+        private static readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
 
         private static async Task<string> GetMD5Hash(string input)
         {
@@ -33,7 +33,7 @@ namespace ThothBotCore.Connections
             return sb.ToString();
         }
 
-        private async Task CreateSessionAsync()
+        private static async Task CreateSessionAsync()
         {
             string signature = await GetMD5Hash(Credentials.botConfig.devId + "createsession" + Credentials.botConfig.authKey + timestamp);
             string result;
@@ -51,7 +51,7 @@ namespace ThothBotCore.Connections
 
             SaveSessionAsync(session.session_id, session.timestamp);
         }
-        private async void SaveSessionAsync(string sessionID, string timestamp)
+        private static async void SaveSessionAsync(string sessionID, string timestamp)
         {
             sessionResult.sessionID = sessionID;
             sessionResult.sessionTime = timestamp;
@@ -59,7 +59,7 @@ namespace ThothBotCore.Connections
             string json = JsonConvert.SerializeObject(sessionResult, Formatting.Indented);
             await File.WriteAllTextAsync("Config/hirezapi.json", json);
         }
-        private async Task CheckSessionAsync()
+        private static async Task CheckSessionAsync()
         {
             if (!File.Exists("Config/hirezapi.json"))
             {
@@ -75,7 +75,7 @@ namespace ThothBotCore.Connections
                 await CreateSessionAsync();
             }
         }
-        private async Task<string> TestAndCallAsync(string endpoint, string value)
+        private static async Task<string> TestAndCallAsync(string endpoint, string value)
         {
             await CheckSessionAsync();
 
@@ -116,7 +116,7 @@ namespace ThothBotCore.Connections
                 return await response.Content.ReadAsStringAsync();
             }
         }
-        public async Task<List<Player.PlayerStats>> GetPlayerAsync(string value)
+        public static async Task<List<Player.PlayerStats>> GetPlayerAsync(string value)
         {
             string json = await TestAndCallAsync("getplayer", value);
             if (json == null)

@@ -29,7 +29,7 @@ namespace ThothBotCore.Notifications
                     }
                     else
                     {
-                        var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed {guild.Name}[{guild.Id}]");
+                        var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed status update sub: {guild.Name}[{guild.Id}]");
                         await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
                         await Database.StopNotifs(guild.Id);
                     }
