@@ -847,7 +847,7 @@ namespace ThothBotCore.Modules
             StringBuilder sb = new();
             foreach (var item in starters)
             {
-                sb.AppendLine($"{item.Emoji} {item.DeviceName} {item.RootItemId}");
+                sb.AppendLine($"{item.Emoji} {item.DeviceName}");
             }
             EmbedBuilder embed = new();
             embed.WithColor(Constants.DefaultBlueColor);
