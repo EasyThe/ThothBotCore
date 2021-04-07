@@ -27,7 +27,7 @@ namespace ThothBotCore
             _container = new UnityContainer();
             _container.RegisterSingleton<ILogger, Logger>();
             _container.RegisterType<DiscordSocketConfig>(new InjectionFactory(i => SocketConfig.GetDefault()));
-            _container.RegisterSingleton<DiscordSocketClient>(new InjectionConstructor(typeof(DiscordSocketConfig)));
+            _container.RegisterSingleton<DiscordShardedClient>(new InjectionConstructor(typeof(DiscordSocketConfig)));
             _container.RegisterSingleton<Connection>();
         }
 

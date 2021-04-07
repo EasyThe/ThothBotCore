@@ -1,5 +1,4 @@
-﻿using Discord;
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -29,8 +28,9 @@ namespace ThothBotCore.Utilities
 
         internal static async void GuildCountTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (Connection.Client.LoginState.ToString() == "LoggedIn")
+            if (Connection.Client.LoginState.ToString() == "LoggedIn" && Connection.Client.CurrentUser != null)
             {
+                Console.WriteLine(Connection.Client.Guilds.Count);
                 int totalUsers = 0;
                 foreach (var guild in Connection.Client.Guilds)
                 {
@@ -57,7 +57,8 @@ namespace ThothBotCore.Utilities
                     try
                     {
                         using (var webclient = new HttpClient())
-                        using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
+                        using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}," +
+                            $"\"shard_count\": {Connection.Client.Shards.Count}}}", Encoding.UTF8, "application/json"))
                         {
                             webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.botsAPI);
                             var topggResponse = await webclient.PostAsync("https://discordbots.org/api/bots/454145330347376651/stats", content);
@@ -109,7 +110,8 @@ namespace ThothBotCore.Utilities
                     try
                     {
                         using (var webclient = new HttpClient())
-                        using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
+                        using (var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}," +
+                            $"\"shardCount\": {Connection.Client.Shards.Count}}}", Encoding.UTF8, "application/json"))
                         {
                             webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.dbggAPI);
                             webclient.DefaultRequestHeaders.UserAgent.TryParseAdd($"{Connection.Client.CurrentUser.Username}-" +
@@ -165,7 +167,8 @@ namespace ThothBotCore.Utilities
                         using (var webclient = new HttpClient())
                         using (var content = new StringContent(
                             $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
-                            $"\"server_count\": \"{Connection.Client.Guilds.Count}\" }}", Encoding.UTF8, "application/json"))
+                            $"\"server_count\": \"{Connection.Client.Guilds.Count}\"," +
+                            $"\"shard_count\": {Connection.Client.Shards.Count} }}", Encoding.UTF8, "application/json"))
                         {
                             var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
                             sb.AppendLine($"DiscordLabs -- {response.StatusCode} {response.ReasonPhrase}");
@@ -181,7 +184,8 @@ namespace ThothBotCore.Utilities
                     try
                     {
                         using var webclient = new HttpClient();
-                        using var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count} }}", Encoding.UTF8, "application/json");
+                        using var content = new StringContent($"{{ \"guildCount\": {Connection.Client.Guilds.Count}," +
+                            $"\"shardCount\": {Connection.Client.Shards.Count} }}", Encoding.UTF8, "application/json");
                         webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.DelAPI);
                         var response = await webclient.PostAsync($"https://api.discordextremelist.xyz/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
                         sb.AppendLine($"DiscordExtremeList.xyz -- {response.StatusCode} {response.ReasonPhrase}");

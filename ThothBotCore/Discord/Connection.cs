@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
@@ -9,12 +10,13 @@ namespace ThothBotCore.Discord
 {
     public class Connection
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly DiscordLogger _logger;
+        public List<int> shardsConnected = new();
 
-        public static DiscordSocketClient Client;
+        public static DiscordShardedClient Client;
 
-        public Connection(DiscordLogger logger, DiscordSocketClient client)
+        public Connection(DiscordLogger logger, DiscordShardedClient client)
         {
             _logger = logger;
             _client = client;
@@ -25,30 +27,55 @@ namespace ThothBotCore.Discord
             _client.Log += _logger.Log;
 
             await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
-            await _client.StartAsync();
+            await _client.StartAsync().ConfigureAwait(false);
             Client = _client;
             CommandHandler _handler = new();
             await _handler.InitializeAsync(_client);
 
-            _client.Ready += ClientReadyTask;
+            _client.ShardReady += ShardReady;
+            _client.ShardDisconnected += ShardDisconnected;
             _client.JoinedGuild += JoinedNewGuildActions;
             _client.LeftGuild += ClientLeftGuildTask;
 
             await Task.Delay(-1).ConfigureAwait(false);
         }
 
+        private Task ShardDisconnected(System.Exception arg1, DiscordSocketClient arg2)
+        {
+            if (arg2.ShardId == 0)
+            {
+                shardsConnected.Remove(shardsConnected.Find(x=> x == 0));
+                return Task.CompletedTask;
+            }
+            var dsc = shardsConnected.Find(x => x == arg2.ShardId);
+            if (dsc != 0)
+            {
+                shardsConnected.Remove(dsc);
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task ShardReady(DiscordSocketClient arg)
+        {
+            Text.WriteLine($"Shard Connected: {arg.ShardId}", System.ConsoleColor.Green, System.ConsoleColor.Black);
+            if (!shardsConnected.Exists(x=> x == arg.ShardId))
+            {
+                shardsConnected.Add(arg.ShardId);
+            }
+            
+            if (shardsConnected.Count == 3)
+            {
+                StatusTimer.StartServerStatusTimer();
+                GuildsTimer.StartGuildsCountTimer();
+            }
+
+            return Task.CompletedTask;
+        }
+
         private async Task ClientLeftGuildTask(SocketGuild arg)
         {
             await Database.DeleteServerConfig(arg.Id);
             await Reporter.SendLeftServers(arg);
-        }
-
-        private Task ClientReadyTask()
-        {
-            StatusTimer.StartServerStatusTimer();
-            GuildsTimer.StartGuildsCountTimer();
-
-            return Task.CompletedTask;
         }
 
         private async Task JoinedNewGuildActions(SocketGuild guild)

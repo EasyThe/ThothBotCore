@@ -15,10 +15,10 @@ namespace ThothBotCore.Discord
 {
     class CommandHandler
     {
-        DiscordSocketClient _client;
+        DiscordShardedClient _client;
         CommandService _commands;
         public IServiceProvider _services;
-        public async Task InitializeAsync(DiscordSocketClient client)
+        public async Task InitializeAsync(DiscordShardedClient client)
         {
             _client = client;
             _services = ConfigureServices();
@@ -57,7 +57,7 @@ namespace ThothBotCore.Discord
                 return;
             }
 
-            var context = new SocketCommandContext(_client, msg);
+            var context = new ShardedCommandContext(_client, msg);
             int argPos = 0;
 
             try
