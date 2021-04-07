@@ -12,7 +12,7 @@ namespace ThothBotCore.Discord
     {
         private readonly DiscordShardedClient _client;
         private readonly DiscordLogger _logger;
-        public List<int> shardsConnected = new();
+        public static List<int> shardsConnected = new();
 
         public static DiscordShardedClient Client;
 

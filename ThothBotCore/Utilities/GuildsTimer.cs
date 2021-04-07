@@ -30,7 +30,6 @@ namespace ThothBotCore.Utilities
         {
             if (Connection.Client.LoginState.ToString() == "LoggedIn" && Connection.Client.CurrentUser != null)
             {
-                Console.WriteLine(Connection.Client.Guilds.Count);
                 int totalUsers = 0;
                 foreach (var guild in Connection.Client.Guilds)
                 {
