@@ -12,15 +12,35 @@ namespace ThothBotCore.Utilities
 {
     public static class Reporter
     {
-        private static SocketTextChannel reportsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(557974702941798410);
-        private static SocketTextChannel joinsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567495039622709268);
-        private static SocketTextChannel commandsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(569710679796482068);
-        private static SocketTextChannel feedbackChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(713183236238344193);
-        private static SocketTextChannel botlogs = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(734987439353102426);
-        private static IUser ownerUser = Connection.Client.GetUser(Constants.OwnerID);
+        private static SocketTextChannel reportsChannel;
+        private static SocketTextChannel joinsChannel;
+        private static SocketTextChannel commandsChannel;
+        private static SocketTextChannel feedbackChannel;
+        private static SocketTextChannel botlogs;
+        private static IUser ownerUser;
 
+        private static Task ChannelLoader()
+        {
+            reportsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(557974702941798410);
+            joinsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567495039622709268);
+            commandsChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(569710679796482068);
+            feedbackChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(713183236238344193);
+            botlogs = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(734987439353102426);
+            ownerUser = Connection.Client.GetUser(Constants.OwnerID);
+
+            return Task.CompletedTask;
+        }
+        private static Task ChannelChecker(SocketTextChannel textChannel)
+        {
+            if (textChannel == null)
+            {
+                ChannelLoader();
+            }
+            return Task.CompletedTask;
+        }
         public static async Task SendJoinedServerEmbedAsync(SocketGuild guild)
         {
+            await ChannelChecker(joinsChannel);
             try
             {
                 var embed = new EmbedBuilder();
@@ -58,6 +78,7 @@ namespace ThothBotCore.Utilities
 
         public static async Task SendLeftServers(SocketGuild guild)
         {
+            await ChannelChecker(joinsChannel);
             try
             {
                 var embed = new EmbedBuilder();
@@ -92,6 +113,7 @@ namespace ThothBotCore.Utilities
 
         public static async Task SendSuccessCommands(SocketCommandContext context, IResult result)
         {
+            await ChannelChecker(commandsChannel);
             try
             {
                 string message;
@@ -133,6 +155,7 @@ namespace ThothBotCore.Utilities
 
         public static async Task SendError(string message)
         {
+            await ChannelChecker(reportsChannel);
             try
             {
                 await reportsChannel.SendMessageAsync(message + $"\n{DateTime.Now}");
@@ -144,6 +167,7 @@ namespace ThothBotCore.Utilities
         }
         public static async Task SendException(Exception ex, SocketCommandContext context, string errorMessage = "")
         {
+            await ChannelChecker(reportsChannel);
             try
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"**Message: **{context.Message.Content}\n" +
@@ -177,6 +201,7 @@ namespace ThothBotCore.Utilities
 
         public static async Task SendEmbedToBotLogsChannel(EmbedBuilder embed)
         {
+            await ChannelChecker(botlogs);
             try
             {
                 await botlogs.SendMessageAsync(embed: embed.Build());
@@ -217,6 +242,7 @@ namespace ThothBotCore.Utilities
 
         public static async Task SendFeedback(string message, SocketUser user)
         {
+            await ChannelChecker(feedbackChannel);
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {

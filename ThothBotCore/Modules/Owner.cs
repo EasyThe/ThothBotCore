@@ -499,7 +499,8 @@ namespace ThothBotCore.Modules
                 $"Preferred Culture: {guild.PreferredCulture}\n" +
                 $"Preferred Locale: {guild.PreferredLocale}\n" +
                 $"Channels: {guild.TextChannels.Count}\n" +
-                $"Users: {guild.MemberCount}";
+                $"Users: {guild.MemberCount}\n" +
+                $"Shard: {Connection.Client.GetShardIdFor(Context.Guild)}";
             });
             if (guild.IconUrl != null)
             {
