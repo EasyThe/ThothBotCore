@@ -66,7 +66,7 @@ namespace ThothBotCore.Modules
         public async Task BotInfoCommand()
         {
             int totalUsers = 0;
-            foreach (var guild in Context.Client.Guilds)
+            foreach (var guild in Connection.Client.Guilds)
             {
                 totalUsers += guild.MemberCount;
             }
@@ -82,8 +82,6 @@ namespace ThothBotCore.Modules
                 patch = "n/a";
                 await Reporter.SendError($"Error in PatchInfo from **botinfo** command.\n{ex.Message}");
             }
-            //https://api.github.com/repos/EasyThe/ThothBotCore
-            //updated_at
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>
             {
@@ -99,6 +97,7 @@ namespace ThothBotCore.Modules
                 x.IsInline = true;
                 x.Name = "Statistics";
                 x.Value = $":stopwatch: **Uptime**: {GetUptime()}\n" +
+                $"⛓ **Shards Connected: **{Connection.shardsConnected.Count}" +
                 $":chart_with_upwards_trend: **Servers**: {Connection.Client.Guilds.Count}\n" +
                 $":busts_in_silhouette: **Users**: {totalUsers}\n" +
                 $":1234: **Commands Run**: {Global.CommandsRun}";
