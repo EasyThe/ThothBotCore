@@ -1,4 +1,5 @@
 ﻿using System;
+using ThothBotCore.Utilities;
 
 namespace ThothBotCore
 {
@@ -6,7 +7,7 @@ namespace ThothBotCore
     {
         public void Log(string severity, string message)
         {
-            Console.WriteLine($"{DateTime.Now:[HH:mm]}[{severity}] {message}");
+            Text.WriteLine($"{DateTime.Now:[HH:mm]}[{severity}] {message}");
         }
     }
 }

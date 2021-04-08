@@ -269,9 +269,7 @@ namespace ThothBotCore.Connections
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getmotdjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}"))
                 {
                     var response = await httpClient.SendAsync(request);
-                    string resp = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine(resp);
-                    return resp;
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
         }

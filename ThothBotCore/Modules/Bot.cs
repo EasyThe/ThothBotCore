@@ -4,6 +4,7 @@ using Discord.Commands;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
@@ -65,6 +66,8 @@ namespace ThothBotCore.Modules
         [Alias("bi", "botinfo", "about", "info", "invite")]
         public async Task BotInfoCommand()
         {
+            var recomm = await Connection.Client.GetRecommendedShardCountAsync();
+            Text.WriteLine($"Recommended shard count: {recomm}");
             int totalUsers = 0;
             foreach (var guild in Connection.Client.Guilds)
             {
@@ -129,6 +132,30 @@ namespace ThothBotCore.Modules
             {
                 x.Text = $"Discord.NET {DiscordConfig.Version} | {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
             });
+            await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("shards", true)]
+        public async Task ShardsCommand()
+        {
+            StringBuilder sb = new();
+            EmbedBuilder embed = new();
+            embed.WithColor(Constants.DefaultBlueColor);
+            foreach (var shard in Connection.Client.Shards)
+            {
+                var shardclient = Connection.Client.GetShard(shard.ShardId);
+                int members = 0;
+                foreach (var guild in shardclient.Guilds)
+                {
+                    members += guild.MemberCount;
+                }
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "Shard " + shard.ShardId;
+                    x.Value = $"**{shard.ConnectionState}**\n**Guilds:** {shard.Guilds.Count}\n**Users:** {members}";
+                });
+            }
             await ReplyAsync(embed: embed.Build());
         }
 

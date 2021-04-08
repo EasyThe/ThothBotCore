@@ -14,7 +14,7 @@ namespace ThothBotCore.Discord
 
         public Task Log(LogMessage logMsg)
         {
-            _logger.Log(logMsg.Severity.ToString(), logMsg.Message);
+            _logger.Log(logMsg.Severity.ToString(), logMsg.Message.Length == 0 ? logMsg.Exception.Message : logMsg.Message);
             return Task.CompletedTask;
         }
     }

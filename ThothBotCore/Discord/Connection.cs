@@ -13,6 +13,7 @@ namespace ThothBotCore.Discord
         private readonly DiscordShardedClient _client;
         private readonly DiscordLogger _logger;
         public static List<int> shardsConnected = new();
+        public const int ShardCount = 2;
 
         public static DiscordShardedClient Client;
 
@@ -33,6 +34,7 @@ namespace ThothBotCore.Discord
             await _handler.InitializeAsync(_client);
 
             _client.ShardReady += ShardReady;
+            _client.ShardConnected += ShardConnected;
             _client.ShardDisconnected += ShardDisconnected;
             _client.JoinedGuild += JoinedNewGuildActions;
             _client.LeftGuild += ClientLeftGuildTask;
@@ -40,8 +42,17 @@ namespace ThothBotCore.Discord
             await Task.Delay(-1).ConfigureAwait(false);
         }
 
+        private Task ShardConnected(DiscordSocketClient arg)
+        {
+            Text.WriteLine($"Shard {arg.ShardId} connected!", System.ConsoleColor.Green, System.ConsoleColor.Black);
+            shardsConnected.Add(arg.ShardId);
+
+            return Task.CompletedTask;
+        }
+
         private Task ShardDisconnected(System.Exception arg1, DiscordSocketClient arg2)
         {
+            Text.WriteLine($"Shard {arg2.ShardId} disconnected!",System.ConsoleColor.Red, System.ConsoleColor.Black);
             if (arg2.ShardId == 0)
             {
                 shardsConnected.Remove(shardsConnected.Find(x=> x == 0));
@@ -57,13 +68,13 @@ namespace ThothBotCore.Discord
 
         private Task ShardReady(DiscordSocketClient arg)
         {
-            Text.WriteLine($"Shard Connected: {arg.ShardId}", System.ConsoleColor.Green, System.ConsoleColor.Black);
+            Text.WriteLine($"Shard {arg.ShardId} Connected", System.ConsoleColor.Green, System.ConsoleColor.Black);
             if (!shardsConnected.Exists(x=> x == arg.ShardId))
             {
                 shardsConnected.Add(arg.ShardId);
             }
             
-            if (shardsConnected.Count == 3)
+            if (shardsConnected.Count == ShardCount)
             {
                 StatusTimer.StartServerStatusTimer();
                 GuildsTimer.StartGuildsCountTimer();

@@ -52,10 +52,6 @@ namespace ThothBotCore.Discord
 
         private async Task HandleCommandAsync(SocketMessage s)
         {
-            if (Connection.shardsConnected.Count != 3)
-            {
-                return;
-            }
             if (s is not SocketUserMessage msg || msg.Author.IsBot)
             {
                 return;
