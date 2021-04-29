@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using ThothBotCore.Discord.Entities;
 
 namespace ThothBotCore.Discord
 {
@@ -12,7 +13,7 @@ namespace ThothBotCore.Discord
                 LogLevel = LogSeverity.Verbose,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 ExclusiveBulkDelete = true,
-                TotalShards = Connection.ShardCount
+                TotalShards = Credentials.botConfig.prefix == "??" ? 1 : Connection.ShardCount
             };
         }
 

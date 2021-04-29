@@ -24,6 +24,7 @@ namespace ThothBotCore.Connections.Models
             public object ret_msg { get; set; }
             public int taskForce { get; set; }
             public int tierLosses { get; set; }
+            public int tierPoints { get; set; }
             public int tierWins { get; set; }
         }
     }

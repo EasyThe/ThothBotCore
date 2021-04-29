@@ -170,6 +170,7 @@ namespace ThothBotCore.Modules
             {
                 return;
             }
+            await Context.Channel.TriggerTypingAsync();
             int id = playerHandler.playerID;
             int allmatchescount = 0;
             double totalminutes = 0;
@@ -580,7 +581,7 @@ namespace ThothBotCore.Modules
         [RequireOwner(Group = "Owner")]
         public async Task SetStatusUpdatesChannel([Name("#your-channel-here")] SocketChannel channelMention)
         {
-            await SetNotifChannel(Context.Guild.Id, Context.Guild.Name, channelMention.Id);
+            await SetNotifChannel(Context.Guild.Id, channelMention.Id);
             SocketTextChannel channel = Connection.Client.GetGuild(Context.Guild.Id).GetTextChannel(channelMention.Id);
             try
             {
@@ -854,6 +855,13 @@ namespace ThothBotCore.Modules
             embed.WithTitle($"List of all {starters.Count} starting items");
             embed.WithDescription(sb.ToString());
             await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("createbuild", true)]
+        [Alias("cb")]
+        public async Task CreateBuildCommandAsync()
+        {
+            var items = MongoConnection.GetAllItems();
         }
 
         [Command("trello", true, RunMode = RunMode.Async)]

@@ -18,13 +18,23 @@ namespace ThothBotCore.Utilities
     public class Utils
     {
         private static readonly Random rnd = new();
+        private static StringBuilder builder;
         public static async Task<string> AddNewGodEmojiInGuild(Gods.God god)
         {
+            Image image;
             var thothGods3guild = Connection.Client.GetGuild(591932765880975370);
             SaveImageToFolder(god.godIcon_URL, true);
             string[] firstsplit = god.godIcon_URL.Split('/');
             string[] secondsplit = firstsplit[^1].Split('.');
-            var image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
+            try
+            {
+                image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
+            }
+            catch (Exception ex)
+            {
+                await Reporter.SendError($"Missing {firstsplit[^1]} when adding new Emoji for god.\n{ex.Message}");
+                return "<:blank:570291209906552848>";
+            }
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
             image.Dispose();
             await Reporter.SendError($"**ADDED NEW GOD EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
@@ -133,7 +143,9 @@ namespace ThothBotCore.Utilities
 
             // Random Starter Item
             var allitems = MongoConnection.GetAllItems();
-            var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.StartingItem);
+            var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.StartingItem && x.GodType.Contains(godType) && x.ItemTier == 2);
+
+            sb.Append(starters[rnd.Next(starters.Count)].Emoji);
 
             // Boots or Shoes depending on the god type
             if (!god.Name.Contains("Ratatoskr"))
@@ -150,8 +162,8 @@ namespace ThothBotCore.Utilities
 
             var items = await MongoConnection.GetActiveItemsByGodTypeAsync(godType, god.Roles.ToLowerInvariant().Trim());
 
-            // Finishing the build with 5 items
-            for (int i = 0; i < 5; i++)
+            // Finishing the build with 4 items
+            for (int i = 0; i < 4; i++)
             {
                 int r = rnd.Next(items.Count);
                 sb.Append(items[r].Emoji);
@@ -259,7 +271,7 @@ namespace ThothBotCore.Utilities
         public static async Task<string> MaintenancePlatformsAsync(List<Component2> platforms)
         {
             var sb = new StringBuilder();
-            for (int i = platforms.Count-1; i >= 0; i--)
+            for (int i = platforms.Count - 1; i >= 0; i--)
             {
                 if (platforms[i].name.ToLowerInvariant().Contains("smite switch"))
                 {
@@ -320,6 +332,16 @@ namespace ThothBotCore.Utilities
                 "440" or "450" or "451" or "502" or "503" or "504" => true,
                 _ => false,
             };
+        }
+
+        public static string LiveRankedString(MatchDetails.MatchDetailsPlayer player, string teamEmoji)
+        {
+            builder?.Clear();
+            builder.Append($"{Text.GetRankedConquest(player.Conquest_Tier).Item2}{Text.GetRankedConquest(player.Conquest_Tier).Item1}\n");
+            builder.Append($"{teamEmoji}W/L: {player.Conquest_Wins}/{player.Conquest_Losses}\n");
+            builder.Append($"{teamEmoji}MMR: {Math.Round(player.Rank_Stat_Conquest, 0)}\n");
+            builder.Append($"{teamEmoji}TP:");
+            return builder.ToString();
         }
     }
 }

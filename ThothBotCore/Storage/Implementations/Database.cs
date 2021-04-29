@@ -55,37 +55,27 @@ namespace ThothBotCore.Storage
                     $"WHERE _id = {serverID}");
             }
         }
-        public static async Task SetNotifChannel(ulong serverID, string serverName, ulong statusChannel) // Working as intended
+        public static async Task SetNotifChannel(ulong serverID, ulong statusChannel) // Working as intended
         {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                await cnn.ExecuteAsync($"INSERT INTO serverConfig(_id, serverName, statusBool, statusChannel) " +
-                    $"VALUES({serverID}, \"{serverName}\", 1, {statusChannel}) " +
-                    $"ON CONFLICT(_id) " +
-                    $"DO UPDATE SET statusChannel = \"{statusChannel}\", statusBool = 1");
-            }
+            using IDbConnection cnn = new SQLiteConnection(LoadConnectionString());
+            await cnn.ExecuteAsync($"INSERT INTO serverConfig(_id, statusBool, statusChannel) " +
+                $"VALUES({serverID}, 1, {statusChannel}) " +
+                $"ON CONFLICT(_id) " +
+                $"DO UPDATE SET statusChannel = \"{statusChannel}\", statusBool = 1");
         }
-        public static async Task SetPrefix(ulong serverID, string serverName, string prefix) // Working as intended
+        public static async Task SetPrefix(ulong serverID, string prefix) // Working as intended
         {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                await cnn.ExecuteAsync($"INSERT INTO serverConfig(_id, serverName, prefix) " +
-                    $"VALUES({serverID}, \"{serverName}\", \"{prefix}\") " +
-                    $"ON CONFLICT(_id) " +
-                    $"DO UPDATE SET prefix = \"{prefix}\", serverName = \"{serverName}\"");
-            }
+            using IDbConnection cnn = new SQLiteConnection(LoadConnectionString());
+            await cnn.ExecuteAsync($"INSERT INTO serverConfig(_id, prefix) " +
+                $"VALUES({serverID}, '{prefix}') " +
+                $"ON CONFLICT(_id) " +
+                $"DO UPDATE SET prefix = '{prefix}'");
         }
-        public static async Task SetGuild(ulong serverID, string serverName) // Working as intended
+        public static async Task SetGuild(ulong serverID) // Working as intended
         {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                if (serverName.Contains("\""))
-                {
-                    serverName = serverName.Replace("\"", "\"\"");
-                }
-                await cnn.ExecuteAsync($"INSERT OR IGNORE INTO serverConfig(_id, prefix, serverName) " +
-                    $"VALUES({serverID}, \"{Credentials.botConfig.prefix}\", \"{serverName}\")");
-            }
+            using IDbConnection cnn = new SQLiteConnection(LoadConnectionString());
+            await cnn.ExecuteAsync($"INSERT OR IGNORE INTO serverConfig(_id, prefix) " +
+                $"VALUES({serverID}, '{Credentials.botConfig.prefix}')");
         }
         public static async Task<List<ServerConfig>> GetServerConfig(ulong id) // Get prefix for guild. Working as intended
         {

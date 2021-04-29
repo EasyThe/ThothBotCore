@@ -707,7 +707,6 @@ namespace ThothBotCore.Discord
             bool isRanked = Utils.IsRanked(team1[0].Queue);
             // 0 = Duel, 1 = Conquest, 2 = Joust
             byte queueMode = 0;
-
             // Averages
             if (isRanked)
             {
@@ -780,9 +779,11 @@ namespace ThothBotCore.Discord
                         player2.Append($"{Text.GetRankedDuel(team2[i].Tier).Item2} {Text.GetRankedDuel(team2[i].Tier).Item1}\n");
                     }
                     player1.Append($"🔹 W/L: {team1[i].tierWins}/{team1[i].tierLosses}\n" +
-                        $"🔹 MMR: {Math.Round(team1[i].Rank_Stat, 0)}");
+                        $"🔹 MMR: {Math.Round(team1[i].Rank_Stat, 0)}\n" +
+                        $"🔹 TP: {team1[i].tierPoints}");
                     player2.Append($"🔸 W/L: {team2[i].tierWins}/{team2[i].tierLosses}\n" +
-                        $"🔸 MMR: {Math.Round(team2[i].Rank_Stat, 0)}");
+                        $"🔸 MMR: {Math.Round(team2[i].Rank_Stat, 0)}\n" +
+                        $"🔸 TP: {team2[i].tierPoints}");
                 }
                 else
                 {
@@ -1138,7 +1139,7 @@ namespace ThothBotCore.Discord
             }
             else
             {
-                embed.WithDescription($"**{ranks.Where(x => x.Rank == 10).Count()}** diamond " +
+                embed.WithDescription($"**{ranks.Where(x => x.Rank == 10).Count()}** diamond, " +
                                         $"**{(ranks.Where(x => x.Rank < 10 && x.Rank >= 5).Any() ? ranks.Where(x => x.Rank < 10 && x.Rank >= 5).Count() : "0")}** legendary and " +
                                         $"**{ranks.Where(x=> x.Rank < 5 && x.Rank >= 1).Count()}** golden.");
             }

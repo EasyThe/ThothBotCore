@@ -62,8 +62,9 @@ namespace ThothBotCore.Discord
 
             try
             {
+                var serverPrefix = await Database.GetServerConfig(context.Guild.Id);
                 if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
-                || msg.HasStringPrefix(Database.GetServerConfig(context.Guild.Id).Result[0].prefix, ref argPos)
+                || msg.HasStringPrefix(serverPrefix.Count != 0 ? serverPrefix[0].prefix : "!!", ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 {
                     var result = await _commands.ExecuteAsync(context, argPos, _services);

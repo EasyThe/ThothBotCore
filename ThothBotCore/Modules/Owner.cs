@@ -9,8 +9,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -547,7 +545,7 @@ namespace ThothBotCore.Modules
                         gname.Replace("'", "''");
                     }
                     Text.WriteLine($"{guild.Name} [{guild.Id}]");
-                    await Database.SetGuild(guild.Id, gname);
+                    await Database.SetGuild(guild.Id);
                     missingCount++;
                     sb.AppendLine($"{guild.Name} [{guild.Id}]");
                 }

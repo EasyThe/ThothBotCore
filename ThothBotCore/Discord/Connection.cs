@@ -91,7 +91,7 @@ namespace ThothBotCore.Discord
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
             await Reporter.SendJoinedServerEmbedAsync(guild);
-            await Database.SetGuild(guild.Id, guild.Name);
+            await Database.SetGuild(guild.Id);
             var channel = guild.DefaultChannel;
             foreach (var chnl in guild.TextChannels)
             {

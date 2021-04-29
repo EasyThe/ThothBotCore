@@ -14,13 +14,40 @@ using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Connections
 {
-    public static class HiRezAPIv2
+    public class HiRezAPIv2
     {
+        private static HiRezAPIv2 instance;
+
+        private string DevId;
+        private string APIKey;
+        private int LanguageId;
+        private HttpClient Client;
+
         readonly static string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         private static SessionResult sessionResult = new();
         private static readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
 
-        private static async Task<string> GetMD5Hash(string input)
+        public HiRezAPIv2(string DevId, string APIKey)
+        {
+            this.DevId = DevId;
+            this.APIKey = APIKey;
+            Client = new HttpClient
+            {
+                BaseAddress = new Uri("http://api.smitegame.com/smiteapi.svc/"),
+                Timeout = TimeSpan.FromSeconds(5)
+            };
+        }
+
+        public static HiRezAPIv2 Instance(string id, string key)
+        {
+            if (instance == null)
+            {
+                instance = new HiRezAPIv2(id, key);
+            }
+            return instance;
+        }
+
+        private string GetMD5Hash(string input)
         {
             var md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
             var bytes = Encoding.UTF8.GetBytes(input);
@@ -33,9 +60,9 @@ namespace ThothBotCore.Connections
             return sb.ToString();
         }
 
-        private static async Task CreateSessionAsync()
+        private async void CreateSessionAsync()
         {
-            string signature = await GetMD5Hash(Credentials.botConfig.devId + "createsession" + Credentials.botConfig.authKey + timestamp);
+            string signature = GetMD5Hash(Credentials.botConfig.devId + "createsession" + Credentials.botConfig.authKey + timestamp);
             string result;
 
             var handler = new HttpClientHandler();
@@ -43,7 +70,7 @@ namespace ThothBotCore.Connections
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}createsessionjson/{Credentials.botConfig.devId}/{signature}/{timestamp}"))
                 {
-                    var response = await httpClient.SendAsync(request);
+                    var response = httpClient.Send(request);
                     result = await response.Content.ReadAsStringAsync();
                 }
             }
@@ -51,19 +78,19 @@ namespace ThothBotCore.Connections
 
             SaveSessionAsync(session.session_id, session.timestamp);
         }
-        private static async void SaveSessionAsync(string sessionID, string timestamp)
+        private void SaveSessionAsync(string sessionID, string timestamp)
         {
             sessionResult.sessionID = sessionID;
             sessionResult.sessionTime = timestamp;
 
             string json = JsonConvert.SerializeObject(sessionResult, Formatting.Indented);
-            await File.WriteAllTextAsync("Config/hirezapi.json", json);
+            File.WriteAllText("Config/hirezapi.json", json);
         }
-        private static async Task CheckSessionAsync()
+        private async Task CheckSessionAsync()
         {
             if (!File.Exists("Config/hirezapi.json"))
             {
-                await CreateSessionAsync();
+                CreateSessionAsync();
             }
             string json = await File.ReadAllTextAsync("Config/hirezapi.json");
             sessionResult = JsonConvert.DeserializeObject<SessionResult>(json);
@@ -72,14 +99,14 @@ namespace ThothBotCore.Connections
 
             if ((DateTime.UtcNow - parsedSessionTime).TotalMinutes >= 15)
             {
-                await CreateSessionAsync();
+                CreateSessionAsync();
             }
         }
-        private static async Task<string> TestAndCallAsync(string endpoint, string value)
+        private async Task<string> TestAndCallAsync(string endpoint, string value)
         {
             await CheckSessionAsync();
 
-            string signature = await GetMD5Hash(Credentials.botConfig.devId + endpoint + Credentials.botConfig.authKey + timestamp);
+            string signature = GetMD5Hash(Credentials.botConfig.devId + endpoint + Credentials.botConfig.authKey + timestamp);
 
             // Remove / or \
             if (value.Contains("\\") || value.Contains("/"))
@@ -116,7 +143,7 @@ namespace ThothBotCore.Connections
                 return await response.Content.ReadAsStringAsync();
             }
         }
-        public static async Task<List<Player.PlayerStats>> GetPlayerAsync(string value)
+        public async Task<List<Player.PlayerStats>> GetPlayerAsync(string value)
         {
             string json = await TestAndCallAsync("getplayer", value);
             if (json == null)

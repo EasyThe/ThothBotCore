@@ -171,7 +171,13 @@ namespace ThothBotCore.Modules
             }
             else
             {
-                await Database.SetPrefix(Context.Guild.Id, Context.Guild.Name, prefix);
+                if (prefix.Contains("'"))
+                {
+                    var emb = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but apostrophes (single quote) is not allowed to be set as a prefix.");
+                    await ReplyAsync(embed: emb);
+                    return;
+                }
+                await Database.SetPrefix(Context.Guild.Id, prefix);
                 // Consider adding a check if the prefix was set successfully.
                 await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to `{prefix}`");
             }
