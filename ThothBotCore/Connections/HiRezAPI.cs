@@ -19,8 +19,8 @@ namespace ThothBotCore.Connections
         private const int language = 1;
         readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         private SessionResult sessionResult = new();
-        private readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
-        private readonly string PaladinsAPIurl = "http://api.paladins.com/paladinsapi.svc/";
+        private readonly string PCAPIurl = "https://api.smitegame.com/smiteapi.svc/";
+        private readonly string PaladinsAPIurl = "https://api.paladins.com/paladinsapi.svc/";
 
         private static async Task<string> GetMD5Hash(string input)
         {

@@ -100,7 +100,7 @@ namespace ThothBotCore.Modules
                 x.IsInline = true;
                 x.Name = "Statistics";
                 x.Value = $":stopwatch: **Uptime**: {GetUptime()}\n" +
-                $"⛓ **Shards Connected: **{Connection.shardsConnected.Count}" +
+                $"⛓ **Shards Connected: **{Connection.shardsConnected.Count}\n" +
                 $":chart_with_upwards_trend: **Servers**: {Connection.Client.Guilds.Count}\n" +
                 $":busts_in_silhouette: **Users**: {totalUsers}\n" +
                 $":1234: **Commands Run**: {Global.CommandsRun}";
@@ -243,7 +243,7 @@ namespace ThothBotCore.Modules
                 str += $"{time.Minutes}m ";
             }
 
-            if (time.Seconds != 0 && time.Hours !>= 0)
+            if (time.Seconds != 0 && time.Hours !>= 0 && time.Days !<= 0)
             {
                 str += $"{time.Seconds}s";
             }
