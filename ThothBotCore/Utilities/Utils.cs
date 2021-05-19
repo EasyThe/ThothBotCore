@@ -143,7 +143,7 @@ namespace ThothBotCore.Utilities
 
             // Random Starter Item
             var allitems = MongoConnection.GetAllItems();
-            var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.StartingItem && x.GodType.Contains(godType) && x.ItemTier == 2);
+            var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.StartingItem && x.GodType != null && x.GodType.Contains(godType) && x.ItemTier == 2);
 
             sb.Append(starters[rnd.Next(starters.Count)].Emoji);
 

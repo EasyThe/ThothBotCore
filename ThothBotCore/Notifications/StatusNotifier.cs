@@ -42,7 +42,7 @@ namespace ThothBotCore.Notifications
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
                         try
                         {
-                            await user?.SendMessageAsync($":warning: Hey! I tried to send this status update to {channel?.Mention} ({guild?.Name}) but I am missing **Access** there.\n" +
+                            await user?.SendMessageAsync($":warning: Hey! I tried to send this status update to {channel?.Mention} in the {guild?.Name} server but I am missing **Access** there.\n" +
                                 $"Please make sure I have **Read Messages, Send Messages**, **Use External Emojis** and **Embed Links** permissions in {channel?.Mention}." +
                                 $"You will get this message everytime I get an error by trying to send Server Status Updates in {channel?.Mention}.\n" +
                                 $"If you don't want to receive Server Status Updates anymore, please use **!!stopstatusupdates** in one of your servers channels.",

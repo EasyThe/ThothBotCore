@@ -844,16 +844,52 @@ namespace ThothBotCore.Modules
         public async Task ItemStartersCommand()
         {
             var items = MongoConnection.GetAllItems();
-            var starters = items.FindAll(x => x.StartingItem);
-            StringBuilder sb = new();
+            var starters = items.FindAll(x => x.StartingItem && x.ActiveFlag == "y");
+            int maxCount = starters.FindAll(x => x.ItemTier == 2).Count / 2;
+            int counter = 0;
+            StringBuilder sb21 = new();
+            StringBuilder sb22 = new();
+            StringBuilder sb1 = new();
             foreach (var item in starters)
             {
-                sb.AppendLine($"{item.Emoji} {item.DeviceName}");
+                if (item.ItemTier == 2)
+                {
+                    if (counter !> maxCount - 1)
+                    {
+                        sb22.AppendLine($"{item.Emoji} {item.DeviceName}");
+                    }
+                    else
+                    {
+                        sb21.AppendLine($"{item.Emoji} {item.DeviceName}");
+                    }
+                    counter++;
+                }
+                else
+                {
+                    sb1.AppendLine($"{item.Emoji} {item.DeviceName}");
+                }
             }
             EmbedBuilder embed = new();
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithTitle($"List of all {starters.Count} starting items");
-            embed.WithDescription(sb.ToString());
+            embed.AddField(x=> 
+            {
+                x.IsInline = true;
+                x.Name = "Tier 1 Starters";
+                x.Value = sb1.ToString();
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Tier 2 Starters [1/2]";
+                x.Value = sb21.ToString();
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Tier 2 Starters [2/2]";
+                x.Value = sb22.ToString();
+            });
             await ReplyAsync(embed: embed.Build());
         }
 

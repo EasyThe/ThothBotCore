@@ -14,7 +14,7 @@ namespace ThothBotCore.Discord
         private readonly DiscordLogger _logger;
         public static List<int> shardsConnected = new();
         public const int ShardCount = 3;
-
+        
         public static DiscordShardedClient Client;
 
         public Connection(DiscordLogger logger, DiscordShardedClient client)
@@ -29,7 +29,6 @@ namespace ThothBotCore.Discord
 
             await _client.LoginAsync(TokenType.Bot, Credentials.botConfig.Token);
             await _client.StartAsync();
-            await _client.SetGameAsync("Shards Connecting...", null, ActivityType.Watching);
             Client = _client;
             CommandHandler _handler = new();
             await _handler.InitializeAsync(_client);

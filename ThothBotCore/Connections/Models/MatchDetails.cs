@@ -111,6 +111,7 @@ namespace ThothBotCore.Connections.Models
             public double Rank_Stat_Joust { get; set; }
             public string Reference_Name { get; set; }
             public string Region { get; set; }
+            public string Role { get; set; }
             public string Skin { get; set; }
             public int SkinId { get; set; }
             public int Structure_Damage { get; set; }

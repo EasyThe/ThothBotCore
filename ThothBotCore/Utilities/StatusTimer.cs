@@ -129,7 +129,7 @@ namespace ThothBotCore.Utilities
                                     embed.WithColor(new Color(52, 152, 219)); //maintenance color
                                     embed.WithFooter(footer =>
                                     {
-                                        footer.Text = $"Current UTC: " + DateTime.UtcNow.ToString("dd MMM, HH:mm:ss", CultureInfo.InvariantCulture);
+                                        footer.Text = "";
                                     });
 
                                     if (ServerStatus.scheduled_maintenances[i].incident_updates.Count > 1 &&
@@ -146,12 +146,12 @@ namespace ThothBotCore.Utilities
                                         if (ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("progress") ||
                                             ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("verifying"))
                                         {
-                                            embed.Footer.Text += " | Ends ";
+                                            embed.Footer.Text += "⏩ Ends";
                                             embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_until);
                                         }
                                         else
                                         {
-                                            embed.Footer.Text += " | Starts ";
+                                            embed.Footer.Text += "⏩ Starts";
                                             embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_for);
                                         }
 
@@ -168,6 +168,18 @@ namespace ThothBotCore.Utilities
                                     else if (Database.GetServerStatusUpdates(ServerStatus.scheduled_maintenances[i].incident_updates[0].id)[0] == "0")
                                     {
                                         string platIcon = await Utils.MaintenancePlatformsAsync(ServerStatus.scheduled_maintenances[i].components);
+
+                                        if (ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("progress") ||
+                                            ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("verifying"))
+                                        {
+                                            embed.Footer.Text += "⏩ Ends";
+                                            embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_until);
+                                        }
+                                        else
+                                        {
+                                            embed.Footer.Text += "⏩ Starts";
+                                            embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_for);
+                                        }
 
                                         for (int j = 0; j < ServerStatus.scheduled_maintenances[i].incident_updates.Count; j++)
                                         {

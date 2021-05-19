@@ -137,18 +137,11 @@ namespace ThothBotCore.Utilities
                 {
                     embed = await EmbedHandler.BuildDescriptionEmbedAsync(message, 254);
                 }
-                if (embed.Description.Contains("love"))
-                {
-                    await botlogs.SendMessageAsync(embed: embed);
-                }
-                else
-                {
-                    await commandsChannel.SendMessageAsync(embed: embed);
-                }
+                await commandsChannel.SendMessageAsync(embed: embed);
             }
             catch (Exception ex)
             {
-                await Reporter.SendException(ex, context, ex.Message);
+                await SendException(ex, context, ex.Message);
                 await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
             }
         }
@@ -220,7 +213,7 @@ namespace ThothBotCore.Utilities
             }
             else if (ex != null && ex.Message.Contains("Value was either too large or too small for an Int32"))
             {
-                sb.Append($"The value was either too large or too small.\nIf you believe that this is wrong, please [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
+                sb.Append($"The value was either too large or too small.\n\nIf you believe that this is wrong, please [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
             }
             else if (ex != null && !(ex.Message.ToLowerInvariant().Contains("database")))
             {

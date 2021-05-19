@@ -25,7 +25,7 @@ namespace ThothBotCore.Connections
 
         readonly static string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         private static SessionResult sessionResult = new();
-        private static readonly string PCAPIurl = "http://api.smitegame.com/smiteapi.svc/";
+        private static readonly string PCAPIurl = "https://api.smitegame.com/smiteapi.svc/";
 
         public HiRezAPIv2(string DevId, string APIKey)
         {
@@ -33,7 +33,7 @@ namespace ThothBotCore.Connections
             this.APIKey = APIKey;
             Client = new HttpClient
             {
-                BaseAddress = new Uri("http://api.smitegame.com/smiteapi.svc/"),
+                BaseAddress = new Uri(PCAPIurl),
                 Timeout = TimeSpan.FromSeconds(5)
             };
         }
