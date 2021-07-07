@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
@@ -820,6 +821,33 @@ namespace ThothBotCore.Modules
             {
                 await ReplyAsync(ex.Message);
             }
+        }
+
+        [Command("trackmatches")]
+        public async Task VulpisChallongeMatchesChecker([Remainder]string tournament)
+        {
+            try
+            {
+                if (Context.Guild.Id != 321367254983770112 || !(TournamentUtilities.IsTournamentManagerCheck(Context)))
+                {
+                    return;
+                }
+                Global.TourneyName = tournament;
+                var emb = await EmbedHandler.BuildDescriptionEmbedAsync("Starting the tracker...", Constants.VulpisColor);
+                var message = await ReplyAsync(embed: emb);
+                Global.TourneyTimerIDs = new[] { message.Channel.Id, message.Id, Context.Guild.Id };
+                await TournamentTimer.StartServerStatusTimer();
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync(ex.Message);
+            }
+        }
+        [Command("stoptracker")]
+        public async Task VulpisChallongeMatchesCheckerStop()
+        {
+            await ReplyAsync($"Hopefully stopped {Global.TourneyName}. Ask <@171675309177831424>");
+            await TournamentTimer.StopTournamentTimer(Global.TourneyName);
         }
     }
 }

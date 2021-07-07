@@ -342,7 +342,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [Command("rgod", true)] // Random God
+        [Command("rgod", true, RunMode = RunMode.Async)] // Random God
         [Summary("Gives you a random God and randomised build.")]
         [Remarks("`m` or `mage` for **mage**, `w` or `warrior` for **warrior**, `h` or `hunter` for **hunter**, `g`, `tank` or `guardian` for **guardian**, `a`, `ass` or `assassin` for **assassin**")]
         [Alias("rg", "randomgod", "random")]
@@ -893,11 +893,49 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("createbuild", true)]
+        [Command("createbuild", true, RunMode = RunMode.Async)]
         [Alias("cb")]
         public async Task CreateBuildCommandAsync()
         {
-            var items = MongoConnection.GetAllItems();
+            try
+            {
+                EmbedBuilder baseEmbed = new();
+                baseEmbed.WithAuthor(x => 
+                {
+                    x.Name = "Thoth Build Creator";
+                    x.IconUrl = Constants.botIcon;
+                });
+                baseEmbed.WithColor(Constants.FeedbackColor);
+                baseEmbed.WithFooter("This command is still in beta. It may break at any point.");
+
+                var embed = baseEmbed;
+                embed.WithDescription($"👋 Welcome to the build creator of Thoth! 📜\n" +
+                    $"This message will edit itself as you are progressing on creating the build. \nYou have 120 seconds to respond on each step of creating a build.\n" +
+                    $"If you have any feedback, please share it with the developer of the bot either by joining " +
+                    "the support server [!!about] or using the feedback command [!!feedback].\n\n" +
+                    $"Step\n1️⃣ Write down 6 items separated by a comma.\n" +
+                    $"**PS: You don't have to write the whole name of an item.**");
+                var msg = await ReplyAsync(embed: embed.Build());
+                var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(120));
+                if (response == null)
+                {
+                    embed = baseEmbed;
+                    embed.WithDescription("Building cancelled! Time is up!");
+                    embed.Fields = null;
+                    await msg.ModifyAsync(x => x.Embed = embed.Build());
+                    return;
+                }
+                embed = baseEmbed;
+                embed.WithDescription(BuildCreator.CreateBuild(response.Content));
+                embed.WithFooter("Hey, this feature is not ready yet! 👀");
+                await msg.ModifyAsync(x => x.Embed = embed.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+            }
+
+            // Todo: god, tag, public?, 
         }
 
         [Command("trello", true, RunMode = RunMode.Async)]
@@ -1243,6 +1281,12 @@ namespace ThothBotCore.Modules
                     x.IconUrl = Constants.botIcon;
                 });
                 Motd motdDay = new();
+
+                if (DateTime.UtcNow !< motdList.Find(x => x.startDateTime.Day == DateTime.UtcNow.Day).startDateTime)
+                {
+                    Console.WriteLine("motd da");
+                }
+
                 for (int i = 0; i < 5; i++)
                 {
                     string[] finalDesc = Array.Empty<string>();
@@ -1264,7 +1308,7 @@ namespace ThothBotCore.Modules
                     }
                     embed.AddField(x =>
                     {
-                        x.Name = $":large_blue_diamond: **{motdDay.title}** - {motdDay.startDateTime.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)}";
+                        x.Name = $":large_blue_diamond: **{motdDay.title}** - {Text.ShortDateTimeTimestamp(motdDay.startDateTime)}";
                         x.Value = $"{embedValue}";
                     });
                 }
@@ -1575,16 +1619,65 @@ namespace ThothBotCore.Modules
         }
 
         [Command("patch", true, RunMode = RunMode.Async)]
-        [Summary("Sends the last patch posted on the SMITEgame.com website")]
+        [Summary("Sends the last two patches posted on the SMITEgame.com website")]
         [Alias("lastpatch", "notes", "patchnotes", "updatenotes")]
         public async Task PatchNotesCommand()
         {
+            await Context.Channel.TriggerTypingAsync();
             var posts = await HiRezWebAPI.FetchPostsAsync();
-            var foundPost = posts.Find(x => x.real_categories.ToLowerInvariant().Contains("notes"));
-            var actualPost = await HiRezWebAPI.GetPostBySlugAsync(foundPost.slug);
-            string description = await PatchPageReader.ReadPatch(actualPost);
-            Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost.large_image, foundPost.slug);
-            await ReplyAsync(embed: embed);
+            var foundPost = posts.FindAll(x => x.real_categories.ToLowerInvariant().Contains("notes"));
+            for (int i = 0; i < 2; i++)
+            {
+                var actualPost = await HiRezWebAPI.GetPostBySlugAsync(foundPost[i].slug);
+                string description = await PatchPageReader.ReadPatch(actualPost);
+                Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost[i].large_image, foundPost[i].slug);
+                await ReplyAsync(embed: embed);
+            }
+        }
+
+        [Command("events", true, RunMode = RunMode.Async)]
+        [Alias("event", "eventnow", "eventsnow", "eventtoday", "eventstoday")]
+        [Summary("🆕 Shows if there are any events currently available in-game.")]
+        public async Task EventsCommand()
+        {
+            try
+            {
+                StringBuilder sb = new();
+                var result = await HiRezWebAPI.GetLandingPanel();
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(x=>
+                {
+                    x.Name = "SMITE Events";
+                    x.IconUrl = Constants.SmiteBolt;
+                });
+                embed.WithFooter(x=> 
+                {
+                    x.Text = "This command is still in beta. It may break at any point.";
+                });
+                if (result.events.content.Count == 0)
+                {
+                    embed.WithTitle("There are no events at the moment.");
+                    await ReplyAsync(embed: embed.Build());
+                    return;
+                }
+                var header = result.events.content.FirstOrDefault().eventList.Find(x => x.header != null);
+                if (header != null)
+                {
+                    embed.WithTitle(header.header.@default);
+                }
+                embed.WithImageUrl(result.events.content.FirstOrDefault()?.imageUrl);
+                embed.WithColor(Constants.FeedbackColor);
+                foreach (var item in result.events.content[0].eventList)
+                {
+                    sb.AppendLine($"🔹 " + (item.desc.@default.Contains("Today") ? $"**{item.desc.@default}**" : $"{item.desc.@default}"));
+                }
+                embed.WithDescription(sb.ToString());
+                await ReplyAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                await Reporter.RespondToCommandOnErrorAsync(ex, Context);
+            }
         }
 
         // test
@@ -1735,12 +1828,15 @@ namespace ThothBotCore.Modules
 
         [Command("tt", true, RunMode = RunMode.Async)]
         [RequireOwner]
-        public async Task TestGetPlayer([Remainder]string name)
+        public async Task TestGetPlayer()
         {
             try
             {
-                var nz = await MongoConnection.LoadGod(name);
-                await ReplyAsync(nz.Title);
+                // use me as u wish my love
+                var da = File.ReadAllText("F:\\Repos\\ThothBotCore\\ThothBotCore\\bin\\Release\\net5.0\\Storage\\2.json");
+                var n = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(da);
+                var em = await EmbedHandler.MatchDetailsEmbed(n);
+                await ReplyAsync(embed: em.Build());
             }
             catch (Exception ex)
             {

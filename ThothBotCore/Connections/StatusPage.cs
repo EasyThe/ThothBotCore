@@ -18,7 +18,7 @@ namespace ThothBotCore.Connections
             }
             catch (System.Exception ex)
             {
-                Text.WriteLine($"===\nGetStatusSummary Error:\n" + ex.Message + ex.InnerException + "\n===");
+                Text.WriteLine($"===\nGetStatusSummary Call Error:\n" + ex.Message + ex.InnerException + "\n===");
                 return "";
             }
         }

@@ -133,11 +133,11 @@ namespace ThothBotCore.Utilities
             var aliases = string.Join(", ", command.Aliases);
             var name = command.GetCommandNameWithGroup();
             var summary = command.Summary;
-            var remarks = command.Remarks;
+            var remarks = command.Remarks != null ? command.Remarks : null;
             var sb = new StringBuilder()
                 .AppendLine($"**Usage**: {prefix}{name}{(command.Parameters.Count != 0 ? $" {command.Parameters[0].Name}" : "")}")
                 .AppendLine($"**Description**: {summary}")
-                .AppendLine($"**Remarks**: {remarks}")
+                .Append(remarks != null ? $"**Remarks**: {remarks}\n" : "")
                 .AppendLine($"**Aliases**: {aliases}");
             return sb.ToString();
         }

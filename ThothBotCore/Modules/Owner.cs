@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using Discord.Rest;
+using Discord.Webhook;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
@@ -457,6 +459,34 @@ namespace ThothBotCore.Modules
             Text.WriteLine((count - 2).ToString());
         }
 
+        [Command("user", true, RunMode = RunMode.Async)]
+        public async Task GetUserInfo(ulong id = 0)
+        {
+            if (id == 0)
+            {
+                id = Context.Message.Author.Id;
+            }
+            var user = await Connection.Client.Rest.GetUserAsync(id);
+            if (user == null)
+            {
+                await ReplyAsync("User is null :shrug:");
+                return;
+            }
+            var embed = new EmbedBuilder().WithDescription("");
+            var userNotRest = Connection.Client.GetUser(id);
+            if (userNotRest != null)
+            {
+                embed.Description += $"\n{userNotRest.Mention}\n" +
+                    $"Mutual Guilds: {userNotRest.MutualGuilds.Count}\n" +
+                    $"Status: {userNotRest.Status}\n";
+            }
+            embed.WithTitle(user.ToString());
+            embed.Description += $"ID: {user.Id}\n" +
+                $"{user.PublicFlags.Value}";
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("users", true, RunMode = RunMode.Async)]
         public async Task GetUsersCommand(ulong id = 0)
         {
@@ -898,14 +928,27 @@ namespace ThothBotCore.Modules
         [Command("ff")]
         public async Task Testingstufbrat()
         {
-            var pages = new EmbedBuilder[]
+            try
             {
-                new EmbedBuilder().WithTitle("Passive"),
-                new EmbedBuilder().WithTitle("1"),
-                new EmbedBuilder().WithTitle("2"),
-                new EmbedBuilder().WithTitle("3"),
-                new EmbedBuilder().WithTitle("4")
-            };
+                var result = await HiRezWebAPI.GetLandingPanel();
+                var singlePanel = result.singlePanel.content.Where(x => x.maxLevel > 100).ToList();
+
+                Embed[] embeds = new Embed[singlePanel.Count];
+
+                for (int i = 0; i < singlePanel.Count; i++)
+                {
+                    EmbedBuilder em = new()
+                    {
+                        Title = singlePanel[i].header.@default,
+                        ImageUrl = singlePanel[i].imageUrl.INT
+                    };
+                    await ReplyAsync(embed: em.Build());
+                }
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync(ex.Message);
+            }
         }
 
         [Command("hapi")]

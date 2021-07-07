@@ -14,7 +14,6 @@ namespace ThothBotCore.Utilities
         {
             return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
         }
-
         public static string ReplaceFirst(string text, string search, string replace)
         {
             int pos = text.IndexOf(search);
@@ -148,6 +147,18 @@ namespace ThothBotCore.Utilities
                 _ => "🤷‍♂️",
             };
         }
+        public static string GetRoleIcon(string role)
+        {
+            return role switch
+            {
+                "Solo" => "<:solol:862261457009246218>",
+                "Jungle" => "<:jungle:862261456527294465>",
+                "Mid" => "<:mid:862261456937812008>",
+                "Support" => "<:support:862261457110302720>",
+                "Carry" => "<:adc:862261456901111878>",
+                _ => ""
+            };
+        }
         public static string StatusEmoji(string status)
         {
             return status switch
@@ -197,7 +208,6 @@ namespace ThothBotCore.Utilities
                 _ => "n/a",
             };
         }
-
         public static string GetPortalIcon(string portal)
         {
             return portal switch
@@ -208,10 +218,9 @@ namespace ThothBotCore.Utilities
                 "10" => "<:XB:537749895029850112>",// Xbox
                 "22" => "<:SW:537752006719176714>",// Switch
                 "28" => "<:egs:705963938340274247>",// Epic Games Store
-                _ => "<:blank:570291209906552848>",
+                _ => "<:Hidden:591666971234402320>"
             };
         }
-
         public static int GetPortalNumber(string portal)
         {
             return portal switch
@@ -225,7 +234,6 @@ namespace ThothBotCore.Utilities
                 _ => 0,
             };
         }
-
         public static string GetPortalIconLinksByPortalID(string portal)
         {
             return portal switch
@@ -239,7 +247,6 @@ namespace ThothBotCore.Utilities
                 _ => Constants.botIcon,
             };
         }
-
         public static string GetPortalIconLinksByPortalName(string portal)
         {
             return portal switch
@@ -308,6 +315,7 @@ namespace ThothBotCore.Utilities
                 504 => "Ranked Conquest (Console)",
                 508 => "Corrupted Arena",
                 10151 => "Custom Corrupted Arena",
+                10152 => "Custom Jade Corruption Joust",
                 10153 => "Classic Joust",
                 10155 => "Heimdallr's Crossing",
                 10158 => "Arena (vs AI) (Very Hard)",
@@ -346,7 +354,17 @@ namespace ThothBotCore.Utilities
                 _ => "<:10:695983354453033010>"
             };
         }
-
+        public static string GetPartyEmoji(int number)
+        {
+            return number switch
+            {
+                1 => "<:Party_1:848904863173312512>",
+                2 => "<:Party_2:848904863479103518>",
+                3 => "<:Party_3:848904863240159262>",
+                4 => "<:Party_4:848904863063605280>",
+                _ => "<:Solo:857722598721060884>"
+            };
+        }
         public static Tuple<string, string> GetRankedConquest(int tier)
         {
             return tier switch
@@ -382,7 +400,6 @@ namespace ThothBotCore.Utilities
                 _ => Tuple.Create("This", "Report")
             };
         }
-
         public static Tuple<string, string> GetRankedJoust(int tier)
         {
             return tier switch
@@ -497,6 +514,59 @@ namespace ThothBotCore.Utilities
             {
                 return name;
             }
+        }
+
+        public static string HiddenProfileCheck(string Name, string HzName, string GamerTag, object Ret_Msg)
+        {
+            if (Ret_Msg != null && Ret_Msg.ToString().ToLowerInvariant().Contains("privacy flag set")) return "~~Hidden Profile~~";
+            if (Name != null && Name.Length != 0 && Name.Contains(HzName)) return HzName;
+            if (Name != null && Name.Length != 0 && Name.Contains(GamerTag)) return GamerTag;
+            if (HzName != null && HzName.Length != 0) return HzName;
+            if (GamerTag != null && GamerTag.Length != 0) return GamerTag;
+            if (Name != null && Name.Length != 0)
+            {
+                if (Name.Contains("[")) return Name.Split("]")[1];
+                return Name;
+            }
+            return "~~Hidden Profile~~";
+        }
+        public static string RelativeTimestamp(DateTime dateTime)
+        {
+            return DiscordTimestamp(dateTime, 'R');
+        }
+        public static string ShortTimeTimestamp(DateTime dateTime)
+        {
+            return DiscordTimestamp(dateTime, 't');
+        }
+        public static string ShortDateTimeTimestamp(DateTime dateTime)
+        {
+            return DiscordTimestamp(dateTime, 'f');
+        }
+        public static string LongDateTimestamp(DateTime dateTime)
+        {
+            return DiscordTimestamp(dateTime, 'D');
+        }
+        /// <summary>
+        /// Discord Timestamp implementation
+        /// </summary>
+        /// <param name="dateTime">DateTime must be in UTC</param>
+        /// <param name="type">t - 16:20, T - 16:20:30, d - 20/04/2021, D - 20 April 2021, f - 20 April 2021 16:20,
+        /// F - long date, R - 2 months ago</param>
+        /// <returns></returns>
+        private static string DiscordTimestamp(DateTime dateTime, char type)
+        {
+            return $"<t:{DateTimeToUnix(dateTime)}:{type}>";
+        }
+        private static int DateTimeToUnix(DateTime dateTime)
+        {
+            return (Int32)(dateTime.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
+        }
+        public static double CalculateKDA(int kills, int deaths, int assists)
+        {
+            if (kills == 0) kills = 1;
+            if (deaths == 0) deaths = 1;
+            if (assists == 0) assists = 1;
+            return (double)(kills + (assists / 2)) / deaths;
         }
 
         //Paladins

@@ -19,7 +19,9 @@ namespace ThothBotCore.Utilities.Smite
             var sb = new StringBuilder();
             sb.AppendLine(NewGod(doc, gods)); // New God
             sb.AppendLine(NewSkins(doc, gods)); // New Skins
-            sb.AppendLine(UpdateSchedule(doc, patchPost));
+            sb.AppendLine(GodsChanged(doc)); // God Changes
+            sb.AppendLine(UpdateSchedule(doc, patchPost)); // Update Schedule
+            
             return Task.FromResult(sb.ToString());
         }
         private static string NewGod(HtmlDocument doc, List<Gods.God> gods)
@@ -44,10 +46,10 @@ namespace ThothBotCore.Utilities.Smite
         private static string NewSkins(HtmlDocument doc, List<Gods.God> gods)
         {
             var sb = new StringBuilder();
-            sb.Append(":performing_arts: **New Skins for** ");
             var newskins = doc.DocumentNode.SelectNodes("//div[contains(@class, 'god-skin--card')]");
             if (newskins != null)
             {
+                sb.Append("🎭 **New Skins for** ");
                 foreach (var gd in gods)
                 {
                     if (newskins.Any(x => x.ChildNodes.FindFirst("p").InnerText.Contains(gd.Name)))
@@ -77,7 +79,7 @@ namespace ThothBotCore.Utilities.Smite
             var schedule = allWrappedHeaders.Where(x => x.InnerText.Contains("Schedule")).FirstOrDefault();
             if (schedule != null)
             {
-                sb.AppendLine($":calendar_spiral: **Update Release Schedule: **");
+                sb.AppendLine($"🗓 **Update Release Schedule: **");
                 var dates = schedule.SelectNodes("following::h6[position()<5]");
                 for (int d = 0; d < dates.Count; d++)
                 {
@@ -89,53 +91,64 @@ namespace ThothBotCore.Utilities.Smite
                     }
                     // date
                     var patchNumberULEle = dates[d].SelectNodes("following::ul[position()<2]");
-                    sb.Append($":white_small_square:**{dates[d].InnerText}** - __");
+                    sb.Append($":white_small_square:{dates[d].InnerText} - ");
                     var numberLIEle = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li");
+                    var numberLIElems = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li").ToList();
 
-                    // patch
-                    string patchTitle = numberLIEle.FirstOrDefault()?.FirstChild.InnerText;
-                    sb.Append(patchTitle.Replace("\n", ""));
-                    sb.Append("__: ");
+                    // patch info
+                    for (int i = 0; i < numberLIElems.Count; i++)
+                    {
+                        // The element links to somewhere, get the link and format it in Discord markdown
+                        if (numberLIElems[i].FirstChild.Name == "a")
+                        {
+                            sb.Append($"[{numberLIElems[i].FirstChild.InnerText}]" +
+                                $"({(numberLIElems[i].FirstChild.Attributes.FirstOrDefault()?.Name == "href" ? numberLIElems[i].FirstChild.Attributes.First().Value : "#")})");
+                        }
+                        else
+                        {
+                            sb.Append(numberLIElems[i].FirstChild.InnerText.Replace("\n", ""));
+                        }
 
-                    // description
-                    var descLIEle = numberLIEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "ul");
-                    string desc = descLIEle.FirstOrDefault()?.InnerText;
-                    if (desc != null)
-                    {
-                        if (desc.StartsWith("\n"))
+                        if (i != numberLIElems.Count - 1)
                         {
-                            desc = Text.ReplaceFirst(desc, "\n", "");
-                        }
-                        if (desc.EndsWith("\n"))
-                        {
-                            desc = desc.Remove(desc.LastIndexOf("\n"));
+                            sb.Append(", ");
                         }
                     }
-                    else
-                    {
-                        desc = numberLIEle.FirstOrDefault()?.InnerText;
-                    }
-                    if (desc.Contains("&#8211;"))
-                    {
-                        desc = desc.Replace("&#8211;", "-");
-                    }
+                    
                     if (sb.ToString().Contains("&#8211;"))
                     {
                         sb.Replace("&#8211;", "-");
                     }
-                    if (desc.Contains(patchTitle))
+
+                    if (d != dates.Count - 1)
                     {
                         sb.Append('\n');
-                        sb.Replace("__", "");
-                        continue;
                     }
-                    sb.Append(desc.Replace("\n", ", "));
-                    sb.Append('\n');
                 }
-                var tentativeText = schedule.SelectNodes("following::p[position()<2]");
-                if (tentativeText?.FirstOrDefault()?.InnerText.Length! < 0)
+                return sb.ToString();
+            }
+            else
+            {
+                return "";
+            }
+        }
+        private static string GodsChanged(HtmlDocument doc)
+        {
+            var sb = new StringBuilder();
+            var allChangedGodDivs = doc.DocumentNode.SelectNodes("//div[contains(@class, 'god-changes--god')]").ToList();
+            if (allChangedGodDivs.Count != 0)
+            {
+                sb.Append("↔ **God Changes:** ");
+                for (int i = 0; i < allChangedGodDivs.Count; i++)
                 {
-                    sb.AppendLine($"*{tentativeText.FirstOrDefault().InnerText}*");
+                    if (allChangedGodDivs[i].InnerText.Length > 1)
+                    {
+                        sb.Append(allChangedGodDivs[i].InnerText.Replace("\n", ""));
+                        if (i != allChangedGodDivs.Count - 1)
+                        {
+                            sb.Append(", ");
+                        }
+                    }
                 }
                 return sb.ToString();
             }

@@ -10,7 +10,7 @@ namespace ThothBotCore.Discord
         {
             return new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Verbose,
+                LogLevel = LogSeverity.Info,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 ExclusiveBulkDelete = true,
                 TotalShards = Credentials.botConfig.prefix == "??" ? 1 : Connection.ShardCount

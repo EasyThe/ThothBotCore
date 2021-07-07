@@ -128,7 +128,7 @@ namespace ThothBotCore.Connections.Models
             public string Win_Status { get; set; }
             public int Winning_TaskForce { get; set; }
             public string hasReplay { get; set; }
-            public object hz_gamer_tag { get; set; }
+            public string hz_gamer_tag { get; set; }
             public string hz_player_name { get; set; }
             public int match_queue_id { get; set; }
             public string name { get; set; }

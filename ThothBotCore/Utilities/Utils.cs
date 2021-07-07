@@ -121,15 +121,13 @@ namespace ThothBotCore.Utilities
         public static async Task<string> RandomBuilderAsync(Gods.God god)
         {
             StringBuilder sb = new();
-            string godType;
+            string godType = "physical";
+            int itemsCount = DateTime.UtcNow.Day == 13 && DateTime.UtcNow.Month == 7 ? 5 : 4;
+            // Change this on the next update
 
             if (god.Roles.Contains("Mage") || god.Roles.Contains("Guardian"))
             {
                 godType = "magical";
-            }
-            else
-            {
-                godType = "physical";
             }
 
             // Random Relics
@@ -148,22 +146,23 @@ namespace ThothBotCore.Utilities
             sb.Append(starters[rnd.Next(starters.Count)].Emoji);
 
             // Boots or Shoes depending on the god type
-            if (!god.Name.Contains("Ratatoskr"))
+            if (god.Name != "Ratatoskr" && itemsCount == 4)
             {
                 var boots = await MongoConnection.GetBootsOrShoesAsync(godType);
                 int boot = rnd.Next(boots.Count);
                 sb.Append(boots[boot].Emoji);
             }
-            else
+            else if (god.Name == "Ratatoskr")
             {
                 var boots = await MongoConnection.GetBootsOrShoesAsync("ratatoskr");
-                sb.Append(boots[0].Emoji);
+                sb.Append(boots[rnd.Next(boots.Count)].Emoji);
+                itemsCount = 4;
             }
 
             var items = await MongoConnection.GetActiveItemsByGodTypeAsync(godType, god.Roles.ToLowerInvariant().Trim());
 
-            // Finishing the build with 4 items
-            for (int i = 0; i < 4; i++)
+            // Finishing the build
+            for (int i = 0; i < itemsCount; i++)
             {
                 int r = rnd.Next(items.Count);
                 sb.Append(items[r].Emoji);

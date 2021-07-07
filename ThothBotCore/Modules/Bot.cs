@@ -26,12 +26,12 @@ namespace ThothBotCore.Modules
         public async Task Help([Remainder] string commandName = null)
         {
             string prefix = Credentials.botConfig.prefix;
-            if (GetServerConfig(Context.Guild.Id).Result.Count > 0)
+            if (Context.Guild != null)
             {
-                if (GetServerConfig(Context.Guild.Id).Result[0].prefix != "!!")
+                var serverConfig = await GetServerConfig(Context.Guild.Id);
+                if (serverConfig.Count > 0)
                 {
-                    var conf = await GetServerConfig(Context.Guild.Id);
-                    prefix = conf[0].prefix;
+                    prefix = serverConfig[0].prefix;
                 }
             }
 
@@ -171,9 +171,15 @@ namespace ThothBotCore.Modules
             }
             else
             {
+                if (Context.Guild == null)
+                {
+                    var em = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but you cannot set a custom prefix when using the bot in DMs.", 254);
+                    await ReplyAsync(embed: em);
+                    return;
+                }
                 if (prefix.Contains("'"))
                 {
-                    var emb = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but apostrophes (single quote) is not allowed to be set as a prefix.");
+                    var emb = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but apostrophes (single quote) is not allowed to be set as a prefix.", 254);
                     await ReplyAsync(embed: emb);
                     return;
                 }

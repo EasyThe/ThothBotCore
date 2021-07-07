@@ -15,6 +15,8 @@ namespace ThothBotCore.Notifications
             var notifChannels = await GetNotifChannels();
             SocketTextChannel channel = null;
             SocketGuild guild = null;
+            int SuccessCount = 0;
+            int FailedCount = 0;
 
             for (int i = 0; i < notifChannels.Count; i++)
             {
@@ -25,13 +27,14 @@ namespace ThothBotCore.Notifications
                     if (channel != null)
                     {
                         await channel.SendMessageAsync(embed: embed.Build());
-                        Text.WriteLine($"Sent Status Updates to: {notifChannels[i]._id}]");
+                        SuccessCount++;
                     }
                     else
                     {
                         var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed status update sub: {guild.Name}[{guild.Id}]");
                         await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
                         await Database.StopNotifs(guild.Id);
+                        FailedCount++;
                     }
                 }
                 catch (System.Exception ex)
@@ -64,6 +67,7 @@ namespace ThothBotCore.Notifications
                     }
                 }
             }
+            await Connection.Logger.Log("Feeds|ServerStatus", $"[{embed.Fields[0].Name.Split('>')[^1].Trim()}] Success: {SuccessCount}, Failed: {FailedCount}, out of {notifChannels.Count}");
         }
     }
 }

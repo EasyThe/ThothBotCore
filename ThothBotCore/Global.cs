@@ -11,5 +11,8 @@ namespace ThothBotCore
         public static string ErrorMessageByOwner { get; set; }
         internal static CommandService commandService { get; set; }
         internal static InteractiveService InteractiveService { get; set; }
+        // 0-ChannelID 1-MessageID 2-GuildID
+        public static ulong[] TourneyTimerIDs { get; set; }
+        public static string TourneyName { get; set; }
     }
 }

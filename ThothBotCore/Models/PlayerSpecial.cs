@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+
 namespace ThothBotCore.Models
 {
     public class PlayerSpecial
@@ -9,5 +10,6 @@ namespace ThothBotCore.Models
         public string streamer_link { get; set; }
         public bool pro_bool { get; set; }
         public string special { get; set; }
+        public DateTime linkedDateTimeUTC { get; set; } = DateTime.UtcNow;
     }
 }

@@ -29,15 +29,19 @@ namespace ThothBotCore.Discord
             _commands.CommandExecuted += CommandExecuted;
         }
 
-        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
+        private async Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
         {
-            /* To do
-            if (arg1.IsSpecified)
+            if (arg3.Error == CommandError.BadArgCount)
             {
-                Console.WriteLine(arg1.Value.Name);
+                var serverConfig = new Models.ServerConfig { prefix = Credentials.botConfig.prefix };
+                if (arg2.Guild != null)
+                {
+                    var db = await Database.GetServerConfig(arg2.Guild.Id);
+                    serverConfig = db[0];
+                }
+                var commandEmbed = HelpCommand.GetHelpEmbed(_commands, arg1.Value.Name, serverConfig.prefix);
+                await arg2.Channel.SendMessageAsync(embed: commandEmbed);
             }
-            */
-            return Task.CompletedTask;
         }
 
         private IServiceProvider ConfigureServices()
@@ -62,9 +66,15 @@ namespace ThothBotCore.Discord
 
             try
             {
-                var serverPrefix = await Database.GetServerConfig(context.Guild.Id);
+                var serverConfig = new Models.ServerConfig { prefix = Credentials.botConfig.prefix };
+                if (context.Guild != null)
+                {
+                    var db = await Database.GetServerConfig(context.Guild.Id);
+                    serverConfig = db[0];
+                }
+
                 if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
-                || msg.HasStringPrefix(serverPrefix.Count != 0 ? serverPrefix[0].prefix : "!!", ref argPos)
+                || msg.HasStringPrefix(serverConfig.prefix, ref argPos)
                 || msg.HasMentionPrefix(_client.CurrentUser, ref argPos)))
                 {
                     var result = await _commands.ExecuteAsync(context, argPos, _services);
@@ -111,12 +121,7 @@ namespace ThothBotCore.Discord
                 errorString = result.ErrorReason;
             }
 
-            if (errorString.ToLowerInvariant().Contains("few parameters"))
-            {
-                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Please check the command usage with **{Credentials.botConfig.prefix}help**", 254);
-                await context.Channel.SendMessageAsync(embed: embed);
-            }
-            else if (errorString.ToLowerInvariant().Contains("user requires guild permission administrator") ||
+            if (errorString.ToLowerInvariant().Contains("user requires guild permission administrator") ||
                 errorString.ToLowerInvariant().Contains("group owner failed"))
             {
                 await context.Channel.SendMessageAsync("You must to have **Administrator** permission in this server to use this command.");
@@ -151,7 +156,8 @@ namespace ThothBotCore.Discord
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"Oops. The content of this message was too long. If you think this was an error, please [contact]({Utilities.Constants.SupportServerInvite}) my developer!", 254);
                 await context.Channel.SendMessageAsync(embed: embed);
             }
-            else if (errorString.ToLowerInvariant().Contains("command can only be run by the owner of the bot."))
+            else if (errorString.ToLowerInvariant().Contains("command can only be run by the owner of the bot.") ||
+                     errorString.ToLowerInvariant().Contains("few parameters"))
             {
                 return;
             }

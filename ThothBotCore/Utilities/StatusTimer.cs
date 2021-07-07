@@ -68,7 +68,7 @@ namespace ThothBotCore.Utilities
                                         for (int c = 0; c < ServerStatus.incidents[i].incident_updates.Count; c++)
                                         {
                                             incidentValue.Append($"**[{Text.ToTitleCase(ServerStatus.incidents[i].incident_updates[c].status)}]({ServerStatus.incidents[i].shortlink})** - " +
-                                                $"{ServerStatus.incidents[i].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
+                                                $"{Text.RelativeTimestamp(ServerStatus.incidents[i].incident_updates[c].updated_at.ToUniversalTime())}\n" +
                                                 $"{ServerStatus.incidents[i].incident_updates[c].body}\n");
                                         }
                                         string incidentPlatIcons = await Utils.MaintenancePlatformsAsync(ServerStatus.incidents[i].components);
@@ -87,8 +87,6 @@ namespace ThothBotCore.Utilities
                                                 field.Value = incidentValue.ToString();
                                             });
                                         }
-                                        incidentEmbed.WithFooter(x => x.Text = "Since");
-                                        incidentEmbed.WithTimestamp(ServerStatus.incidents[i].created_at);
 
                                         // Saving to DB
                                         try
@@ -127,10 +125,6 @@ namespace ThothBotCore.Utilities
                                     ServerStatus.scheduled_maintenances[i].incident_updates[0].body.Contains("Smite"))
                                 {
                                     embed.WithColor(new Color(52, 152, 219)); //maintenance color
-                                    embed.WithFooter(footer =>
-                                    {
-                                        footer.Text = "";
-                                    });
 
                                     if (ServerStatus.scheduled_maintenances[i].incident_updates.Count > 1 &&
                                         Database.GetServerStatusUpdates(ServerStatus.scheduled_maintenances[i].incident_updates[0].id)[0] == "0")
@@ -143,43 +137,23 @@ namespace ThothBotCore.Utilities
                                         TimeSpan expDwntime = ServerStatus.scheduled_maintenances[i].scheduled_until - ServerStatus.scheduled_maintenances[i].scheduled_for;
                                         string expectedDtime = await Utils.ExpectedDowntimeAsync(expDwntime);
 
-                                        if (ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("progress") ||
-                                            ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("verifying"))
-                                        {
-                                            embed.Footer.Text += "⏩ Ends";
-                                            embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_until);
-                                        }
-                                        else
-                                        {
-                                            embed.Footer.Text += "⏩ Starts";
-                                            embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_for);
-                                        }
-
                                         string maintStatus = ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Contains("_") ? Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status.Replace("_", " ")) : Text.ToTitleCase(ServerStatus.scheduled_maintenances[i].incident_updates[0].status);
-                                        maintValue += $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - {ServerStatus.scheduled_maintenances[i].incident_updates[0].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n{ServerStatus.scheduled_maintenances[i].incident_updates[0].body}\n";
+                                        maintValue += $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})** - " +
+                                            $"{Text.RelativeTimestamp(ServerStatus.scheduled_maintenances[i].incident_updates[0].created_at.ToUniversalTime())}" +
+                                            $"\n{ServerStatus.scheduled_maintenances[i].incident_updates[0].body}\n";
 
                                         embed.AddField(field =>
                                         {
                                             field.IsInline = false;
                                             field.Name = $"{platIcon}{ServerStatus.scheduled_maintenances[i].name}";
-                                            field.Value = $"**__Expected downtime: {expectedDtime}__**, {ServerStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue;
+                                            field.Value = $"**__Expected downtime: {expectedDtime}__**, " +
+                                            $"{Text.ShortDateTimeTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime())} - " +
+                                            $"{Text.ShortTimeTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime())}\n" + maintValue;
                                         });
                                     }
                                     else if (Database.GetServerStatusUpdates(ServerStatus.scheduled_maintenances[i].incident_updates[0].id)[0] == "0")
                                     {
                                         string platIcon = await Utils.MaintenancePlatformsAsync(ServerStatus.scheduled_maintenances[i].components);
-
-                                        if (ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("progress") ||
-                                            ServerStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("verifying"))
-                                        {
-                                            embed.Footer.Text += "⏩ Ends";
-                                            embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_until);
-                                        }
-                                        else
-                                        {
-                                            embed.Footer.Text += "⏩ Starts";
-                                            embed.WithTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_for);
-                                        }
 
                                         for (int j = 0; j < ServerStatus.scheduled_maintenances[i].incident_updates.Count; j++)
                                         {
@@ -191,7 +165,11 @@ namespace ThothBotCore.Utilities
                                             {
                                                 field.IsInline = false;
                                                 field.Name = $"{platIcon}{ServerStatus.scheduled_maintenances[i].name}";
-                                                field.Value = $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})**\n__**Expected downtime: {expectedDtime}**__, {ServerStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n{ServerStatus.scheduled_maintenances[i].incident_updates[j].body}";
+                                                field.Value = $"**[{maintStatus}]({ServerStatus.scheduled_maintenances[i].shortlink})**\n" +
+                                                $"__**Expected downtime: {expectedDtime}**__, " +
+                                                $"{Text.ShortDateTimeTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime())} - " +
+                                                $"{Text.ShortTimeTimestamp(ServerStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime())}\n" +
+                                                $"{ServerStatus.scheduled_maintenances[i].incident_updates[j].body}";
                                             });
                                         }
                                     }

@@ -126,14 +126,14 @@ namespace ThothBotCore.Discord
                     for (int c = 0; c < serverStatus.incidents[n].incident_updates.Count; c++)
                     {
                         incidentValue += $"**[{Text.ToTitleCase(serverStatus.incidents[n].incident_updates[c].status)}]({serverStatus.incidents[n].shortlink})** - " +
-                            $"{serverStatus.incidents[n].incident_updates[c].updated_at.ToUniversalTime().ToString("d MMM, HH:mm", CultureInfo.InvariantCulture)} UTC\n" +
+                            $"{Text.RelativeTimestamp(serverStatus.incidents[n].incident_updates[c].updated_at.ToUniversalTime())}\n" +
                             $"{serverStatus.incidents[n].incident_updates[c].body}\n";
                     }
                     string incidentPlatIcons = await Utils.MaintenancePlatformsAsync(serverStatus.incidents[n].components);
 
                     if (incidentValue.Length > 1024)
                     {
-                        incidentEmbed.WithTitle($"{incidentPlatIcons.ToString()} {serverStatus.incidents[n].name}");
+                        incidentEmbed.WithTitle($"{incidentPlatIcons} {serverStatus.incidents[n].name}");
                         incidentEmbed.WithDescription(incidentValue);
                     }
                     else
@@ -141,7 +141,7 @@ namespace ThothBotCore.Discord
                         incidentEmbed.AddField(field =>
                         {
                             field.IsInline = false;
-                            field.Name = $"{incidentPlatIcons.ToString()} {serverStatus.incidents[n].name}";
+                            field.Name = $"{incidentPlatIcons} {serverStatus.incidents[n].name}";
                             field.Value = incidentValue;
                         });
                     }
@@ -149,7 +149,6 @@ namespace ThothBotCore.Discord
                     return incidentEmbed;
                 }
             }
-
             return null;
         }
         public static async Task<EmbedBuilder> StatusMaintenanceEmbed(ServerStatus serverStatus)
@@ -166,10 +165,6 @@ namespace ThothBotCore.Discord
                         author.WithName("Scheduled Maintenance");
                         author.WithIconUrl("https://i.imgur.com/qGjA3nY.png");
                     });
-                    embed.WithFooter(footer =>
-                    {
-                        footer.Text = $"Current UTC: {DateTime.UtcNow.ToString("dd MMM, HH:mm:ss", CultureInfo.InvariantCulture)}";
-                    });
 
                     var platIcon = "";
                     var maintValue = new StringBuilder();
@@ -181,24 +176,12 @@ namespace ThothBotCore.Discord
                         TimeSpan expDwntime = serverStatus.scheduled_maintenances[i].scheduled_until - serverStatus.scheduled_maintenances[i].scheduled_for;
                         expectedDtime = await Utils.ExpectedDowntimeAsync(expDwntime);
 
-                        if (serverStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("progress") ||
-                            serverStatus.scheduled_maintenances[i].status.ToLowerInvariant().Contains("verifying"))
-                        {
-                            embed.Footer.Text += " | Ends ";
-                            embed.WithTimestamp(serverStatus.scheduled_maintenances[i].scheduled_until);
-                        }
-                        else
-                        {
-                            embed.Footer.Text += " | Starts ";
-                            embed.WithTimestamp(serverStatus.scheduled_maintenances[i].scheduled_for);
-                        }
-
                         for (int j = 0; j < serverStatus.scheduled_maintenances[i].incident_updates.Count; j++)
                         {
                             string maintStatus = serverStatus.scheduled_maintenances[i].incident_updates[j].status.Contains("_") ? Text.ToTitleCase(serverStatus.scheduled_maintenances[i].incident_updates[j].status.Replace("_", " ")) : Text.ToTitleCase(serverStatus.scheduled_maintenances[i].incident_updates[j].status);
 
                             maintValue.Append($"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})** - " +
-                                $"{serverStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToString("d MMM, HH:mm:ss UTC", CultureInfo.InvariantCulture)}\n" +
+                                $"{Text.RelativeTimestamp(serverStatus.scheduled_maintenances[i].incident_updates[j].created_at.ToUniversalTime())}\n" +
                                 $"{serverStatus.scheduled_maintenances[i].incident_updates[j].body}\n");
                         }
 
@@ -206,7 +189,8 @@ namespace ThothBotCore.Discord
                         {
                             field.IsInline = false;
                             field.Name = $"{platIcon}{serverStatus.scheduled_maintenances[i].name}";
-                            field.Value = $"**__Expected downtime: {expectedDtime}__**, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n" + maintValue.ToString();
+                            field.Value = $"**__Expected downtime: {expectedDtime}__**, {Text.ShortDateTimeTimestamp(serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime())}" +
+                            $" - {Text.ShortTimeTimestamp(serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime())}\n" + maintValue.ToString();
                         });
                     }
                     else
@@ -223,7 +207,10 @@ namespace ThothBotCore.Discord
                             {
                                 field.IsInline = false;
                                 field.Name = $"{platIcon}{serverStatus.scheduled_maintenances[i].name}";
-                                field.Value = $"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})**\n__**Expected downtime: {expectedDtime}**__, {serverStatus.scheduled_maintenances[i].scheduled_until.ToString("d MMM", CultureInfo.InvariantCulture)}, {serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} - {serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime().ToString("t", CultureInfo.InvariantCulture)} UTC\n{serverStatus.scheduled_maintenances[i].incident_updates[j].body}";
+                                field.Value = $"**[{maintStatus}]({serverStatus.scheduled_maintenances[i].shortlink})**\n" +
+                                $"__**Expected downtime: {expectedDtime}**__, {Text.ShortDateTimeTimestamp(serverStatus.scheduled_maintenances[i].scheduled_for.ToUniversalTime())} - " +
+                                $"{Text.ShortTimeTimestamp(serverStatus.scheduled_maintenances[i].scheduled_until.ToUniversalTime())}" +
+                                $"\n{serverStatus.scheduled_maintenances[i].incident_updates[j].body}";
                             });
                         }
                     }
@@ -288,7 +275,8 @@ namespace ThothBotCore.Discord
             embed.WithTitle(embedTitle);
             if (playerStatus[0].status == 0)
             {
-                embed.WithDescription($":eyes: **Last Login:** {(playerStats[0].Last_Login_Datetime != "" ? Text.PrettyDate(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}");
+                embed.WithDescription($":eyes: **Last Login:** " +
+                    $"{(playerStats[0].Last_Login_Datetime != "" ? Text.RelativeTimestamp(DateTime.Parse(playerStats[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}");
                 embed.WithColor(new Color(220, 147, 4));
                 defaultEmoji = ":small_orange_diamond:";
             }
@@ -497,7 +485,8 @@ namespace ThothBotCore.Discord
             {
                 field.IsInline = true;
                 field.Name = $":video_game:Playing SMITE since";
-                field.Value = $"{defaultEmoji}{(playerStats[0].Created_Datetime != "" ? Text.InvariantDate(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
+                field.Value = $"{defaultEmoji}" +
+                $"{(playerStats[0].Created_Datetime != "" ? Text.LongDateTimestamp(DateTime.Parse(playerStats[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
             });
             string regionValue = playerStats[0].Region switch
             {
@@ -538,20 +527,16 @@ namespace ThothBotCore.Discord
                     field.Name = "<:Gods:567146088985919498>Top Gods";
                     field.Value = godRanksValue;
                 });
-            } 
-            // KDA
-            if (playerAchievements.PlayerKills != 0 && playerAchievements.AssistedKills != 0 && playerAchievements.Deaths != 0)
-            {
-                double kda = (double)(playerAchievements.PlayerKills + (playerAchievements.AssistedKills / 2)) / playerAchievements.Deaths;
-                embed.AddField(field =>
-                {
-                    field.IsInline = true;
-                    field.Name = ($"⚔️KDA [{Math.Round(kda, 2).ToString(CultureInfo.InvariantCulture)}]");
-                    field.Value = ($":dagger:Kills: {playerAchievements.PlayerKills}\n" +
-                    $":skull_crossbones:Deaths: {playerAchievements.Deaths}\n" +
-                    $":handshake:Assists: {playerAchievements.AssistedKills}");
-                });
             }
+            // KDA
+            embed.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = ($"⚔️KDA [{Math.Round(Text.CalculateKDA(playerAchievements.PlayerKills, playerAchievements.Deaths, playerAchievements.AssistedKills), 2).ToString(CultureInfo.InvariantCulture)}]");
+                field.Value = ($":dagger:Kills: {playerAchievements.PlayerKills}\n" +
+                $":skull_crossbones:Deaths: {playerAchievements.Deaths}\n" +
+                $":handshake:Assists: {playerAchievements.AssistedKills}");
+            });
             if (playerStats[0].Personal_Status_Message == "")
             {
                 embed.WithFooter(x =>
@@ -605,6 +590,18 @@ namespace ThothBotCore.Discord
             if (r != 0 || g != 0 || b != 0)
             {
                 embed.WithColor(new Color(r, g, b));
+            }
+            return Task.FromResult(embed.Build());
+        }
+        public static Task<Embed> BuildDescriptionEmbedAsync(string description, Color color)
+        {
+            var embed = new EmbedBuilder
+            {
+                Description = description
+            };
+            if (color.RawValue != 0)
+            {
+                embed.WithColor(color);
             }
             return Task.FromResult(embed.Build());
         }
@@ -717,9 +714,9 @@ namespace ThothBotCore.Discord
                     // Conquest
                     queueMode = 1;
                     var tuple = Text.GetRankedConquest(Convert.ToInt32(team1.Where(x => x.Tier != -1).Average(x => x.Tier)));
-                    team1AvgTier = $"{tuple.Item2} {tuple.Item1}";
+                    team1AvgTier = $"{tuple.Item2}{tuple.Item1}";
                     tuple = Text.GetRankedConquest(Convert.ToInt32(team2.Where(x => x.Tier != -1).Average(x => x.Tier)));
-                    team2AvgTier = $"{tuple.Item2} {tuple.Item1}";
+                    team2AvgTier = $"{tuple.Item2}{tuple.Item1}";
                 }
                 else if (team1[0].Queue == "450" || team1[0].Queue == "503")
                 {
@@ -728,7 +725,7 @@ namespace ThothBotCore.Discord
                     var tuple = Text.GetRankedJoust(Convert.ToInt32(team1.Where(x => x.Tier != -1).Average(x => x.Tier)));
                     team1AvgTier = $"{tuple.Item2}{tuple.Item1}";
                     tuple = Text.GetRankedJoust(Convert.ToInt32(team2.Where(x => x.Tier != -1).Average(x => x.Tier)));
-                    team2AvgTier = $"{tuple.Item2} {tuple.Item1}";
+                    team2AvgTier = $"{tuple.Item2}{tuple.Item1}";
                 }
                 if (team1AvgTier.Length != 0)
                 {
@@ -736,8 +733,7 @@ namespace ThothBotCore.Discord
                     {
                         x.IsInline = true;
                         x.Name = $"{team1force}**Averages:**{team1force}";
-                        x.Value = $"{team1AvgTier}\n" +
-                        $"{team1force}MMR: {Math.Round(team1.Where(x => x.Rank_Stat != 0).Average(x => x.Rank_Stat), 2)}";
+                        x.Value = $"{team1AvgTier} [{Math.Round(team1.Where(x => x.Rank_Stat != 0).Average(x => x.Rank_Stat), 2)}]";
                     });
                     embed.AddField(x =>
                     {
@@ -749,8 +745,7 @@ namespace ThothBotCore.Discord
                     {
                         x.IsInline = true;
                         x.Name = $"{team2force}**Averages:**{team2force}";
-                        x.Value = $"{team2AvgTier}\n" +
-                        $"{team2force}MMR: {Math.Round(team2.Where(x => x.Rank_Stat != 0).Average(x => x.Rank_Stat), 2)}";
+                        x.Value = $"{team2AvgTier} [{Math.Round(team2.Where(x => x.Rank_Stat != 0).Average(x => x.Rank_Stat), 2)}]";
                     });
                 }
             }
@@ -765,25 +760,21 @@ namespace ThothBotCore.Discord
                 {
                     if (queueMode == 1)
                     {
-                        player1.Append($"{Text.GetRankedConquest(team1[i].Tier).Item2} {Text.GetRankedConquest(team1[i].Tier).Item1}\n");
-                        player2.Append($"{Text.GetRankedConquest(team2[i].Tier).Item2} {Text.GetRankedConquest(team2[i].Tier).Item1}\n");
+                        player1.Append($"{Text.GetRankedConquest(team1[i].Tier).Item2}{Text.GetRankedConquest(team1[i].Tier).Item1} [{Math.Round(team1[i].Rank_Stat, 0)}]\n");
+                        player2.Append($"{Text.GetRankedConquest(team2[i].Tier).Item2}{Text.GetRankedConquest(team2[i].Tier).Item1} [{Math.Round(team2[i].Rank_Stat, 0)}]\n");
                     }
                     else if (queueMode == 2)
                     {
-                        player1.Append($"{Text.GetRankedJoust(team1[i].Tier).Item2} {Text.GetRankedJoust(team1[i].Tier).Item1}\n");
-                        player2.Append($"{Text.GetRankedJoust(team2[i].Tier).Item2} {Text.GetRankedJoust(team2[i].Tier).Item1}\n");
+                        player1.Append($"{Text.GetRankedJoust(team1[i].Tier).Item2}{Text.GetRankedJoust(team1[i].Tier).Item1} [{Math.Round(team1[i].Rank_Stat, 0)}]\n");
+                        player2.Append($"{Text.GetRankedJoust(team2[i].Tier).Item2}{Text.GetRankedJoust(team2[i].Tier).Item1} [{Math.Round(team2[i].Rank_Stat, 0)}]\n");
                     }
                     else
                     {
-                        player1.Append($"{Text.GetRankedDuel(team1[i].Tier).Item2} {Text.GetRankedDuel(team1[i].Tier).Item1}\n");
-                        player2.Append($"{Text.GetRankedDuel(team2[i].Tier).Item2} {Text.GetRankedDuel(team2[i].Tier).Item1}\n");
+                        player1.Append($"{Text.GetRankedDuel(team1[i].Tier).Item2}{Text.GetRankedDuel(team1[i].Tier).Item1} [{Math.Round(team1[i].Rank_Stat, 0)}]\n");
+                        player2.Append($"{Text.GetRankedDuel(team2[i].Tier).Item2}{Text.GetRankedDuel(team2[i].Tier).Item1} [{Math.Round(team2[i].Rank_Stat, 0)}]\n");
                     }
-                    player1.Append($"🔹 W/L: {team1[i].tierWins}/{team1[i].tierLosses}\n" +
-                        $"🔹 MMR: {Math.Round(team1[i].Rank_Stat, 0)}\n" +
-                        $"🔹 TP: {team1[i].tierPoints}");
-                    player2.Append($"🔸 W/L: {team2[i].tierWins}/{team2[i].tierLosses}\n" +
-                        $"🔸 MMR: {Math.Round(team2[i].Rank_Stat, 0)}\n" +
-                        $"🔸 TP: {team2[i].tierPoints}");
+                    player1.Append($"🔹W/L: {team1[i].tierWins}/{team1[i].tierLosses}<:blank:570291209906552848>{team1[i].tierPoints} TP");
+                    player2.Append($"🔸W/L: {team2[i].tierWins}/{team2[i].tierLosses}<:blank:570291209906552848>{team2[i].tierPoints} TP");
                 }
                 else
                 {
@@ -850,7 +841,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(x =>
                     {
                         x.IsInline = true;
-                        x.Name = $"{godemoji} {(player.hz_player_name == null || player.hz_player_name == "" ? player.hz_gamer_tag : player.hz_player_name)}";
+                        x.Name = $"{godemoji} {Text.HiddenProfileCheck(player.playerName, player.hz_player_name, player.hz_gamer_tag, player.ret_msg)}";
                         x.Value = $"⚔️KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
                     $"🗡Damage: {player.Damage_Player}";
                     });
@@ -860,9 +851,24 @@ namespace ThothBotCore.Discord
 
             var winners = new List<MatchDetails.MatchDetailsPlayer>();
             var losers = new List<MatchDetails.MatchDetailsPlayer>();
+            var parties = new Dictionary<int, List<MatchDetails.MatchDetailsPlayer>>();
 
             foreach (var player in matchdetailsList)
             {
+                // Parties
+                if (player.PartyId != 0)
+                {
+                    if (parties.ContainsKey(player.PartyId))
+                    {
+                        parties[player.PartyId].Add(player);
+                    }
+                    else
+                    {
+                        parties.Add(player.PartyId, new List<MatchDetails.MatchDetailsPlayer> { player });
+                    }
+                }
+
+                // Winners / Losers
                 if (player.Win_Status.ToLowerInvariant() == "winner")
                 {
                     winners.Add(player);
@@ -876,7 +882,11 @@ namespace ThothBotCore.Discord
                     await Reporter.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
                 }
             }
+            // Sorting the parties for easier printing after
+            var sortedParties = parties.OrderByDescending(x => x.Value.Count).ToList();
+
             // If the match is vs bots
+            // Yo, does this even run at any point?
             if (winners.Count == 0 || losers.Count == 0)
             {
                 foreach (var player in matchdetailsList)
@@ -885,7 +895,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(x =>
                     {
                         x.IsInline = true;
-                        x.Name = $"{godemoji} {(player.hz_player_name == null || player.hz_player_name == "" ? player.hz_gamer_tag : player.hz_player_name)}\n" +
+                        x.Name = $"{godemoji} {Text.HiddenProfileCheck(player.playerName, player.hz_player_name, player.hz_gamer_tag, player.ret_msg)}\n" +
                         $"{Utils.GetItemsBuiltAsync(player)}";
                         x.Value = $"⚔️KDA: {player.Kills_Player}/{player.Deaths}/{player.Assists}\n" +
                     $"🗡Damage: {player.Damage_Player}";
@@ -895,22 +905,40 @@ namespace ThothBotCore.Discord
             }
             string team1emo = Text.SideEmoji(winners[0].TaskForce);
             string team2emo = Text.SideEmoji(losers[0].TaskForce);
+            Tuple<string,string> tuple;
             double winnersAverageMMR = 0;
+            string winnersAverages = "";
+            string losersAverages = "";
             double losersAverageMMR = 0;
             if (winners[0].match_queue_id == 451 || winners[0].match_queue_id == 504) // Conquest
             {
+                tuple = Text.GetRankedConquest(Convert.ToInt32(winners.Where(x => x.Conquest_Tier != -1).Average(x => x.Conquest_Tier)));
                 winnersAverageMMR = winners.Where(x => x.Rank_Stat_Conquest != 0).Average(x => x.Rank_Stat_Conquest);
+                winnersAverages = $"{tuple.Item2}{tuple.Item1} {(winnersAverageMMR != 0 ? $"[{Math.Round(winnersAverageMMR)}]\n" : "")}";
+
+                tuple = Text.GetRankedConquest(Convert.ToInt32(losers.Where(x => x.Conquest_Tier != -1).Average(x => x.Conquest_Tier)));
                 losersAverageMMR = losers.Where(x => x.Rank_Stat_Conquest != 0).Average(x => x.Rank_Stat_Conquest);
+                losersAverages = $"{tuple.Item2}{tuple.Item1} {(losersAverageMMR != 0 ? $"[{Math.Round(losersAverageMMR)}]\n" : "")}";
             }
             else if (winners[0].match_queue_id == 450 || winners[0].match_queue_id == 503) // Joust
             {
+                tuple = Text.GetRankedJoust(Convert.ToInt32(winners.Where(x => x.Joust_Tier != -1).Average(x => x.Joust_Tier)));
                 winnersAverageMMR = winners.Where(x => x.Rank_Stat_Joust != 0).Average(x => x.Rank_Stat_Joust);
+                winnersAverages = $"{tuple.Item2}{tuple.Item1} {(winnersAverageMMR != 0 ? $"[{Math.Round(winnersAverageMMR)}]\n" : "")}";
+
+                tuple = Text.GetRankedJoust(Convert.ToInt32(losers.Where(x => x.Joust_Tier != -1).Average(x => x.Joust_Tier)));
                 losersAverageMMR = losers.Where(x => x.Rank_Stat_Joust != 0).Average(x => x.Rank_Stat_Joust);
+                losersAverages = $"{tuple.Item2}{tuple.Item1} {(losersAverageMMR != 0 ? $"[{Math.Round(losersAverageMMR)}]\n" : "")}";
             }
             else if (winners[0].match_queue_id == 440 || winners[0].match_queue_id == 502) // Duel
             {
+                tuple = Text.GetRankedDuel(Convert.ToInt32(winners.Where(x => x.Duel_Tier != -1).Average(x => x.Duel_Tier)));
                 winnersAverageMMR = winners.Where(x => x.Rank_Stat_Duel != 0).Average(x => x.Rank_Stat_Duel);
+                winnersAverages = $"{tuple.Item2}{tuple.Item1} {(winnersAverageMMR != 0 ? $"[{Math.Round(winnersAverageMMR)}]\n" : "")}";
+
+                tuple = Text.GetRankedDuel(Convert.ToInt32(losers.Where(x => x.Duel_Tier != -1).Average(x => x.Duel_Tier)));
                 losersAverageMMR = losers.Where(x => x.Rank_Stat_Duel != 0).Average(x => x.Rank_Stat_Duel);
+                losersAverages = $"{tuple.Item2}{tuple.Item1} {(losersAverageMMR != 0 ? $"[{Math.Round(losersAverageMMR)}]\n" : "")}";
             }
             // Winners Main Info
             string winnersVal = "";
@@ -918,7 +946,7 @@ namespace ThothBotCore.Discord
             {
                 winnersVal = $"⚔️Team KDA: {winners.Sum(x => x.Kills_Player)}/{winners.Sum(x => x.Deaths)}/{winners.Sum(x => x.Assists)}\n" +
                     $"{team1emo}**Averages:**{team1emo}\n" +
-                    $"{(winnersAverageMMR != 0 ? $"{team1emo}MMR: {Math.Round(winnersAverageMMR)}\n" : "")}" +
+                    $"{winnersAverages}" +
                     $"🗡Damage: {Math.Round(winners.Average(x => x.Damage_Player))}\n";
             }
             else
@@ -931,7 +959,7 @@ namespace ThothBotCore.Discord
                 x.Name = $"🏆 **{winners[0].Win_Status}** 🏆";
                 x.Value = winnersVal;
             });
-            if (winners[0].Ban1.Length != 0)
+            if (winners[0].Ban1.Length != 0 || winners[0].Ban2.Length != 0)
             {
                 var bans = new StringBuilder();
                 bans.Append(gods.Find(x => x.id == winners[0].Ban1Id)?.Emoji);
@@ -967,7 +995,7 @@ namespace ThothBotCore.Discord
             {
                 losersVal = $"⚔️Team KDA: {losers.Sum(x => x.Kills_Player)}/{losers.Sum(x => x.Deaths)}/{losers.Sum(x => x.Assists)}\n" +
                 $"{team2emo}**Averages:**{team2emo}\n" +
-                $"{(losersAverageMMR != 0 ? $"{team2emo}MMR: {Math.Round(losersAverageMMR)}\n" : "")}" +
+                $"{losersAverages}" +
                 $"🗡Damage: {Math.Round(losers.Average(x => x.Damage_Player))}\n";
             }
             else
@@ -987,7 +1015,7 @@ namespace ThothBotCore.Discord
 
             var player1 = new StringBuilder();
             var player2 = new StringBuilder();
-            
+
             for (int i = 0; i < winners.Count; i++)
             {
                 if ((winners[0].match_queue_id == 440) || 
@@ -999,61 +1027,86 @@ namespace ThothBotCore.Discord
                 {
                     if (winners[0].match_queue_id == 451 || winners[0].match_queue_id == 504) // Conquest
                     {
-                        player1.Append($"{Text.GetRankedConquest(winners[i].Conquest_Tier).Item2}{Text.GetRankedConquest(winners[i].Conquest_Tier).Item1}\n");
-                        player1.Append($"{team1emo}W/L: {winners[i].Conquest_Wins}/{winners[i].Conquest_Losses}\n");
-                        player1.Append($"{team1emo}MMR: {Math.Round(winners[i].Rank_Stat_Conquest, 0)}\n");
-                        
-                        player2.Append($"{Text.GetRankedConquest(losers[i].Conquest_Tier).Item2}{Text.GetRankedConquest(losers[i].Conquest_Tier).Item1}\n");
-                        player2.Append($"{team2emo}W/L: {losers[i].Conquest_Wins}/{losers[i].Conquest_Losses}\n");
-                        player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Conquest, 0)}\n");
+                        tuple = Text.GetRankedConquest(winners[i].Conquest_Tier);
+                        player1.Append($"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(winners[i].Rank_Stat_Conquest, 0)}]\n");
+                        player1.Append($"{team1emo}W/L: {winners[i].Conquest_Wins}/{winners[i].Conquest_Losses}<:blank:570291209906552848>{winners[i].Conquest_Points} TP\n");
+
+                        tuple = Text.GetRankedConquest(losers[i].Conquest_Tier);
+                        player2.Append($"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(losers[i].Rank_Stat_Conquest, 0)}]\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Conquest_Wins}/{losers[i].Conquest_Losses}<:blank:570291209906552848>{losers[i].Conquest_Points} TP\n");
                     }
                     else if (winners[0].match_queue_id == 450 || winners[0].match_queue_id == 503) // Joust
                     {
-                        player1.Append($"{Text.GetRankedJoust(winners[i].Joust_Tier).Item2}{Text.GetRankedJoust(winners[i].Joust_Tier).Item1}\n");
-                        player1.Append($"{team1emo}W/L: {winners[i].Joust_Wins}/{winners[i].Joust_Losses}\n");
-                        player1.Append($"{team1emo}MMR: {Math.Round(winners[i].Rank_Stat_Joust, 0)}\n");
+                        tuple = Text.GetRankedJoust(winners[i].Joust_Tier);
+                        player1.Append($"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(winners[i].Rank_Stat_Joust, 0)}]\n");
+                        player1.Append($"{team1emo}W/L: {winners[i].Joust_Wins}/{winners[i].Joust_Losses}<:blank:570291209906552848>{winners[i].Joust_Points} TP\n");
 
-                        player2.Append($"{Text.GetRankedJoust(losers[i].Joust_Tier).Item2}{Text.GetRankedJoust(losers[i].Joust_Tier).Item1}\n");
-                        player2.Append($"{team2emo}W/L: {losers[i].Joust_Wins}/{losers[i].Joust_Losses}\n");
-                        player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Joust, 0)}\n");
+                        tuple = Text.GetRankedJoust(losers[i].Joust_Tier);
+                        player2.Append($"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(losers[i].Rank_Stat_Joust, 0)}]\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Joust_Wins}/{losers[i].Joust_Losses}<:blank:570291209906552848>{losers[i].Joust_Points} TP\n");
                     }
                     else
                     {
-                        player1.Append($"{Text.GetRankedDuel(winners[i].Duel_Tier).Item2}{Text.GetRankedDuel(winners[i].Duel_Tier).Item1}\n");
-                        player1.Append($"{team1emo}W/L: {winners[i].Duel_Wins}/{winners[i].Duel_Losses}\n");
-                        player1.Append($"{team1emo}MMR: {Math.Round(winners[i].Rank_Stat_Duel, 0)}\n");
+                        tuple = Text.GetRankedDuel(winners[i].Duel_Tier);
+                        player1.Append($"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(winners[i].Rank_Stat_Duel, 0)}]\n");
+                        player1.Append($"{team1emo}W/L: {winners[i].Duel_Wins}/{winners[i].Duel_Losses}<:blank:570291209906552848>{winners[i].Duel_Points} TP\n");
 
-                        player2.Append($"{Text.GetRankedDuel(losers[i].Duel_Tier).Item2}{Text.GetRankedDuel(losers[i].Duel_Tier).Item1}\n");
-                        player2.Append($"{team2emo}W/L: {losers[i].Duel_Wins}/{losers[i].Duel_Losses}\n");
-                        player2.Append($"{team2emo}MMR: {Math.Round(losers[i].Rank_Stat_Duel, 0)}\n");
+                        tuple = Text.GetRankedDuel(losers[i].Duel_Tier);
+                        player2.Append($"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(losers[i].Rank_Stat_Conquest, 0)}]\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Conquest_Wins}/{losers[i].Conquest_Losses}<:blank:570291209906552848>{losers[i].Conquest_Points} TP\n");
                     }
+                }
+
+                // Party Checker
+                var foundWinP = sortedParties.Find(x => x.Key == winners[i].PartyId);
+                KeyValuePair<int, List<MatchDetails.MatchDetailsPlayer>> foundLosP = new();
+                if (i < losers.Count)
+                {
+                    foundLosP = sortedParties.Find(x => x.Key == losers[i].PartyId);
                 }
 
                 player1.Append($"{await Utils.GetItemsBuiltAsync(winners[i])}\n" +
                     $"⚔️KDA: {winners[i].Kills_Player}/{winners[i].Deaths}/{winners[i].Assists}\n" +
                     $"🗡Damage: {winners[i].Damage_Player}");
-                player2.Append($"{await Utils.GetItemsBuiltAsync(losers[i])}\n" +
+
+                if (i < losers.Count)
+                {
+                    player2.Append($"{await Utils.GetItemsBuiltAsync(losers[i])}\n" +
                     $"⚔️KDA: {losers[i].Kills_Player}/{losers[i].Deaths}/{losers[i].Assists}\n" +
                     $"🗡Damage: {losers[i].Damage_Player}");
+                }
+                else
+                {
+                    player2.Append($"\u200b");
+                }
 
-                godemoji = gods.Find(x => x.id == winners[i].GodId).Emoji;
+                godemoji = gods.Find(x => x.id == winners[i].GodId)?.Emoji;
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{godemoji} {(winners[i].hz_player_name == null || winners[i].hz_player_name == "" ? winners[i].hz_gamer_tag : winners[i].hz_player_name)}";
+                    x.Name = $"{godemoji} {Text.HiddenProfileCheck(winners[i].playerName, winners[i].hz_player_name, winners[i].hz_gamer_tag, winners[i].ret_msg)}";
                     x.Value = player1.ToString();
                 });
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"**{winners[i].Account_Level} **<:level:529719212017451008>** {losers[i].Account_Level}**";
-                    x.Value = $"{Text.AbbreviationRegions(winners[i].Region)} 🌐 {Text.AbbreviationRegions(losers[i].Region)}";
+                    x.Name = $"**{winners[i].Account_Level} **<:level:529719212017451008>** {losers[i].Account_Level}**\n" +
+                    $"{Text.AbbreviationRegions(winners[i].Region)} 🌐 {Text.AbbreviationRegions(losers[i].Region)}";
+                    x.Value = $"{Text.GetPortalIcon(winners[i].playerPortalId)} <:blank:570291209906552848> {Text.GetPortalIcon(losers[i].playerPortalId)}\n" +
+                    $"{(winners[i].PartyId != 0 && foundWinP.Value.Count > 1 ? Text.GetPartyEmoji(sortedParties.IndexOf(foundWinP) + 1) : Text.GetPartyEmoji(0))} <:blank:570291209906552848> " +
+                    $"{(losers[i].PartyId != 0 && foundLosP.Value.Count > 1 ? Text.GetPartyEmoji(sortedParties.IndexOf(foundLosP) + 1) : Text.GetPartyEmoji(0))}";
                 });
-                godemoji = gods.Find(x => x.id == losers[i].GodId).Emoji;
+                godemoji = gods.Find(x => x.id == losers[i].GodId)?.Emoji;
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = $"{godemoji} {(losers[i].hz_player_name == "" || losers[i].hz_player_name == null ? losers[i].hz_gamer_tag : losers[i].hz_player_name)}";
+                    x.Name = $"{godemoji} {Text.HiddenProfileCheck(losers[i].playerName, losers[i].hz_player_name, losers[i].hz_gamer_tag, losers[i].ret_msg)}";
                     x.Value = player2.ToString();
                 });
 
@@ -1088,7 +1141,9 @@ namespace ThothBotCore.Discord
                     embed.AddField(async x =>
                     {
                         x.IsInline = false;
-                        x.Name = $"{godemoji} `{matchHistory[i].Win_Status}` {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - {matchHistory[i].Minutes} min - {Text.PrettyDate(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} `[{matchHistory[i].Match}]`";
+                        x.Name = $"{godemoji} `{matchHistory[i].Win_Status}` {Text.GetQueueName(matchHistory[i].Match_Queue_Id)} - " +
+                        $"{matchHistory[i].Minutes} min - {Text.RelativeTimestamp(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} " +
+                        $"`[{matchHistory[i].Match}]`";
                         x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | " +
                         $"🗡Damage: {matchHistory[i].Damage} | {await Utils.GetItemsBuiltAsync(match)}";
                     });
@@ -1225,8 +1280,8 @@ namespace ThothBotCore.Discord
             embed.WithImageUrl(imageURL);
             embed.WithAuthor(x =>
             {
-                x.Name = "SMITE";
-                x.IconUrl = "https://pbs.twimg.com/profile_images/1210997178786832384/ScZXulZQ_400x400.jpg";
+                x.Name = "SMITE"; 
+                x.IconUrl = Constants.SmiteBolt;
             });
             return await Task.FromResult(embed.Build());
         }
