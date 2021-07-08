@@ -661,7 +661,7 @@ namespace ThothBotCore.Discord
 
             if (matchPlayerDetails.Count == 1)
             {
-                string ge = gods.Find(x => x.id == matchPlayerDetails[0].GodId).Emoji;
+                string ge = Utils.FindGodEmoji(gods, matchPlayerDetails[0].GodId);
                 embed.AddField(x =>
                 {
                     x.IsInline = false;
@@ -674,7 +674,7 @@ namespace ThothBotCore.Discord
             {
                 foreach (var player in matchPlayerDetails)
                 {
-                    string ge = gods.Find(x => x.id == player.GodId).Emoji;
+                    string ge = Utils.FindGodEmoji(gods, player.GodId);
                     embed.AddField(x =>
                     {
                         x.IsInline = false;
@@ -781,7 +781,7 @@ namespace ThothBotCore.Discord
                     player1.Append($":video_game:Account Created: \n{team1force}{(team1[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team1[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
                     player2.Append($":video_game:Account Created: \n{team2force}{(team2[i].playerCreated != "" ? Text.InvariantDate(DateTime.Parse(team2[i].playerCreated, CultureInfo.InvariantCulture)) : "n/a")}");
                 }
-                godemoji = gods.Find(x => x.id == team1[i].GodId).Emoji;
+                godemoji = Utils.FindGodEmoji(gods, team1[i].GodId);
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
@@ -794,7 +794,7 @@ namespace ThothBotCore.Discord
                     x.Name = $"**{team1[i].Account_Level} **<:level:529719212017451008>** {team2[i].Account_Level}**";
                     x.Value = $" {Text.AbbreviationRegions(team1[i].playerRegion)} 🌐 {Text.AbbreviationRegions(team2[i].playerRegion)}";
                 });
-                godemoji = gods.Find(x => x.id == team2[i].GodId).Emoji;
+                godemoji = Utils.FindGodEmoji(gods, team2[i].GodId);
                 embed.AddField(field =>
                 {
                     field.IsInline = true;
@@ -837,7 +837,7 @@ namespace ThothBotCore.Discord
             {
                 foreach (var player in matchdetailsList)
                 {
-                    godemoji = gods.Find(x => x.id == player.GodId).Emoji;
+                    godemoji = Utils.FindGodEmoji(gods, player.GodId);
                     embed.AddField(x =>
                     {
                         x.IsInline = true;
@@ -891,7 +891,7 @@ namespace ThothBotCore.Discord
             {
                 foreach (var player in matchdetailsList)
                 {
-                    godemoji = gods.Find(x => x.id == player.GodId).Emoji;
+                    godemoji = Utils.FindGodEmoji(gods, player.GodId);
                     embed.AddField(x =>
                     {
                         x.IsInline = true;
@@ -1086,7 +1086,7 @@ namespace ThothBotCore.Discord
                     player2.Append($"\u200b");
                 }
 
-                godemoji = gods.Find(x => x.id == winners[i].GodId)?.Emoji;
+                godemoji = Utils.FindGodEmoji(gods, winners[i].GodId);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -1102,7 +1102,7 @@ namespace ThothBotCore.Discord
                     $"{(winners[i].PartyId != 0 && foundWinP.Value.Count > 1 ? Text.GetPartyEmoji(sortedParties.IndexOf(foundWinP) + 1) : Text.GetPartyEmoji(0))} <:blank:570291209906552848> " +
                     $"{(losers[i].PartyId != 0 && foundLosP.Value.Count > 1 ? Text.GetPartyEmoji(sortedParties.IndexOf(foundLosP) + 1) : Text.GetPartyEmoji(0))}";
                 });
-                godemoji = gods.Find(x => x.id == losers[i].GodId)?.Emoji;
+                godemoji = Utils.FindGodEmoji(gods, losers[i].GodId);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -1137,7 +1137,7 @@ namespace ThothBotCore.Discord
             {
                 if (i != 6)
                 {
-                    godemoji = gods.Find(x => x.id == matchHistory[i].GodId).Emoji;
+                    godemoji = Utils.FindGodEmoji(gods, matchHistory[i].GodId);
                     embed.AddField(async x =>
                     {
                         x.IsInline = false;
@@ -1235,7 +1235,7 @@ namespace ThothBotCore.Discord
             var sortedRanksByWinRate = ranks.OrderByDescending(x=>x.WinRate).ToList();
             for (int i = 0; i < sortedRanksByWinRate.Count; i++)
             {
-                string godEmoji = gods.Find(x => x.id.ToString() == sortedRanksByWinRate[i].god_id).Emoji;
+                string godEmoji = Utils.FindGodEmoji(gods, Int32.Parse(sortedRanksByWinRate[i].god_id));
                 sb.AppendLine($"{godEmoji} {sortedRanksByWinRate[i].god} [**{Math.Round(sortedRanksByWinRate[i].WinRate, 2)}%**]");
                 count++;
                 if (count == 19)

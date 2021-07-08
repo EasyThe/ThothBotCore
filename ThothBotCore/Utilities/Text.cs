@@ -519,8 +519,8 @@ namespace ThothBotCore.Utilities
         public static string HiddenProfileCheck(string Name, string HzName, string GamerTag, object Ret_Msg)
         {
             if (Ret_Msg != null && Ret_Msg.ToString().ToLowerInvariant().Contains("privacy flag set")) return "~~Hidden Profile~~";
-            if (Name != null && Name.Length != 0 && Name.Contains(HzName)) return HzName;
-            if (Name != null && Name.Length != 0 && Name.Contains(GamerTag)) return GamerTag;
+            if (HzName != null && Name != null && Name.Length != 0 && Name.Contains(HzName)) return HzName;
+            if (GamerTag != null && Name != null && Name.Length != 0 && Name.Contains(GamerTag)) return GamerTag;
             if (HzName != null && HzName.Length != 0) return HzName;
             if (GamerTag != null && GamerTag.Length != 0) return GamerTag;
             if (Name != null && Name.Length != 0)

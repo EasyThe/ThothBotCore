@@ -28,7 +28,7 @@ namespace ThothBotCore.Utilities
             string[] secondsplit = firstsplit[^1].Split('.');
             try
             {
-                image = new Image($"Storage\\Gods\\{firstsplit[^1]}");
+                image = new Image($"Storage/Gods/{firstsplit[^1]}");
             }
             catch (Exception ex)
             {
@@ -341,6 +341,12 @@ namespace ThothBotCore.Utilities
             builder.Append($"{teamEmoji}MMR: {Math.Round(player.Rank_Stat_Conquest, 0)}\n");
             builder.Append($"{teamEmoji}TP:");
             return builder.ToString();
+        }
+        public static string FindGodEmoji(List<Gods.God> gods, int godId)
+        {
+            var find = gods.Find(x => x.id == godId);
+            if (find != null) return find.Emoji;
+            return "<:blank:570291209906552848>";
         }
     }
 }
