@@ -31,7 +31,7 @@ namespace ThothBotCore.Discord
 
         private async Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
         {
-            if (arg3.Error == CommandError.BadArgCount)
+            if (arg3?.Error == CommandError.BadArgCount)
             {
                 var serverConfig = new Models.ServerConfig { prefix = Credentials.botConfig.prefix };
                 if (arg2.Guild != null)
@@ -42,6 +42,7 @@ namespace ThothBotCore.Discord
                 var commandEmbed = HelpCommand.GetHelpEmbed(_commands, arg1.Value.Name, serverConfig.prefix);
                 await arg2.Channel.SendMessageAsync(embed: commandEmbed);
             }
+            
         }
 
         private IServiceProvider ConfigureServices()

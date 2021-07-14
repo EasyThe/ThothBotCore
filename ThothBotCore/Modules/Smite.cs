@@ -526,9 +526,23 @@ namespace ThothBotCore.Modules
         [Alias("статус", "statis", "s", "с", "server", "servers", "se", "се", "serverstatus")]
         public async Task ServerStatusCheck()
         {
+            List<HiRezServerStatus> hirezServerStatus = new();
+
             await Context.Channel.TriggerTypingAsync();
             var smiteServerStatus = JsonConvert.DeserializeObject<ServerStatus>(await StatusPage.GetStatusSummary());
-            var hirezServerStatus = JsonConvert.DeserializeObject<List<HiRezServerStatus>>(await hirezAPI.GetHiRezServerStatus());
+            var hirezStatusString = await hirezAPI.GetHiRezServerStatus();
+            if (!hirezStatusString.Contains("<html>"))
+            {
+                hirezServerStatus = JsonConvert.DeserializeObject<List<HiRezServerStatus>>(hirezStatusString);
+            }
+            else
+            {
+                hirezServerStatus.Add(new() { Platform = "pc", Status = "API Unavailable", Limited_access = false, Environment = "live" });
+                hirezServerStatus.Add(new() { Platform = "xbox", Status = "API Unavailable", Limited_access = false, Environment = "live" });
+                hirezServerStatus.Add(new() { Platform = "ps4", Status = "API Unavailable", Limited_access = false, Environment = "live" });
+                hirezServerStatus.Add(new() { Platform = "switch", Status = "API Unavailable", Limited_access = false, Environment = "live" });
+                hirezServerStatus.Add(new() { Platform = "pc", Status = "API Unavailable", Limited_access = false, Environment = "pts" });
+            }
 
             var statusEmbed = await EmbedHandler.ServerStatusEmbedAsync(smiteServerStatus, hirezServerStatus);
             await ReplyAsync(embed: statusEmbed);
@@ -1828,15 +1842,13 @@ namespace ThothBotCore.Modules
 
         [Command("tt", true, RunMode = RunMode.Async)]
         [RequireOwner]
-        public async Task TestGetPlayer()
+        public async Task TestGetPlayer(string godName)
         {
             try
             {
                 // use me as u wish my love
-                var da = File.ReadAllText("F:\\Repos\\ThothBotCore\\ThothBotCore\\bin\\Release\\net5.0\\Storage\\2.json");
-                var n = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(da);
-                var em = await EmbedHandler.MatchDetailsEmbed(n);
-                await ReplyAsync(embed: em.Build());
+                
+                await ReplyAsync("nishto");
             }
             catch (Exception ex)
             {

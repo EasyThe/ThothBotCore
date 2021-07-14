@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
+using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Utilities
@@ -122,8 +123,7 @@ namespace ThothBotCore.Utilities
         {
             StringBuilder sb = new();
             string godType = "physical";
-            int itemsCount = DateTime.UtcNow.Day == 13 && DateTime.UtcNow.Month == 7 ? 5 : 4;
-            // Change this on the next update
+            int itemsCount = 5; // This was 4 when boots existed #RIPBoots
 
             if (god.Roles.Contains("Mage") || god.Roles.Contains("Guardian"))
             {
@@ -145,17 +145,10 @@ namespace ThothBotCore.Utilities
 
             sb.Append(starters[rnd.Next(starters.Count)].Emoji);
 
-            // Boots or Shoes depending on the god type
-            if (god.Name != "Ratatoskr" && itemsCount == 4)
+            // Boots or Shoes depending on the god type | hehe rip boots
+            if (god.Name == "Ratatoskr")
             {
-                var boots = await MongoConnection.GetBootsOrShoesAsync(godType);
-                int boot = rnd.Next(boots.Count);
-                sb.Append(boots[boot].Emoji);
-            }
-            else if (god.Name == "Ratatoskr")
-            {
-                var boots = await MongoConnection.GetBootsOrShoesAsync("ratatoskr");
-                sb.Append(boots[rnd.Next(boots.Count)].Emoji);
+                sb.Append(await GetRandomBoots("Ratatoskr", godType));
                 itemsCount = 4;
             }
 
@@ -171,6 +164,17 @@ namespace ThothBotCore.Utilities
 
             // Random Build END
             return sb.ToString();
+        }
+        private static async Task<string> GetRandomBoots(string godName, string godType) //This is here in case HiRez adds boots back lol
+        {
+            if (godName != "Ratatoskr")
+            {
+                var boots = await MongoConnection.GetBootsOrShoesAsync(godType);
+                int boot = rnd.Next(boots.Count);
+                return boots[boot].Emoji;
+            }
+            var bootsr = await MongoConnection.GetBootsOrShoesAsync("ratatoskr");
+            return bootsr[rnd.Next(bootsr.Count)].Emoji;
         }
         public static async Task<string> GetItemsBuiltAsync(MatchHistoryModel match)
         {
@@ -347,6 +351,12 @@ namespace ThothBotCore.Utilities
             var find = gods.Find(x => x.id == godId);
             if (find != null) return find.Emoji;
             return "<:blank:570291209906552848>";
+        }
+        public static async void RespondOnBadArgCount(ulong guildId, string commandName)
+        {
+            var db = await Database.GetServerConfig(guildId);
+            //var commandEmbed = HelpCommand.GetHelpEmbed(_commands, commandName, db[0].prefix);
+            //await arg2.Channel.SendMessageAsync(embed: commandEmbed);
         }
     }
 }
