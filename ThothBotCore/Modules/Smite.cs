@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -776,12 +775,15 @@ namespace ThothBotCore.Modules
                 if (item[index].ChildItemId != 0)
                 {
                     itemsForPrice = await MongoConnection.GetSpecificItemByIDAsync(item[index].ChildItemId);
-                    if (itemsForPrice[0].ChildItemId != 0)
+                    if (itemsForPrice != null && itemsForPrice.Count != 0)
                     {
-                        itemsForPriceTwo = await MongoConnection.GetSpecificItemByIDAsync(itemsForPrice[0].ChildItemId);
-                        itemPrice = itemsForPriceTwo[0].Price;
+                        if (itemsForPrice[0].ChildItemId != 0)
+                        {
+                            itemsForPriceTwo = await MongoConnection.GetSpecificItemByIDAsync(itemsForPrice[0].ChildItemId);
+                            itemPrice = itemsForPriceTwo[0].Price;
+                        }
+                        itemPrice = itemPrice + item[index].Price + itemsForPrice[0].Price;
                     }
-                    itemPrice = itemPrice + item[index].Price + itemsForPrice[0].Price;
                 }
                 else
                 {
@@ -808,6 +810,7 @@ namespace ThothBotCore.Modules
                 try
                 {
                     var allitems = MongoConnection.GetAllItems();
+                    allitems.RemoveAll(x => x.ActiveFlag != "y");
                     List<GetItems.Item> relatedItems = new();
                     relatedItems.AddRange(allitems.FindAll(x => x.ChildItemId == item[index].ItemId));
                     if (item[index].ChildItemId != 0)
@@ -1285,30 +1288,40 @@ namespace ThothBotCore.Modules
                 var motdList = JsonConvert.DeserializeObject<List<Motd>>(json);
                 string desc = "";
                 string embedValue = "";
+                bool addedTodaysMotd = false;
 
                 var embed = new EmbedBuilder();
 
-                embed.WithColor(0, 80, 188);
+                embed.WithColor(Constants.DefaultBlueColor);
                 embed.WithAuthor(x =>
                 {
-                    x.Name = "Upcoming Matches Of The Day";
+                    x.Name = "Current & Upcoming Matches Of The Day";
                     x.IconUrl = Constants.botIcon;
                 });
-                Motd motdDay = new();
-
-                if (DateTime.UtcNow !< motdList.Find(x => x.startDateTime.Day == DateTime.UtcNow.Day).startDateTime)
+                embed.WithFooter(x =>
                 {
-                    Console.WriteLine("motd da");
-                }
+                    x.IconUrl = Constants.botIcon;
+                    x.Text = Text.GetRandomTip();
+                });
+
+                Motd motdDay = new();
 
                 for (int i = 0; i < 5; i++)
                 {
                     string[] finalDesc = Array.Empty<string>();
                     motdDay = motdList.Find(x => x.startDateTime.Date == DateTime.Today.AddDays(i));
+
+                    // Checking if the motd for the day has actually changed or not
+                    if (motdDay != null && DateTime.Now <= motdDay.startDateTime && !addedTodaysMotd)
+                    {
+                        motdDay = motdList.Find(x => x.startDateTime.Date == DateTime.Today.AddDays(-1));
+                        addedTodaysMotd = true;
+                        i -= 1;
+                    }
+
                     if (motdDay == null)
                     {
-                        await ReplyAsync("", false, embed.Build());
-                        return;
+                        break;
                     }
                     desc = Text.ReFormatMOTDText(motdDay.description);
                     if (desc.Contains("**Map"))
@@ -1327,6 +1340,10 @@ namespace ThothBotCore.Modules
                     });
                 }
 
+                if (embed.Fields?.Count == 0)
+                {
+                    embed.WithDescription("No data available.");
+                }
                 await ReplyAsync(embed: embed.Build());
             }
             catch (Exception ex)
@@ -1651,7 +1668,7 @@ namespace ThothBotCore.Modules
 
         [Command("events", true, RunMode = RunMode.Async)]
         [Alias("event", "eventnow", "eventsnow", "eventtoday", "eventstoday")]
-        [Summary("🆕 Shows if there are any events currently available in-game.")]
+        [Summary("Shows if there are any events currently available in-game.")]
         public async Task EventsCommand()
         {
             try
@@ -1659,10 +1676,11 @@ namespace ThothBotCore.Modules
                 StringBuilder sb = new();
                 var result = await HiRezWebAPI.GetLandingPanel();
                 var embed = new EmbedBuilder();
-                embed.WithAuthor(x=>
+                embed.WithAuthor(x =>
                 {
                     x.Name = "SMITE Events";
                     x.IconUrl = Constants.SmiteBolt;
+                    x.Url = "https://www.smitegame.com/news/";
                 });
                 embed.WithFooter(x=> 
                 {
@@ -1881,25 +1899,6 @@ namespace ThothBotCore.Modules
                     await ReplyAsync(ex.Message);
                 }
             }
-        }
-
-        // Esports
-        [Command("espsch", true)]
-        public async Task SPLScheduleCommandAsync()
-        {
-            string json;
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, "https://esports.hirezstudios.com/esportsAPI/smite/schedule/7118"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    json = await response.Content.ReadAsStringAsync();
-                }
-            }
-            SPLSchedule schedule = JsonConvert.DeserializeObject<SPLSchedule>(json);
-
-            await ReplyAsync("y");
         }
 
         // Shit/fun commands lul

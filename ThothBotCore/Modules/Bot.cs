@@ -116,16 +116,17 @@ namespace ThothBotCore.Modules
                 $":loudspeaker: **Status Update Subs**: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
                 $"<:Gods:567146088985919498> **SMITE Version**: {patch}";
             });
+            var settings = MongoConnection.GetSettings();
             embed.AddField(x =>
             {
                 x.IsInline = true;
                 x.Name = "Links";
-                x.Value = $"[Bot Invite]({MongoConnection.GetSettings().BotInviteLink}) | " +
-                $"[Support Server]({Constants.SupportServerInvite})\n" +
+                x.Value = $"[Bot Invite]({settings.s[0]}) | " +
+                $"[Support Server]({settings.s[3]})\n" +
                 $"[Twitter](https://twitter.com/ThothDiscordBot) | " +
-                $"[Website](http://thothbot.tk)\n" +
-                $"[Privacy Policy](http://thothbot.tk/privacy-policy.html) | " +
-                $"[PayPal](https://www.paypal.me/EasyThe)\n" +
+                $"[Website]({settings.s[1]})\n" +
+                $"[Privacy Policy]({settings.s[2]}) | " +
+                $"[PayPal](https://www.paypal.me/EasyTheBG)\n" +
                 $"[Referral Link to SMITE Store](https://link.xsolla.com/M43fjVPi)";
             });
             embed.WithFooter(x =>
@@ -193,7 +194,7 @@ namespace ThothBotCore.Modules
         [Summary("If you have got feedback for the bot, this is the command.")]
         public async Task FeedbackCommand([Name("Enter your feedback here")][Remainder] string FeedbackMessage)
         {
-            await Reporter.SendFeedback(FeedbackMessage, Context.Message.Author);
+            await Reporter.SendFeedback(FeedbackMessage, Context);
             await ReplyAsync("♥ Thanks for the feedback! The bot owner got your message. ");
         }
 

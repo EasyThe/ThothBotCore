@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using ThothBotCore.Models;
+using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Connections
 {
@@ -10,6 +11,7 @@ namespace ThothBotCore.Connections
     {
         private static readonly HttpClientHandler handler = new();
         private static readonly HttpClient httpClient = new(handler, false);
+        private static readonly BotSettingsModel settings = MongoConnection.GetSettings();
 
         public static async Task<List<WebAPIPostsModel>> FetchPostsAsync()
         {
@@ -31,6 +33,28 @@ namespace ThothBotCore.Connections
             var response = await httpClient.SendAsync(request);
             string json = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<SmiteNewsModel>(json);
+        }
+        public static async Task<SPLSchedule> GetEsportsSchedule()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://esports.hirezstudios.com/esportsAPI/smite/schedule/{settings.s[4]}");
+            var response = await httpClient.SendAsync(request);
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<SPLSchedule>(json);
+            }
+            return new SPLSchedule();
+        }
+        public static async Task<List<SPLStandings>> GetEsportsStandings()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://esports.hirezstudios.com/esportsAPI/smite/standings/{settings.s[4]}");
+            var response = await httpClient.SendAsync(request);
+            string json = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return JsonConvert.DeserializeObject<List<SPLStandings>>(json);
+            }
+            return new List<SPLStandings>();
         }
     }
 }

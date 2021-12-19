@@ -13,6 +13,7 @@
 <a href="https://top.ggg/bot/454145330347376651" >
   <img src="https://top.gg/api/widget/owner/454145330347376651.svg" alt="Thoth" />
 </a>
+![Twitter Follow](https://img.shields.io/twitter/follow/ThothDiscordBot?style=social)
 
 Cooler bot for SMITE stats for Discord
 

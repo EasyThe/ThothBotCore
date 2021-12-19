@@ -14,15 +14,19 @@ namespace ThothBotCore.Storage.Implementations
         public static IMongoDatabase database;
 
         private static readonly ReplaceOptions replaceOptions = new() { IsUpsert = true };
-        public static IMongoDatabase GetDatabase()
+        private static void GetClient()
         {
             if (client == null)
             {
                 client = new MongoClient(Credentials.botConfig.MongoDbURL);
             }
+        }
+        public static IMongoDatabase GetDatabase(string dbName = "thothbot")
+        {
+            GetClient();
             if (database == null)
             {
-                database = client.GetDatabase("thothbot");
+                database = client.GetDatabase(dbName);
             }
             return database;
         }

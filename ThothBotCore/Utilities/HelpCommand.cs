@@ -110,6 +110,20 @@ namespace ThothBotCore.Utilities
                     }
                     helpEmbedBuilder.WithDescription(sb.ToString());
                 }
+                else if (module.Name == "Smite Pro League")
+                {
+                    var sb = new StringBuilder();
+                    foreach (var command in module.Commands)
+                    {
+                        var parameters = string.Join(", ", command.GetCommandParameters());
+                        if (command.Summary != null)
+                        {
+                            sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters[0].Name}" : "")}` - {command.Summary}");
+                        }
+                    }
+                    sb.Append($"\n🆘 **Do you need help with something? Join the** [Support server]({Constants.SupportServerInvite})");
+                    helpEmbedBuilder.AddField("<:SWC:921931266989887488> Smite Pro League", sb.ToString(), true);
+                }
                 else if (module.Name.Contains("Bot"))
                 {
                     var sb = new StringBuilder();
@@ -121,7 +135,6 @@ namespace ThothBotCore.Utilities
                             sb.AppendLine($"🔹`{prefix}{command.Name}{(command.Parameters.Count != 0 ? $" {command.Parameters[0].Name}" : "")}` - {command.Summary}");
                         }
                     }
-                    sb.AppendLine("\n🆘 **Do you need help with something? Join the** [Support server](http://discord.gg/hU6MTbQ)");
                     helpEmbedBuilder.AddField("🤖 Bot", sb.ToString(), true);
                 }
             }

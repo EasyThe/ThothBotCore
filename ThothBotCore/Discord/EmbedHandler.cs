@@ -107,6 +107,7 @@ namespace ThothBotCore.Discord
 
             return await Task.FromResult(embed.Build());
         }
+
         public static async Task<EmbedBuilder> StatusIncidentEmbed(ServerStatus serverStatus)
         {
             var incidentEmbed = new EmbedBuilder();
@@ -1058,8 +1059,8 @@ namespace ThothBotCore.Discord
 
                         tuple = Text.GetRankedDuel(losers[i].Duel_Tier);
                         player2.Append($"{tuple.Item2}{tuple.Item1} " +
-                            $"[{Math.Round(losers[i].Rank_Stat_Conquest, 0)}]\n");
-                        player2.Append($"{team2emo}W/L: {losers[i].Conquest_Wins}/{losers[i].Conquest_Losses}<:blank:570291209906552848>{losers[i].Conquest_Points} TP\n");
+                            $"[{Math.Round(losers[i].Rank_Stat_Duel, 0)}]\n");
+                        player2.Append($"{team2emo}W/L: {losers[i].Duel_Wins}/{losers[i].Duel_Losses}<:blank:570291209906552848>{losers[i].Duel_Points} TP\n");
                     }
                 }
 
@@ -1280,9 +1281,86 @@ namespace ThothBotCore.Discord
             embed.WithImageUrl(imageURL);
             embed.WithAuthor(x =>
             {
-                x.Name = "SMITE"; 
+                x.Name = "SMITE Update Notes"; 
                 x.IconUrl = Constants.SmiteBolt;
+                x.Url = "https://www.smitegame.com/news/";
             });
+            return await Task.FromResult(embed.Build());
+        }
+        public static async Task<Embed> BuildEsportsScheduleEmbedAsync(SPLSchedule schedule)
+        {
+            var unixToday = Text.DateTimeToUnix(DateTime.UtcNow.AddDays(-5));
+            StringBuilder sb = new();
+            var embed = new EmbedBuilder();
+            embed.WithColor(Constants.SPLColor);
+            embed.WithAuthor(x =>
+            {
+                x.Name = "SPL Schedule";
+                x.IconUrl = Constants.SmiteBolt;
+                x.Url = "https://www.smiteproleague.com/schedule";
+            });
+            embed.WithFooter(x =>
+            {
+                x.Text = "This command is still in beta. It may break at any point.";
+            });
+            foreach (var item in schedule.schedule)
+            {
+                if (item.date > unixToday)
+                {
+                    if (embed.Fields.Count == 6)
+                    {
+                        break;
+                    }
+                    foreach (var match in item.matches)
+                    {
+                        sb.AppendLine($"{Text.GetEsportsTeamEmoji(match.team_1_shortname)}" +
+                            $"**{match.team_1_name}** VS **{match.team_2_name}** {Text.GetEsportsTeamEmoji(match.team_2_shortname)} " +
+                            $"{(match.playlist_url != null && match.playlist_url.Length > 1 ? $"[VOD]({match.playlist_url})" : $"{Text.ShortTimeTimestamp(Text.UnixToDateTime(match.time))}")}");
+                    }
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = false;
+                        x.Name = $"{Text.LongDateTimestamp(Text.UnixToDateTime(item.date))}";
+                        x.Value = sb.ToString();
+                    });
+                    sb.Clear();
+                }
+            }
+            if (embed.Fields.Count == 0)
+            {
+                embed.WithDescription("No recent matches found.");
+            }
+            return await Task.FromResult(embed.Build());
+        }
+        public static async Task<Embed> BuildEsportsStandingsEmbedAsync(List<SPLStandings> standings)
+        {
+            var unixToday = Text.DateTimeToUnix(DateTime.UtcNow.AddDays(-5));
+            StringBuilder sb = new();
+            var embed = new EmbedBuilder();
+            embed.WithColor(Constants.SPLColor);
+            embed.WithAuthor(x =>
+            {
+                x.Name = "SPL Standings";
+                x.IconUrl = Constants.SmiteBolt;
+                x.Url = "https://www.smiteproleague.com/standings";
+            });
+            embed.WithFooter(x =>
+            {
+                x.Text = "This command is still in beta. It may break at any point.";
+            });
+            for (int i = 0; i < standings.Count; i++)
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = $"{i + 1}. {Text.GetEsportsTeamEmoji(standings[i].team_shortname)} {standings[i].team_name}";
+                    x.Value = $"**{standings[i].matches}** matches, **{standings[i].wins}** wins, **{standings[i].losses}** losses, **{standings[i].win_percent}** win ratio";
+                });
+            }
+            if (embed.Fields?.Count == 0)
+            {
+                embed.WithDescription("No standings found. Try again later.");
+            }
             return await Task.FromResult(embed.Build());
         }
     }

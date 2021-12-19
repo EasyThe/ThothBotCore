@@ -263,13 +263,47 @@ namespace ThothBotCore.Modules
             await Connection.Client.GetGuild(id).LeaveAsync();
         }
 
-        [Command("sm")]
-        public async Task SendMessageAsOwner(ulong server, ulong channel, [Remainder] string message)
+        [Command("sm", RunMode = RunMode.Async)]
+        public async Task SendMessageAsOwner([Name("ServerID")] ulong server, [Name("ChannelID")] ulong channel, [Remainder] string message)
         {
             var chn = Connection.Client.GetGuild(server).GetTextChannel(channel);
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(Context.Message.Author);
+            embed.Author.Url = Constants.SupportServerInvite;
+            embed.WithColor(Constants.FeedbackColor);
+            embed.AddField(x =>
+            {
+                x.IsInline = false;
+                x.Name = "-------";
+                x.Value = $"If you want to answer to this message you can use the `{Credentials.botConfig.prefix}feedback` command or " +
+                $"[join the support server]({Constants.SupportServerInvite}) of Thoth and chat with the developer directly!";
+            });
+            embed.WithDescription(message);
+            embed.WithFooter(x =>
+            {
+                x.Text = "This message was sent by the developer of the bot";
+                x.IconUrl = Constants.botIcon;
+            });
 
-            await chn.SendMessageAsync(message);
-            await ReplyAsync("I guess it worked, idk.");
+            var testmessage = await ReplyAsync("Respond with 'yes' if the message looks good.",
+                embed: embed.Build());
+            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response != null)
+            {
+                if (response.Content.ToLowerInvariant() == "yes")
+                {
+                    await testmessage.ModifyAsync(x => x.Content = "Sent!");
+                    await chn.SendMessageAsync(embed: embed.Build());
+                }
+                else
+                {
+                    await ReplyAsync("Message was not sent. :ok_hand:");
+                }
+            }
+            else
+            {
+                await testmessage.ModifyAsync(x => x.Content = "Time is up.");
+            }
         }
 
         [Command("getjson")]
@@ -590,6 +624,11 @@ namespace ThothBotCore.Modules
         {
             IUser targetUser = Connection.Client.GetUser(userID);
             var channel = await targetUser.GetOrCreateDMChannelAsync();
+            if (channel == null)
+            {
+                await ReplyAsync("Channel for this user cannot be found or created. :(");
+                return;
+            }
             var embed = new EmbedBuilder();
             embed.WithAuthor(Context.Message.Author);
             embed.Author.Url = Constants.SupportServerInvite;
@@ -604,7 +643,7 @@ namespace ThothBotCore.Modules
             embed.WithDescription(message);
             embed.WithFooter(x =>
             {
-                x.Text = "This message was sent from the developer of the bot";
+                x.Text = "This message was sent by the developer of the bot";
                 x.IconUrl = Constants.botIcon;
             });
 
@@ -615,6 +654,7 @@ namespace ThothBotCore.Modules
             {
                 if (response.Content.ToLowerInvariant() == "yes")
                 {
+                    await testmessage.ModifyAsync(x => x.Content = "Sent!");
                     await channel.SendMessageAsync(embed: embed.Build());
                 }
                 else

@@ -6,7 +6,7 @@ namespace ThothBotCore.Models
     {
         public string stream_url { get; set; }
         public string date_range { get; set; }
-        public int start_date { get; set; }
+        public int? start_date { get; set; }
         public int end_date { get; set; }
         public List<int> match_list { get; set; }
         public List<Phase> phases { get; set; }
@@ -16,7 +16,7 @@ namespace ThothBotCore.Models
     {
         public string title { get; set; }
         public int id { get; set; }
-        public int start_date { get; set; }
+        public int? start_date { get; set; }
         public int end_date { get; set; }
         public int is_bracket { get; set; }
     }
@@ -26,15 +26,15 @@ namespace ThothBotCore.Models
         public int match_id { get; set; }
         public int time { get; set; }
         public int in_progress { get; set; }
-        public int team_1_score { get; set; }
+        public int? team_1_score { get; set; }
         public string team_1_name { get; set; }
         public string team_1_shortname { get; set; }
-        public int team_1_esports_team_id { get; set; }
+        public int? team_1_esports_team_id { get; set; }
         public string team_1_top { get; set; }
-        public int team_2_score { get; set; }
+        public int? team_2_score { get; set; }
         public string team_2_name { get; set; }
         public string team_2_shortname { get; set; }
-        public int team_2_esports_team_id { get; set; }
+        public int? team_2_esports_team_id { get; set; }
         public string team_2_top { get; set; }
         public string top_1_name { get; set; }
         public string top_1_team { get; set; }

@@ -260,6 +260,22 @@ namespace ThothBotCore.Utilities
                 _ => Constants.botIcon,
             };
         }
+        // SMITE Esports
+        public static string GetEsportsTeamEmoji(string team)
+        {
+            return team switch
+            {
+                "BOLTS" => "<:BOLTS:875188138111279164>",
+                "JADE" => "<:JADE:875189087299072050>",
+                "KINGS" => "<:KINGS:875188137045942272>",
+                "LVTHN" => "<:LVTHN:875189087533932544>",
+                "ONI" => "<:ONI:875189088033054741>",
+                "SOLAR" => "<:SOLAR:875189087810768896>",
+                "TITAN" => "<:TITAN:875189088238600243>",
+                "VALKS" => "<:VALKS:875188135527600149>",
+                _ => ""
+            };
+        }
 
         // SMITE Queue names
         public static string GetQueueName(int queueID)
@@ -334,6 +350,7 @@ namespace ThothBotCore.Utilities
                 10171 => "Joust Practice (Hard)",
                 10173 => "Classic Domination",
                 10182 => "Conquest (vs AI) (Very Easy)",
+                10190 => "Custom Duel",
                 _ => "Unknown Queue"
             };
         }
@@ -480,19 +497,17 @@ namespace ThothBotCore.Utilities
 
         public static string ReFormatMOTDText(string text)
         {
-            text = text.Replace("<li>", "\n");
-            text = text.Replace("</li>", "");
-            text = text.Replace("Map", "**Map**");
-            text = text.Replace("Starting/Maximum Cooldown Reduction", "**Starting**/**Maximum Cooldown Reduction**");
-            text = text.Replace("Starting Level", "**Starting Level**");
-            text = text.Replace("Starting Gold", "**Starting Gold**");
-            text = text.Replace("Gods:", "**Gods:**");
-            text = text.Replace("Selection", "**Selection**");
-            text = text.Replace("Infinite Mana", "**Infinite Mana**");
-            text = text.Replace("Maximum Cooldown Reduction", "**Maximum Cooldown Reduction**");
-            text = text.Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
-
-            return text;
+            return text.Replace("<li>", "\n")
+                .Replace("</li>", "")
+                .Replace("Map", "**Map**")
+                .Replace("Starting/Maximum Cooldown Reduction", "**Starting**/**Maximum Cooldown Reduction**")
+                .Replace("Starting Level", "**Starting Level**")
+                .Replace("Starting Gold", "**Starting Gold**")
+                .Replace("Gods:", "**Gods:**")
+                .Replace("Selection", "**Selection**")
+                .Replace("Infinite Mana", "**Infinite Mana**")
+                .Replace("Maximum Cooldown Reduction", "**Maximum Cooldown Reduction**")
+                .Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
         }
 
         public static string EmptyStringCheck(string value)
@@ -557,9 +572,14 @@ namespace ThothBotCore.Utilities
         {
             return $"<t:{DateTimeToUnix(dateTime)}:{type}>";
         }
-        private static int DateTimeToUnix(DateTime dateTime)
+        public static int DateTimeToUnix(DateTime dateTime)
         {
             return (Int32)(dateTime.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
+        }
+        public static DateTime UnixToDateTime(int unix)
+        {
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unix);
+            return dateTime;
         }
         public static double CalculateKDA(int kills, int deaths, int assists)
         {

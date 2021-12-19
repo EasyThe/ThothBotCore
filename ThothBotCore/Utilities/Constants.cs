@@ -26,6 +26,7 @@ namespace ThothBotCore.Utilities
         public static readonly Color VulpisColor = new(233, 78, 26);
         public static readonly Color ErrorColor = new(255, 148, 148);
         public static readonly Color FeedbackColor = new(107, 70, 147);
+        public static readonly Color SPLColor = new(255, 194, 67);
         public static List<Models.TipsModel> TipsList = MongoConnection.GetAllTips();
         public static List<Models.CommunityModel> CommList = MongoConnection.GetAllCommunities();
 

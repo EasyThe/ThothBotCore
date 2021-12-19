@@ -19,7 +19,7 @@ namespace ThothBotCore.Utilities.Smite
             var sb = new StringBuilder();
             sb.AppendLine(NewGod(doc, gods)); // New God
             sb.AppendLine(NewSkins(doc, gods)); // New Skins
-            sb.AppendLine(GodsChanged(doc)); // God Changes
+            sb.AppendLine(GodsChanged(doc, gods)); // God Changes
             sb.AppendLine(UpdateSchedule(doc, patchPost)); // Update Schedule
             
             return Task.FromResult(sb.ToString());
@@ -52,7 +52,7 @@ namespace ThothBotCore.Utilities.Smite
                 sb.Append("🎭 **New Skins for** ");
                 foreach (var gd in gods)
                 {
-                    if (newskins.Any(x => x.ChildNodes.FindFirst("p").InnerText.Contains(gd.Name)))
+                    if (newskins.Any(x => x.ChildNodes.Count != 0 && x.ChildNodes.FindFirst("p").InnerText.Contains(gd.Name)))
                     {
                         if (gd.Name == "Ra")
                         {
@@ -60,12 +60,10 @@ namespace ThothBotCore.Utilities.Smite
                             var split = ihatera?.FirstOrDefault()?.ChildNodes.FindFirst("p").InnerText.Split(" ");
                             if (split.Last() != "Ra")
                             {
-                                gd.Name += "++";
                                 continue;
                             }
                         }
                         sb.Append($"{gd.Name}, ");
-                        gd.Name += "++";
                     }
                 }
                 sb.Remove(sb.ToString().LastIndexOf(','), 1);
@@ -132,24 +130,31 @@ namespace ThothBotCore.Utilities.Smite
                 return "";
             }
         }
-        private static string GodsChanged(HtmlDocument doc)
+        private static string GodsChanged(HtmlDocument doc, List<Gods.God> gods)
         {
             var sb = new StringBuilder();
-            var allChangedGodDivs = doc.DocumentNode.SelectNodes("//div[contains(@class, 'god-changes--god')]").ToList();
+            var allChangedGodDivs = doc.DocumentNode.SelectNodes("//div[contains(@class, 'god--name')]").ToList();
             if (allChangedGodDivs.Count != 0)
             {
                 sb.Append("↔ **God Changes:** ");
-                for (int i = 0; i < allChangedGodDivs.Count; i++)
+                foreach (var gd in gods)
                 {
-                    if (allChangedGodDivs[i].InnerText.Length > 1)
+                    if (allChangedGodDivs.Any(x => x.InnerText.Contains(gd.Name)))
                     {
-                        sb.Append(allChangedGodDivs[i].InnerText.Replace("\n", ""));
-                        if (i != allChangedGodDivs.Count - 1)
+                        if (gd.Name == "Ra")
                         {
-                            sb.Append(", ");
+                            var ihatera = allChangedGodDivs.Where(x => x.InnerText.Contains("Ra")).FirstOrDefault();
+                            if (ihatera.InnerText != "Ra")
+                            {
+                                continue;
+                            }
                         }
+                        // We add that changed god to the string
+                        sb.Append($"{gd.Name}, ");
                     }
                 }
+                sb.Length--;
+                sb.Length--;
                 return sb.ToString();
             }
             else

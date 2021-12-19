@@ -233,20 +233,20 @@ namespace ThothBotCore.Utilities
             return await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 183, 0, 0);
         }
 
-        public static async Task SendFeedback(string message, SocketUser user)
+        public static async Task SendFeedback(string message, SocketCommandContext context)
         {
             await ChannelChecker(feedbackChannel);
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {
-                x.Name = $"{user}";
-                x.IconUrl = user.GetAvatarUrl();
+                x.Name = $"{context.User}";
+                x.IconUrl = context.User.GetAvatarUrl();
             });
             embed.WithColor(Constants.FeedbackColor);
             embed.WithDescription(message);
             embed.WithFooter(x =>
             {
-                x.Text = $"ID: {user.Id} | First Mutual Guild: {user.MutualGuilds.First().Id}";
+                x.Text = $"{context.User.Id} {context.Guild.Id} {context.Channel.Id}";
             });
             await feedbackChannel.SendMessageAsync(embed: embed.Build());
         }
