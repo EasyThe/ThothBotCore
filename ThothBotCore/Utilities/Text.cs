@@ -350,6 +350,7 @@ namespace ThothBotCore.Utilities
                 10171 => "Joust Practice (Hard)",
                 10173 => "Classic Domination",
                 10182 => "Conquest (vs AI) (Very Easy)",
+                10189 => "Slash",
                 10190 => "Custom Duel",
                 _ => "Unknown Queue"
             };
@@ -498,16 +499,38 @@ namespace ThothBotCore.Utilities
         public static string ReFormatMOTDText(string text)
         {
             return text.Replace("<li>", "\n")
-                .Replace("</li>", "")
-                .Replace("Map", "**Map**")
-                .Replace("Starting/Maximum Cooldown Reduction", "**Starting**/**Maximum Cooldown Reduction**")
-                .Replace("Starting Level", "**Starting Level**")
-                .Replace("Starting Gold", "**Starting Gold**")
-                .Replace("Gods:", "**Gods:**")
-                .Replace("Selection", "**Selection**")
-                .Replace("Infinite Mana", "**Infinite Mana**")
-                .Replace("Maximum Cooldown Reduction", "**Maximum Cooldown Reduction**")
-                .Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
+                       .Replace("</li>", "")
+                       .Replace("Map", "**Map**")
+                       .Replace("Starting/Maximum Cooldown Reduction", "**Starting**/**Maximum Cooldown Reduction**")
+                       .Replace("Starting Level", "**Starting Level**")
+                       .Replace("Starting Gold", "**Starting Gold**")
+                       .Replace("Gods:", "**Gods:**")
+                       .Replace("Selection", "**Selection**")
+                       .Replace("Infinite Mana", "**Infinite Mana**")
+                       .Replace("Maximum Cooldown Reduction", "**Maximum Cooldown Reduction**")
+                       .Replace("Starting Cooldown Reduction", "**Starting Cooldown Reduction**");
+        }
+        public static string ReformatSecondaryItemDescription(string text)
+        {
+            return text.Replace("PASSIVE", "**PASSIVE**")
+                       .Replace("<n>", "\n")
+                       .Replace("GLYPH", "**GLYPH**")
+                       .Replace("<font color='#42F46E'>", "")
+                       .Replace("<font color='#F44242'>", "")
+                       .Replace("AURA", "**AURA**")
+                       .Replace("ROLE QUEST", "**ROLE QUEST**");
+        }
+        public static string CleanDirtyText(string dirty)
+        {
+            return dirty.Replace("\\", String.Empty)
+                        .Replace("/", String.Empty)
+                        .Replace("*", String.Empty)
+                        .Replace(".", String.Empty)
+                        .Replace(",", String.Empty)
+                        .Replace("?", String.Empty)
+                        .Replace("!", String.Empty)
+                        .Replace(";", String.Empty)
+                        .Replace(":", String.Empty);
         }
 
         public static string EmptyStringCheck(string value)

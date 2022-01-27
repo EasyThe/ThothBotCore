@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
 
@@ -112,16 +113,15 @@ namespace ThothBotCore.Utilities.Smite
                             sb.Append(", ");
                         }
                     }
-                    
-                    if (sb.ToString().Contains("&#8211;"))
-                    {
-                        sb.Replace("&#8211;", "-");
-                    }
 
                     if (d != dates.Count - 1)
                     {
                         sb.Append('\n');
                     }
+                }
+                if (sb.ToString().Contains(';'))
+                {
+                    return HttpUtility.HtmlDecode(sb.ToString());
                 }
                 return sb.ToString();
             }
