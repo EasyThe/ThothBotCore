@@ -100,7 +100,7 @@ namespace ThothBotCore.Discord
             });
             embed.WithFooter(x =>
             {
-                x.Text = $"If you want to be notified for Server Status Updates use !!statusupdates #desired-channel";
+                x.Text = $"If you want to be notified for SMITE Status changes use /feeds";
             });
 
             return await Task.FromResult(embed.Build());
