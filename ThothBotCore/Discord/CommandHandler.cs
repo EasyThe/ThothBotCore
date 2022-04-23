@@ -1,12 +1,16 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
+using Fergun.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 using Sentry;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Reflection;
 using System.Threading.Tasks;
+using ThothBotCore.Connections;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
 using ThothBotCore.Utilities;
@@ -17,32 +21,131 @@ namespace ThothBotCore.Discord
     {
         DiscordShardedClient _client;
         CommandService _commands;
+        InteractionService _interactionService;
+        HiRezAPIv2 _HiRez;
+        Meter _metrics;
+        List<Counter<int>> _slashCounters = new();
+        List<Counter<int>> _normalCounters = new();
+        List<Counter<int>> _guildCounters = new();
+
         public IServiceProvider _services;
         public async Task InitializeAsync(DiscordShardedClient client)
         {
             _client = client;
             _services = ConfigureServices();
             _commands = _services.GetRequiredService<CommandService>();
+            _interactionService = _services.GetRequiredService<InteractionService>();
+            _HiRez = _services.GetRequiredService<HiRezAPIv2>();
+            _metrics = _services.GetRequiredService<Meter>();
+
             Global.commandService = _commands;
+            Global.Metrics = _metrics;
+            Global.interactionService = _interactionService;
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+
+            await RegisterMetrics();
+
             _client.MessageReceived += HandleCommandAsync;
+            _client.InteractionCreated += HandleInteractionAsync;
+
             _commands.CommandExecuted += CommandExecuted;
+            _interactionService.InteractionExecuted += InteractionExecuted;
         }
 
-        private async Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
+        private Task RegisterMetrics()
         {
-            if (arg3?.Error == CommandError.BadArgCount)
+            foreach (var module in _interactionService.Modules)
             {
-                var serverConfig = new Models.ServerConfig { prefix = Credentials.botConfig.prefix };
-                if (arg2.Guild != null)
+                foreach (var command in module.SlashCommands)
                 {
-                    var db = await Database.GetServerConfig(arg2.Guild.Id);
-                    serverConfig = db[0];
+                    _slashCounters.Add(_metrics.CreateCounter<int>($"slash_{command.Name}"));
                 }
-                var commandEmbed = HelpCommand.GetHelpEmbed(_commands, arg1.Value.Name, serverConfig.prefix);
-                await arg2.Channel.SendMessageAsync(embed: commandEmbed);
+                foreach (var command in module.ComponentCommands)
+                {
+                    _slashCounters.Add(_metrics.CreateCounter<int>($"comp_{command.Name}"));
+                }
+                foreach (var command in module.ModalCommands)
+                {
+                    _slashCounters.Add(_metrics.CreateCounter<int>($"modal_{command.Name}"));
+                }
             }
-            
+            foreach (var module in _commands.Modules)
+            {
+                foreach (var command in module.Commands)
+                {
+                    _normalCounters.Add(_metrics.CreateCounter<int>($"old_{command.Name}"));
+                }
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task InteractionExecuted(ICommandInfo arg1, IInteractionContext arg2, global::Discord.Interactions.IResult arg3)
+        {
+            if (arg2.Interaction.Type == InteractionType.ApplicationCommand)
+            {
+                _slashCounters.Find(x => x.Name == $"slash_{arg1.Name}").Add(1);
+            }
+            else if (arg2.Interaction.Type == InteractionType.MessageComponent)
+            {
+                _slashCounters.Find(x => x.Name == $"comp_{arg1.Name}").Add(1);
+            }
+            else if (arg2.Interaction.Type == InteractionType.ModalSubmit)
+            {
+                _slashCounters.Find(x => x.Name == $"modal_{arg1.Name}").Add(1);
+            }
+            // guild counter
+            if (arg2.Guild.Id != 518408306415632384)
+            {
+                try
+                {
+                    _guildCounters.Find(x => x.Name == $"g_{arg2.Guild.Id}").Add(1);
+                }
+                catch
+                {
+                    _guildCounters.Add(_metrics.CreateCounter<int>($"g_{arg2.Guild.Id}"));
+                }
+            }
+            if (arg3.IsSuccess)
+            {
+                Global.CommandsRun++;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, global::Discord.Commands.IResult arg3)
+        {
+            if (arg1.IsSpecified)
+            {
+                _normalCounters.Find(x => x.Name == $"old_{arg1.Value.Name}").Add(1);
+            }
+            return Task.CompletedTask;
+        }
+
+        private async Task HandleInteractionAsync(SocketInteraction arg)
+        {
+            try
+            {
+                if (arg.Type == InteractionType.MessageComponent)
+                {
+                    var cntxt = new ShardedInteractionContext<SocketMessageComponent>(_client, (SocketMessageComponent)arg);
+                    await _interactionService.ExecuteCommandAsync(cntxt, _services);
+                    return;
+                }
+                // Create an execution context that matches the generic type parameter of your InteractionModuleBase<T> modules
+                var ctx = new ShardedInteractionContext(_client, arg);
+                await _interactionService.ExecuteCommandAsync(ctx, _services);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"HandleInteractionAsync (CommandHandler.cs) - " + ex);
+
+                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
+                // response, or at least let the user know that something went wrong during the command execution.
+                if (arg.Type == InteractionType.ApplicationCommand)
+                    await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+            }
         }
 
         private IServiceProvider ConfigureServices()
@@ -52,6 +155,9 @@ namespace ThothBotCore.Discord
                 .AddSingleton<CommandService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractiveService>()
+                .AddSingleton(new InteractionService(_client, new InteractionServiceConfig { UseCompiledLambda = true }))
+                .AddSingleton(new HiRezAPIv2())
+                .AddSingleton(new Meter("ThothBotMetrics"))
                 .BuildServiceProvider();
         }
 
@@ -110,7 +216,7 @@ namespace ThothBotCore.Discord
             }
         }
 
-        public static async Task ErrorHandler(SocketCommandContext context, IResult result = null, Exception exception = null)
+        public static async Task ErrorHandler(SocketCommandContext context, global::Discord.Commands.IResult result = null, Exception exception = null)
         {
             string errorString;
             if (result == null)

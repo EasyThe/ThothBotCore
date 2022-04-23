@@ -1,8 +1,8 @@
 ﻿using Dapper;
 using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using Fergun.Interactive;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
@@ -19,9 +18,10 @@ using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
 {
-    public class Vulpis : InteractiveBase<SocketCommandContext>
+    public class Vulpis : ModuleBase<SocketCommandContext>
     {
         static Random rnd = new();
+        public InteractiveService Interactive { get; set; }
 
         [Command("vulpis", true)]
         public async Task VulpisInfoCommand()
@@ -45,28 +45,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("assaultteam")]
-        [Alias("asteam")]
-        public async Task AssaultTeamCommand()
-        {
-            var embed = new EmbedBuilder();
-            var gods = MongoConnection.GetAllGods();
-
-            embed.WithColor(Constants.DefaultBlueColor);
-
-            // Team 1
-            StringBuilder team1 = new();
-            for (int i = 0; i < 5; i++)
-            {
-                int rr = rnd.Next(gods.Count);
-                team1.Append(gods[rr].Emoji);
-            }
-            embed.WithTitle("Team 1");
-            embed.WithDescription(team1.ToString());
-
-            await ReplyAsync("", false, embed.Build());
-        }
-
         [Command("createtournament", RunMode = RunMode.Async)]
         [Alias("ctvulpis")]
         public async Task CreateTournamentCommand()
@@ -82,8 +60,8 @@ namespace ThothBotCore.Modules
 
                 // Tournament type
                 await ReplyAsync(":heart:**Hello, qtie and welcome to TOURNAMENT CREATOR 1.0**\n🔹 Please tell me what the tournament will be (conquest, duel)((you have 60 seconds btw))");
-                var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                meganz.Tournament.Type = response.Content;
+                var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                meganz.Tournament.Type = response.Value.Content;
 
                 string filename = "";
                 if (response.ToString().ToLowerInvariant() == "conquest")
@@ -97,8 +75,8 @@ namespace ThothBotCore.Modules
 
                 // Date and time
                 await ReplyAsync("**Okay, okay gimme a date!**\n*Date format:* **MM-dd-yyyy HH:mm**");
-                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                var tourneyDate = DateTime.Parse(response.Content);
+                response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                var tourneyDate = DateTime.Parse(response.Value.Content);
 
                 meganz.Tournament.SignupsAllowed = true;
 
@@ -353,11 +331,11 @@ namespace ThothBotCore.Modules
                 return;
             }
             var message = await ReplyAsync("Okay, give me the ID of the message the embed is at...");
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
             var embedmessage = await Connection.Client
                 .GetGuild(Context.Guild.Id)
                 .GetTextChannel(Context.Channel.Id)
-                .GetMessageAsync(Convert.ToUInt64(response.Content));
+                .GetMessageAsync(Convert.ToUInt64(response.Value.Content));
             if (embedmessage.Embeds.Count != 0)
             {
                 await message.ModifyAsync(x => 
@@ -365,8 +343,8 @@ namespace ThothBotCore.Modules
                     x.Content = "Found this one:\nIs it the right one? Type yes if so.";
                     x.Embed = embedmessage.Embeds.First().ToEmbedBuilder().Build();
                 });
-                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                if (response.Content.ToLowerInvariant().Contains("yes"))
+                response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                if (response.Value.Content.ToLowerInvariant().Contains("yes"))
                 {
                     var finalembed = embedmessage.Embeds.First().ToEmbedBuilder();
                     string footer = finalembed.Footer.Text;
@@ -382,8 +360,8 @@ namespace ThothBotCore.Modules
                         x.Embed = embed.Build();
                     });
                     // solo
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                    sb.AppendLine($"<:Warrior:607990144338886658>{response.Content}");
+                    response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Warrior:607990144338886658>{response.Value.Content}");
                     embed.WithDescription(sb.ToString());
                     await message.ModifyAsync(x =>
                     {
@@ -391,8 +369,8 @@ namespace ThothBotCore.Modules
                         x.Embed = embed.Build();
                     });
                     // jungle
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                    sb.AppendLine($"<:Assassin:607990143915261983>{response.Content}");
+                    response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Assassin:607990143915261983>{response.Value.Content}");
                     embed.WithDescription(sb.ToString());
                     await message.ModifyAsync(x =>
                     {
@@ -400,8 +378,8 @@ namespace ThothBotCore.Modules
                         x.Embed = embed.Build();
                     });
                     // MID
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                    sb.AppendLine($"<:Mage:607990144380698625>{response.Content}");
+                    response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Mage:607990144380698625>{response.Value.Content}");
                     embed.WithDescription(sb.ToString());
                     await message.ModifyAsync(x =>
                     {
@@ -409,8 +387,8 @@ namespace ThothBotCore.Modules
                         x.Embed = embed.Build();
                     });
                     // Support
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                    sb.AppendLine($"<:Guardian:607990144385024000>{response.Content}");
+                    response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Guardian:607990144385024000>{response.Value.Content}");
                     embed.WithDescription(sb.ToString());
                     // ADC
                     await message.ModifyAsync(x =>
@@ -418,16 +396,16 @@ namespace ThothBotCore.Modules
                         x.Content = "Tell me the IGN of the **ADC** now";
                         x.Embed = embed.Build();
                     });
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                    sb.AppendLine($"<:Hunter:607990144271646740>{response.Content}");
+                    response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    sb.AppendLine($"<:Hunter:607990144271646740>{response.Value.Content}");
                     embed.WithDescription(sb.ToString());
                     await message.ModifyAsync(x =>
                     {
                         x.Content = "Okay. If everything seems fine, write **okay** to add it to the embed, or anything else to cancel.";
                         x.Embed = embed.Build();
                     });
-                    response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                    if (response.Content.ToLowerInvariant().Contains("okay"))
+                    response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+                    if (response.Value.Content.ToLowerInvariant().Contains("okay"))
                     {
                         finalembed.Footer.Text = $"{teamnumber} Teams";
                         finalembed.AddField(x =>
@@ -544,13 +522,13 @@ namespace ThothBotCore.Modules
                 message = await ReplyAsync(embed: embed);
             }
 
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
             if (response == null)
             {
                 await message.ModifyAsync(x => x.Embed = null);
                 return;
             }
-            if (response.Content.ToLowerInvariant().Contains("yes"))
+            if (response.Value.Content.ToLowerInvariant().Contains("yes"))
             {
                 for (int i = 0; i < tournamentObj.Players.Count; i++)
                 {
@@ -597,89 +575,6 @@ namespace ThothBotCore.Modules
             // Saving
             string json = JsonConvert.SerializeObject(tournamentObj, Formatting.Indented);
             await File.WriteAllTextAsync(TournamentUtilities.GetTournamentFileName("soloqcq"), json);
-        }
-
-        [Command("randomteamassault")]
-        [Alias("rta")]
-        public async Task RandomAssaultVulpisCommand()
-        {
-            if (Context.Guild.Id != 321367254983770112)
-            {
-                await ReplyAsync("This command is available only in Vulpis.");
-                return;
-            }
-            var embed = new EmbedBuilder();
-            var sb1 = new StringBuilder();
-            var sb2 = new StringBuilder();
-            bool hasHealer = false;
-            bool firstHasHealer = false;
-            //       ra, hel, guan yu, aphrodite, change, sylvanus, terra, baron, horus, yemoja
-            int[] healers = { 1698, 1718, 1763, 1898, 1921, 2030, 2147, 3518, 3611, 3811 };
-            var gods = MongoConnection.GetAllGods();
-
-            // First team
-            for (int i = 0; i < 5; i++)
-            {
-                var current = gods[rnd.Next(gods.Count)];
-                while (hasHealer && healers.AsList().Contains(current.id))
-                {
-                    current = gods[rnd.Next(gods.Count)];
-                }
-                if (healers.AsList().Contains(current.id))
-                {
-                    hasHealer = true;
-                    firstHasHealer = true;
-                }
-
-                sb1.AppendLine($"{current.Emoji} {current.Name}");
-                gods.Remove(current);
-            }
-
-            // Second team
-            gods = MongoConnection.GetAllGods();
-            hasHealer = false;
-            for (int i = 0; i < 5; i++)
-            {
-                var current = gods[rnd.Next(gods.Count)];
-                if (healers.AsList().Contains(current.id) && firstHasHealer)
-                {
-                    hasHealer = true;
-                }
-                else if (healers.AsList().Contains(current.id) && !firstHasHealer)
-                {
-                    while (healers.AsList().Contains(current.id))
-                    {
-                        current = gods[rnd.Next(gods.Count)];
-                    }
-                }
-                while (firstHasHealer && !hasHealer && i == 4 && !healers.AsList().Contains(current.id))
-                {
-                    current = gods[rnd.Next(gods.Count)];
-                }
-
-                sb2.AppendLine($"{current.Emoji} {current.Name}");
-                gods.Remove(current);
-            }
-
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Team 1";
-                x.Value = sb1.ToString();
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Team 2";
-                x.Value = sb2.ToString();
-            });
-            embed.WithAuthor(x =>
-            {
-                x.Name = "Random Assault Teams";
-                x.IconUrl = Constants.VulpisLogoLink;
-            });
-            embed.WithColor(Constants.VulpisColor);
-            await ReplyAsync(message: $"Two random assault teams for {Context.Message.Author.Mention}", embed: embed.Build());
         }
 
         [Command("reroll")]

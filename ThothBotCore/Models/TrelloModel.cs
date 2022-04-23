@@ -10,7 +10,6 @@ namespace ThothBotCore.Models
         public bool closed { get; set; }
         public DateTime dateLastActivity { get; set; }
         public string desc { get; set; }
-        public DescData descData { get; set; }
         public object dueReminder { get; set; }
         public string idBoard { get; set; }
         public string idList { get; set; }
@@ -31,15 +30,6 @@ namespace ThothBotCore.Models
         public string shortUrl { get; set; }
         public bool subscribed { get; set; }
         public string url { get; set; }
-    }
-
-    public class Emoji
-    {
-    }
-
-    public class DescData
-    {
-        public Emoji emoji { get; set; }
     }
 
     public class Trello

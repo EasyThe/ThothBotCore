@@ -2,8 +2,8 @@
 using System.Net;
 using ColorThiefDotNet;
 using System.Globalization;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 
 namespace ThothBotCore.Utilities
 {

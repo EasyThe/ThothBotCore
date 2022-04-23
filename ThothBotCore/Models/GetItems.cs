@@ -1,8 +1,10 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
 
 namespace ThothBotCore.Models
 {
+    [BsonIgnoreExtraElements]
     public class GetItems
     {
         public class Menuitem
@@ -18,12 +20,14 @@ namespace ThothBotCore.Models
             public string SecondaryDescription { get; set; }
         }
 
+        [BsonIgnoreExtraElements]
         public class Item
         {
             public ObjectId _id { get; set; } = ObjectId.GenerateNewId();
             public string ActiveFlag { get; set; }
             public int ChildItemId { get; set; }
             public string DeviceName { get; set; }
+            public string Glyph { get; set; }
             public int IconId { get; set; }
             public ItemDescription ItemDescription { get; set; }
             public int ItemId { get; set; }

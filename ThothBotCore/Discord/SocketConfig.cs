@@ -12,8 +12,9 @@ namespace ThothBotCore.Discord
             {
                 LogLevel = LogSeverity.Info,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
-                ExclusiveBulkDelete = true,
-                TotalShards = Credentials.botConfig.prefix == "??" ? 1 : Connection.ShardCount
+                LogGatewayIntentWarnings = false,
+                TotalShards = Credentials.botConfig.prefix == "??" ? 1 : Connection.ShardCount,
+                GatewayIntents = GatewayIntents.AllUnprivileged
             };
         }
 

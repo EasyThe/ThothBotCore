@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using ThothBotCore.Connections.Models;
+
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage;
@@ -119,6 +119,72 @@ namespace ThothBotCore.Utilities
             }
             return "";
         }
+        public static async Task<string[]> AddMissingAbilityEmojiAsync(Gods.God god)
+        {
+            string[] emojis = new string[5];
+            try
+            {
+                var emoteGuilds = new List<SocketGuild>
+                {
+                    Connection.Client.GetGuild(958115981685817414),
+                    Connection.Client.GetGuild(958117246985711696),
+                    Connection.Client.GetGuild(958117246985711696),
+                    Connection.Client.GetGuild(958117463126593567),
+                    Connection.Client.GetGuild(958117484324618271),
+                    Connection.Client.GetGuild(958117517652557894),
+                    Connection.Client.GetGuild(958117543007121468),
+                    Connection.Client.GetGuild(958117570576257125),
+                    Connection.Client.GetGuild(958117631569838173),
+                    Connection.Client.GetGuild(958117658329505802),
+                    Connection.Client.GetGuild(958117687731556352),
+                    Connection.Client.GetGuild(958117713228730420),
+                    Connection.Client.GetGuild(958117755456991262),
+                };
+
+                string[] urls = new string[5]
+                {
+                    god.godAbility1_URL,
+                    god.godAbility2_URL,
+                    god.godAbility3_URL,
+                    god.godAbility4_URL,
+                    god.godAbility5_URL
+                };
+
+                for (int i = 0; i < urls.Length; i++)
+                {
+                    string emojiname = urls[i].Trim().Replace("\'", "").ToLowerInvariant();
+                    emojiname = Regex.Replace(emojiname, @"\s+", "");
+
+                    string[] splitLink = urls[i].Split('/');
+
+                    SaveImageToFolder(urls[i], false);
+
+                    // Adding the image as emoji in emojiguilds
+                    foreach (var guild in emoteGuilds)
+                    {
+                        if (guild.Emotes.Count != 50)
+                        {
+                            Thread.Sleep(200);
+                            using var image = new Image($"Storage/Items/{splitLink[5]}");
+                            Text.WriteLine(emojiname);
+                            var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
+                            emojis[i] = $"<:{insertedEmote.Name}:{insertedEmote.Id}>";
+                        }
+                        else
+                        {
+                            Text.WriteLine($"{guild.Name} is full.");
+                            continue;
+                        }
+                    }
+                }
+                return emojis;
+            }
+            catch (Exception ex)
+            {
+                Text.WriteLine(ex.Message);
+                return emojis;
+            }
+        }
         public static async Task<string> RandomBuilderAsync(Gods.God god)
         {
             StringBuilder sb = new();
@@ -140,8 +206,8 @@ namespace ThothBotCore.Utilities
             }
 
             // Random Starter Item
-            var allitems = MongoConnection.GetAllItems();
-            var starters = allitems.FindAll(x => x.ActiveFlag == "y" && x.StartingItem && x.GodType != null && x.GodType.Contains(godType) && x.ItemTier == 2);
+            var allitems = MongoConnection.GetAllActiveItems();
+            var starters = allitems.FindAll(x => x.StartingItem && x.GodType != null && x.GodType.Contains(godType) && x.ItemTier == 2);
 
             sb.Append(starters[rnd.Next(starters.Count)].Emoji);
 
@@ -200,7 +266,13 @@ namespace ThothBotCore.Utilities
             build.Append(items.Find(x => x.ItemId == match.ItemId6)?.Emoji);
             return await Task.FromResult(build.ToString());
         }
-        public static async Task<string> CheckSpecialsForPlayer(int id, bool emoteOnly)
+        /// <summary>
+        /// Checks for badges for the requested player id.
+        /// </summary>
+        /// <param name="id">Player ID</param>
+        /// <param name="type">0 - Emote Only, 1 - All, 2 - Only Text</param>
+        /// <returns></returns>
+        public static async Task<string> CheckSpecialsForPlayer(int id, int type)
         {
             PlayerSpecial playerSpecial = await MongoConnection.GetPlayerSpecialsByPlayerIdAsync(id);
             if (playerSpecial != null)
@@ -211,30 +283,34 @@ namespace ThothBotCore.Utilities
                     if (playerSpecial.pro_bool)
                     {
                         var badge = await MongoConnection.GetBadgeAsync("pro");
-                        if (emoteOnly)
+                        if (type == 0)
                         {
                             specialsResult.Append(badge.Emote);
                         }
-                        else
+                        else if (type == 1)
                         {
                             specialsResult.Append($"{badge.Emote} {badge.Title}");
+                        }
+                        else
+                        {
+                            specialsResult.Append(badge.Title);
                         }
                     }
                     if (playerSpecial.streamer_bool)
                     {
                         if (specialsResult.Length != 0)
                         {
-                            if (!emoteOnly)
+                            if (type == 1)
                             {
                                 specialsResult.Append('\n');
                             }
                         }
                         var badge = await MongoConnection.GetBadgeAsync("streamer");
-                        if (emoteOnly)
+                        if (type == 0)
                         {
                             specialsResult.Append(badge.Emote);
                         }
-                        else
+                        else if (type == 1)
                         {
                             specialsResult.Append($"{badge.Emote} {badge.Title}");
                             if (playerSpecial.streamer_link != null)
@@ -242,13 +318,17 @@ namespace ThothBotCore.Utilities
                                 specialsResult.Append($" {playerSpecial.streamer_link}");
                             }
                         }
+                        else
+                        {
+                            specialsResult.Append(badge.Title);
+                        }
                     }
                     // Check specials
                     if (playerSpecial.special != null)
                     {
                         if (specialsResult.Length != 0)
                         {
-                            if (!emoteOnly)
+                            if (type == 1)
                             {
                                 specialsResult.Append('\n');
                             }
@@ -256,13 +336,17 @@ namespace ThothBotCore.Utilities
                         var badge = await MongoConnection.GetBadgeAsync(playerSpecial.special);
                         if (badge != null)
                         {
-                            if (emoteOnly)
+                            if (type == 0)
                             {
                                 specialsResult.Append(badge.Emote);
                             }
-                            else
+                            else if (type == 1)
                             {
                                 specialsResult.Append($"{badge.Emote} {badge.Title}");
+                            }
+                            else
+                            {
+                                specialsResult.Append(badge.Title);
                             }
                         }
                     }
@@ -328,14 +412,11 @@ namespace ThothBotCore.Utilities
             return await Task.FromResult(sb.ToString());
         }
 
-        public static bool IsRanked(string queueID)
+        public static bool IsRanked(string queueID) => queueID switch
         {
-            return queueID switch
-            {
-                "440" or "450" or "451" or "502" or "503" or "504" => true,
-                _ => false,
-            };
-        }
+            "440" or "450" or "451" or "502" or "503" or "504" => true,
+            _ => false,
+        };
 
         public static string LiveRankedString(MatchDetails.MatchDetailsPlayer player, string teamEmoji)
         {
@@ -351,12 +432,6 @@ namespace ThothBotCore.Utilities
             var find = gods.Find(x => x.id == godId);
             if (find != null) return find.Emoji;
             return "<:blank:570291209906552848>";
-        }
-        public static async void RespondOnBadArgCount(ulong guildId, string commandName)
-        {
-            var db = await Database.GetServerConfig(guildId);
-            //var commandEmbed = HelpCommand.GetHelpEmbed(_commands, commandName, db[0].prefix);
-            //await arg2.Channel.SendMessageAsync(embed: commandEmbed);
         }
     }
 }

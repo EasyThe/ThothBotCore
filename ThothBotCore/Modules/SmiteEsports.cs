@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -10,7 +9,7 @@ using ThothBotCore.Utilities;
 namespace ThothBotCore.Modules
 {
     [Name("Smite Pro League")]
-    public class SmiteEsports : InteractiveBase<SocketCommandContext>
+    public class SmiteEsports : ModuleBase<SocketCommandContext>
     {
         [Command("splschedule", true)]
         [Summary("Check the Smite Pro League Schedule")]
@@ -20,8 +19,9 @@ namespace ThothBotCore.Modules
             await Context.Channel.TriggerTypingAsync();
             try
             {
-                var schedule = await HiRezWebAPI.GetEsportsSchedule();
-                var emb = await EmbedHandler.BuildEsportsScheduleEmbedAsync(schedule);
+                var schedule = await APIInteractions.GetEsportsSchedule();
+                var calendar = await APIInteractions.GetSCCCalendarEvents();
+                var emb = await EmbedHandler.BuildEsportsScheduleEmbedAsync(schedule, calendar);
 
                 await ReplyAsync(embed: emb);
             }
@@ -38,7 +38,7 @@ namespace ThothBotCore.Modules
             await Context.Channel.TriggerTypingAsync();
             try
             {
-                var standings = await HiRezWebAPI.GetEsportsStandings();
+                var standings = await APIInteractions.GetEsportsStandings();
                 var emb = await EmbedHandler.BuildEsportsStandingsEmbedAsync(standings);
 
                 await ReplyAsync(embed: emb);
@@ -53,7 +53,7 @@ namespace ThothBotCore.Modules
         [Alias("swcs", "swcschedule", "schedule")]
         public async Task SWCSchedule()
         {
-            var settings = MongoConnection.GetSettings();
+            var settings = MongoConnection.GetBotSettings();
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {

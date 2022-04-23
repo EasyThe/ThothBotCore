@@ -86,6 +86,17 @@ namespace ThothBotCore.Discord
                 await _logger.Log("i", "Starting ServerStatusTimer & GuildsCountTimer");
                 await StatusTimer.StartServerStatusTimer();
                 await GuildsTimer.StartGuildsCountTimer();
+
+                try
+                {
+                    // Register slash commands to test server
+                    // await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+                    await Global.interactionService.RegisterCommandsGloballyAsync(true);
+                }
+                catch (System.Exception ex)
+                {
+                    await Reporter.SendError($"REGISTERING SLASH COMMANDS ERROR:\n{ex.Message}");
+                }
             }
         }
 
@@ -97,26 +108,8 @@ namespace ThothBotCore.Discord
 
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            await Reporter.SendJoinedServerEmbedAsync(guild);
             await Database.SetGuild(guild.Id);
-            var channel = guild.DefaultChannel;
-            foreach (var chnl in guild.TextChannels)
-            {
-                if (chnl.Name.ToLowerInvariant().Contains("bot"))
-                {
-                    channel = chnl;
-                    break;
-                }
-            }
-            try
-            {
-                await channel.SendMessageAsync(Constants.JoinedMessage);
-            }
-            catch (System.Exception)
-            {
-                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{Constants.FailedToSendJoinedMessage}\n{guild.Name}[{guild.Id}]", 255, 165);
-                await Reporter.SendEmbedToBotLogsChannel(embed.ToEmbedBuilder());
-            }
+            await Reporter.SendJoinedServerEmbedAsync(guild);
         }
     }
 }

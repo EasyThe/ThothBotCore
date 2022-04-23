@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
 using ThothBotCore.Connections;
-using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord;
+using ThothBotCore.Models;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Tournament

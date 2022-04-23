@@ -18,10 +18,14 @@ namespace ThothBotCore.Utilities.Smite
             var doc = new HtmlDocument();
             doc.LoadHtml(patchPost.content);
             var sb = new StringBuilder();
+            var schedule = UpdateSchedule(doc, patchPost);
             sb.AppendLine(NewGod(doc, gods)); // New God
             sb.AppendLine(NewSkins(doc, gods)); // New Skins
             sb.AppendLine(GodsChanged(doc, gods)); // God Changes
-            sb.AppendLine(UpdateSchedule(doc, patchPost)); // Update Schedule
+            if (schedule.Length > 15)
+            {
+                sb.AppendLine(schedule); // Update Schedule
+            }
             
             return Task.FromResult(sb.ToString());
         }
@@ -75,60 +79,125 @@ namespace ThothBotCore.Utilities.Smite
         {
             var sb = new StringBuilder();
             var allWrappedHeaders = doc.DocumentNode.SelectNodes("//div[contains(@class, 'wrapped-header')]");
-            var schedule = allWrappedHeaders.Where(x => x.InnerText.Contains("Schedule")).FirstOrDefault();
-            if (schedule != null)
+            if (allWrappedHeaders != null)
             {
-                sb.AppendLine($"🗓 **Update Release Schedule: **");
-                var dates = schedule.SelectNodes("following::h6[position()<5]");
-                for (int d = 0; d < dates.Count; d++)
+                var schedule = allWrappedHeaders.Where(x => x.InnerText.Contains("Schedule")).FirstOrDefault();
+                if (schedule != null)
                 {
-                    if (!dates[d].InnerText.Contains(patchPost.timestamp.ToString("MMMM", CultureInfo.InvariantCulture)) &&
-                        !dates[d].InnerText.Contains(patchPost.timestamp.AddMonths(1).ToString("MMMM", CultureInfo.InvariantCulture)) &&
-                        !dates[d].InnerText.Contains(patchPost.timestamp.AddMonths(2).ToString("MMMM", CultureInfo.InvariantCulture)))
+                    sb.AppendLine($"🗓 **Update Release Schedule: **");
+                    var dates = schedule.SelectNodes("following::h6[position()<5]");
+                    if (dates != null && dates.Any(x => CultureInfo.InvariantCulture.DateTimeFormat.MonthGenitiveNames.Contains(x.InnerText)))
                     {
-                        continue;
-                    }
-                    // date
-                    var patchNumberULEle = dates[d].SelectNodes("following::ul[position()<2]");
-                    sb.Append($":white_small_square:{dates[d].InnerText} - ");
-                    var numberLIEle = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li");
-                    var numberLIElems = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li").ToList();
+                        for (int d = 0; d < dates.Count; d++)
+                        {
+                            if (!dates[d].InnerText.Contains(patchPost.timestamp.ToString("MMMM", CultureInfo.InvariantCulture)) &&
+                                !dates[d].InnerText.Contains(patchPost.timestamp.AddMonths(1).ToString("MMMM", CultureInfo.InvariantCulture)) &&
+                                !dates[d].InnerText.Contains(patchPost.timestamp.AddMonths(2).ToString("MMMM", CultureInfo.InvariantCulture)))
+                            {
+                                continue;
+                            }
+                            // date
+                            var patchNumberULEle = dates[d].SelectNodes("following::ul[position()<2]");
+                            sb.Append($":white_small_square:{dates[d].InnerText} - ");
+                            var numberLIEle = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li");
+                            var numberLIElems = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li").ToList();
 
-                    // patch info
-                    for (int i = 0; i < numberLIElems.Count; i++)
+                            // patch info
+                            for (int i = 0; i < numberLIElems.Count; i++)
+                            {
+                                // The element links to somewhere, get the link and format it in Discord markdown
+                                if (numberLIElems[i].FirstChild.Name == "a")
+                                {
+                                    sb.Append($"[{numberLIElems[i].FirstChild.InnerText}]" +
+                                        $"({(numberLIElems[i].FirstChild.Attributes.FirstOrDefault()?.Name == "href" ? numberLIElems[i].FirstChild.Attributes.First().Value : "#")})");
+                                }
+                                else
+                                {
+                                    sb.Append(numberLIElems[i].FirstChild.InnerText.Replace("\n", ""));
+                                }
+
+                                if (i != numberLIElems.Count - 1)
+                                {
+                                    sb.Append(", ");
+                                }
+                            }
+
+                            if (d != dates.Count - 1)
+                            {
+                                sb.Append('\n');
+                            }
+                        }
+                    }
+                    else
                     {
-                        // The element links to somewhere, get the link and format it in Discord markdown
-                        if (numberLIElems[i].FirstChild.Name == "a")
+                        // unknown format 
+                        string elementName = "";
+                        var checkingSchedule = schedule;
+                        while (elementName.Length == 0)
                         {
-                            sb.Append($"[{numberLIElems[i].FirstChild.InnerText}]" +
-                                $"({(numberLIElems[i].FirstChild.Attributes.FirstOrDefault()?.Name == "href" ? numberLIElems[i].FirstChild.Attributes.First().Value : "#")})");
+                            if (CultureInfo.InvariantCulture.DateTimeFormat.MonthGenitiveNames.Contains(checkingSchedule.NextSibling.InnerText.Split(' ').FirstOrDefault()))
+                            {
+                                elementName = checkingSchedule.NextSibling.Name;
+                            }
+                            else
+                            {
+                                checkingSchedule = schedule.NextSibling;
+                            }
                         }
-                        else
+                        dates = schedule.SelectNodes($"following::{elementName}[position()<5]");
+                        for (int d = 0; d < dates.Count; d++)
                         {
-                            sb.Append(numberLIElems[i].FirstChild.InnerText.Replace("\n", ""));
-                        }
+                            if (!dates[d].InnerText.Contains(patchPost.timestamp.ToString("MMMM", CultureInfo.InvariantCulture)) &&
+                                !dates[d].InnerText.Contains(patchPost.timestamp.AddMonths(1).ToString("MMMM", CultureInfo.InvariantCulture)) &&
+                                !dates[d].InnerText.Contains(patchPost.timestamp.AddMonths(2).ToString("MMMM", CultureInfo.InvariantCulture)))
+                            {
+                                continue;
+                            }
+                            // date
+                            var patchNumberULEle = dates[d].SelectNodes("following::ul[position()<2]");
+                            sb.Append($":white_small_square:{dates[d].InnerText} - ");
+                            var numberLIEle = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li");
+                            var numberLIElems = patchNumberULEle.FirstOrDefault()?.ChildNodes.Where(x => x.Name == "li").ToList();
 
-                        if (i != numberLIElems.Count - 1)
-                        {
-                            sb.Append(", ");
+                            // patch info
+                            for (int i = 0; i < numberLIElems.Count; i++)
+                            {
+                                // The element links to somewhere, get the link and format it in Discord markdown
+                                if (numberLIElems[i].FirstChild.Name == "a")
+                                {
+                                    sb.Append($"[{numberLIElems[i].FirstChild.InnerText}]" +
+                                        $"({(numberLIElems[i].FirstChild.Attributes.FirstOrDefault()?.Name == "href" ? numberLIElems[i].FirstChild.Attributes.First().Value : "#")})");
+                                }
+                                else
+                                {
+                                    sb.Append(numberLIElems[i].FirstChild.InnerText.Replace("\n", ""));
+                                }
+
+                                if (i != numberLIElems.Count - 1)
+                                {
+                                    sb.Append(", ");
+                                }
+                            }
+
+                            if (d != dates.Count - 1)
+                            {
+                                sb.Append('\n');
+                            }
                         }
                     }
-
-                    if (d != dates.Count - 1)
+                    if (sb.ToString().Contains(';'))
                     {
-                        sb.Append('\n');
+                        return HttpUtility.HtmlDecode(sb.ToString());
                     }
+                    return sb.ToString();
                 }
-                if (sb.ToString().Contains(';'))
+                else
                 {
-                    return HttpUtility.HtmlDecode(sb.ToString());
+                    return "";
                 }
-                return sb.ToString();
             }
-            else
-            {
-                return "";
-            }
+            // no wrapped headers, this should never happen, ever!
+            return "";
         }
         private static string GodsChanged(HtmlDocument doc, List<Gods.God> gods)
         {

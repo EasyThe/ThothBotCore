@@ -1,5 +1,5 @@
 ﻿
-namespace ThothBotCore.Connections.Models
+namespace ThothBotCore.Models
 {
     public class HiRezSession
     {

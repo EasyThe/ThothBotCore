@@ -7,8 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using ThothBotCore.Connections;
-using ThothBotCore.Connections.Models;
-using ThothBotCore.Notifications;
+using ThothBotCore.Feeds;
 using ThothBotCore.Storage;
 
 namespace ThothBotCore.Utilities
@@ -44,8 +43,8 @@ namespace ThothBotCore.Utilities
                         Directory.CreateDirectory("Status");
                     }
 
-                    await StatusPage.GetStatusSummary();
-                    var ServerStatus = JsonConvert.DeserializeObject<ServerStatus>(await StatusPage.GetStatusSummary());
+                    await APIInteractions.GetStatusSummary();
+                    var ServerStatus = JsonConvert.DeserializeObject<Models.ServerStatus>(await APIInteractions.GetStatusSummary());
 
                     if (ServerStatus != null)
                     {
@@ -112,7 +111,7 @@ namespace ThothBotCore.Utilities
                             if (incidentEmbed.Length != 0)
                             {
                                 // Sending the Incident to the servers
-                                await StatusNotifier.SendServerStatus(incidentEmbed);
+                                await Feeder.SendServerStatusWebhooks(incidentEmbed.Build(), Models.GuildSettingsModel.FeedType.ServerStatus, "SMITE Server Incident");
                             }
                         }
 
@@ -190,7 +189,7 @@ namespace ThothBotCore.Utilities
                             //Sending maintenance embed
                             if (embed.Fields.Count != 0)
                             {
-                                await StatusNotifier.SendServerStatus(embed);
+                                await Feeder.SendServerStatusWebhooks(embed.Build(), Models.GuildSettingsModel.FeedType.ServerStatus, "SMITE Server Maintenance");
                             }
                         }
                     }

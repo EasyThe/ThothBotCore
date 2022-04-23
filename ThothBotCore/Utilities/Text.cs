@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using ThothBotCore.Models;
-using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Utilities
 {
     public class Text
     {
         static Random rnd = new();
+        private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+
         public static string ToTitleCase(string text)
         {
             return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
@@ -35,6 +36,10 @@ namespace ThothBotCore.Utilities
         {
             return dateTime.ToString(CultureInfo.InvariantCulture);
         }
+        public static string ToRfc3339String(DateTime dateTime)
+        {
+            return dateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fffzzz", DateTimeFormatInfo.InvariantInfo);
+        }
         public static string UserNotFound(string username)
         {
             return $"<:X_:579151621502795777>*{username}* was not found!";
@@ -42,6 +47,15 @@ namespace ThothBotCore.Utilities
         public static string UserIsHidden(string username)
         {
             return $"<:Hidden:591666971234402320>*{username}*'s account is hidden!";
+        }
+        public static string GenerateString(int count)
+        {
+            char[] chars = new char[count];
+            for (int i = 0; i < count; i++)
+            {
+                chars[i] = alphabet[rnd.Next(alphabet.Length)];
+            }
+            return new string(chars);
         }
         public static void WriteLine(string message, ConsoleColor backColor, ConsoleColor textColor)
         {
@@ -70,64 +84,6 @@ namespace ThothBotCore.Utilities
                 .Where(char.IsLetter)
                 .Where(char.IsUpper));
             }
-        }
-        public static string PrettyDate(DateTime dateTime)
-        {
-            TimeSpan timeSpan = DateTime.UtcNow.Subtract(dateTime);
-            int daysDiff = (int)timeSpan.TotalDays;
-            int secsDiff = (int)timeSpan.TotalSeconds;
-
-            if (daysDiff < 0 || daysDiff >= 31)
-            {
-                return dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
-            }
-
-            else if (daysDiff == 0)
-            {
-                if (secsDiff < 60)
-                {
-                    return "Just now";
-                }
-                if (secsDiff < 120)
-                {
-                    return "1 minute ago";
-                }
-                if (secsDiff < 3600)
-                {
-                    return string.Format("{0} minutes ago",
-                        Math.Floor((double)secsDiff / 60));
-                }
-                if (secsDiff < 7200)
-                {
-                    return "1 hour ago";
-                }
-                if (secsDiff < 86400)
-                {
-                    return string.Format("{0} hours ago",
-                        Math.Floor((double)secsDiff / 3600));
-                }
-            }
-            else if (daysDiff == 1)
-            {
-                return string.Format("Yesterday [{0}]", dateTime.ToString("HH:mm UTC", CultureInfo.InvariantCulture));
-            }
-            else if (daysDiff == 7)
-            {
-                return string.Format("{0} week ago [{1}]",
-                    Math.Ceiling((double)daysDiff / 7), dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture));
-            }
-            else if (daysDiff < 7)
-            {
-                return string.Format("{0} days ago [{1}]",
-                    daysDiff, dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture));
-            }
-            else if (daysDiff < 31)
-            {
-                return string.Format("{0} weeks ago [{1}]",
-                    Math.Ceiling((double)daysDiff / 7), dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture));
-            }
-
-            return dateTime.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
         }
         public static string NumberEmojies(int number)
         {
@@ -177,10 +133,7 @@ namespace ThothBotCore.Utilities
             {
                 return "Order";
             }
-            else
-            {
-                return "Chaos";
-            }
+            return "Chaos";
         }
         public static string SideEmoji(int taskForce)
         {
@@ -188,11 +141,9 @@ namespace ThothBotCore.Utilities
             {
                 return "🔹";
             }
-            else
-            {
-                return "🔸";
-            }
+            return "🔸";
         }
+        public static string URLifyGodName(string godName) => godName.Replace(" ", "-");
 
         // SMITE Portals
         public static string GetPortalName(int portal)
@@ -208,7 +159,7 @@ namespace ThothBotCore.Utilities
                 _ => "n/a",
             };
         }
-        public static string GetPortalIcon(string portal)
+        public static string GetPortalEmoji(string portal)
         {
             return portal switch
             {
@@ -278,82 +229,19 @@ namespace ThothBotCore.Utilities
         }
 
         // SMITE Queue names
-        public static string GetQueueName(int queueID)
+        public static string GetQueueName(int queueID, string name = "")
         {
-            return queueID switch
+            var queue = Constants.SmiteQueues.FirstOrDefault(x => x.Key == queueID.ToString()).Value;
+            if (queue == null)
             {
-                423 => "Conquest 5v5 __Old Queue__",
-                426 => "Conquest",
-                429 => "Custom Conquest",
-                430 => "Conquest Solo Ranked __Old Queue__",
-                433 => "Domination __Old Queue__",
-                434 => "MOTD",
-                435 => "Arena",
-                436 => "Basic Tutorial",
-                438 => "Custom Arena",
-                440 => "Ranked Duel",
-                441 => "Custom Joust",
-                443 => "Arena Practice (Easy)",
-                444 => "Jungle Practice",
-                445 => "Assault",
-                446 => "Custom Assault",
-                448 => "Joust",
-                450 => "Ranked Joust",
-                451 => "Ranked Conquest",
-                452 => "Ranked Arena __Old Queue__",
-                454 => "Assault(vs AI) Medium",
-                456 => "Joust (vs AI) Medium",
-                457 => "Arena (vs AI) Easy",
-                458 => "Conquest Practice (Easy)",
-                459 => "Siege",
-                460 => "Custom Siege",
-                461 => "Conquest (vs AI) Medium",
-                462 => "Arena Tutorial",
-                464 => "Joust Practice (Easy)",
-                466 => "Clash",
-                467 => "Custom Clash",
-                468 => "Arena (vs AI) Medium",
-                469 => "Clash (vs AI) Medium",
-                470 => "Clash Practice (Easy)",
-                471 => "Clash Tutorial",
-                472 => "Arena Practice (Medium)",
-                473 => "Joust Practice (Medium)",
-                474 => "Joust (Co-Op) Easy",
-                475 => "Conquest Practice (Medium)",
-                476 => "Conquest (Co-Op) Easy",
-                477 => "Clash Practice (Medium)",
-                478 => "Clash (Co-Op) Easy",
-                479 => "Assault Practice (Easy)",
-                480 => "Assault Practice (Medium)",
-                481 => "Assault (Co-Op) Easy",
-                502 => "Ranked Duel (Console)",
-                503 => "Ranked Joust (Console)",
-                504 => "Ranked Conquest (Console)",
-                508 => "Corrupted Arena",
-                10151 => "Custom Corrupted Arena",
-                10152 => "Custom Jade Corruption Joust",
-                10153 => "Classic Joust",
-                10155 => "Heimdallr's Crossing",
-                10158 => "Arena (vs AI) (Very Hard)",
-                10159 => "Assault (vs AI) (Hard)",
-                10160 => "Clash (vs AI) (Hard)",
-                10161 => "Conquest (vs AI) (Hard)",
-                10162 => "Joust (vs AI) (Very Hard)",
-                10163 => "Arena (vs AI) (Easy)",
-                10164 => "Arena (vs AI) (Hard)",
-                10165 => "Joust (vs AI) (Easy)",
-                10166 => "Joust (vs AI) (Hard)",
-                10167 => "Arena Practice (Hard)",
-                10168 => "Assault Practice (Hard)",
-                10169 => "Clash Practice (Hard)",
-                10170 => "Conquest Practice (Hard)",
-                10171 => "Joust Practice (Hard)",
-                10173 => "Classic Domination",
-                10182 => "Conquest (vs AI) (Very Easy)",
-                10189 => "Slash",
-                10190 => "Custom Duel",
-                _ => "Unknown Queue"
-            };
+                if (name.Length != 0)
+                {
+                    return name;
+                }
+                _ = Reporter.SendError($"**Missing Queue:**\nID:{queueID} || {name}");
+                return "Unknown Queue";
+            }
+            return queue;
         }
         public static string GetRankEmoji(int rank)
         {
@@ -382,6 +270,46 @@ namespace ThothBotCore.Utilities
                 4 => "<:Party_4:848904863063605280>",
                 _ => "<:Solo:857722598721060884>"
             };
+        }
+        /// <param name="pantheon">lower case</param>
+        /// <returns></returns>
+        public static string GetPantheonEmoji(string pantheon)
+        {
+            return pantheon switch
+            {
+                "arthurian" => "<:Arthurian:960310480189161534>",
+                "babylonian" => "<:Babylonian:960310480306577448>",
+                "chinese" => "<:Chinese:960310480424030249>",
+                "celtic" => "<:Celtic:960310480017162251>",
+                "egyptian" => "<:Egyptian:960310480377888808>",
+                "greek" => "<:Greek:960310480335933521>",
+                "great old ones" => "<:Great_Old_Ones:960310480457576548>",
+                "hindu" => "<:Hindu:960310480432406579>",
+                "japanese" => "<:Japanese:960310480633741382>",
+                "maya" => "<:Maya:960310480692465706>",
+                "norse" => "<:Norse:960310480415629342>",
+                "polynesian" => "<:Polynesian:960310480390467655>",
+                "roman" => "<:Roman:960310480751198258>",
+                "slavic" => "<:Slavic:960310480684064778>",
+                "voodoo" => "<:Voodoo:960310480239480873>",
+                "yoruba" => "<:Yoruba:960310480486936698>",
+                _ => "<:blank:570291209906552848>"
+            };
+        }
+        public static string GetGodRoleEmoji(string role)
+        {
+            return role.ToLowerInvariant() switch
+            {
+                "mage" => "<:Mage:607990144380698625>",
+                "warrior" => "<:Warrior:607990144338886658>",
+                "assassin" => "<:Assassin:607990143915261983>",
+                "guardian" => "<:Guardian:607990144385024000>",
+                _ => "<:Hunter:607990144271646740>"
+            };
+        }
+        public static string GetGodTypeEmoji(string type)
+        {
+            return type == "magical" ? "<:Magical:960310480533090324>" : "<:Physical:960310480759586836>";
         }
         public static Tuple<string, string> GetRankedConquest(int tier)
         {
@@ -492,7 +420,7 @@ namespace ThothBotCore.Utilities
 
         public static List<int> LegitQueueIDs()
         {
-            List<int> list = new() { 423, 426, 430, 433, 435, 440, 445, 448, 450, 451, 452, 459, 466, 502, 503, 504 };
+            List<int> list = new() { 423, 426, 430, 433, 435, 440, 445, 448, 450, 451, 452, 459, 466, 502, 503, 504, 10189 };
             return list;
         }
 
@@ -512,13 +440,13 @@ namespace ThothBotCore.Utilities
         }
         public static string ReformatSecondaryItemDescription(string text)
         {
-            return text.Replace("PASSIVE", "**PASSIVE**")
+            return text != null ? text.Replace("PASSIVE", "**PASSIVE**")
                        .Replace("<n>", "\n")
                        .Replace("GLYPH", "**GLYPH**")
                        .Replace("<font color='#42F46E'>", "")
                        .Replace("<font color='#F44242'>", "")
                        .Replace("AURA", "**AURA**")
-                       .Replace("ROLE QUEST", "**ROLE QUEST**");
+                       .Replace("ROLE QUEST", "**ROLE QUEST**") : "";
         }
         public static string CleanDirtyText(string dirty)
         {
@@ -563,7 +491,7 @@ namespace ThothBotCore.Utilities
             if (GamerTag != null && GamerTag.Length != 0) return GamerTag;
             if (Name != null && Name.Length != 0)
             {
-                if (Name.Contains("[")) return Name.Split("]")[1];
+                if (Name.Contains('[')) return Name.Split("]")[1];
                 return Name;
             }
             return "~~Hidden Profile~~";
@@ -606,28 +534,20 @@ namespace ThothBotCore.Utilities
         }
         public static double CalculateKDA(int kills, int deaths, int assists)
         {
+            if (kills == 0 && deaths == 0 && assists == 0)
+            {
+                return 0;
+            }
             if (kills == 0) kills = 1;
             if (deaths == 0) deaths = 1;
             if (assists == 0) assists = 1;
             return (double)(kills + (assists / 2)) / deaths;
         }
 
-        //Paladins
-        public static string GetQueueNamePaladins(int queueID)
+        public static string PlaceholderText()
         {
-            return queueID switch
-            {
-                424 => "Siege",
-                469 => "Team Deathmatch",
-                452 => "Onslaught",
-                486 => "Competitive KBM",
-                470 => "Team Deathmatch Practice",
-                425 => "Practice Siege",
-                453 => "Onslaught Practice",
-                428 => "Competitive Gamepad",
-                445 => "Test Maps",
-                _ => "Unknown Mode",
-            };
+            var plc = Constants.Placeholders;
+            return plc[rnd.Next(plc.Length)];
         }
 
         // Tips

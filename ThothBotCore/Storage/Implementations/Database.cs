@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Utilities;
-using static ThothBotCore.Connections.Models.Player;
 
 namespace ThothBotCore.Storage
 {
@@ -55,14 +54,6 @@ namespace ThothBotCore.Storage
                     $"WHERE _id = {serverID}");
             }
         }
-        public static async Task SetNotifChannel(ulong serverID, ulong statusChannel) // Working as intended
-        {
-            using IDbConnection cnn = new SQLiteConnection(LoadConnectionString());
-            await cnn.ExecuteAsync($"INSERT INTO serverConfig(_id, statusBool, statusChannel) " +
-                $"VALUES({serverID}, 1, {statusChannel}) " +
-                $"ON CONFLICT(_id) " +
-                $"DO UPDATE SET statusChannel = \"{statusChannel}\", statusBool = 1");
-        }
         public static async Task SetPrefix(ulong serverID, string prefix) // Working as intended
         {
             using IDbConnection cnn = new SQLiteConnection(LoadConnectionString());
@@ -93,31 +84,6 @@ namespace ThothBotCore.Storage
             }
         }
         // remove those here after migration
-        public static async Task<List<PlayerStats>> GetAllPlayers()
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                var output = await cnn.QueryAsync<PlayerStats>($"SELECT * FROM players", new DynamicParameters());
-                return output.ToList();
-            }
-        }
-        public static async Task<List<PlayerSpecial>> GetAllPlayerSpecials()
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                var output = await cnn.QueryAsync<PlayerSpecial>($"SELECT * FROM playersSpecial", new DynamicParameters());
-                return output.ToList();
-            }
-        }
-        public static async Task<List<ServerConfig>> GetAllGuilds()
-        {
-            using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
-            {
-                var output = await cnn.QueryAsync<ServerConfig>($"SELECT * FROM serverConfig", new DynamicParameters());
-                return output.ToList();
-            }
-        }
-        // delete till here
         public static List<string> CountOfStatusUpdatesActivatedInDB() // Working as intended
         {
             using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))

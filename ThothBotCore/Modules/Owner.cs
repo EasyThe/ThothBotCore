@@ -1,9 +1,7 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
-using Discord.Rest;
-using Discord.Webhook;
 using Discord.WebSocket;
+using Fergun.Interactive;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -13,7 +11,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
@@ -26,148 +23,100 @@ using ThothBotCore.Utilities;
 namespace ThothBotCore.Modules
 {
     [RequireOwner]
-    public class Owner : InteractiveBase<SocketCommandContext>
+    public class Owner : ModuleBase<SocketCommandContext>
     {
         HiRezAPI hirezAPI = new();
+        public InteractiveService Interactive { get; set; }
 
-        [Command("updatedb", true, RunMode = RunMode.Async)]
-        public async Task UpdateDBFromSmiteAPI()
+        [Command("migratetofeeds", true, RunMode = RunMode.Async)]
+        public async Task MigrateFromSqliteToMongoFeeds()
+        {
+            StringBuilder sb = new();
+            var oldDb = await Database.GetNotifChannels();
+            foreach (var oldGuild in oldDb)
+            {
+                try
+                {
+                    var guild = Connection.Client.GetGuild(oldGuild._id);
+                    var chnl = guild.GetTextChannel(oldGuild.statusChannel);
+                    var webhook = await chnl.CreateWebhookAsync("Thoth Feeds");
+                    if (webhook != null)
+                    {
+                        var guildSettings = new GuildSettingsModel()
+                        {
+                            _id = oldGuild._id,
+                            Feeds = new List<GuildSettingsModel.Feed>()
+                            {
+                                new GuildSettingsModel.Feed
+                                {
+                                    ChannelID = oldGuild.statusChannel,
+                                    Type = GuildSettingsModel.FeedType.ServerStatus,
+                                    WebhookID = webhook.Id,
+                                    WebhookToken = webhook.Token
+                                }
+                            }
+                        }; 
+                        await MongoConnection.SaveGuildSettingsAsync(guildSettings);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Guild: {oldGuild._id} - {ex.Message}");
+                    if (ex.Message.Contains("Permission"))
+                    {
+                        sb.AppendLine(oldGuild._id.ToString());
+                        var guildSettings = new GuildSettingsModel()
+                        {
+                            _id = oldGuild._id,
+                            Feeds = new List<GuildSettingsModel.Feed>()
+                            {
+                                new GuildSettingsModel.Feed
+                                {
+                                    ChannelID = oldGuild.statusChannel,
+                                    Type = GuildSettingsModel.FeedType.ServerStatus
+                                }
+                            }
+                        };
+                        await MongoConnection.SaveGuildSettingsAsync(guildSettings);
+                    }
+                }
+            }
+            await ReplyAsync("Migration complete!");
+            if (sb.Length != 0)
+            {
+                await ReplyAsync($"Servers failed to migrate due to no permissions:\n{sb}");
+            }
+        }
+
+        [Command("testwebhook", RunMode = RunMode.Async)]
+        public async Task TestWebhookCOmmand([Remainder]string text)
         {
             try
             {
-                var msg = await ReplyAsync("<a:updating:403035325242540032> Working on gods...");
-                var newGodList = JsonConvert.DeserializeObject<List<Gods.God>>(await hirezAPI.GetGods());
-                var godsInDb = MongoConnection.GetAllGods();
-
-                // Adding the emojis and domcolors from the old db to the new one
-                foreach (var god in godsInDb)
-                {
-                    var found = newGodList.Find(x => x.id == god.id);
-                    if (found != null)
-                    {
-                        newGodList.Find(x => x.id == god.id).Emoji = god.Emoji;
-                        newGodList.Find(x => x.id == god.id).DomColor = god.DomColor;
-                    }
-                    else
-                    {
-                        await ReplyAsync($"{god.Name} is missing from the API.");
-                    }
-                }
-
-                // Missing Emoji?
-                if (newGodList.Any(x => x.Emoji == null))
-                {
-                    foreach (var god in newGodList)
-                    {
-                        if (god.Emoji == null)
-                        {
-                            god.Emoji = await Utils.AddNewGodEmojiInGuild(god);
-                        }
-                    }
-                }
-                Thread.Sleep(200);
-                // Missing DomColor?
-                if (newGodList.Any(x => x.DomColor == 0))
-                {
-                    foreach (var god in newGodList)
-                    {
-                        if (god.DomColor == 0)
-                        {
-                            // Getting the dominant color from the gods icon
-                            try
-                            {
-                                if (god.godIcon_URL != "")
-                                {
-                                    god.DomColor = DominantColor.GetDomColor(god.godIcon_URL);
-                                }
-                                else
-                                {
-                                    await Reporter.SendError($"{god.Name} has missing icon.");
-                                }
-                            }
-                            catch (Exception exxx)
-                            {
-                                await ReplyAsync($"{god.Name} {exxx.Message}");
-                            }
-                        }
-                    }
-                }
-                // Saving the gods to the DB
-                foreach (var god in newGodList)
-                {
-                    await MongoConnection.SaveGodAsync(god);
-                }
-
-                // ITEMS ====================================================================================================
-                await msg.ModifyAsync(x => x.Content = "<a:updating:403035325242540032> Working on items...");
-
-                var newItemsList = JsonConvert.DeserializeObject<List<GetItems.Item>>(await hirezAPI.GetItems());
-                var itemsInDb = MongoConnection.GetAllItems();
-
-                // Adding the emojis and domcolors from the old db to the new one
-                foreach (var item in itemsInDb)
-                {
-                    var foundIndex = newItemsList.FindIndex(x => x.ItemId == item.ItemId);
-                    if (foundIndex != -1)
-                    {
-                        newItemsList[foundIndex]._id = item._id;
-                        newItemsList[foundIndex].Emoji = item.Emoji;
-                        newItemsList[foundIndex].DomColor = item.DomColor;
-                        newItemsList[foundIndex].GodType = item.GodType;
-                    }
-                }
-
-                // Missing Emoji?
-                if (newItemsList.Any(x => x.Emoji == null && x.ActiveFlag == "y"))
-                {
-                    foreach (var item in newItemsList)
-                    {
-                        if (item.Emoji == null && item.ActiveFlag == "y")
-                        {
-                            try
-                            {
-                                item.Emoji = await Utils.AddMissingItemEmojiAsync(item);
-                            }
-                            catch (Exception exx)
-                            {
-                                await ReplyAsync($"{item.DeviceName} {exx.Message}");
-                            }
-                        }
-                    }
-                }
-
-                // Missing DomColor?
-                if (newItemsList.Any(x=> x.DomColor == 0))
-                {
-                    foreach (var item in newItemsList)
-                    {
-                        if (item.DomColor == 0 && item.ActiveFlag == "y")
-                        {
-                            if (item.itemIcon_URL != "")
-                            {
-                                try
-                                {
-                                    item.DomColor = DominantColor.GetDomColor(item.itemIcon_URL);
-                                }
-                                catch (Exception x)
-                                {
-                                    await ReplyAsync($"{item.DeviceName} {x.Message}");
-                                }
-                            }
-                        }
-                    }
-                }
-
-                foreach (var item in newItemsList)
-                {
-                    await MongoConnection.SaveItemAsync(item);
-                }
-
-                await msg.ModifyAsync(x => x.Content = "<:check:314349398811475968> Done!");
+                var em = await EmbedHandler.BuildDescriptionEmbedAsync(text);
+                await Feeds.Feeder.SendServerStatusWebhooks(em, GuildSettingsModel.FeedType.ServerStatus, "Testing Webhook");
+                await ReplyAsync(":pray:");
             }
             catch (Exception ex)
             {
-                await Reporter.SendException(ex, Context, "");
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        [Command("testcal", RunMode = RunMode.Async)]
+        public async Task TestCalendarCall()
+        {
+            try
+            {
+                //var result = await APIInteractions.GetEsportsEventID();
+                //var split = result.Split("eventId:");
+                //var hopefullyID = split[1].Split('"');
+                //Console.WriteLine(hopefullyID[1]);
+                await ReplyAsync(":pray:");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -257,12 +206,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync("Ready");
         }
 
-        [Command("lg")] // Leave Guild
-        public async Task LeaveGuild(ulong id)
-        {
-            await Connection.Client.GetGuild(id).LeaveAsync();
-        }
-
         [Command("sm", RunMode = RunMode.Async)]
         public async Task SendMessageAsOwner([Name("ServerID")] ulong server, [Name("ChannelID")] ulong channel, [Remainder] string message)
         {
@@ -287,10 +230,10 @@ namespace ThothBotCore.Modules
 
             var testmessage = await ReplyAsync("Respond with 'yes' if the message looks good.",
                 embed: embed.Build());
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
             if (response != null)
             {
-                if (response.Content.ToLowerInvariant() == "yes")
+                if (response.Value.Content.ToLowerInvariant() == "yes")
                 {
                     await testmessage.ModifyAsync(x => x.Content = "Sent!");
                     await chn.SendMessageAsync(embed: embed.Build());
@@ -435,20 +378,6 @@ namespace ThothBotCore.Modules
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
 
-        [Command("sac")]
-        public async Task SetActivityCommand(string url, [Remainder] string game)
-        {
-            await Connection.Client.SetGameAsync(game, url);
-            await ReplyAsync($"Successfully set the activity to '**{game}**'");
-        }
-
-        [Command("sg")]
-        public async Task SetGame([Remainder] string game)
-        {
-            await Connection.Client.SetGameAsync(game);
-            await ReplyAsync($"Successfully set the game to '**{game}**'");
-        }
-
         [Command("desc")]
         public async Task EmbedDescriptionOwnerCommand([Remainder] string text)
         {
@@ -491,50 +420,6 @@ namespace ThothBotCore.Modules
             await File.AppendAllTextAsync("spimise.txt", nzbr.ToString());
             await File.AppendAllTextAsync("zxc.csv", sb.ToString());
             Text.WriteLine((count - 2).ToString());
-        }
-
-        [Command("user", true, RunMode = RunMode.Async)]
-        public async Task GetUserInfo(ulong id = 0)
-        {
-            if (id == 0)
-            {
-                id = Context.Message.Author.Id;
-            }
-            var user = await Connection.Client.Rest.GetUserAsync(id);
-            if (user == null)
-            {
-                await ReplyAsync("User is null :shrug:");
-                return;
-            }
-            var embed = new EmbedBuilder().WithDescription("");
-            var userNotRest = Connection.Client.GetUser(id);
-            if (userNotRest != null)
-            {
-                embed.Description += $"\n{userNotRest.Mention}\n" +
-                    $"Mutual Guilds: {userNotRest.MutualGuilds.Count}\n" +
-                    $"Status: {userNotRest.Status}\n";
-            }
-            embed.WithTitle(user.ToString());
-            embed.Description += $"ID: {user.Id}\n" +
-                $"{user.PublicFlags.Value}";
-            embed.WithThumbnailUrl(user.GetAvatarUrl());
-            await ReplyAsync(embed: embed.Build());
-        }
-
-        [Command("users", true, RunMode = RunMode.Async)]
-        public async Task GetUsersCommand(ulong id = 0)
-        {
-            if (id == 0)
-            {
-                id = Context.Guild.Id;
-            }
-            var guild = Connection.Client.GetGuild(id);
-            var sb = new StringBuilder();
-            foreach (var user in guild.Users)
-            {
-                sb.AppendLine($"{user.Username}#{user.DiscriminatorValue} [{user.Id}]");
-            }
-            await ReplyAsync(sb.ToString());
         }
 
         [Command("guild", true, RunMode = RunMode.Async)]
@@ -619,114 +504,6 @@ namespace ThothBotCore.Modules
                 $"{sb}");
         }
 
-        [Command("sendDM", RunMode = RunMode.Async)]
-        public async Task SendDMasOwner(ulong userID, [Remainder] string message)
-        {
-            IUser targetUser = Connection.Client.GetUser(userID);
-            var channel = await targetUser.GetOrCreateDMChannelAsync();
-            if (channel == null)
-            {
-                await ReplyAsync("Channel for this user cannot be found or created. :(");
-                return;
-            }
-            var embed = new EmbedBuilder();
-            embed.WithAuthor(Context.Message.Author);
-            embed.Author.Url = Constants.SupportServerInvite;
-            embed.WithColor(Constants.FeedbackColor);
-            embed.AddField(x =>
-            {
-                x.IsInline = false;
-                x.Name = "-------";
-                x.Value = $"If you want to answer to this message you can use the `{Credentials.botConfig.prefix}feedback` command or " +
-                $"[join the support server]({Constants.SupportServerInvite}) of Thoth and chat with the developer directly!";
-            });
-            embed.WithDescription(message);
-            embed.WithFooter(x =>
-            {
-                x.Text = "This message was sent by the developer of the bot";
-                x.IconUrl = Constants.botIcon;
-            });
-
-            var testmessage = await ReplyAsync("Respond with 'yes' if the message looks good.",
-                embed: embed.Build());
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response != null)
-            {
-                if (response.Content.ToLowerInvariant() == "yes")
-                {
-                    await testmessage.ModifyAsync(x => x.Content = "Sent!");
-                    await channel.SendMessageAsync(embed: embed.Build());
-                }
-                else
-                {
-                    await ReplyAsync("Message was not sent. :ok_hand:");
-                }
-            }
-            else
-            {
-                await testmessage.ModifyAsync(x=> x.Content = "Time is up.");
-            }
-        }
-
-        [Command("cee", true, RunMode = RunMode.Async)]
-        public async Task CreateAnEmbedAsOwnerCommand()
-        {
-            var embed = new EmbedBuilder();
-            var mainMessage = await ReplyAsync("Author?", embed: embed.Build());
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-
-            // With author
-            if (response.Content.ToLowerInvariant().Contains("y"))
-            {
-                await response.DeleteAsync();
-                await mainMessage.ModifyAsync(x =>
-                {
-                    x.Content = "Provide Author name: ";
-                });
-                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                embed.WithAuthor(x =>
-                {
-                    x.IconUrl = Constants.VulpisLogoLink;
-                    x.Name = response.Content;
-                });
-                embed.WithColor(Constants.VulpisColor);
-                await mainMessage.ModifyAsync(x =>
-                {
-                    x.Embed = embed.Build();
-                });
-                await response.DeleteAsync();
-            }
-
-            // Description
-            await mainMessage.ModifyAsync(x =>
-            {
-                x.Content = "**Description?**";
-            });
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response.Content.ToLowerInvariant().Contains("y"))
-            {
-                await response.DeleteAsync();
-                await mainMessage.ModifyAsync(x =>
-                {
-                    x.Content = "**Write Description now:**";
-                });
-                response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            }
-            await response.DeleteAsync();
-
-            await mainMessage.ModifyAsync(x =>
-            {
-                x.Content = "**Content**";
-            });
-            // Content
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            await mainMessage.ModifyAsync(x =>
-            {
-                x.Content = response.Content;
-            });
-            await response.DeleteAsync();
-        }
-
         [Command("permcheck", true, RunMode = RunMode.Async)]
         public async Task PermissionsCheckCommand()
         {
@@ -749,91 +526,6 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"Guilds with missing ManageMessages permission: {count}\n{sb}");
         }
 
-        [Command("cleansqlite", RunMode = RunMode.Async)]
-        public async Task ClearMissingGuildsFromSqliteDBCommand()
-        {
-            await ReplyAsync("cheti konzolata");
-            try
-            {
-                var db = await Database.GetAllGuilds();
-                SocketGuild nzvrat = null;
-                foreach (var guild in db)
-                {
-                    try
-                    {
-                        nzvrat = Connection.Client.Guilds.Single(x => x.Id == guild._id);
-                    }
-                    catch
-                    {
-                        Text.WriteLine(guild._id.ToString());
-                    }
-                }
-                var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-                if (response != null || response.Content.Contains("yes"))
-                {
-                    foreach (var guild in db)
-                    {
-                        try
-                        {
-                            nzvrat = Connection.Client.Guilds.Single(x => x.Id == guild._id);
-                        }
-                        catch
-                        {
-                            Text.WriteLine($"{nzvrat.Id} {nzvrat.Name}");
-                            await Database.DeleteServerConfig(guild._id);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Text.WriteLine(ex.Message);
-            }
-        }
-
-        [Command("reload")]
-        public async Task ReloadConstantsCommand()
-        {
-            Constants.ReloadConstants();
-            await ReplyAsync("Reloaded!");
-        }
-
-        // Badges
-        [Command("badges")]
-        public async Task GetAllBadgesCommandAsync()
-        {
-            EmbedBuilder embed = new()
-            { 
-                Color = Constants.FeedbackColor
-            };
-            StringBuilder keys = new();
-            StringBuilder badge = new();
-            embed.WithAuthor(x =>
-            {
-                x.IconUrl = Constants.botIcon;
-                x.Name = "All available badges";
-            });
-            var allBadges = MongoConnection.GetAllBadges();
-            foreach (var bdg in allBadges)
-            {
-                keys.AppendLine(bdg.Key);
-                badge.AppendLine($"{bdg.Emote} {bdg.Title}");
-            }
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Key";
-                x.Value = keys.ToString();
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Badge";
-                x.Value = badge.ToString();
-            });
-            await ReplyAsync(embed: embed.Build());
-        }
-
         // Communities
 
         [Command("addcommunity", true, RunMode = RunMode.Async)]
@@ -843,58 +535,58 @@ namespace ThothBotCore.Modules
             CommunityModel community = new();
             // Name?
             var message = await ReplyAsync("Name?");
-            var response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null || response.Content.ToLowerInvariant().Contains("cancel"))
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null || response.Value.Content.ToLowerInvariant().Contains("cancel"))
             {
                 return;
             }
-            community.Name = response.Content;
-            await response.DeleteAsync();
+            community.Name = response.Value.Content;
+            await response.Value.DeleteAsync();
             // Description
             await message.ModifyAsync(x => x.Content = "Description?");
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null || response.Content.ToLowerInvariant().Contains("cancel"))
+            response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null || response.Value.Content.ToLowerInvariant().Contains("cancel"))
             {
                 return;
             }
-            community.Description = response.Content;
-            await response.DeleteAsync();
+            community.Description = response.Value.Content;
+            await response.Value.DeleteAsync();
             // LogoLink
             await message.ModifyAsync(x => x.Content = "Logo link? (imgur)");
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null || response.Content.ToLowerInvariant().Contains("cancel"))
+            response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null || response.Value.Content.ToLowerInvariant().Contains("cancel"))
             {
                 return;
             }
-            community.LogoLink = response.Content;
-            await response.DeleteAsync();
+            community.LogoLink = response.Value.Content;
+            await response.Value.DeleteAsync();
             // Mods
             await message.ModifyAsync(x => x.Content = "Mod ID? Add only one!");
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null || response.Content.ToLowerInvariant().Contains("cancel"))
+            response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null || response.Value.Content.ToLowerInvariant().Contains("cancel"))
             {
                 return;
             }
-            community.Mods = new ulong[1] { UInt64.Parse(response.Content) };
-            await response.DeleteAsync();
+            community.Mods = new ulong[1] { UInt64.Parse(response.Value.Content) };
+            await response.Value.DeleteAsync();
             // Type
             await message.ModifyAsync(x => x.Content = "Type?");
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null || response.Content.ToLowerInvariant().Contains("cancel"))
+            response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null || response.Value.Content.ToLowerInvariant().Contains("cancel"))
             {
                 return;
             }
-            community.Type = response.Content;
-            await response.DeleteAsync();
+            community.Type = response.Value.Content;
+            await response.Value.DeleteAsync();
             // Discord invite or else
             await message.ModifyAsync(x => x.Content = "Discord invite or Twitter?");
-            response = await NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
-            if (response == null || response.Content.ToLowerInvariant().Contains("cancel"))
+            response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            if (response == null || response.Value.Content.ToLowerInvariant().Contains("cancel"))
             {
                 return;
             }
-            community.Link = response.Content;
-            await response.DeleteAsync();
+            community.Link = response.Value.Content;
+            await response.Value.DeleteAsync();
 
             await MongoConnection.SaveOrCreateCommunityAsync(community);
             Constants.ReloadConstants();
@@ -941,36 +633,12 @@ namespace ThothBotCore.Modules
             await ReplyAsync($"Tips in DB: {alltips.Count}");
         }
 
-        [Command("tips")]
-        public async Task PrintAllTips()
-        {
-            var alltips = Constants.TipsList;
-            EmbedBuilder embed = new()
-            {
-                Color = Constants.FeedbackColor
-            };
-            StringBuilder main = new();
-            embed.WithAuthor(x =>
-            {
-                x.IconUrl = Constants.botIcon;
-                x.Name = "All tips";
-            });
-            int count = 1;
-            foreach (var tip in alltips)
-            {
-                main.AppendLine($"**{count}.** {tip.TipText}");
-                count++;
-            }
-            embed.WithDescription(main.ToString());
-            await ReplyAsync(embed: embed.Build());
-        }
-
         [Command("ff")]
         public async Task Testingstufbrat()
         {
             try
             {
-                var result = await HiRezWebAPI.GetLandingPanel();
+                var result = await APIInteractions.GetLandingPanel();
                 var singlePanel = result.singlePanel.content.Where(x => x.maxLevel > 100).ToList();
 
                 Embed[] embeds = new Embed[singlePanel.Count];
@@ -989,50 +657,6 @@ namespace ThothBotCore.Modules
             {
                 await ReplyAsync(ex.Message);
             }
-        }
-
-        [Command("hapi")]
-        public async Task ApiResponseToFile()
-        {
-            var json = await hirezAPI.GetHiRezServerStatus();
-            object parsedJson;
-            try
-            {
-                parsedJson = JsonConvert.DeserializeObject(json);
-
-                await ReplyAsync($"```json\n{JsonConvert.SerializeObject(parsedJson, Formatting.Indented)}```");
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("2000"))
-                {
-                    await File.WriteAllTextAsync($"testing.json", json);
-                    await Context.Channel.SendFileAsync($"testing.json");
-                }
-                else
-                {
-                    await ReplyAsync(ex.Message);
-                }
-            }
-        }
-
-        [Command("pingapi")]
-        public async Task Testindsafdsgstufbrat()
-        {
-            await hirezAPI.PingAPI();
-            await ReplyAsync(hirezAPI.pingAPI);
-        }
-
-        private class DataUsed
-        {
-            public int Active_Sessions { get; set; }
-            public int Concurrent_Sessions { get; set; }
-            public int Request_Limit_Daily { get; set; }
-            public int Session_Cap { get; set; }
-            public int Session_Time_Limit { get; set; }
-            public int Total_Requests_Today { get; set; }
-            public int Total_Sessions_Today { get; set; }
-            public object ret_msg { get; set; }
         }
     }
 }

@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Sentry;
 using System;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
@@ -17,6 +16,7 @@ namespace ThothBotCore.Utilities
         private static SocketTextChannel commandsChannel;
         private static SocketTextChannel feedbackChannel;
         private static SocketTextChannel botlogs;
+        private static SocketTextChannel changelogChannel;
         private static IUser ownerUser;
 
         private static Task ChannelLoader()
@@ -27,6 +27,7 @@ namespace ThothBotCore.Utilities
             feedbackChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(713183236238344193);
             botlogs = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(734987439353102426);
             ownerUser = Connection.Client.GetUser(Constants.OwnerID);
+            changelogChannel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567192879026536448);
 
             return Task.CompletedTask;
         }
@@ -38,7 +39,7 @@ namespace ThothBotCore.Utilities
             }
             return Task.CompletedTask;
         }
-        public static async Task SendJoinedServerEmbedAsync(SocketGuild guild)
+        public static async Task SendJoinedServerEmbedAsync(SocketGuild guild, bool couldntSend = true)
         {
             await ChannelChecker(joinsChannel);
             try
@@ -49,7 +50,7 @@ namespace ThothBotCore.Utilities
                 {
                     x.Name = $"Server #{Connection.Client.Guilds.Count}";
                 });
-                string result = $"🆕{guild.Name}\n" +
+                string result = $"{(!couldntSend ? "🚫" : "")}🆕{guild.Name}\n" +
                 $"🆔**Server ID:** {guild.Id}\n" +
                 $"👤**Owner:** {guild.Owner} [{guild.OwnerId}]\n" +
                 $"👥**Users:** {guild.MemberCount}\n" +
@@ -151,7 +152,7 @@ namespace ThothBotCore.Utilities
             await ChannelChecker(reportsChannel);
             try
             {
-                await reportsChannel.SendMessageAsync(message + $"\n{DateTime.Now}");
+                await reportsChannel.SendMessageAsync($"> {message}\n{DateTime.Now}");
             }
             catch (Exception ex)
             {
@@ -167,7 +168,6 @@ namespace ThothBotCore.Utilities
                     $"**User: **{context.Message.Author} [{context.Message.Author.Id}]\n" +
                     $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
                     $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
-                    $"**Inner Exception Message: **{(ex.InnerException != null ? ex.InnerException.Message : "No Inner Exception")}\n" +
                     $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 254);
                 await reportsChannel.SendMessageAsync(embed: embed);
             }
@@ -192,6 +192,48 @@ namespace ThothBotCore.Utilities
             }
         }
 
+        public static async Task SlashSendException(Exception ex, IInteractionContext context, string errorMessage = "")
+        {
+            await ChannelChecker(reportsChannel);
+            try
+            {
+                StringBuilder sb = new();
+                if (context?.Interaction.Data is SocketSlashCommandData data)
+                {
+                    sb.Append($"SlashCommand: {data.Name}");
+                }
+                else
+                {
+                    sb.Append(context?.Interaction.Data);
+                }
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{sb}\n" +
+                    $"**User: **{context?.Interaction.User} [{context?.Interaction.User.Id}]\n" +
+                    $"**Server and Channel: **{context?.Guild.Id}[{context?.Channel.Id}]\n" +
+                    $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
+                    $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 200);
+                await reportsChannel.SendMessageAsync(embed: embed);
+            }
+            catch (Exception exc)
+            {
+                Text.WriteLine("\t=== Couldn't send error to reports channnel." +
+                                "\n" +
+                                $"\t\tInteraction type & Data: {context.Interaction.Type} {context.Interaction.Data}\n" +
+                                $"\t\tUser: {context.Interaction.User}\n" +
+                                $"\t\tServer and Channel: {context.Guild.Id}[{context.Channel.Id}]\n" +
+                                $"\t\tException Message: {ex.Message}\n" +
+                                $"\t\tData: {ex.Data}\n" +
+                                $"\t\tStack Trace: {ex.StackTrace}\n" +
+                                $"\t\tInnerException: {ex.InnerException}" +
+                                "\n\t===\n" + exc.Message);
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{context.Interaction.Type} {context.Interaction.Data}\n" +
+                    $"**Server and Channel: **{context.Guild.Id}[{context.Channel.Id}]\n" +
+                    $"**Inner Exception Message: **{(ex.InnerException != null ? ex.InnerException.Message : "No Inner Exception")}\n" +
+                    $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 200);
+                await reportsChannel.SendMessageAsync(embed: embed);
+                await reportsChannel.SendMessageAsync($"{ownerUser.Mention} **Check the console for an error!**");
+            }
+        }
+
         public static async Task SendEmbedToBotLogsChannel(EmbedBuilder embed)
         {
             await ChannelChecker(botlogs);
@@ -207,7 +249,7 @@ namespace ThothBotCore.Utilities
         public static async Task<Embed> RespondToCommandOnErrorAsync(Exception ex, SocketCommandContext context, string errorMessage = "")
         {
             var sb = new StringBuilder();
-            if (ex != null && ex.Message.ToLowerInvariant().Contains("the api is unavailable"))
+            if (errorMessage == "apidown" || (ex != null && ex.Message.ToLowerInvariant().Contains("the api is unavailable")))
             {
                 sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
             }
@@ -219,6 +261,32 @@ namespace ThothBotCore.Utilities
             {
                 sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
                 await SendException(ex, context, errorMessage);
+                SentrySdk.CaptureException(ex);
+            }
+            else if (ex == null && errorMessage != "")
+            {
+                sb.Append($"An unexpected error has occured.");
+                await SendError(errorMessage);
+            }
+            if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
+            {
+                sb.Append("\n" + Global.ErrorMessageByOwner);
+            }
+            return await EmbedHandler.BuildDescriptionEmbedAsync(sb.ToString(), 183, 0, 0);
+        }
+
+        public static async Task<Embed> SlashRespondToCommandOnErrorAsync(Exception ex, IInteractionContext context, string errorMessage = "")
+        {
+            var sb = new StringBuilder();
+            if (errorMessage == "apidown" || (ex != null && ex.Message.ToLowerInvariant().Contains("the api is unavailable")))
+            {
+                sb.Append("Sorry, the Hi-Rez API is unavailable right now. Please try again later.");
+            }
+            else if (ex != null && !(ex.Message.ToLowerInvariant().Contains("database")))
+            {
+                sb.Append($"{(Global.ErrorMessageByOwner != null && Global.ErrorMessageByOwner != "" ? Global.ErrorMessageByOwner : "An unexpected error has occured. Please try again later.")}" +
+                    $"\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
+                await SlashSendException(ex, context, errorMessage);
                 SentrySdk.CaptureException(ex);
             }
             else if (ex == null && errorMessage != "")
@@ -249,6 +317,28 @@ namespace ThothBotCore.Utilities
                 x.Text = $"{context.User.Id} {context.Guild.Id} {context.Channel.Id}";
             });
             await feedbackChannel.SendMessageAsync(embed: embed.Build());
+        }
+        public static async Task SendFeedback(string message, IInteractionContext context)
+        {
+            await ChannelChecker(feedbackChannel);
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(x =>
+            {
+                x.Name = $"{context.User}";
+                x.IconUrl = context.User.GetAvatarUrl();
+            });
+            embed.WithColor(Constants.FeedbackColor);
+            embed.WithDescription(message);
+            embed.WithFooter(x =>
+            {
+                x.Text = $"{context.Interaction.User.Id} {context.Guild?.Id} {context.Channel.Id}";
+            });
+            await feedbackChannel.SendMessageAsync(embed: embed.Build());
+        }
+        public static async Task SendChangelog(string message)
+        {
+            await ChannelChecker(changelogChannel);
+            await changelogChannel.SendMessageAsync(message);
         }
     }
 }

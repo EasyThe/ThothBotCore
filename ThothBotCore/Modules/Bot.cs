@@ -1,6 +1,6 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
+using Fergun.Interactive;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
@@ -16,9 +16,11 @@ using static ThothBotCore.Storage.Database;
 
 namespace ThothBotCore.Modules
 {
-    public class Bot : InteractiveBase<SocketCommandContext>
+    public class Bot : ModuleBase<SocketCommandContext>
     {
         readonly HiRezAPI hirezAPI = new();
+        private const string slash = "⚠Thoth is switching to Slash Commands! Please use ";
+        public InteractiveService Interactive { get; set; }
 
         [Command("help", true, RunMode = RunMode.Async)]
         [Summary("List of all available commands.")]
@@ -38,7 +40,7 @@ namespace ThothBotCore.Modules
             var helpEmbed = HelpCommand.GetHelpEmbed(Global.commandService, commandName, prefix);
             try
             {
-                await ReplyAsync(embed: helpEmbed);
+                await ReplyAsync($"⚠Thoth is switching to Slash Commands! By the end of August 2022 the normal commands will stop functioning.", embed: helpEmbed);
             }
             catch (Exception ex)
             {
@@ -116,7 +118,7 @@ namespace ThothBotCore.Modules
                 $":loudspeaker: **Status Update Subs**: {CountOfStatusUpdatesActivatedInDB()[0]}\n" +
                 $"<:Gods:567146088985919498> **SMITE Version**: {patch}";
             });
-            var settings = MongoConnection.GetSettings();
+            var settings = MongoConnection.GetBotSettings();
             embed.AddField(x =>
             {
                 x.IsInline = true;
@@ -131,32 +133,8 @@ namespace ThothBotCore.Modules
             });
             embed.WithFooter(x =>
             {
-                x.Text = $"Discord.NET {DiscordConfig.Version} | {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
+                x.Text = $"Discord.NET {DiscordConfig.Version} | {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\n{slash}/about";
             });
-            await ReplyAsync(embed: embed.Build());
-        }
-
-        [Command("shards", true)]
-        public async Task ShardsCommand()
-        {
-            StringBuilder sb = new();
-            EmbedBuilder embed = new();
-            embed.WithColor(Constants.DefaultBlueColor);
-            foreach (var shard in Connection.Client.Shards)
-            {
-                var shardclient = Connection.Client.GetShard(shard.ShardId);
-                int members = 0;
-                foreach (var guild in shardclient.Guilds)
-                {
-                    members += guild.MemberCount;
-                }
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = "Shard " + shard.ShardId;
-                    x.Value = $"**{shard.ConnectionState}**\n**Guilds:** {shard.Guilds.Count}\n**Users:** {members}";
-                });
-            }
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -178,7 +156,7 @@ namespace ThothBotCore.Modules
                     await ReplyAsync(embed: em);
                     return;
                 }
-                if (prefix.Contains("'"))
+                if (prefix.Contains('\''))
                 {
                     var emb = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but apostrophes (single quote) is not allowed to be set as a prefix.", 254);
                     await ReplyAsync(embed: emb);
@@ -186,7 +164,8 @@ namespace ThothBotCore.Modules
                 }
                 await Database.SetPrefix(Context.Guild.Id, prefix);
                 // Consider adding a check if the prefix was set successfully.
-                await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to `{prefix}`");
+                await Context.Channel.SendMessageAsync($"Prefix for **{Context.Guild.Name}** set to `{prefix}`\n{slash}`/` " +
+                    $"from now on. **Custom prefixes and normal commands will stop working by the end of August 2022**");
             }
         }
 
@@ -195,39 +174,13 @@ namespace ThothBotCore.Modules
         public async Task FeedbackCommand([Name("Enter your feedback here")][Remainder] string FeedbackMessage)
         {
             await Reporter.SendFeedback(FeedbackMessage, Context);
-            await ReplyAsync("♥ Thanks for the feedback! The bot owner got your message. ");
-        }
-
-        [Command("ping", true)]
-        public async Task Ping()
-        {
-            await ReplyAsync(Context.Client.Latency.ToString() + " ms");
+            await ReplyAsync($"♥ Thanks for the feedback! The bot owner got your message.\n{slash}/about");
         }
 
         [Command("thoth", true)]
         public async Task BasicInfoCommand()
         {
-            await ReplyAsync($"My default prefix is `{Credentials.botConfig.prefix}`");
-        }
-        
-        [Command("changelog", true, RunMode = RunMode.Async)]
-        [Summary("Latest changes to ThothBot.")]
-        public async Task ChangelogCommand()
-        {
-            var channel = Connection.Client.GetGuild(Constants.SupportServerID).GetTextChannel(567192879026536448);
-            var messages = await channel.GetMessagesAsync(1).FlattenAsync().ConfigureAwait(false);
-
-            var embed = new EmbedBuilder
-            {
-                Title = "Latest Update of ThothBot",
-                Color = new Color(169, 11, 212)
-            };
-            foreach (var item in messages)
-            {
-                embed.Description = item.Content;
-            }
-
-            await ReplyAsync(embed: embed.Build());
+            await ReplyAsync($"My default prefix is `{Credentials.botConfig.prefix}`\n{slash}`/` from now on!");
         }
 
         private static string GetUptime()

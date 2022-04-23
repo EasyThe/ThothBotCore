@@ -6,7 +6,6 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using ThothBotCore.Connections.Models;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 
@@ -20,7 +19,6 @@ namespace ThothBotCore.Connections
         readonly string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         private SessionResult sessionResult = new();
         private readonly string PCAPIurl = "https://api.smitegame.com/smiteapi.svc/";
-        private readonly string PaladinsAPIurl = "https://api.paladins.com/paladinsapi.svc/";
 
         private static async Task<string> GetMD5Hash(string input)
         {
@@ -130,23 +128,6 @@ namespace ThothBotCore.Connections
             using (var httpClient = new HttpClient(handler, false))
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}{_endpoint}json/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{value}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
-        public async Task<string> GetPlayerIdByName(string username)
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "getplayeridbyname" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getplayeridbynamejson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
                 {
                     var response = await httpClient.SendAsync(request);
                     return await response.Content.ReadAsStringAsync();
@@ -341,23 +322,6 @@ namespace ThothBotCore.Connections
             }
         }
 
-        public async Task<string> EsportsProLeagueDetails()
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "getesportsproleaguedetails" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PCAPIurl}getesportsproleaguedetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
         public async Task PingAPI()
         {
             var handler = new HttpClientHandler();
@@ -412,115 +376,6 @@ namespace ThothBotCore.Connections
             using var request = new HttpRequestMessage(HttpMethod.Get, PCAPIurl + "gethirezserverstatusjson/" + devID + "/" + signature + "/" + sessionResult.sessionID + "/" + timestamp);
             var response = await httpClient.SendAsync(request);
             return await response.Content.ReadAsStringAsync();
-        }
-
-        // Paladins
-
-        public async Task<string> PaladinsAPITestMethod(string _endpoint, string value) // Testing Method
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + _endpoint.ToLowerInvariant() + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}{_endpoint}json/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{value}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
-        public async Task<List<SearchPlayers>> SearchPlayersPaladins(string username)
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "searchplayers" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}searchplayersjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    string json = await response.Content.ReadAsStringAsync();
-                    if (json.ToLowerInvariant().Contains("not found"))
-                    {
-                        await File.WriteAllTextAsync($"error4ence{DateTime.Now.ToString("dd-MM-yyyy")}.html", json);
-                    }
-                    return JsonConvert.DeserializeObject<List<SearchPlayers>>(json);
-                }
-            }
-        }
-
-        public async Task<string> GetPlayerPaladins(string username)
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "getplayer" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}getplayerjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{username}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
-        public async Task<string> GetGodRanksPaladins(int id)
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "getgodranks" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}getgodranksjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{id}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
-        public async Task<string> GetPlayerStatusPaladins(int playerID)
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "getplayerstatus" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}getplayerstatusjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{playerID}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
-        }
-
-        public async Task<string> GetMatchPlayerDetailsPaladins(int matchID)
-        {
-            await CheckSession();
-
-            string signature = await GetMD5Hash(devID + "getmatchplayerdetails" + authKey + timestamp);
-
-            var handler = new HttpClientHandler();
-            using (var httpClient = new HttpClient(handler, false))
-            {
-                using (var request = new HttpRequestMessage(HttpMethod.Get, $"{PaladinsAPIurl}getmatchplayerdetailsjson/{devID}/{signature}/{sessionResult.sessionID}/{timestamp}/{matchID}"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                    return await response.Content.ReadAsStringAsync();
-                }
-            }
         }
 
         public class PatchInfo

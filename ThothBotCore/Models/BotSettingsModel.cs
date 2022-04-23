@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
 
 namespace ThothBotCore.Models
 {
@@ -17,5 +18,18 @@ namespace ThothBotCore.Models
         /// 6 - Twitch Drops link
         /// </summary>
         public string[] s { get; set; }
+        public Dictionary<string, string> SmiteQueues { get; set; }
+        public Dictionary<string, string> AboutLinks { get; set; }
+        public string[] Placeholders { get; set; }
+        public List<Top> Pantheons { get; set; }
+        public List<Top> Skins { get; set; }
+        public string Changelog { get; set; }
+        
+        public class Top
+        {
+            public string Emoji { get; set; }
+            public string Name { get; set; }
+            public int Count { get; set; }
+        }
     }
 }

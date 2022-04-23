@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ThothBotCore.Connections.Models
+namespace ThothBotCore.Models
 {
     public class ServerStatus
     {

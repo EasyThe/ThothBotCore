@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
 
 namespace ThothBotCore.Models
 {
+    [BsonIgnoreExtraElements]
     public class Gods
     {
         public class DescriptionValue
@@ -31,20 +33,14 @@ namespace ThothBotCore.Models
             public int Id { get; set; }
             public string Summary { get; set; }
             public string URL { get; set; }
+            public string Emoji { get; set; }
+            public int DomColor { get; set; }
+            public string Video { get; set; }
         }
 
+        [BsonIgnoreExtraElements]
         public class God
         {
-            public string Ability1 { get; set; }
-            public string Ability2 { get; set; }
-            public string Ability3 { get; set; }
-            public string Ability4 { get; set; }
-            public string Ability5 { get; set; }
-            public int AbilityId1 { get; set; }
-            public int AbilityId2 { get; set; }
-            public int AbilityId3 { get; set; }
-            public int AbilityId4 { get; set; }
-            public int AbilityId5 { get; set; }
             public Ability Ability_1 { get; set; }
             public Ability Ability_2 { get; set; }
             public Ability Ability_3 { get; set; }
@@ -78,11 +74,6 @@ namespace ThothBotCore.Models
             public int Speed { get; set; }
             public string Title { get; set; }
             public string Type { get; set; }
-            public Description abilityDescription1 { get; set; }
-            public Description abilityDescription2 { get; set; }
-            public Description abilityDescription3 { get; set; }
-            public Description abilityDescription4 { get; set; }
-            public Description abilityDescription5 { get; set; }
             public Description basicAttack { get; set; }
             public string godAbility1_URL { get; set; }
             public string godAbility2_URL { get; set; }
@@ -90,12 +81,14 @@ namespace ThothBotCore.Models
             public string godAbility4_URL { get; set; }
             public string godAbility5_URL { get; set; }
             public string godCard_URL { get; set; }
+            public string godHeader_URL { get; set; }
             public string godIcon_URL { get; set; }
             public int id { get; set; }
             public string latestGod { get; set; }
             public object ret_msg { get; set; }
             public int DomColor { get; set; }
             public string Emoji { get; set; }
+            public List<GodSkinModel> Skins { get; set; }
         }
     }
 }

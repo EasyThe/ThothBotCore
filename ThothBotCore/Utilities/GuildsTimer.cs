@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -14,6 +15,8 @@ namespace ThothBotCore.Utilities
     {
         private static Timer GuildCountTimer;
         static internal int joinedGuilds = 0;
+        static Counter<int> _guildsCounter;
+        static Counter<int> _usersCounter;
 
         public static Task StartGuildsCountTimer()
         {
@@ -36,6 +39,13 @@ namespace ThothBotCore.Utilities
                 {
                     totalUsers += guild.MemberCount;
                 }
+                if (_guildsCounter == null)
+                {
+                    _guildsCounter = Global.Metrics.CreateCounter<int>("guilds");
+                    _usersCounter = Global.Metrics.CreateCounter<int>("users");
+                }
+                _guildsCounter.Add(Connection.Client.Guilds.Count);
+                _usersCounter.Add(totalUsers);
                 if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)
                 {
                     joinedGuilds = Connection.Client.Guilds.Count;
@@ -51,30 +61,13 @@ namespace ThothBotCore.Utilities
                             $"\"shard_count\": {Connection.Client.Shards.Count}}}", Encoding.UTF8, "application/json"))
                         {
                             webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.botsAPI);
-                            var topggResponse = await webclient.PostAsync("https://discordbots.org/api/bots/454145330347376651/stats", content);
+                            var topggResponse = await webclient.PostAsync("https://top.gg/api/bots/454145330347376651/stats", content);
                             await BotListCallResponse("Top.GG", topggResponse);
                         }
                     }
                     catch (Exception ex)
                     {
                         await Reporter.SendError("**TopGG.**\n" +
-                            $"**Error Message:** {ex.Message}");
-                    }
-
-                    //BotsForDiscord.com
-                    try
-                    {
-                        using (var webclient = new HttpClient())
-                        using (var content = new StringContent($"{{ \"server_count\": {Connection.Client.Guilds.Count}}}", Encoding.UTF8, "application/json"))
-                        {
-                            webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.bfdAPI);
-                            var bfdcomResponse = await webclient.PostAsync("https://botsfordiscord.com/api/bot/454145330347376651", content);
-                            await BotListCallResponse("BotsForDiscord.com", bfdcomResponse);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        await Reporter.SendError("**BotsForDiscord.**\n" +
                             $"**Error Message:** {ex.Message}");
                     }
 
@@ -212,7 +205,8 @@ namespace ThothBotCore.Utilities
             if ((response.StatusCode != System.Net.HttpStatusCode.OK && listName != "BotsOnDiscord") ||
                 (listName == "BotsOnDiscord" && response.StatusCode != System.Net.HttpStatusCode.NoContent))
             {
-                await Connection.Logger.Log(listName, response.ReasonPhrase);
+                var str = await response.Content.ReadAsStringAsync();
+                await Connection.Logger.Log(listName, $"{response.ReasonPhrase}\n{str}");
                 return;
             }
             return;
