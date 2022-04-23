@@ -44,8 +44,12 @@ namespace ThothBotCore.Utilities
                     _guildsCounter = Global.Metrics.CreateCounter<int>("guilds");
                     _usersCounter = Global.Metrics.CreateCounter<int>("users");
                 }
-                _guildsCounter.Add(Connection.Client.Guilds.Count);
-                _usersCounter.Add(totalUsers);
+                if (_guildsCounter != null)
+                {
+                    _guildsCounter.Add(Connection.Client.Guilds.Count);
+                    _usersCounter.Add(totalUsers);
+                }
+                
                 if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)
                 {
                     joinedGuilds = Connection.Client.Guilds.Count;
