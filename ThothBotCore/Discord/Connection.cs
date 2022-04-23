@@ -45,6 +45,8 @@ namespace ThothBotCore.Discord
             await _logger.Log("i", "Starting Command Handler..");
             await _handler.InitializeAsync(_client);
             await _logger.Log("√", "Command Handler Started!");
+            await _logger.Log("√", "Registering Slash Commands!");
+            await RegisterSlashCommandGlobally();
 
             _client.JoinedGuild += JoinedNewGuildActions;
             _client.LeftGuild += ClientLeftGuildTask;
@@ -86,17 +88,20 @@ namespace ThothBotCore.Discord
                 await _logger.Log("i", "Starting ServerStatusTimer & GuildsCountTimer");
                 await StatusTimer.StartServerStatusTimer();
                 await GuildsTimer.StartGuildsCountTimer();
+            }
+        }
 
-                try
-                {
-                    // Register slash commands to test server
-                    // await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
-                    await Global.interactionService.RegisterCommandsGloballyAsync(true);
-                }
-                catch (System.Exception ex)
-                {
-                    await Reporter.SendError($"REGISTERING SLASH COMMANDS ERROR:\n{ex.Message}");
-                }
+        private async Task RegisterSlashCommandGlobally()
+        {
+            try
+            {
+                // Register slash commands to test server
+                // await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+                await Global.interactionService.RegisterCommandsGloballyAsync(true);
+            }
+            catch (System.Exception ex)
+            {
+                await Reporter.SendError($"REGISTERING SLASH COMMANDS ERROR:\n{ex.Message}");
             }
         }
 
