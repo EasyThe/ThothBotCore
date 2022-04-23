@@ -39,7 +39,7 @@ namespace ThothBotCore.Utilities
                 {
                     totalUsers += guild.MemberCount;
                 }
-                if (_guildsCounter == null)
+                if (_guildsCounter == null && Global.Metrics != null)
                 {
                     _guildsCounter = Global.Metrics.CreateCounter<int>("guilds");
                     _usersCounter = Global.Metrics.CreateCounter<int>("users");
