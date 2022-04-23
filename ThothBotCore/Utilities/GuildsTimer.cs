@@ -15,8 +15,8 @@ namespace ThothBotCore.Utilities
     {
         private static Timer GuildCountTimer;
         static internal int joinedGuilds = 0;
-        static Counter<int> _guildsCounter;
-        static Counter<int> _usersCounter;
+        static Counter<int> _guildsCounter = null;
+        static Counter<int> _usersCounter = null;
 
         public static Task StartGuildsCountTimer()
         {
