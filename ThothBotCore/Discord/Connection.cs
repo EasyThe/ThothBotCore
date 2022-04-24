@@ -82,6 +82,11 @@ namespace ThothBotCore.Discord
             {
                 shardsConnected.Add(arg.ShardId);
             }
+
+            if (Credentials.botConfig.prefix == "??")
+            {
+                await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+            }
             
             if (shardsConnected.Count == ShardCount || Connection.Client.CurrentUser.Id == 587623068461957121)
             {
@@ -96,8 +101,10 @@ namespace ThothBotCore.Discord
             try
             {
                 // Register slash commands to test server
-                // await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
-                await Global.interactionService.RegisterCommandsGloballyAsync(true);
+                if (Credentials.botConfig.prefix != "??")
+                {
+                    await Global.interactionService.RegisterCommandsGloballyAsync(true);
+                }
             }
             catch (System.Exception ex)
             {

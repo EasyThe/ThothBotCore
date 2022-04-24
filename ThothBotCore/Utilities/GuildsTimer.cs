@@ -15,8 +15,8 @@ namespace ThothBotCore.Utilities
     {
         private static Timer GuildCountTimer;
         static internal int joinedGuilds = 0;
-        static Counter<int> _guildsCounter = null;
-        static Counter<int> _usersCounter = null;
+        static ObservableGauge<int> _guildsCounter = null;
+        static ObservableGauge<int> _usersCounter = null;
 
         public static Task StartGuildsCountTimer()
         {
@@ -41,13 +41,8 @@ namespace ThothBotCore.Utilities
                 }
                 if (_guildsCounter == null && Global.Metrics != null)
                 {
-                    _guildsCounter = Global.Metrics.CreateCounter<int>("guilds");
-                    _usersCounter = Global.Metrics.CreateCounter<int>("users");
-                }
-                if (_guildsCounter != null)
-                {
-                    _guildsCounter.Add(Connection.Client.Guilds.Count);
-                    _usersCounter.Add(totalUsers);
+                    _guildsCounter = Global.Metrics.CreateObservableGauge("guilds", () => Connection.Client.Guilds.Count);
+                    _usersCounter = Global.Metrics.CreateObservableGauge("users", () => totalUsers);
                 }
                 
                 if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)

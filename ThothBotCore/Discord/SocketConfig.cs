@@ -10,11 +10,12 @@ namespace ThothBotCore.Discord
         {
             return new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Info,
+                LogLevel = Credentials.botConfig.Debug ? LogSeverity.Verbose : LogSeverity.Info,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 LogGatewayIntentWarnings = false,
                 TotalShards = Credentials.botConfig.prefix == "??" ? 1 : Connection.ShardCount,
-                GatewayIntents = GatewayIntents.AllUnprivileged
+                GatewayIntents = GatewayIntents.AllUnprivileged,
+                SuppressUnknownDispatchWarnings = true
             };
         }
 

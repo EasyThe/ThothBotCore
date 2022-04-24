@@ -23,7 +23,7 @@ namespace ThothBotCore
                 .AddMeter("ThothBotMetrics")
                 .AddPrometheusExporter(opt =>
                 {
-                    opt.HttpListenerPrefixes = new string[] { $"http://localhost:9284/" };
+                    opt.HttpListenerPrefixes = new string[] { $"http://localhost:{Credentials.botConfig.MetricsPort}/" };
                     opt.ScrapeEndpointPath = "/metrics";
                     opt.StartHttpListener = true;
                 })

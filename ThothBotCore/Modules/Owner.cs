@@ -28,66 +28,6 @@ namespace ThothBotCore.Modules
         HiRezAPI hirezAPI = new();
         public InteractiveService Interactive { get; set; }
 
-        [Command("migratetofeeds", true, RunMode = RunMode.Async)]
-        public async Task MigrateFromSqliteToMongoFeeds()
-        {
-            StringBuilder sb = new();
-            var oldDb = await Database.GetNotifChannels();
-            foreach (var oldGuild in oldDb)
-            {
-                try
-                {
-                    var guild = Connection.Client.GetGuild(oldGuild._id);
-                    var chnl = guild.GetTextChannel(oldGuild.statusChannel);
-                    var webhook = await chnl.CreateWebhookAsync("Thoth Feeds");
-                    if (webhook != null)
-                    {
-                        var guildSettings = new GuildSettingsModel()
-                        {
-                            _id = oldGuild._id,
-                            Feeds = new List<GuildSettingsModel.Feed>()
-                            {
-                                new GuildSettingsModel.Feed
-                                {
-                                    ChannelID = oldGuild.statusChannel,
-                                    Type = GuildSettingsModel.FeedType.ServerStatus,
-                                    WebhookID = webhook.Id,
-                                    WebhookToken = webhook.Token
-                                }
-                            }
-                        }; 
-                        await MongoConnection.SaveGuildSettingsAsync(guildSettings);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Guild: {oldGuild._id} - {ex.Message}");
-                    if (ex.Message.Contains("Permission"))
-                    {
-                        sb.AppendLine(oldGuild._id.ToString());
-                        var guildSettings = new GuildSettingsModel()
-                        {
-                            _id = oldGuild._id,
-                            Feeds = new List<GuildSettingsModel.Feed>()
-                            {
-                                new GuildSettingsModel.Feed
-                                {
-                                    ChannelID = oldGuild.statusChannel,
-                                    Type = GuildSettingsModel.FeedType.ServerStatus
-                                }
-                            }
-                        };
-                        await MongoConnection.SaveGuildSettingsAsync(guildSettings);
-                    }
-                }
-            }
-            await ReplyAsync("Migration complete!");
-            if (sb.Length != 0)
-            {
-                await ReplyAsync($"Servers failed to migrate due to no permissions:\n{sb}");
-            }
-        }
-
         [Command("testwebhook", RunMode = RunMode.Async)]
         public async Task TestWebhookCOmmand([Remainder]string text)
         {
@@ -108,10 +48,32 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                //var result = await APIInteractions.GetEsportsEventID();
-                //var split = result.Split("eventId:");
-                //var hopefullyID = split[1].Split('"');
-                //Console.WriteLine(hopefullyID[1]);
+                var emoteGuilds = new List<SocketGuild>
+                {
+                    Connection.Client.GetGuild(958115981685817414),
+                    Connection.Client.GetGuild(958117246985711696),
+                    Connection.Client.GetGuild(958117246985711696),
+                    Connection.Client.GetGuild(958117463126593567),
+                    Connection.Client.GetGuild(958117484324618271),
+                    Connection.Client.GetGuild(958117517652557894),
+                    Connection.Client.GetGuild(958117543007121468),
+                    Connection.Client.GetGuild(958117570576257125),
+                    Connection.Client.GetGuild(958117631569838173),
+                    Connection.Client.GetGuild(958117658329505802),
+                    Connection.Client.GetGuild(958117687731556352),
+                    Connection.Client.GetGuild(958117713228730420),
+                    Connection.Client.GetGuild(958117755456991262),
+                };
+
+                foreach (var guild in emoteGuilds)
+                {
+                    var emotes = await guild.GetEmotesAsync();
+                    foreach (var emote in emotes)
+                    {
+                        Console.WriteLine(emote);
+                        await guild.DeleteEmoteAsync(emote);
+                    }
+                }
                 await ReplyAsync(":pray:");
             }
             catch (Exception ex)
@@ -209,6 +171,7 @@ namespace ThothBotCore.Modules
         [Command("sm", RunMode = RunMode.Async)]
         public async Task SendMessageAsOwner([Name("ServerID")] ulong server, [Name("ChannelID")] ulong channel, [Remainder] string message)
         {
+            Console.WriteLine(Interactive.DefaultTimeout.TotalSeconds);
             var chn = Connection.Client.GetGuild(server).GetTextChannel(channel);
             var embed = new EmbedBuilder();
             embed.WithAuthor(Context.Message.Author);
@@ -233,7 +196,7 @@ namespace ThothBotCore.Modules
             var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
             if (response != null)
             {
-                if (response.Value.Content.ToLowerInvariant() == "yes")
+                if (response?.Value.Content.ToLowerInvariant() == "yes")
                 {
                     await testmessage.ModifyAsync(x => x.Content = "Sent!");
                     await chn.SendMessageAsync(embed: embed.Build());

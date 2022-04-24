@@ -613,10 +613,18 @@ namespace ThothBotCore.Modules
             });
         }
 
-        [ComponentInteraction("abi-yt-*")]
+        [ComponentInteraction("abiyt-*")]
         public async Task AbilityVideoButtonInteraction(string videoId)
         {
-            await RespondAsync($"https://youtu.be/{videoId}", ephemeral: true);
+            try
+            {
+                await RespondAsync($"https://youtu.be/{videoId}", ephemeral: true);
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context, $"AbiYT: ID:{videoId}");
+                await RespondAsync(embed: embed, ephemeral: true);
+            }
         }
 
         [ComponentInteraction("skins-*")]
@@ -1524,6 +1532,7 @@ namespace ThothBotCore.Modules
                     {
                         try
                         {
+                            Thread.Sleep(6000);// fuck my life and the discord rate limits
                             var emojis = await Utils.AddMissingAbilityEmojiAsync(god);
                             if (emojis.Length == 5)
                             {

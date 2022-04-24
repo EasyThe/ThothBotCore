@@ -152,8 +152,7 @@ namespace ThothBotCore.Utilities
 
                 for (int i = 0; i < urls.Length; i++)
                 {
-                    string emojiname = urls[i].Trim().Replace("\'", "").ToLowerInvariant();
-                    emojiname = Regex.Replace(emojiname, @"\s+", "");
+                    string emojiname = urls[i].Split("/")[^1].Split(".")[0].Replace("-", "_");
 
                     string[] splitLink = urls[i].Split('/');
 
@@ -169,6 +168,7 @@ namespace ThothBotCore.Utilities
                             Text.WriteLine(emojiname);
                             var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
                             emojis[i] = $"<:{insertedEmote.Name}:{insertedEmote.Id}>";
+                            break;
                         }
                         else
                         {

@@ -58,5 +58,7 @@ namespace ThothBotCore.Discord.Entities
         public string DiscordLabsAPI { get; set; } = "DiscordLabsAPI";
         public string StatCordAPI { get; set; } = "StatCordAPI";
         public string GoogleAPIKey { get; set; } = "GoogleAPIKey";
+        public string MetricsPort { get; set; } = "9284";
+        public bool Debug { get; set; } = false;
     }
 }

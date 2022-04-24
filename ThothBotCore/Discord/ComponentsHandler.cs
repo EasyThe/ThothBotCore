@@ -345,7 +345,7 @@ namespace ThothBotCore.Discord
             if (ability != null && ability.Video != null)
             {
                 builder.WithButton($"{ability.Summary} [Video]",
-                                   $"abi-yt-{ability.Video}",
+                                   $"abiyt-{ability.Video}",
                                    ButtonStyle.Secondary,
                                    Emote.Parse("<:YT:962689918763692043>"),
                                    row: 2);

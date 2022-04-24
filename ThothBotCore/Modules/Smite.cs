@@ -1,14 +1,11 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Fergun.Interactive;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -1607,7 +1604,7 @@ namespace ThothBotCore.Modules
                     x.Embed = embed.Build();
                 });
             }
-            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(120));
             if (response == null || !(response.Value.Content.All(char.IsDigit)))
             {
                 embed.WithFooter(x =>
