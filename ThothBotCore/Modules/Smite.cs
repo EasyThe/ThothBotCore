@@ -75,7 +75,7 @@ namespace ThothBotCore.Modules
                     await hirezAPI.GetPlayerAchievements(playerID),
                     await hirezAPI.GetPlayerStatus(playerID),
                     matchJson);
-                finalEmbed.WithFooter(x => x.Text = slash + "/smitestats");
+                finalEmbed.WithFooter(x => x.Text = slash + "/stats");
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>

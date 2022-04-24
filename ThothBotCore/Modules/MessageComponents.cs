@@ -1728,7 +1728,7 @@ namespace ThothBotCore.Modules
                 .AddTextInput("Activity text",
                               "msg",
                               TextInputStyle.Paragraph,
-                              placeholder: "https://www.twitch.tv/smitegame Stream name\n/smitestats | Servers: 6969",
+                              placeholder: "https://www.twitch.tv/smitegame Stream name\n/stats | Servers: 6969",
                               value: Connection.Client.Activity?.Details,
                               required: true);
 

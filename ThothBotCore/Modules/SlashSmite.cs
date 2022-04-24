@@ -784,7 +784,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [SlashCommand("smitestats", "Display stats for the requested PlayerName.")]
+        [SlashCommand("stats", "Display stats for the requested PlayerName.")]
         public async Task SlashPlayerStatsCommand([Summary("PlayerName", "The in-game name of a SMITE player")]string PlayerName = "")
         {
             try
@@ -1314,7 +1314,7 @@ namespace ThothBotCore.Modules
                 });
                 embed.WithDescription($"Thoth Account Linking will link your Discord and SMITE account in our database which will " +
                     $"allow executing commands without providing PlayerName. \nCommands using this feature are:\n\n" +
-                    $"`/smitestats`, `/livemd`, `/mdlast`, `/history`, `/wp`, `/wr`\n\n" +
+                    $"`/stats`, `/livemd`, `/mdlast`, `/history`, `/wp`, `/wr`\n\n" +
                     $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! " +
                     $"Linking requires changing your Personal Status Message in-game to verify that the account you're trying to link is yours.** " +
                     $"You can keep using your previous status message after linking is completed." +
