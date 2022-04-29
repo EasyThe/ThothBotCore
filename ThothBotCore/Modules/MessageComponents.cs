@@ -1764,5 +1764,20 @@ namespace ThothBotCore.Modules
         [ComponentInteraction("open-msgtoguild")]
         [CustomRequireOwner]
         public async Task OpenModalMessageToGuild() => await Context.Interaction.RespondWithModalAsync<ModalSubmissions.SendMessageByOwnerModal>("submit-msgtoguild");
+
+        [ComponentInteraction("register-globally")]
+        [CustomRequireOwner]
+        public async Task RegisterGlobally()
+        {
+            try
+            {
+                await Global.interactionService.RegisterCommandsGloballyAsync(true);
+                await RespondAsync("Done", ephemeral: true);
+            }
+            catch (Exception ex)
+            {
+                await RespondAsync(ex.Message, ephemeral: true);
+            }
+        }
     }
 }

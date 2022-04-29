@@ -90,7 +90,7 @@ namespace ThothBotCore.Discord
                     await GuildsTimer.StartGuildsCountTimer();
 
                     // Register commands
-                    await RegisterSlashCommandGlobally();
+                    await RegisterSlashCommandsGlobally();
                 }
             }
             catch (System.Exception ex)
@@ -99,7 +99,7 @@ namespace ThothBotCore.Discord
             }
         }
 
-        private async Task RegisterSlashCommandGlobally()
+        public async Task RegisterSlashCommandsGlobally()
         {
             try
             {

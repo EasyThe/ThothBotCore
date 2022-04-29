@@ -638,7 +638,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                
+                await Connection.Client.Rest.DeleteAllGlobalCommandsAsync();
             }
             catch (Exception ex)
             {

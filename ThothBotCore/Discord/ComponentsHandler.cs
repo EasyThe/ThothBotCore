@@ -118,7 +118,8 @@ namespace ThothBotCore.Discord
                        .WithButton("Badges", "badges", ButtonStyle.Secondary, new Emoji("🏷️"))
                        .WithButton("Tips", "tips", ButtonStyle.Secondary, new Emoji("ℹ️"))
                        .WithButton((Global.ErrorMessageByOwner.Length == 0 ? "Add Global Error Message" : "Edit Global Error Message"), "edit-globalerror", ButtonStyle.Secondary, new Emoji("🌍"))
-                       .WithButton("Set Activity", "set-activity", ButtonStyle.Secondary, new Emoji("💭"));
+                       .WithButton("Set Activity", "set-activity", ButtonStyle.Secondary, new Emoji("💭"))
+                       .WithButton("Register Globally", "register-globally", ButtonStyle.Danger, new Emoji("🏳️‍🌈"));
             }
 
             return await Task.FromResult(builder.Build());
