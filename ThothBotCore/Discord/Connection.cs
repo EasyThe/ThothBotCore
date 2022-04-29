@@ -103,16 +103,19 @@ namespace ThothBotCore.Discord
         {
             try
             {
-                // Register slash commands to test server
-                if (Credentials.botConfig.prefix != "??")
+                if (Global.interactionService != null)
                 {
-                    await Global.interactionService.RegisterCommandsGloballyAsync(true);
-                    await _logger.Log("√", "Registered commands globally!");
-                }
-                else
-                {
-                    await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
-                    await _logger.Log("√", "Registered commands to dev guild!");
+                    // Register slash commands to test server
+                    if (Credentials.botConfig.prefix != "??")
+                    {
+                        await Global.interactionService.RegisterCommandsGloballyAsync(true);
+                        await _logger.Log("√", "Registered commands globally!");
+                    }
+                    else
+                    {
+                        await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+                        await _logger.Log("√", "Registered commands to dev guild!");
+                    }
                 }
             }
             catch (System.Exception ex)
