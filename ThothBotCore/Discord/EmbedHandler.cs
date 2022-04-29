@@ -1570,6 +1570,10 @@ namespace ThothBotCore.Discord
                 x.IconUrl = Text.GetPortalIconLinksByPortalName(player.Platform);
                 x.Url = $"https://smite.guru/profile/{player.ActivePlayerId}/champions";
             });
+            embed.WithFooter(x =>
+            {
+                x.Text = "God [Win Rate]";
+            });
             int count = 0;
             var gods = MongoConnection.GetAllGods();
             foreach (var god in ranks)
@@ -1583,7 +1587,7 @@ namespace ThothBotCore.Discord
                 if (godEmoji.Length + 
                     sortedRanksByWinRate[i].god.Length + 
                     Math.Round(sortedRanksByWinRate[i].WinRate, 2).ToString().Length + 
-                    sb.Length + embed.Length > 6000)
+                    sb.Length + embed.Length + 13 > 6000)
                 {
                     break;
                 }
@@ -1606,7 +1610,7 @@ namespace ThothBotCore.Discord
                 embed.WithTitle($"{(player.hz_player_name ?? player.hz_gamer_tag)} has not played any gods.");
             }
 
-            if (sb.Length != 0 && embed.Length !> 5500)
+            if (sb.Length != 0 && embed.Length + sb.Length <= 6000)
             {
                 embed.AddField(x =>
                 {
@@ -1615,10 +1619,6 @@ namespace ThothBotCore.Discord
                     x.Value = sb.ToString();
                 });
             }
-            embed.WithFooter(x =>
-            {
-                x.Text = "God [Win Rate]";
-            });
             return await Task.FromResult(embed.Build());
         }
 

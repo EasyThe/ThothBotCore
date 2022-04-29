@@ -1246,17 +1246,18 @@ namespace ThothBotCore.Modules
                 string json = await hirezAPI.GetGodRanks(playerID);
                 var ranks = JsonConvert.DeserializeObject<List<GodRanks>>(json);
                 var finalEmbed = await EmbedHandler.BuildWinRatesEmbedAsync(ranks, getplayer[0]);
-                var emm = finalEmbed.ToEmbedBuilder().WithFooter($"{slash}/wp");
+
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Embed = emm.Build();
+                        x.Content = $"{slash}`/wr`";
+                        x.Embed = finalEmbed;
                     });
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync(embed: emm.Build());
+                    await Context.Channel.SendMessageAsync($"{slash}/wr", embed: finalEmbed);
                 }
             }
             catch (Exception ex)
@@ -1396,7 +1397,7 @@ namespace ThothBotCore.Modules
             try
             {
                 json = await hirezAPI.APITestMethod(endpoint, value);
-                Console.WriteLine(json);
+                //Console.WriteLine(json);
                 parsedJson = JsonConvert.DeserializeObject(json);
 
                 await ReplyAsync($"```json\n{JsonConvert.SerializeObject(parsedJson, Formatting.Indented)}```");
@@ -1604,7 +1605,8 @@ namespace ThothBotCore.Modules
                     x.Embed = embed.Build();
                 });
             }
-            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(120));
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60),
+                filter: x => x.Author.Id == context.User.Id);
             if (response == null || !(response.Value.Content.All(char.IsDigit)))
             {
                 embed.WithFooter(x =>

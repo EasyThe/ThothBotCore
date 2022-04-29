@@ -128,7 +128,7 @@ namespace ThothBotCore.Utilities
                 {
                     Connection.Client.GetGuild(958115981685817414),
                     Connection.Client.GetGuild(958117246985711696),
-                    Connection.Client.GetGuild(958117246985711696),
+                    Connection.Client.GetGuild(958117335166775348),
                     Connection.Client.GetGuild(958117463126593567),
                     Connection.Client.GetGuild(958117484324618271),
                     Connection.Client.GetGuild(958117517652557894),
@@ -163,7 +163,7 @@ namespace ThothBotCore.Utilities
                     {
                         if (guild.Emotes.Count != 50)
                         {
-                            Thread.Sleep(200);
+                            Thread.Sleep(500);
                             using var image = new Image($"Storage/Items/{splitLink[5]}");
                             Text.WriteLine(emojiname);
                             var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
@@ -172,7 +172,7 @@ namespace ThothBotCore.Utilities
                         }
                         else
                         {
-                            Text.WriteLine($"{guild.Name} is full.");
+                            //Text.WriteLine($"{guild.Name} is full.");
                             continue;
                         }
                     }

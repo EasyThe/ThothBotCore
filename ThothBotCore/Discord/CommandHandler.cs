@@ -82,6 +82,11 @@ namespace ThothBotCore.Discord
 
         private Task InteractionExecuted(ICommandInfo arg1, IInteractionContext arg2, global::Discord.Interactions.IResult arg3)
         {
+            if (Connection.Client.CurrentUser.Id != 587623068461957121 && 
+                arg2.User.Id == 171675309177831424)
+            {
+                return Task.CompletedTask;
+            }
             if (arg2.Interaction.Type == InteractionType.ApplicationCommand)
             {
                 _slashCounters.Find(x => x.Name == $"slash_{arg1.Name}").Add(1);

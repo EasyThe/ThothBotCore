@@ -104,7 +104,6 @@ namespace ThothBotCore.Modules
         }
 
         // Owner 
-
         [ModalInteraction("lookupsearchmodal")]
         [CustomRequireOwner]
         public async Task LookupSearchReceivedInteraction(LookupSearchModal lookupSearchModal)
@@ -221,7 +220,7 @@ namespace ThothBotCore.Modules
         public async Task UserRespondToDMInteraction(OneParagraphModal interaction)
         {
             await Reporter.SendFeedback(interaction.Message, Context);
-            await RespondAsync("Your response was sent successfully!", ephemeral: true);
+            await RespondAsync("Your response was received successfully!", ephemeral: true);
         }
 
         [ModalInteraction("leavemodal")]
@@ -244,6 +243,7 @@ namespace ThothBotCore.Modules
             Constants.ReloadConstants();
             await RespondAsync($"Changelog saved successfully!\n> {settings.Changelog}", ephemeral: true);
         }
+
         [ModalInteraction("edit-globalerror-modal")]
         [CustomRequireOwner]
         public async Task EditGlobalErrorInteraction(OneParagraphModal interaction)
@@ -259,6 +259,7 @@ namespace ThothBotCore.Modules
             
             await RespondAsync($"Global Error Message set to\n> {Global.ErrorMessageByOwner}", ephemeral: true);
         }
+
         [ModalInteraction("set-activity-modal")]
         [CustomRequireOwner]
         public async Task SetActivityInteraction(OneShortModal interaction)
@@ -284,6 +285,43 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+            }
+        }
+
+        [ModalInteraction("submit-msgtoguild")]
+        public async Task SubmitMessageToGuildFromModal(SendMessageByOwnerModal interaction)
+        {
+            try
+            {
+                var guild = Connection.Client.GetGuild(Convert.ToUInt64(interaction.GuildID));
+                var channel = guild.GetTextChannel(Convert.ToUInt64(interaction.ChannelID));
+
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(Context.Interaction.User);
+                embed.Author.Url = Constants.SupportServerInvite;
+                embed.WithColor(Constants.FeedbackColor);
+                embed.AddField(x =>
+                {
+                    x.IsInline = false;
+                    x.Name = "-------";
+                    x.Value = $"If you want to answer to this message you can use the \"Respond\" button or " +
+                    $"[join the support server]({Constants.SupportServerInvite}) of Thoth and chat with the developer directly!";
+                });
+                embed.WithDescription(interaction.Message);
+                embed.WithFooter(x =>
+                {
+                    x.Text = "This message was sent by the developer of the bot";
+                    x.IconUrl = Constants.botIcon;
+                });
+                var buttons = new ComponentBuilder().WithButton("Respond", "senddmuserrespond", ButtonStyle.Secondary, Emoji.Parse("📨"))
+                                .WithButton("Support Server", style: ButtonStyle.Link, url: Constants.SupportServerInvite);
+
+                await channel.SendMessageAsync(embed: embed.Build(), components: buttons.Build());
+                await RespondAsync("Message sent successfully!", embed: embed.Build(), ephemeral: true);
+            }
+            catch (Exception ex)
+            {
+                await RespondAsync($"Error: {ex.Message}", ephemeral: true);
             }
         }
 
@@ -351,6 +389,22 @@ namespace ThothBotCore.Modules
             [ModalTextInput("discordid", TextInputStyle.Short)]
             [RequiredInput(true)]
             public string DiscordID { get; set; }
+            [InputLabel("Message")]
+            [ModalTextInput("message", TextInputStyle.Paragraph)]
+            [RequiredInput(true)]
+            public string Message { get; set; }
+        }
+        public class SendMessageByOwnerModal : IModal
+        {
+            public string Title { get; set; } = "Send message to guild channel";
+            [InputLabel("Guild ID")]
+            [ModalTextInput("guildid", TextInputStyle.Short)]
+            [RequiredInput(true)]
+            public string GuildID { get; set; }
+            [InputLabel("Channel ID")]
+            [ModalTextInput("channelid", TextInputStyle.Short)]
+            [RequiredInput(true)]
+            public string ChannelID { get; set; }
             [InputLabel("Message")]
             [ModalTextInput("message", TextInputStyle.Paragraph)]
             [RequiredInput(true)]

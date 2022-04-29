@@ -106,16 +106,17 @@ namespace ThothBotCore.Discord
             }
             if (position == 69)
             {
-                builder.WithButton("Hi-Rez API", "hirezapi", ButtonStyle.Secondary, new Emoji("💀"))
+                builder.WithButton("Add Changelog", "add-changelog", ButtonStyle.Secondary, new Emoji("⚙"))
                        .WithButton("Shards", "shards", ButtonStyle.Secondary, new Emoji("⛓️"))
+                       .WithButton("Leave", "leave", ButtonStyle.Secondary, new Emoji("🚪"))
+                       .WithButton("Hi-Rez API", "hirezapi", ButtonStyle.Secondary, new Emoji("💀"))
                        .WithButton("Player Lookup", "lookup", ButtonStyle.Secondary, new Emoji("🔧"))
                        .WithButton("Send DM", "senddmbyowner", ButtonStyle.Secondary, new Emoji("📨"))
-                       .WithButton("Leave", "leave", ButtonStyle.Secondary, new Emoji("🚪"))
+                       .WithButton("Send Message", "open-msgtoguild", ButtonStyle.Secondary, new Emoji("📨"))
                        .WithButton("Reload Settings", "reloadconst", ButtonStyle.Secondary, new Emoji("🔄"))
                        .WithButton("Update Database", "updatedb", ButtonStyle.Secondary, new Emoji("📥"))
                        .WithButton("Badges", "badges", ButtonStyle.Secondary, new Emoji("🏷️"))
                        .WithButton("Tips", "tips", ButtonStyle.Secondary, new Emoji("ℹ️"))
-                       .WithButton("Add Changelog", "add-changelog", ButtonStyle.Secondary, new Emoji("⚙"))
                        .WithButton((Global.ErrorMessageByOwner.Length == 0 ? "Add Global Error Message" : "Edit Global Error Message"), "edit-globalerror", ButtonStyle.Secondary, new Emoji("🌍"))
                        .WithButton("Set Activity", "set-activity", ButtonStyle.Secondary, new Emoji("💭"));
             }

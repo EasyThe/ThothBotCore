@@ -171,7 +171,6 @@ namespace ThothBotCore.Modules
         [Command("sm", RunMode = RunMode.Async)]
         public async Task SendMessageAsOwner([Name("ServerID")] ulong server, [Name("ChannelID")] ulong channel, [Remainder] string message)
         {
-            Console.WriteLine(Interactive.DefaultTimeout.TotalSeconds);
             var chn = Connection.Client.GetGuild(server).GetTextChannel(channel);
             var embed = new EmbedBuilder();
             embed.WithAuthor(Context.Message.Author);
@@ -193,7 +192,8 @@ namespace ThothBotCore.Modules
 
             var testmessage = await ReplyAsync("Respond with 'yes' if the message looks good.",
                 embed: embed.Build());
-            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60));
+            var response = await Interactive.NextMessageAsync(timeout: TimeSpan.FromSeconds(60),
+                filter: x => x.Author.Id == Context.User.Id);
             if (response != null)
             {
                 if (response?.Value.Content.ToLowerInvariant() == "yes")
@@ -341,11 +341,48 @@ namespace ThothBotCore.Modules
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
 
-        [Command("desc")]
-        public async Task EmbedDescriptionOwnerCommand([Remainder] string text)
+        [Command("desc", true, RunMode = RunMode.Async)]
+        public async Task EmbedDescriptionOwnerCommand() // testing hehehehhehehe
         {
-            var embed = await EmbedHandler.BuildDescriptionEmbedAsync(text);
-            await ReplyAsync(embed: embed);
+            try
+            {
+                var gods = MongoConnection.GetAllGods();
+                foreach (var god in gods)
+                {
+                    god.Ability_1.DomColor = 0;
+                    god.Ability_2.DomColor = 0;
+                    god.Ability_3.DomColor = 0;
+                    god.Ability_4.DomColor = 0;
+                    god.Ability_5.DomColor = 0;
+
+                    await MongoConnection.SaveGodAsync(god);
+                }
+
+
+
+                //var res = await APIInteractions.GetDominantColorFromCloudVisionAsync("https://webcdn.hirezstudios.com/smite/god-abilities/skewer.jpg");
+                //var embed = new EmbedBuilder();
+                //int r, g, b;
+                //r = res.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red;
+                //g = res.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green;
+                //b = res.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue;
+                //embed.WithDescription($"R: {r}\n" +
+                //    $"G: {g}\n" +
+                //    $"B: {b}");
+                //embed.WithColor(new(r, g, b));
+
+                //await ReplyAsync(embed: embed.Build());
+                //Color nz = new(r, g, b);
+
+                //embed.WithColor(new(nz.RawValue));
+                //embed.WithDescription($"{nz.RawValue}\n{((int)nz.RawValue)}");
+                //await ReplyAsync(embed: embed.Build());
+                await ReplyAsync("done");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         [Command("zxc", RunMode = RunMode.Async)]
@@ -601,20 +638,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                var result = await APIInteractions.GetLandingPanel();
-                var singlePanel = result.singlePanel.content.Where(x => x.maxLevel > 100).ToList();
-
-                Embed[] embeds = new Embed[singlePanel.Count];
-
-                for (int i = 0; i < singlePanel.Count; i++)
-                {
-                    EmbedBuilder em = new()
-                    {
-                        Title = singlePanel[i].header.@default,
-                        ImageUrl = singlePanel[i].imageUrl.INT
-                    };
-                    await ReplyAsync(embed: em.Build());
-                }
+                
             }
             catch (Exception ex)
             {

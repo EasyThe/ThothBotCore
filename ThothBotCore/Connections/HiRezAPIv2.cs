@@ -55,9 +55,7 @@ namespace ThothBotCore.Connections
         private string GetSignature(string endpoint) => GetMD5Hash(DevId + endpoint + APIKey + DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
         private async Task CreateSessionAsync()
         {
-            string url = $"{BaseURL}/createsessionjson/{DevId}/{GetSignature("createsession")}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-
-            string json = await SendRequestAsync(url);
+            string json = await SendRequestAsync("createsession");
             if (json == null)
             {
                 return;
@@ -79,10 +77,8 @@ namespace ThothBotCore.Connections
         private async Task<string> TestSession(SessionResult session)
         {
             //                      /testsessionjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}
-            string url = $"{BaseURL}/testsessionjson/{DevId}/{GetSignature("testsession")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-
-            string response = await SendRequestAsync(url);
-            if (response != null && !response.Contains("successful"))
+            string response = await SendRequestAsync("testsession");
+            if (response != null && !response.Contains("This was a successful"))
             {
                 await CreateSessionAsync();
             }
@@ -90,99 +86,43 @@ namespace ThothBotCore.Connections
         }
         public async Task<string> PingAsync()
         {
-            //                      /pingjson
-            string url = $"{BaseURL}/pingjson";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return "";
-            }
-            return json;
+            string json = await SendRequestAsync("ping");
+            return json ?? "";
         }
         public async Task<List<Gods.God>> GetGodsAsync()
         {
-            //                      /getgodsjson/{DevId}/{Signature}/{Session}/{timestamp}/{languageId}
-            string url = $"{BaseURL}/getgodsjson/{DevId}/{GetSignature("getgods")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/1";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<Gods.God>();
-            }
-            return JsonConvert.DeserializeObject<List<Gods.God>>(json);
+            string json = await SendRequestAsync("getgods", "1");
+            return json == null ? new List<Gods.God>() : JsonConvert.DeserializeObject<List<Gods.God>>(json);
         }
         public async Task<object> GetGodAltAbilitiesAsync()
         {
-            //                      /getGodAltAbilitiesjson/{DevId}/{Signature}/{Session}/{timestamp}/
-            string url = $"{BaseURL}/getgodaltabilitiesjson/{DevId}/{GetSignature("getgodaltabilities")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return "";
-            }
-            return JsonConvert.DeserializeObject<dynamic>(json);
+            string json = await SendRequestAsync("getgodaltabilities");
+            return json == null ? "" : JsonConvert.DeserializeObject<dynamic>(json);
         }
         public async Task<List<GodSkinModel>> GetGodSkinsAsync(int godId = -1)
         {
-            //                      /getgodskinsjson/{DevId}/{Signature}/{Session}/{timestamp}/{godId}/{languageCode}
-            string url = $"{BaseURL}/getgodskinsjson/{DevId}/{GetSignature("getgodskins")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{godId}/1";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<GodSkinModel>();
-            }
-            return JsonConvert.DeserializeObject<List<GodSkinModel>>(json);
+            string json = await SendRequestAsync("getgodskins", $"{godId}/1");
+            return json == null ? new List<GodSkinModel>() : JsonConvert.DeserializeObject<List<GodSkinModel>>(json);
         }
         public async Task<List<GetItems.Item>> GetItemsAsync()
         {
-            //                      /getitemsjson/{DevId}/{Signature}/{Session}/{timestamp}/{languageId}
-            string url = $"{BaseURL}/getitemsjson/{DevId}/{GetSignature("getitems")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/1";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<GetItems.Item>();
-            }
-            return JsonConvert.DeserializeObject<List<GetItems.Item>>(json);
+            string json = await SendRequestAsync("getitems", "1");
+            return json == null ? new List<GetItems.Item>() : JsonConvert.DeserializeObject<List<GetItems.Item>>(json);
         }
         public async Task<PatchInfoModel> GetPatchInfoAsync()
         {
-            //                      /getpatchinfojson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}
-            string url = $"{BaseURL}/getpatchinfojson/{DevId}/{GetSignature("getpatchinfo")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new PatchInfoModel();
-            }
-            return JsonConvert.DeserializeObject<PatchInfoModel>(json);
+            string json = await SendRequestAsync("getpatchinfo");
+            return json == null ? new PatchInfoModel() : JsonConvert.DeserializeObject<PatchInfoModel>(json);
         }
         public async Task<List<DataUsed>> GetDataUsedAsync()
         {
-            //                      /getdatausedjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}
-            string url = $"{BaseURL}/getdatausedjson/{DevId}/{GetSignature("getdataused")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<DataUsed>();
-            }
-            return JsonConvert.DeserializeObject<List<DataUsed>>(json);
+            string json = await SendRequestAsync("getdataused");
+            return json == null ? new List<DataUsed>() : JsonConvert.DeserializeObject<List<DataUsed>>(json);
         }
         public async Task<List<Player.PlayerStats>> GetPlayerAsync(string player)
         {
-            //                      /getplayerjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}/{PortalId}
-            string url = $"{BaseURL}/getplayerjson/{DevId}/{GetSignature("getplayer")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<Player.PlayerStats>();
-            }
-            return JsonConvert.DeserializeObject<List<Player.PlayerStats>>(json);
+            string json = await SendRequestAsync("getplayer", player);
+            return json == null ? new List<Player.PlayerStats>() : JsonConvert.DeserializeObject<List<Player.PlayerStats>>(json);
         }
         /// <summary>
         /// Not available for SMITE API
@@ -203,106 +143,47 @@ namespace ThothBotCore.Connections
         }
         public async Task<PlayerAchievements> GetPlayerAchievementsAsync(string player)
         {
-            //                      /getplayerachievementsjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/getplayerachievementsjson/{DevId}/{GetSignature("getplayerachievements")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new PlayerAchievements();
-            }
-            return JsonConvert.DeserializeObject<PlayerAchievements>(json);
+            string json = await SendRequestAsync("getplayerachievements", player);
+            return json == null ? new PlayerAchievements() : JsonConvert.DeserializeObject<PlayerAchievements>(json);
         }
         public async Task<List<Player.PlayerStatus>> GetPlayerStatusAsync(string player)
         {
-            //                      /getplayerstatusjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/getplayerstatusjson/{DevId}/{GetSignature("getplayerstatus")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<Player.PlayerStatus>();
-            }
-            return JsonConvert.DeserializeObject<List<Player.PlayerStatus>>(json);
+            string json = await SendRequestAsync("getplayerstatus", player);
+            return json == null ? new List<Player.PlayerStatus>() : JsonConvert.DeserializeObject<List<Player.PlayerStatus>>(json);
         }
         public async Task<List<GodRanks>> GetGodRanksAsync(string player)
         {
-            //                      /getgodranksjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/getgodranksjson/{DevId}/{GetSignature("getgodranks")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<GodRanks>();
-            }
-            return JsonConvert.DeserializeObject<List<GodRanks>>(json);
+            string json = await SendRequestAsync("getgodranks", player);
+            return json == null ? new List<GodRanks>() : JsonConvert.DeserializeObject<List<GodRanks>>(json);
         }
         public async Task<List<MatchDetails.MatchDetailsPlayer>> GetMatchDetailsAsync(string matchId)
         {
-            //                      /getmatchdetailsjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/getmatchdetailsjson/{DevId}/{GetSignature("getmatchdetails")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{matchId}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<MatchDetails.MatchDetailsPlayer>();
-            }
-            return JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(json);
+            string json = await SendRequestAsync("getmatchdetails", matchId);
+            return json == null ? new List<MatchDetails.MatchDetailsPlayer>() : JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(json);
         }
         public async Task<List<MatchHistoryModel>> GetMatchHistoryAsync(string player)
         {
-            //                      /getmatchhistoryjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/getmatchhistoryjson/{DevId}/{GetSignature("getmatchhistory")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<MatchHistoryModel>();
-            }
-            return JsonConvert.DeserializeObject<List<MatchHistoryModel>>(json);
+            string json = await SendRequestAsync("getmatchhistory", player);
+            return json == null ? new List<MatchHistoryModel>() : JsonConvert.DeserializeObject<List<MatchHistoryModel>>(json);
         }
         public async Task<List<MatchPlayerDetails.PlayerMatchDetails>> GetMatchPlayerDetailsAsync(string player)
         {
-            //                      /getmatchplayerdetailsjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/getmatchplayerdetailsjson/{DevId}/{GetSignature("getmatchplayerdetails")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<MatchPlayerDetails.PlayerMatchDetails>();
-            }
-            return JsonConvert.DeserializeObject<List<MatchPlayerDetails.PlayerMatchDetails>>(json);
+            string json = await SendRequestAsync("getmatchplayerdetails", player);
+            return json == null ? new List<MatchPlayerDetails.PlayerMatchDetails>() : JsonConvert.DeserializeObject<List<MatchPlayerDetails.PlayerMatchDetails>>(json);
         }
         public async Task<List<Motd>> GetMOTD()
         {
-            //                      /getmotdjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}
-            string url = $"{BaseURL}/getmotdjson/{DevId}/{GetSignature("getmotd")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<Motd>();
-            }
-            return JsonConvert.DeserializeObject<List<Motd>>(json);
+            string json = await SendRequestAsync("getmotd");
+            return json == null ? new List<Motd>() : JsonConvert.DeserializeObject<List<Motd>>(json);
         }
         public async Task<List<HiRezServerStatus>> GetHiRezServerStatusAsync()
         {
-            //                      /gethirezserverstatusjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}
-            string url = $"{BaseURL}/gethirezserverstatusjson/{DevId}/{GetSignature("gethirezserverstatus")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
-            
-            string json = await SendRequestAsync(url);
-            if (json == null)
-            {
-                return new List<HiRezServerStatus>();
-            }
-            return JsonConvert.DeserializeObject<List<HiRezServerStatus>>(json);
+            string json = await SendRequestAsync("gethirezserverstatus");
+            return json == null ? new List<HiRezServerStatus>() : JsonConvert.DeserializeObject<List<HiRezServerStatus>>(json);
         }
         public async Task<List<SearchPlayers>> SearchPlayersAsync(string player)
         {
-            //                      /searchplayersjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{player}
-            string url = $"{BaseURL}/searchplayersjson/{DevId}/{GetSignature("searchplayers")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{player}";
-
-            string json = await SendRequestAsync(url);
+            string json = await SendRequestAsync("searchplayers", player);
             if (json == null)
             {
                 var ret = new List<SearchPlayers>
@@ -315,10 +196,7 @@ namespace ThothBotCore.Connections
         }
         public async Task<List<QueueStats>> GetQueueStats(string playerid, int queueid)
         {
-            //                      /getqueuestatsjson/{DevId}/{Signature}/{Session}/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/{playerid}/queueid
-            string url = $"{BaseURL}/getqueuestatsjson/{DevId}/{GetSignature("getqueuestats")}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{playerid}/{queueid}";
-
-            string json = await SendRequestAsync(url);
+            string json = await SendRequestAsync("getqueuestats", $"{playerid}/{queueid}");
             if (json == null)
             {
                 var ret = new List<QueueStats>
@@ -330,10 +208,11 @@ namespace ThothBotCore.Connections
             return JsonConvert.DeserializeObject<List<QueueStats>>(json);
         }
 
-        private async Task<string> SendRequestAsync(string url)
+        private async Task<string> SendRequestAsync(string endpoint, string value = "")
         {
             try
             {
+                var url = GenerateURL(endpoint, value);
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
                 var response = await Client.SendAsync(request);
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
@@ -351,7 +230,8 @@ namespace ThothBotCore.Connections
                 else if (json.Contains("Invalid session id"))
                 {
                     await CreateSessionAsync();
-                    return null;
+                    
+                    return await SendRequestAsync(endpoint, value);
                 }
                 else if (json.Contains("Exception - Timestamp"))
                 {
@@ -371,6 +251,22 @@ namespace ThothBotCore.Connections
                 Console.WriteLine($"SendRequestAsync - {ex.Message}");
                 return null;
             }
+        }
+        private string GenerateURL(string endpoint, string value)
+        {
+            if (value != "" && endpoint != "ping")
+            {
+                return $"{BaseURL}/{endpoint}json/{DevId}/{GetSignature(endpoint)}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}/{value}";
+            }
+            else if (endpoint == "ping")
+            {
+                return $"{BaseURL}/pingjson";
+            }
+            else if (endpoint == "createsession")
+            {
+                return $"{BaseURL}/{endpoint}json/{DevId}/{GetSignature(endpoint)}/{DateTime.UtcNow:yyyyMMddHHmmss}";
+            }
+            return $"{BaseURL}/{endpoint}json/{DevId}/{GetSignature(endpoint)}/{sessionResult.sessionID}/{DateTime.UtcNow:yyyyMMddHHmmss}";
         }
     }
 }

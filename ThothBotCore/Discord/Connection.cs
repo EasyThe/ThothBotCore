@@ -45,8 +45,6 @@ namespace ThothBotCore.Discord
             await _logger.Log("i", "Starting Command Handler..");
             await _handler.InitializeAsync(_client);
             await _logger.Log("√", "Command Handler Started!");
-            await _logger.Log("√", "Registering Slash Commands!");
-            await RegisterSlashCommandGlobally();
 
             _client.JoinedGuild += JoinedNewGuildActions;
             _client.LeftGuild += ClientLeftGuildTask;
@@ -77,22 +75,27 @@ namespace ThothBotCore.Discord
 
         private async Task ShardReady(DiscordSocketClient arg)
         {
-            await _logger.Log("√", $"Shard {arg.ShardId} Connected");
-            if (!shardsConnected.Exists(x=> x == arg.ShardId))
+            try
             {
-                shardsConnected.Add(arg.ShardId);
-            }
+                await _logger.Log("√", $"Shard {arg.ShardId} Connected");
+                if (!shardsConnected.Exists(x => x == arg.ShardId))
+                {
+                    shardsConnected.Add(arg.ShardId);
+                }
 
-            if (Credentials.botConfig.prefix == "??")
-            {
-                await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+                if (shardsConnected.Count == ShardCount || Connection.Client.CurrentUser.Id == 587623068461957121)
+                {
+                    await _logger.Log("i", "Starting ServerStatusTimer & GuildsCountTimer");
+                    await StatusTimer.StartServerStatusTimer();
+                    await GuildsTimer.StartGuildsCountTimer();
+
+                    // Register commands
+                    await RegisterSlashCommandGlobally();
+                }
             }
-            
-            if (shardsConnected.Count == ShardCount || Connection.Client.CurrentUser.Id == 587623068461957121)
+            catch (System.Exception ex)
             {
-                await _logger.Log("i", "Starting ServerStatusTimer & GuildsCountTimer");
-                await StatusTimer.StartServerStatusTimer();
-                await GuildsTimer.StartGuildsCountTimer();
+                await _logger.Log("X", $"ShardReady Exception: {ex.Message}");
             }
         }
 
@@ -104,11 +107,18 @@ namespace ThothBotCore.Discord
                 if (Credentials.botConfig.prefix != "??")
                 {
                     await Global.interactionService.RegisterCommandsGloballyAsync(true);
+                    await _logger.Log("√", "Registered commands globally!");
+                }
+                else
+                {
+                    await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+                    await _logger.Log("√", "Registered commands to dev guild!");
                 }
             }
             catch (System.Exception ex)
             {
-                await Reporter.SendError($"REGISTERING SLASH COMMANDS ERROR:\n{ex.Message}");
+                await _logger.Log("X", $"Registering commands failed. Exception: {ex.Message}");
+                await Reporter.SendError($"Registering commands failed. Exception:\n{ex.Message}");
             }
         }
 

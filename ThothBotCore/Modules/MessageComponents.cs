@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
-using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Models.Gods;
@@ -30,6 +29,8 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
+                await DeferAsync();
                 string player = selectedPlayer.FirstOrDefault();
 
                 // Doing the stuff
@@ -1388,27 +1389,37 @@ namespace ThothBotCore.Modules
                 // NOT TESTED ==========================================================================================
 
                 // Ability videos & God Header images from Smite CMS API
-                for (int i = 1; i < 13; i++)
+                if (newGodList.Any(x => x.Ability_1.Video == null) ||
+                    newGodList.Any(x => x.Ability_2.Video == null) ||
+                    newGodList.Any(x => x.Ability_3.Video == null) ||
+                    newGodList.Any(x => x.Ability_4.Video == null) ||
+                    newGodList.Any(x => x.Ability_5.Video == null) ||
+                    newGodList.Any(x => x.godHeader_URL == null))
                 {
-                    var result = await APIInteractions.GetGodAbilityVideoIDsByPageAsync(i);
-                    foreach (var item in result)
+                    Text.WriteLine("- Starting ability videos & god header images");
+                    for (int i = 1; i < 13; i++)
                     {
-                        var god = newGodList.Find(x => x.id.ToString() == item.acf.god_id);
-                        if (god != null && god.id != 0)
+                        var result = await APIInteractions.GetGodAbilityVideoIDsByPageAsync(i);
+                        foreach (var item in result)
                         {
-                            god.Ability_1.Video = item.acf.abilitiy_video_1;
-                            god.Ability_2.Video = item.acf.abilitiy_video_2;
-                            god.Ability_3.Video = item.acf.abilitiy_video_3;
-                            god.Ability_4.Video = item.acf.abilitiy_video_4;
-                            god.Ability_5.Video = item.acf.ability_video_passive;
-                            god.godHeader_URL = item.acf.god_header_image;
+                            var god = newGodList.Find(x => x.id.ToString() == item.acf.god_id);
+                            if (god != null && god.id != 0)
+                            {
+                                god.Ability_1.Video = item.acf.abilitiy_video_1;
+                                god.Ability_2.Video = item.acf.abilitiy_video_2;
+                                god.Ability_3.Video = item.acf.abilitiy_video_3;
+                                god.Ability_4.Video = item.acf.abilitiy_video_4;
+                                god.Ability_5.Video = item.acf.ability_video_passive;
+                                god.godHeader_URL = item.acf.god_header_image;
+                            }
                         }
                     }
+                    Text.WriteLine("Completed.");
                 }
 
                 // Ability DomColor
 
-                Text.WriteLine("Ability DomColor START");
+                Text.WriteLine("Ability DomColor");
                 foreach (var god in newGodList)
                 {
                     // 1
@@ -1419,9 +1430,11 @@ namespace ThothBotCore.Modules
                             if (god.Ability_1.URL != "")
                             {
                                 var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_1.URL);
-                                var ordered = colors.responses[0].imagePropertiesAnnotation.dominantColors.colors.OrderByDescending(x => x.score).ToList();
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_1.DomColor = (ordered.First().color.red << 0) | (ordered.First().color.green << 8) | (ordered.First().color.blue << 16);
+                                god.Ability_1.DomColor = (int)clr.RawValue;
                             }
                             else
                             {
@@ -1441,9 +1454,11 @@ namespace ThothBotCore.Modules
                             if (god.Ability_2.URL != "")
                             {
                                 var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_2.URL);
-                                var ordered = colors.responses[0].imagePropertiesAnnotation.dominantColors.colors.OrderByDescending(x => x.score).ToList();
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_2.DomColor = (ordered.First().color.red << 0) | (ordered.First().color.green << 8) | (ordered.First().color.blue << 16);
+                                god.Ability_2.DomColor = (int)clr.RawValue;
                             }
                             else
                             {
@@ -1463,9 +1478,11 @@ namespace ThothBotCore.Modules
                             if (god.Ability_3.URL != "")
                             {
                                 var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_3.URL);
-                                var ordered = colors.responses[0].imagePropertiesAnnotation.dominantColors.colors.OrderByDescending(x => x.score).ToList();
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_3.DomColor = (ordered.First().color.red << 0) | (ordered.First().color.green << 8) | (ordered.First().color.blue << 16);
+                                god.Ability_3.DomColor = (int)clr.RawValue;
                             }
                             else
                             {
@@ -1485,9 +1502,11 @@ namespace ThothBotCore.Modules
                             if (god.Ability_4.URL != "")
                             {
                                 var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_4.URL);
-                                var ordered = colors.responses[0].imagePropertiesAnnotation.dominantColors.colors.OrderByDescending(x => x.score).ToList();
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_4.DomColor = (ordered.First().color.red << 0) | (ordered.First().color.green << 8) | (ordered.First().color.blue << 16);
+                                god.Ability_4.DomColor = (int)clr.RawValue;
                             }
                             else
                             {
@@ -1507,9 +1526,11 @@ namespace ThothBotCore.Modules
                             if (god.Ability_5.URL != "")
                             {
                                 var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_5.URL);
-                                var ordered = colors.responses[0].imagePropertiesAnnotation.dominantColors.colors.OrderByDescending(x => x.score).ToList();
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_5.DomColor = (ordered.First().color.red << 0) | (ordered.First().color.green << 8) | (ordered.First().color.blue << 16);
+                                god.Ability_5.DomColor = (int)clr.RawValue;
                             }
                             else
                             {
@@ -1525,38 +1546,42 @@ namespace ThothBotCore.Modules
                 }
 
                 // Ability Emojis
-                Text.WriteLine("Ability Emojis START");
-                foreach (var god in newGodList)
+                if (newGodList.Any(x => x.Ability_1.Emoji == null || x.Ability_1.Emoji.Length == 0))
                 {
-                    if (god.Ability_1.Emoji == null || god.Ability_1.Emoji.Length == 0)
+                    Text.WriteLine("Ability Emojis");
+                    foreach (var god in newGodList)
                     {
-                        try
+                        if (god.Ability_1.Emoji == null || god.Ability_1.Emoji.Length == 0)
                         {
-                            Thread.Sleep(6000);// fuck my life and the discord rate limits
-                            var emojis = await Utils.AddMissingAbilityEmojiAsync(god);
-                            if (emojis.Length == 5)
+                            try
                             {
-                                god.Ability_1.Emoji = emojis[0];
-                                god.Ability_2.Emoji = emojis[1];
-                                god.Ability_3.Emoji = emojis[2];
-                                god.Ability_4.Emoji = emojis[3];
-                                god.Ability_5.Emoji = emojis[4];
+                                Console.WriteLine(god.Name);
+                                var emojis = await Utils.AddMissingAbilityEmojiAsync(god);
+                                if (emojis.Length == 5)
+                                {
+                                    god.Ability_1.Emoji = emojis[0];
+                                    god.Ability_2.Emoji = emojis[1];
+                                    god.Ability_3.Emoji = emojis[2];
+                                    god.Ability_4.Emoji = emojis[3];
+                                    god.Ability_5.Emoji = emojis[4];
+                                }
+                            }
+                            catch (Exception exxx)
+                            {
+                                await ReplyAsync($"{god.Name} {exxx.Message}");
                             }
                         }
-                        catch (Exception exxx)
-                        {
-                            await ReplyAsync($"{god.Name} {exxx.Message}");
-                        }
+                        Text.WriteLine($"Ability Emojis for {god.Name} added.");
                     }
-                    Text.WriteLine($"Ability Emojis for {god.Name} added.");
                 }
 
                 // Skins
-                Text.WriteLine("Skins START");
+                Text.WriteLine("Skins");
                 var skins = await HiRez.GetGodSkinsAsync();
                 newGodList.ForEach(god => god.Skins = skins.FindAll(x => x.god_id == god.id)); // thats it i guess? wtf
 
                 // Top Skins
+                Text.WriteLine("Top Skins");
                 var settings = MongoConnection.GetBotSettings();
                 if (skins != null || skins.Count == 1)
                 {
@@ -1582,6 +1607,7 @@ namespace ThothBotCore.Modules
                     settings.Skins = topSkins;
                 }
 
+                Text.WriteLine("Top Pantheons");
                 // Top Pantheons
                 var topPantheons = from g in newGodList
                                    group g by g.Pantheon into p
@@ -1734,5 +1760,9 @@ namespace ThothBotCore.Modules
 
             await Context.Interaction.RespondWithModalAsync(mb.Build());
         }
+
+        [ComponentInteraction("open-msgtoguild")]
+        [CustomRequireOwner]
+        public async Task OpenModalMessageToGuild() => await Context.Interaction.RespondWithModalAsync<ModalSubmissions.SendMessageByOwnerModal>("submit-msgtoguild");
     }
 }

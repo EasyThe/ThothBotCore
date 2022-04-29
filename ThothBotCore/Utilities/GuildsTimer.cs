@@ -48,7 +48,10 @@ namespace ThothBotCore.Utilities
                 if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)
                 {
                     joinedGuilds = Connection.Client.Guilds.Count;
-                    await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
+                    if (Connection.Client.CurrentUser.Activities.Count == 1)
+                    {
+                        await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
+                    }
 
                     Text.WriteLine("Users: " + totalUsers);
 
@@ -71,22 +74,23 @@ namespace ThothBotCore.Utilities
                     }
 
                     //DiscordBotList.com
-                    try
-                    {
-                        using (var webclient = new HttpClient())
-                        using (var content = new StringContent($"{{ \"guilds\": {Connection.Client.Guilds.Count}, \"users\": {totalUsers} }}", Encoding.UTF8, "application/json"))
-                        {
-                            webclient.DefaultRequestHeaders.Add("Authorization", Credentials.botConfig.dblAPI);
-                            var dblcomResponse = await webclient.PostAsync("https://discordbotlist.com/api/v1/bots/454145330347376651/stats", content);
-                            await BotListCallResponse("DiscordBotList.com", dblcomResponse);
-                        }
+                    // Disabled because they don't care about the list anymore, API throwing 5xx codes
+                    //try
+                    //{
+                    //    using (var webclient = new HttpClient())
+                    //    using (var content = new StringContent($"{{ \"guilds\": {Connection.Client.Guilds.Count}, \"users\": {totalUsers} }}", Encoding.UTF8, "application/json"))
+                    //    {
+                    //        webclient.DefaultRequestHeaders.Add("Authorization", Credentials.botConfig.dblAPI);
+                    //        var dblcomResponse = await webclient.PostAsync("https://discordbotlist.com/api/v1/bots/454145330347376651/stats", content);
+                    //        await BotListCallResponse("DiscordBotList.com", dblcomResponse);
+                    //    }
 
-                    }
-                    catch (Exception ex)
-                    {
-                        await Reporter.SendError("**DiscordBotList.**\n" +
-                            $"**Error Message:** {ex.Message}");
-                    }
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    await Reporter.SendError("**DiscordBotList.**\n" +
+                    //        $"**Error Message:** {ex.Message}");
+                    //}
 
                     //Discord.Bots.GG
                     try

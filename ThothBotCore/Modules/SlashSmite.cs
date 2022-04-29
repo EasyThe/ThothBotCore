@@ -13,7 +13,6 @@ using ThothBotCore.Autocomplete;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
-using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using ThothBotCore.Utilities.Smite;
@@ -765,7 +764,6 @@ namespace ThothBotCore.Modules
                     }
                     embed.AddField(x =>
                     {
-                        Console.WriteLine(motdDay.title);
                         x.Name = $":large_blue_diamond: **{motdDay.title}** - {Text.ShortDateTimeTimestamp(motdDay.startDateTime)}";
                         x.Value = $"{embedValue}";
                     });
@@ -793,6 +791,11 @@ namespace ThothBotCore.Modules
                 
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
+                if (Context.Interaction.HasResponded)
+                {
+                    return;
+                }
+
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
@@ -815,11 +818,6 @@ namespace ThothBotCore.Modules
 
                 if (player.Count == 1)
                 {
-                    if (player[0].privacy_flag == "y")
-                    {
-                        return;
-                    }
-
                     await DeferAsync();
 
                     EmbedBuilder embed;
@@ -882,6 +880,11 @@ namespace ThothBotCore.Modules
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
+                if (Context.Interaction.HasResponded)
+                {
+                    return;
+                }
+
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
@@ -904,11 +907,6 @@ namespace ThothBotCore.Modules
 
                 if (player.Count == 1)
                 {
-                    if (player[0].privacy_flag == "y")
-                    {
-                        return;
-                    }
-
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
                     var getGodRanks = await HiRez.GetGodRanksAsync(player[0].player_id.ToString());
@@ -938,6 +936,11 @@ namespace ThothBotCore.Modules
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
+                if (Context.Interaction.HasResponded)
+                {
+                    return;
+                }
+
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
@@ -960,11 +963,6 @@ namespace ThothBotCore.Modules
 
                 if (player.Count == 1)
                 {
-                    if (player[0].privacy_flag == "y")
-                    {
-                        return;
-                    }
-
                     await DeferAsync();
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
@@ -996,6 +994,11 @@ namespace ThothBotCore.Modules
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
+                if (Context.Interaction.HasResponded)
+                {
+                    return;
+                }
+
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
@@ -1018,10 +1021,6 @@ namespace ThothBotCore.Modules
 
                 if (player.Count == 1)
                 {
-                    if (player[0].privacy_flag == "y")
-                    {
-                        return;
-                    }
                     await DeferAsync();
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
@@ -1118,6 +1117,11 @@ namespace ThothBotCore.Modules
             {
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
+                if (Context.Interaction.HasResponded)
+                {
+                    return;
+                }
+
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
@@ -1140,11 +1144,6 @@ namespace ThothBotCore.Modules
 
                 if (player.Count == 1)
                 {
-                    if (player[0].privacy_flag == "y")
-                    {
-                        return;
-                    }
-
                     await DeferAsync();
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
@@ -1193,6 +1192,11 @@ namespace ThothBotCore.Modules
                 int mID = 0;
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
+                if (Context.Interaction.HasResponded)
+                {
+                    return;
+                }
+
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
@@ -1214,10 +1218,6 @@ namespace ThothBotCore.Modules
 
                 if (player.Count == 1)
                 {
-                    if (player[0].privacy_flag == "y")
-                    {
-                        return;
-                    }
                     await DeferAsync();
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 

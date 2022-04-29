@@ -200,7 +200,29 @@ namespace ThothBotCore.Utilities
                 StringBuilder sb = new();
                 if (context?.Interaction.Data is SocketSlashCommandData data)
                 {
-                    sb.Append($"SlashCommand: {data.Name}");
+                    sb.Append($"**SlashCommand:** {data.Name}");
+                    if (data.Options != null && data.Options.Count != 0)
+                    {
+                        foreach (var item in data.Options)
+                        {
+                            sb.Append($" `{item.Name}: {item.Value}`");
+                        }
+                    }
+                }
+                else if (context?.Interaction.Data is SocketMessageComponentData compData)
+                {
+                    sb.Append($"**Component:** {compData.CustomId}");
+                    if (compData.Value != null && compData.Value.Length != 0)
+                    {
+                        sb.Append($" `{compData.Value}`");
+                    }
+                    else if (compData.Values != null && compData.Values.Count != 0)
+                    {
+                        foreach (var item in compData.Values)
+                        {
+                            sb.Append($" `{item}`");
+                        }
+                    }
                 }
                 else
                 {
@@ -294,7 +316,7 @@ namespace ThothBotCore.Utilities
                 sb.Append($"An unexpected error has occured.");
                 await SendError(errorMessage);
             }
-            if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
+            if ((Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "") && !sb.ToString().StartsWith(Global.ErrorMessageByOwner))
             {
                 sb.Append("\n" + Global.ErrorMessageByOwner);
             }
