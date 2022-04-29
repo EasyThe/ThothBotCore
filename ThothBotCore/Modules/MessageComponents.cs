@@ -29,8 +29,6 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                await DeferAsync();
-                await DeferAsync();
                 string player = selectedPlayer.FirstOrDefault();
 
                 // Doing the stuff

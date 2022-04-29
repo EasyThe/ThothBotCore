@@ -48,10 +48,7 @@ namespace ThothBotCore.Utilities
                 if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)
                 {
                     joinedGuilds = Connection.Client.Guilds.Count;
-                    if (Connection.Client.CurrentUser.Activities.Count == 1)
-                    {
-                        await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
-                    }
+                    await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
 
                     Text.WriteLine("Users: " + totalUsers);
 
