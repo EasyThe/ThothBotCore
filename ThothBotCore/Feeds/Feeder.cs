@@ -122,9 +122,10 @@ namespace ThothBotCore.Feeds
                         var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to channel = null: {guild.Name}[{guild.Id}]");
                         await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
 
-                        feed.WebhookToken = null;
-                        feed.WebhookID = 0;
-                        feed.ChannelID = 0;
+                        feedGuilds[i].Feeds[0].ChannelID = 0;
+                        feedGuilds[i].Feeds[0].WebhookID = 0;
+                        feedGuilds[i].Feeds[0].WebhookToken = null;
+                        // this is the thing u need to edit if the bot still doesn't set the settings to 0
                         await MongoConnection.SaveGuildSettingsAsync(feedGuilds[i]);
                     }
                 }
