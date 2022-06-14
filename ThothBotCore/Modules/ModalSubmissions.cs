@@ -337,7 +337,6 @@ namespace ThothBotCore.Modules
             {
                 var result = await CSharpScript.EvaluateAsync(modal.Message, ScriptOptions.Default.WithReferences("ThothBotCore"));
                 await FollowupAsync($"```csharp\n{modal.Message}```Result:\n{result}");
-                ThothBotCore.Storage.Implementations.MongoConnection.GetFeedGuildsAsync(GuildSettingsModel.FeedType.ServerStatus).Count.ToString()
             }
             catch (Exception ex)
             {

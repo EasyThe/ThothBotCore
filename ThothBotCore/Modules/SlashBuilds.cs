@@ -10,6 +10,7 @@ using ThothBotCore.Utilities;
 namespace ThothBotCore.Modules
 {
     [Group("builds", "Builds created by the users of the bot")]
+    [DontAutoRegister]
     public class SlashBuilds : InteractionModuleBase
     {
         [SlashCommand("create", "Create a build for a god")]
