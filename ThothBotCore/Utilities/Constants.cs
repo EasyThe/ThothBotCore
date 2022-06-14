@@ -19,7 +19,7 @@ namespace ThothBotCore.Utilities
         public static readonly Emoji CheckMarkEmoji = new("✅");
         public static readonly Color DefaultBlueColor = new(85, 172, 238);
         public static readonly Color VulpisColor = new(233, 78, 26);
-        public static readonly Color ErrorColor = new(255, 148, 148);
+        public static readonly Color ErrorColor = new(255, 0, 0);
         public static readonly Color FeedbackColor = new(107, 70, 147);
         public static readonly Color SPLColor = new(255, 194, 67);
         public static readonly Color SuccessColor = new(67, 181, 129);

@@ -41,6 +41,10 @@ namespace ThothBotCore.Connections
             using var request = new HttpRequestMessage(HttpMethod.Get, $"https://cms.smitegame.com/wp-json/wp/v2/gods?page={page}");
             var response = await httpClient.SendAsync(request);
             string json = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                return null;
+            }
             return JsonConvert.DeserializeObject<List<SmiteWebGodAbilityInfoModel>>(json);
         }
         public static async Task<SmiteNewsModel> GetLandingPanel()

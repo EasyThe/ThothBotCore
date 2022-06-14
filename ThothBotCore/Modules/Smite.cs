@@ -1357,30 +1357,144 @@ namespace ThothBotCore.Modules
 
         [Command("tt", true, RunMode = RunMode.Async)]
         [RequireOwner]
-        public async Task TestGetPlayer(int id)
+        public async Task TestGetPlayer()
         {
             try
             {
-                //var gods = MongoConnection.GetAllGods();
+                // Ability DomColor
+                var newGodList = MongoConnection.GetAllGods();
 
-                //await HiRez.GetGodSkinsAsync();
-                var da = Text.GetQueueName(id);
-                await ReplyAsync(da);
+                Text.WriteLine("Ability DomColor");
+                foreach (var god in newGodList)
+                {
+                    if (god.Ability_1.DomColor != 0)
+                    {
+                        Console.WriteLine($"Skipping {god.Name}");
+                        continue;
+                    }
+                    // 1
+                    if (god.Ability_1.DomColor == 0)
+                    {
+                        try
+                        {
+                            if (god.Ability_1.URL != "")
+                            {
+                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_1.URL);
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                //var settings = MongoConnection.GetBotSettings();
-                //settings.Placeholders = new[] 
-                //{ 
-                //    "We're no strangers to love\nYou know the rules and so do I\nA full commitment's what I'm thinking of",
-                //    "You wouldn't get this from any other guy\nI just wanna tell you how I'm feeling",
-                //    "Never gonna give you up\nNever gonna let you down\nNever gonna run around and desert you",
-                //    "We've known each other for so long\nYour heart's been aching but you're too shy to say it",
-                //    "We know the game and we're gonna play it\nAnd if you ask me how I'm feeling",
-                //    "Somebody once told me the world is gonna roll me\nI ain't the sharpest tool in the shed",
-                //    "She was looking kind of dumb with her finger and her thumb\nIn the shape of an \"L\" on her forehead",
-                //    "Well the years start coming and they don't stop coming and they don't stop coming and they don't"
-                //};
+                                god.Ability_1.DomColor = (int)clr.RawValue;
+                            }
+                            else
+                            {
+                                await Reporter.SendError($"{god.Name} ability 1 error.");
+                            }
+                        }
+                        catch (Exception exxx)
+                        {
+                            await ReplyAsync($"{god.Name} {exxx.Message}");
+                        }
+                    }
+                    // 2
+                    if (god.Ability_2.DomColor == 0)
+                    {
+                        try
+                        {
+                            if (god.Ability_2.URL != "")
+                            {
+                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_2.URL);
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                //await MongoConnection.SaveBotSettingsAsync(settings);
+                                god.Ability_2.DomColor = (int)clr.RawValue;
+                            }
+                            else
+                            {
+                                await Reporter.SendError($"{god.Name} ability 2 error.");
+                            }
+                        }
+                        catch (Exception exxx)
+                        {
+                            await ReplyAsync($"{god.Name} {exxx.Message}");
+                        }
+                    }
+                    // 3
+                    if (god.Ability_3.DomColor == 0)
+                    {
+                        try
+                        {
+                            if (god.Ability_3.URL != "")
+                            {
+                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_3.URL);
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+
+                                god.Ability_3.DomColor = (int)clr.RawValue;
+                            }
+                            else
+                            {
+                                await Reporter.SendError($"{god.Name} ability 3 error.");
+                            }
+                        }
+                        catch (Exception exxx)
+                        {
+                            await ReplyAsync($"{god.Name} {exxx.Message}");
+                        }
+                    }
+                    // 4
+                    if (god.Ability_4.DomColor == 0)
+                    {
+                        try
+                        {
+                            if (god.Ability_4.URL != "")
+                            {
+                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_4.URL);
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+
+                                god.Ability_4.DomColor = (int)clr.RawValue;
+                            }
+                            else
+                            {
+                                await Reporter.SendError($"{god.Name} ability 4 error.");
+                            }
+                        }
+                        catch (Exception exxx)
+                        {
+                            await ReplyAsync($"{god.Name} {exxx.Message}");
+                        }
+                    }
+                    // 5
+                    if (god.Ability_5.DomColor == 0)
+                    {
+                        try
+                        {
+                            if (god.Ability_5.URL != "")
+                            {
+                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_5.URL);
+                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+
+                                god.Ability_5.DomColor = (int)clr.RawValue;
+                            }
+                            else
+                            {
+                                await Reporter.SendError($"{god.Name} ability 5 error.");
+                            }
+                        }
+                        catch (Exception exxx)
+                        {
+                            await ReplyAsync($"{god.Name} {exxx.Message}");
+                        }
+                    }
+                    await MongoConnection.SaveGodAsync(god);
+                    Text.WriteLine($"Ability DomColor for {god.Name} completed.");
+                }
             }
             catch (Exception ex)
             {

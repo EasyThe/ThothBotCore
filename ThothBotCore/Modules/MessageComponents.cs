@@ -75,10 +75,86 @@ namespace ThothBotCore.Modules
                     field.Value = mostplayed;
                 });
 
+                // Buttons
+                var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 0, playerStatus[0].Match != 0);
+
                 await Context.Interaction.ModifyOriginalResponseAsync(x =>
                 {
                     x.Embed = embed.Build();
                     x.Content = "";
+                    x.Components = comps;
+                });
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                });
+            }
+        }
+
+        [ComponentInteraction("btn-st-*")]
+        public async Task PlayerStatsButton(string player)
+        {
+            try
+            {
+                await DeferAsync();
+                // Doing the stuff
+                var playerStatus = await HiRez.GetPlayerStatusAsync(player);
+                List<MatchPlayerDetails.PlayerMatchDetails> match = new();
+                if (playerStatus[0].Match != 0)
+                {
+                    match = await HiRez.GetMatchPlayerDetailsAsync(playerStatus[0].Match.ToString());
+                }
+
+                var getPlayer = await HiRez.GetPlayerAsync(player);
+                if (getPlayer[0].ret_msg != null && getPlayer[0].ret_msg.ToString().ToLowerInvariant().Contains("privacy flag"))
+                {
+                    var embedh = await EmbedHandler.HiddenProfileEmbed("*");
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embedh.Build();
+                        x.Content = "";
+                    });
+                    return;
+                }
+
+                var loading = await EmbedHandler.LoadingStats($"{(getPlayer[0].hz_player_name != null ? getPlayer[0].hz_player_name : getPlayer[0].hz_gamer_tag)}'s stats");
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = loading.Build();
+                });
+
+                string mostplayed = await SlashSmite.CalculateTopGameModesForStatsAsync(HiRez, player);
+
+                // Generating the embed and sending to channel
+                var embed = await EmbedHandler.PlayerStatsEmbed(
+                    getPlayer,
+                    await HiRez.GetGodRanksAsync(player),
+                    await HiRez.GetPlayerAchievementsAsync(player),
+                    playerStatus,
+                    match);
+
+                // Add Most played matches
+                embed.AddField(field =>
+                {
+                    field.IsInline = true;
+                    field.Name = $"<:matches:579604410569850891>Most Played Modes";
+                    field.Value = mostplayed;
+                });
+
+                // Buttons
+                var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 0, playerStatus[0].Match != 0);
+
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed.Build();
+                    x.Content = "";
+                    x.Components = comps;
                 });
             }
             catch (Exception ex)
@@ -130,6 +206,56 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [ComponentInteraction("btn-wp-*")]
+        public async Task WorshipersButton(string player)
+        {
+            try
+            {
+                await DeferAsync();
+                var getPlayer = await HiRez.GetPlayerAsync(player);
+                if (getPlayer[0].ret_msg != null && getPlayer[0].ret_msg.ToString().ToLowerInvariant().Contains("privacy flag"))
+                {
+                    var embedh = await EmbedHandler.HiddenProfileEmbed("*");
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embedh.Build();
+                        x.Content = "";
+                    });
+                    return;
+                }
+
+                var loading = await EmbedHandler.LoadingStats($"{(getPlayer[0].hz_player_name != null ? getPlayer[0].hz_player_name : getPlayer[0].hz_gamer_tag)}'s god worshipers");
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = loading.Build();
+                });
+
+                var getGodRanks = await HiRez.GetGodRanksAsync(player);
+                // Generating the embed and sending to channel
+                var embed = await EmbedHandler.BuildWorshipersEmbedAsync(getGodRanks, getPlayer[0]);
+
+                // Buttons
+                var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 3);
+
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                    x.Components = comps;
+                });
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                });
+            }
+        }
+
         [ComponentInteraction("playerselect-wr")]
         public async Task PlayerSelectWinrates(string[] selectedPlayer)
         {
@@ -168,6 +294,56 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [ComponentInteraction("btn-wr-*")]
+        public async Task WinRatesButton(string player)
+        {
+            try
+            {
+                await DeferAsync();
+                var getPlayer = await HiRez.GetPlayerAsync(player);
+                if (getPlayer[0].ret_msg != null && getPlayer[0].ret_msg.ToString().ToLowerInvariant().Contains("privacy flag"))
+                {
+                    var embedh = await EmbedHandler.HiddenProfileEmbed("*");
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embedh.Build();
+                        x.Content = "";
+                    });
+                    return;
+                }
+
+                var loading = await EmbedHandler.LoadingStats($"{(getPlayer[0].hz_player_name != null ? getPlayer[0].hz_player_name : getPlayer[0].hz_gamer_tag)}'s god win rates");
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = loading.Build();
+                });
+
+                var getGodRanks = await HiRez.GetGodRanksAsync(player);
+                // Generating the embed and sending to channel
+                var embed = await EmbedHandler.BuildWinRatesEmbedAsync(getGodRanks, getPlayer[0]);
+
+                // Buttons
+                var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 4);
+
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                    x.Components = comps;
+                });
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                });
+            }
+        }
+
         [ComponentInteraction("playerselect-mh")]
         public async Task PlayerSelectMatchHistory(string[] selectedPlayer)
         {
@@ -186,7 +362,7 @@ namespace ThothBotCore.Modules
                     return;
                 }
 
-                var loading = await EmbedHandler.LoadingStats(getPlayer[0].Name.Contains("]") ? getPlayer[0].Name.Split(']')[1] : getPlayer[0].Name);
+                var loading = await EmbedHandler.LoadingStats(getPlayer[0].hz_player_name != null ? getPlayer[0].hz_player_name : getPlayer[0].hz_gamer_tag);
                 await Context.Interaction.UpdateAsync(x =>
                 {
                     x.Content = "";
@@ -217,10 +393,118 @@ namespace ThothBotCore.Modules
                 }
                 var embed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
 
+                // Match details select menu
+                List<SelectMenuOptionBuilder> options = new();
+                for (int i = 0; i < matchHistory.Count; i++)
+                {
+                    if (i == 24)
+                    {
+                        break;
+                    }
+                    string godemoji = Utils.FindGodEmoji(Utilities.Constants.GodsHashSet.ToList(), matchHistory[i].GodId);
+                    options.Add(new SelectMenuOptionBuilder()
+                    {
+                        Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
+                        Description = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists}",
+                        Emote = Emote.Parse(godemoji),
+                        Value = matchHistory[i].Match.ToString()
+                    });
+                }
+                var comp = new ComponentBuilder().WithSelectMenu("mdselect", placeholder: "Show match details", options: options);
+
                 await Context.Interaction.ModifyOriginalResponseAsync(x =>
                 {
                     x.Embed = embed;
                     x.Content = "";
+                    x.Components = comp.Build();
+                });
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                });
+            }
+        }
+
+        [ComponentInteraction("btn-mh-*")]
+        public async Task MatchHistoryButton(string player)
+        {
+            try
+            {
+                var getPlayer = await HiRez.GetPlayerAsync(player);
+                if (getPlayer[0].ret_msg != null && getPlayer[0].ret_msg.ToString().ToLowerInvariant().Contains("privacy flag"))
+                {
+                    var embedh = await EmbedHandler.HiddenProfileEmbed("*");
+                    await Context.Interaction.UpdateAsync(x =>
+                    {
+                        x.Embed = embedh.Build();
+                        x.Content = "";
+                    });
+                    return;
+                }
+
+                var loading = await EmbedHandler.LoadingStats($"{(getPlayer[0].hz_player_name != null ? getPlayer[0].hz_player_name : getPlayer[0].hz_gamer_tag)}'s match history");
+                await Context.Interaction.UpdateAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = loading.Build();
+                });
+
+                var buttons = await ComponentsHandler.RichStatsButtonsAsync(player, 2);
+                var matchHistory = await HiRez.GetMatchHistoryAsync(player.ToString());
+
+                if (matchHistory.Count == 0)
+                {
+                    var em = await EmbedHandler.BuildDescriptionEmbedAsync(Utilities.Constants.APIEmptyResponse, 254, 0, 0);
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = em;
+                        x.Content = "";
+                    });
+                    return;
+                }
+                if (matchHistory[0].ret_msg != null && matchHistory[0].ret_msg.ToString().ToLowerInvariant().Contains("no match history"))
+                {
+                    var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"{(getPlayer[0].Name.Contains(']') ? getPlayer[0].Name.Split(']')[1] : getPlayer[0].Name)} has no recent matches.");
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = emb;
+                        x.Content = "";
+                        x.Components = buttons;
+                    });
+                    return;
+                }
+                var embed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
+
+                // Match details select menu
+                List<SelectMenuOptionBuilder> options = new();
+                for (int i = 0; i < matchHistory.Count; i++)
+                {
+                    if (i == 24)
+                    {
+                        break;
+                    }
+                    string godemoji = Utils.FindGodEmoji(Utilities.Constants.GodsHashSet.ToList(), matchHistory[i].GodId);
+                    options.Add(new SelectMenuOptionBuilder()
+                    {
+                        Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
+                        Description = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists}",
+                        Emote = Emote.Parse(godemoji),
+                        Value = matchHistory[i].Match.ToString()
+                    });
+                }
+                
+                var comp = ComponentBuilder.FromComponents(buttons.Components).WithSelectMenu("mdselect", placeholder: "Show match details", options: options);
+
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                    x.Components = comp.Build();
                 });
             }
             catch (Exception ex)
@@ -274,7 +558,7 @@ namespace ThothBotCore.Modules
 
                 var matchPlayerDetails = await HiRez.GetMatchPlayerDetailsAsync(playerstatus[0].Match.ToString());
 
-                if (matchPlayerDetails != null || matchPlayerDetails.Count == 0)
+                if (matchPlayerDetails == null || matchPlayerDetails.Count == 0)
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but this match seems to be unavailable to show.");
                     await Context.Interaction.ModifyOriginalResponseAsync(x =>
@@ -308,6 +592,98 @@ namespace ThothBotCore.Modules
                 {
                     x.Embed = embed;
                     x.Content = "";
+                });
+            }
+        }
+
+        [ComponentInteraction("btn-lm-*")]
+        public async Task LiveMatchDetailsButton(string player)
+        {
+            try
+            {
+                await DeferAsync();
+                var getPlayer = await HiRez.GetPlayerAsync(player);
+
+                if (getPlayer[0].ret_msg != null && getPlayer[0].ret_msg.ToString().ToLowerInvariant().Contains("privacy flag"))
+                {
+                    var embedh = await EmbedHandler.HiddenProfileEmbed("*");
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embedh.Build();
+                    });
+                    return;
+                }
+
+                var loading = await EmbedHandler.LoadingStats($"{(getPlayer[0].hz_player_name != null ? getPlayer[0].hz_player_name : getPlayer[0].hz_gamer_tag)}'s live match");
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = loading.Build();
+                });
+
+                var playerstatus = await HiRez.GetPlayerStatusAsync(player);
+
+                // Checking if the player is online and is in match
+                if (playerstatus[0].status != 3 && playerstatus[0].Match == 0)
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{getPlayer[0].hz_player_name ?? getPlayer[0].hz_gamer_tag} is not in a match. [{playerstatus[0].status_string}]");
+                    var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 1, true);
+
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embed;
+                        x.Components = comps;
+                    });
+                    return;
+                }
+
+                var matchPlayerDetails = await HiRez.GetMatchPlayerDetailsAsync(playerstatus[0].Match.ToString());
+
+                if (matchPlayerDetails == null || matchPlayerDetails.Count == 0)
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but this match seems to be unavailable to show.");
+                    var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 1, true);
+
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embed;
+                        x.Components = comps;
+                    });
+                    return;
+                }
+                if (matchPlayerDetails[0].ret_msg == null)
+                {
+                    var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
+                    var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 1, true);
+
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = embed.Build();
+                        x.Components = comps;
+                    });
+                }
+                else
+                {
+                    var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 1, true);
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = null;
+                        x.Content = matchPlayerDetails[0].ret_msg.ToString();
+                        x.Components = comps;
+                    });
+                    await Reporter.SlashRespondToCommandOnErrorAsync(null, Context, matchPlayerDetails[0].ret_msg.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 1, true);
+
+                await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Content = "";
+                    x.Components = comps;
                 });
             }
         }
@@ -430,6 +806,40 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [ComponentInteraction("mdselect")]
+        public async Task MatchDetailsSelect(string[] matchIdArray)
+        {
+            var matchId = matchIdArray.FirstOrDefault();
+            var loading = await EmbedHandler.LoadingStats($"match with ID: `{matchId}`");
+            await Context.Interaction.UpdateAsync(x =>
+            {
+                x.Content = "";
+                x.Embed = loading.Build();
+            });
+            var matchDetails = await HiRez.GetMatchDetailsAsync(matchId);
+            if (matchDetails.Count == 0)
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the API sent an empty response which most of the time means the match" +
+                    " is not available anymore.\n" +
+                    "You can try Smite.Guru instead", $"MatchID: {matchId}");
+                await FollowupAsync(embed: embed, ephemeral: true);
+                return;
+            }
+
+            if (matchDetails.Count == 1 && matchDetails[0].ret_msg != null)
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync(matchDetails[0].ret_msg.ToString(), $"MatchID: {matchId}", 255);
+                await FollowupAsync(embed: embed, ephemeral: true);
+                return;
+            }
+
+            var finalembed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
+            await Context.Interaction.ModifyOriginalResponseAsync(x =>
+            {
+                x.Embed = finalembed.Build();
+            });
+        }
+
         [ComponentInteraction("startlinking")]
         public async Task StartLinking()
         {
@@ -439,6 +849,18 @@ namespace ThothBotCore.Modules
                 var unavailableEmbed = await EmbedHandler.BuildDescriptionEmbedAsync(
                         "Sorry, we cannot link your accounts, because the Hi-Rez API is unavailable right now. Please try again later.", 163);
                 await RespondAsync(embed: unavailableEmbed, ephemeral: true);
+                return;
+            }
+            // check if the user is already linked
+            var dbCheck = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(Context.Interaction.User.Id);
+            if (dbCheck != null && dbCheck.discordID != 0)
+            {
+                var getplayer = await HiRez.GetPlayerAsync(dbCheck._id.ToString());
+                var getplayerstatus = await HiRez.GetPlayerStatusAsync(dbCheck._id.ToString());
+
+                var em = await EmbedHandler.BuildAlreadyLinkedEmbedAsync(getplayer, getplayerstatus);
+                var button = new ComponentBuilder().WithButton($"Unlink", "unlink", ButtonStyle.Danger, Emoji.Parse("✖️"));
+                await RespondAsync(embed: em, components: button.Build(), ephemeral: true);
                 return;
             }
             var mb = new ModalBuilder("Thoth Linking", "startlinkingmodal")
@@ -456,6 +878,13 @@ namespace ThothBotCore.Modules
             try
             {
                 var getplayer = await HiRez.GetPlayerAsync(playerId);
+                if (getplayer == null || getplayer.Count == 0)
+                {
+                    var embed = await EmbedHandler.BuildDescriptionEmbedAsync("The Hi-Rez API is unavailable. Please try again.", Constants.ErrorColor);
+                    await RespondAsync(embed: embed, ephemeral: true);
+                    return;
+                }
+
                 if (getplayer[0].ret_msg != null && getplayer[0].ret_msg.ToString().Contains("privacy"))
                 {
                     var embed = new EmbedBuilder();
@@ -483,20 +912,21 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
+                    string pmsg = "empty";
+                    if (getplayer[0].Personal_Status_Message != null && getplayer[0].Personal_Status_Message.Length > 0)
+                    {
+                        pmsg = getplayer[0].Personal_Status_Message;
+                    }
                     var embed = new EmbedBuilder();
                     embed.WithDescription($"We were not able to confirm that this account is yours because the personal status message of " +
-                        $"**{getplayer[0].hz_player_name + " " + getplayer[0].hz_gamer_tag}** is {getplayer[0].Personal_Status_Message}.");
+                        $"**{getplayer[0].hz_player_name + " " + getplayer[0].hz_gamer_tag}** is `{pmsg}`.");
                     await RespondAsync(embed: embed.Build(), ephemeral: true);
                 }
             }
             catch (Exception ex)
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await Context.Interaction.UpdateAsync(x =>
-                {
-                    x.Embed = embed;
-                    x.Content = "";
-                });
+                await RespondAsync(embed: embed, ephemeral: true);
             }
         }
 
@@ -1347,6 +1777,10 @@ namespace ThothBotCore.Modules
                 // Missing Emoji?
                 if (newGodList.Any(x => x.Emoji == null))
                 {
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Content += $"\nFound Missing god emojis";
+                    });
                     foreach (var god in newGodList)
                     {
                         if (god.Emoji == null)
@@ -1360,6 +1794,10 @@ namespace ThothBotCore.Modules
                 // Missing DomColor?
                 if (newGodList.Any(x => x.DomColor == 0))
                 {
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Content += $"\nFound Missing god domcolor";
+                    });
                     foreach (var god in newGodList)
                     {
                         if (god.DomColor == 0)
@@ -1394,6 +1832,18 @@ namespace ThothBotCore.Modules
                     newGodList.Any(x => x.Ability_5.Video == null) ||
                     newGodList.Any(x => x.godHeader_URL == null))
                 {
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Content += $"\nFound Missing ability videos or godheader images";
+                    });
+                    var allMissing1 = newGodList.FindAll(x => x.Ability_1.Video == null).ToList();
+                    var allMissing2 = newGodList.FindAll(x => x.Ability_2.Video == null).ToList();
+                    var allMissing3 = newGodList.FindAll(x => x.Ability_3.Video == null).ToList();
+                    var allMissing4 = newGodList.FindAll(x => x.Ability_4.Video == null).ToList();
+                    var allMissing5 = newGodList.FindAll(x => x.Ability_5.Video == null).ToList();
+                    var allMissinghead = newGodList.FindAll(x => x.godHeader_URL == null).ToList();
+                    Text.WriteLine($"ab1 {allMissing1.Count} ab2 {allMissing2.Count} ab3 {allMissing3.Count} " +
+                        $"ab4 {allMissing4.Count} ab5 {allMissing5.Count} head {allMissinghead.Count}");
                     Text.WriteLine("- Starting ability videos & god header images");
                     for (int i = 1; i < 13; i++)
                     {
@@ -1401,6 +1851,16 @@ namespace ThothBotCore.Modules
                         foreach (var item in result)
                         {
                             var god = newGodList.Find(x => x.id.ToString() == item.acf.god_id);
+                            if (god.Ability_1.Video == null ||
+                                god.Ability_2.Video == null ||
+                                god.Ability_3.Video == null ||
+                                god.Ability_4.Video == null ||
+                                god.Ability_5.Video == null ||
+                                god.godHeader_URL == null)
+                            {
+                                continue;
+                            }
+                            Console.WriteLine("it didn't skip");
                             if (god != null && god.id != 0)
                             {
                                 god.Ability_1.Video = item.acf.abilitiy_video_1;
@@ -1418,134 +1878,149 @@ namespace ThothBotCore.Modules
                 // Ability DomColor
 
                 Text.WriteLine("Ability DomColor");
-                foreach (var god in newGodList)
+                if (newGodList.Any(x => x.Ability_1.DomColor == 0) ||
+                    newGodList.Any(x => x.Ability_2.DomColor == 0) ||
+                    newGodList.Any(x => x.Ability_3.DomColor == 0) ||
+                    newGodList.Any(x => x.Ability_4.DomColor == 0) ||
+                    newGodList.Any(x => x.Ability_5.DomColor == 0))
                 {
-                    // 1
-                    if (god.Ability_1.DomColor == 0)
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
                     {
-                        try
-                        {
-                            if (god.Ability_1.URL != "")
-                            {
-                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_1.URL);
-                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
-
-                                god.Ability_1.DomColor = (int)clr.RawValue;
-                            }
-                            else
-                            {
-                                await Reporter.SendError($"{god.Name} ability 1 error.");
-                            }
-                        }
-                        catch (Exception exxx)
-                        {
-                            await ReplyAsync($"{god.Name} {exxx.Message}");
-                        }
-                    }
-                    // 2
-                    if (god.Ability_2.DomColor == 0)
+                        x.Content += $"\nFound Missing ability domcolor";
+                    });
+                    foreach (var god in newGodList)
                     {
-                        try
+                        // 1
+                        if (god.Ability_1.DomColor == 0)
                         {
-                            if (god.Ability_2.URL != "")
+                            try
                             {
-                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_2.URL);
-                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+                                if (god.Ability_1.URL != "")
+                                {
+                                    var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_1.URL);
+                                    var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_2.DomColor = (int)clr.RawValue;
+                                    god.Ability_1.DomColor = (int)clr.RawValue;
+                                }
+                                else
+                                {
+                                    await Reporter.SendError($"{god.Name} ability 1 error.");
+                                }
                             }
-                            else
+                            catch (Exception exxx)
                             {
-                                await Reporter.SendError($"{god.Name} ability 2 error.");
+                                await ReplyAsync($"{god.Name} {exxx.Message}");
                             }
                         }
-                        catch (Exception exxx)
+                        // 2
+                        if (god.Ability_2.DomColor == 0)
                         {
-                            await ReplyAsync($"{god.Name} {exxx.Message}");
-                        }
-                    }
-                    // 3
-                    if (god.Ability_3.DomColor == 0)
-                    {
-                        try
-                        {
-                            if (god.Ability_3.URL != "")
+                            try
                             {
-                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_3.URL);
-                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+                                if (god.Ability_2.URL != "")
+                                {
+                                    var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_2.URL);
+                                    var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_3.DomColor = (int)clr.RawValue;
+                                    god.Ability_2.DomColor = (int)clr.RawValue;
+                                }
+                                else
+                                {
+                                    await Reporter.SendError($"{god.Name} ability 2 error.");
+                                }
                             }
-                            else
+                            catch (Exception exxx)
                             {
-                                await Reporter.SendError($"{god.Name} ability 3 error.");
+                                await ReplyAsync($"{god.Name} {exxx.Message}");
                             }
                         }
-                        catch (Exception exxx)
+                        // 3
+                        if (god.Ability_3.DomColor == 0)
                         {
-                            await ReplyAsync($"{god.Name} {exxx.Message}");
-                        }
-                    }
-                    // 4
-                    if (god.Ability_4.DomColor == 0)
-                    {
-                        try
-                        {
-                            if (god.Ability_4.URL != "")
+                            try
                             {
-                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_4.URL);
-                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+                                if (god.Ability_3.URL != "")
+                                {
+                                    var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_3.URL);
+                                    var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_4.DomColor = (int)clr.RawValue;
+                                    god.Ability_3.DomColor = (int)clr.RawValue;
+                                }
+                                else
+                                {
+                                    await Reporter.SendError($"{god.Name} ability 3 error.");
+                                }
                             }
-                            else
+                            catch (Exception exxx)
                             {
-                                await Reporter.SendError($"{god.Name} ability 4 error.");
+                                await ReplyAsync($"{god.Name} {exxx.Message}");
                             }
                         }
-                        catch (Exception exxx)
+                        // 4
+                        if (god.Ability_4.DomColor == 0)
                         {
-                            await ReplyAsync($"{god.Name} {exxx.Message}");
-                        }
-                    }
-                    // 5
-                    if (god.Ability_5.DomColor == 0)
-                    {
-                        try
-                        {
-                            if (god.Ability_5.URL != "")
+                            try
                             {
-                                var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_5.URL);
-                                var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
-                                    colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+                                if (god.Ability_4.URL != "")
+                                {
+                                    var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_4.URL);
+                                    var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
 
-                                god.Ability_5.DomColor = (int)clr.RawValue;
+                                    god.Ability_4.DomColor = (int)clr.RawValue;
+                                }
+                                else
+                                {
+                                    await Reporter.SendError($"{god.Name} ability 4 error.");
+                                }
                             }
-                            else
+                            catch (Exception exxx)
                             {
-                                await Reporter.SendError($"{god.Name} ability 5 error.");
+                                await ReplyAsync($"{god.Name} {exxx.Message}");
                             }
                         }
-                        catch (Exception exxx)
+                        // 5
+                        if (god.Ability_5.DomColor == 0)
                         {
-                            await ReplyAsync($"{god.Name} {exxx.Message}");
+                            try
+                            {
+                                if (god.Ability_5.URL != "")
+                                {
+                                    var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.Ability_5.URL);
+                                    var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+
+                                    god.Ability_5.DomColor = (int)clr.RawValue;
+                                }
+                                else
+                                {
+                                    await Reporter.SendError($"{god.Name} ability 5 error.");
+                                }
+                            }
+                            catch (Exception exxx)
+                            {
+                                await ReplyAsync($"{god.Name} {exxx.Message}");
+                            }
                         }
+                        Text.WriteLine($"Ability DomColor for {god.Name} completed.");
                     }
-                    Text.WriteLine($"Ability DomColor for {god.Name} completed.");
                 }
 
                 // Ability Emojis
                 if (newGodList.Any(x => x.Ability_1.Emoji == null || x.Ability_1.Emoji.Length == 0))
                 {
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Content += $"\nFound ability emojis";
+                    });
                     Text.WriteLine("Ability Emojis");
                     foreach (var god in newGodList)
                     {
@@ -1575,34 +2050,37 @@ namespace ThothBotCore.Modules
 
                 // Skins
                 Text.WriteLine("Skins");
-                var skins = await HiRez.GetGodSkinsAsync();
-                newGodList.ForEach(god => god.Skins = skins.FindAll(x => x.god_id == god.id)); // thats it i guess? wtf
-
-                // Top Skins
-                Text.WriteLine("Top Skins");
                 var settings = MongoConnection.GetBotSettings();
-                if (skins != null || skins.Count == 1)
+                var skins = await HiRez.GetGodSkinsAsync();
+                if (skins.Count != 0)
                 {
-                    var topGods = from s in skins
-                                  group s by s.god_id into g
-                                  select new { godId = g.Key, Skins = g.ToList() };
-                    var orderedTopGods = topGods.OrderByDescending(x => x.Skins.Count).ToList();
+                    newGodList.ForEach(god => god.Skins = skins.FindAll(x => x.god_id == god.id).ToList()); // thats it i guess? wtf
 
-                    List<BotSettingsModel.Top> topSkins = new();
-                    foreach (var god in orderedTopGods)
+                    // Top Skins
+                    Text.WriteLine("Top Skins");
+                    
+                    if (skins != null || skins.Count == 1)
                     {
-                        var foundGod = newGodList.Find(x => x.id == god.godId);
-                        if (foundGod != null && foundGod.id != 0)
+                        var topGods = from s in skins
+                                      group s by s.god_id into g
+                                      select new { godId = g.Key, Skins = g.ToList() };
+                        var orderedTopGods = topGods.OrderByDescending(x => x.Skins.Count).ToList();
+                        List<BotSettingsModel.Top> topSkins = new();
+                        foreach (var god in orderedTopGods)
                         {
-                            topSkins.Add(new BotSettingsModel.Top
+                            var foundGod = newGodList.Find(x => x.id == god.godId);
+                            if (foundGod != null && foundGod.id != 0)
                             {
-                                Name = foundGod.Name,
-                                Emoji = foundGod.Emoji,
-                                Count = god.Skins.Count
-                            });
+                                topSkins.Add(new BotSettingsModel.Top
+                                {
+                                    Name = foundGod.Name,
+                                    Emoji = foundGod.Emoji,
+                                    Count = god.Skins.Count
+                                });
+                            }
                         }
+                        settings.Skins = topSkins;
                     }
-                    settings.Skins = topSkins;
                 }
 
                 Text.WriteLine("Top Pantheons");
@@ -1777,5 +2255,9 @@ namespace ThothBotCore.Modules
                 await RespondAsync(ex.Message, ephemeral: true);
             }
         }
+
+        [ComponentInteraction("open-eval")]
+        [CustomRequireOwner]
+        public async Task EvaluateButton() => await Context.Interaction.RespondWithModalAsync<ModalSubmissions.OneParagraphModal>("submit-eval");
     }
 }

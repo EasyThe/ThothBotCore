@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
+using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Discord
@@ -128,6 +129,8 @@ namespace ThothBotCore.Discord
         private async Task ClientLeftGuildTask(SocketGuild arg)
         {
             await Database.DeleteServerConfig(arg.Id);
+            await MongoConnection.RemoveGuildSettings(arg.Id);
+
             await Reporter.SendLeftServers(arg);
         }
 

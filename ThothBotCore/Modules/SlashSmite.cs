@@ -5,7 +5,6 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -131,7 +130,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [SlashCommand("god", "Provides information about the requested god.")] // This command has to be reworked to add more information about the gods using buttons
+        [SlashCommand("god", "Provides information about the requested god.")]
         public async Task SlashGodInfoCommand([Summary("GodName", "Start typing the name of the god and you will get recommendations.")]
             [Autocomplete(typeof(GodNameAutocompleteHandler))]string GodName)
         {
@@ -555,6 +554,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
                 StringBuilder sb = new();
                 var result = await APIInteractions.GetLandingPanel();
                 var embed = new EmbedBuilder();
@@ -569,17 +569,17 @@ namespace ThothBotCore.Modules
                 {
                     if (result.singlePanel.visible == "true")
                     {
-                        var first = result.singlePanel.content.FirstOrDefault();
-                        if (first.isStandard == "true")
+                        var first = result.singlePanel.content.FirstOrDefault(x => x.locationId == 702 && x.isStandard == "true" && x.endDate.AddHours(2) > DateTime.UtcNow);
+                        if (first != null && first.isStandard == "true")
                         {
-                            embed.WithTitle(first.header?.@default);
+                            embed.WithTitle($"{first.header?.@default} | Ends <t:{Text.DateTimeToUnix(first.endDate.AddHours(2))}:R>");
                             embed.WithImageUrl(first?.imageUrl.INT);
-                            await RespondAsync(embed: embed.Build());
+                            await FollowupAsync(embed: embed.Build());
                             return;
                         }
                     }
                     embed.WithTitle("There are no events at the moment.");
-                    await RespondAsync(embed: embed.Build());
+                    await FollowupAsync(embed: embed.Build());
                     return;
                 }
                 var header = result.events.content.FirstOrDefault().eventList.Find(x => x.header != null);
@@ -594,12 +594,12 @@ namespace ThothBotCore.Modules
                     sb.AppendLine($"🔹 " + (item.desc.@default.Contains("Today") ? $"**{item.desc.@default}**" : $"{item.desc.@default}"));
                 }
                 embed.WithDescription(sb.ToString());
-                await RespondAsync(embed: embed.Build());
+                await FollowupAsync(embed: embed.Build());
             }
             catch (Exception ex)
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await RespondAsync(embed: embed);
+                await FollowupAsync(embed: embed);
             }
         }
 
@@ -787,38 +787,37 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
-                if (Context.Interaction.HasResponded)
-                {
-                    return;
-                }
-
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
                     return;
                 }
 
                 if ((string)player[0].ret_msg == "apidown" || !isAlive)
                 {
                     var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
                 if (player.Count == 1)
                 {
-                    await DeferAsync();
+                    if (player[0].privacy_flag == "y")
+                    {
+                        return;
+                    }
 
                     EmbedBuilder embed;
                     string mostplayed = await CalculateTopGameModesForStatsAsync(HiRez, player[0].player_id.ToString());
@@ -841,6 +840,9 @@ namespace ThothBotCore.Modules
                         playerStatus,
                         match);
 
+                    // Buttons
+                    var comps = await ComponentsHandler.RichStatsButtonsAsync(player[0].player_id.ToString(), 0, playerStatus[0].Match != 0);
+
                     // Add Most played matches
                     embed.AddField(field =>
                     {
@@ -849,13 +851,13 @@ namespace ThothBotCore.Modules
                         field.Value = mostplayed;
                     });
 
-                    await FollowupAsync(embed: embed.Build());
+                    await FollowupAsync(embed: embed.Build(), components: comps);
                 }
                 else
                 {
                     // A select menu event will handle it somewhere else...
                     var comps = await ComponentsHandler.MultiplePlayersSelectMenuAsync(player, "stats");
-                    await RespondAsync("Multiple players found, please select a player via the select menu:", components: comps);
+                    await FollowupAsync("Multiple players found, please select a player via the select menu:", components: comps);
                 }
             }
             catch (Exception ex)
@@ -867,7 +869,7 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    await RespondAsync(embed: embed);
+                    await FollowupAsync(embed: embed);
                 }
             }
         }
@@ -877,48 +879,50 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
+
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
-
-                if (Context.Interaction.HasResponded)
-                {
-                    return;
-                }
 
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
                     return;
                 }
 
                 if ((string)player[0].ret_msg == "apidown" || !isAlive)
                 {
                     var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
                 if (player.Count == 1)
                 {
+                    if (player[0].privacy_flag == "y")
+                    {
+                        return;
+                    }
+
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
                     var getGodRanks = await HiRez.GetGodRanksAsync(player[0].player_id.ToString());
                     // Generating the embed and sending to channel
                     var embed = await EmbedHandler.BuildWorshipersEmbedAsync(getGodRanks, getPlayer[0]);
 
-                    await RespondAsync(embed: embed);
+                    await FollowupAsync(embed: embed);
                 }
                 else
                 {
                     var comps = await ComponentsHandler.MultiplePlayersSelectMenuAsync(player, "wp");
-                    await RespondAsync("Multiple players found, please select a player via the select menu:", components: comps);
+                    await FollowupAsync("Multiple players found, please select a player via the select menu:", components: comps);
                 }
             }
             catch (Exception ex)
@@ -933,37 +937,38 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
+
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
-
-                if (Context.Interaction.HasResponded)
-                {
-                    return;
-                }
 
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
                     return;
                 }
 
                 if ((string)player[0].ret_msg == "apidown" || !isAlive)
                 {
                     var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
                 if (player.Count == 1)
                 {
-                    await DeferAsync();
+                    if (player[0].privacy_flag == "y")
+                    {
+                        return;
+                    }
+
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
                     var getGodRanks = await HiRez.GetGodRanksAsync(player[0].player_id.ToString());
@@ -976,7 +981,7 @@ namespace ThothBotCore.Modules
                 {
                     // A select menu event will handle it somewhere else...
                     var comps = await ComponentsHandler.MultiplePlayersSelectMenuAsync(player, "wr");
-                    await RespondAsync("Multiple players found, please select a player via the select menu:", components: comps);
+                    await FollowupAsync("Multiple players found, please select a player via the select menu:", components: comps);
                 }
             }
             catch (Exception ex)
@@ -991,37 +996,38 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
+
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
-
-                if (Context.Interaction.HasResponded)
-                {
-                    return;
-                }
 
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
                     return;
                 }
 
                 if ((string)player[0].ret_msg == "apidown" || !isAlive)
                 {
                     var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
                 if (player.Count == 1)
                 {
-                    await DeferAsync();
+                    if (player[0].privacy_flag == "y")
+                    {
+                        return;
+                    }
+
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
                     var matchHistory = await HiRez.GetMatchHistoryAsync(player[0].player_id.ToString());
@@ -1047,16 +1053,35 @@ namespace ThothBotCore.Modules
                     //    await FollowupAsync(embed: emb);
                     //    return;
                     //}
+                    
+                    // Match details select menu
+                    List<SelectMenuOptionBuilder> options = new();
+                    for (int i = 0; i < matchHistory.Count; i++)
+                    {
+                        if (i == 24)
+                        {
+                            break;
+                        }
+                        string godemoji = Utils.FindGodEmoji(Utilities.Constants.GodsHashSet.ToList(), matchHistory[i].GodId);
+                        options.Add(new SelectMenuOptionBuilder()
+                        {
+                            Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
+                            Description = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists}",
+                            Emote = Emote.Parse(godemoji),
+                            Value = matchHistory[i].Match.ToString()
+                        });
+                    }
+                    var comp = new ComponentBuilder().WithSelectMenu("mdselect", placeholder: "Show match details", options: options);
 
                     var embed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
 
-                    await FollowupAsync(embed: embed);
+                    await FollowupAsync(embed: embed, components: comp.Build());
                 }
                 else
                 {
                     // A select menu event will handle it somewhere else...
                     var comps = await ComponentsHandler.MultiplePlayersSelectMenuAsync(player, "mh");
-                    await RespondAsync("Multiple players found, please select a player via the select menu:", components: comps);
+                    await FollowupAsync("Multiple players found, please select a player via the select menu:", components: comps);
                 }
             }
             catch (Exception ex)
@@ -1071,17 +1096,18 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
+
                 var isAlive = await IsSmiteApiAlive(HiRez);
                 int mID = Convert.ToInt32(MatchID);
 
                 if (!isAlive)
                 {
                     var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
-                await DeferAsync();
                 // We have a match ID, we go for it
                 var matchDetails = await HiRez.GetMatchDetailsAsync(mID.ToString());
                 if (matchDetails.Count == 0)
@@ -1115,36 +1141,37 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
+                await DeferAsync();
 
-                if (Context.Interaction.HasResponded)
-                {
-                    return;
-                }
+                var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
 
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
                     return;
                 }
 
                 if ((string)player[0].ret_msg == "apidown")
                 {
                     var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
                 if (player.Count == 1)
                 {
-                    await DeferAsync();
+                    if (player[0].privacy_flag == "y")
+                    {
+                        return;
+                    }
+
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
                     var playerstatus = await HiRez.GetPlayerStatusAsync(player[0].player_id.ToString());
@@ -1189,36 +1216,37 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
+
                 int mID = 0;
                 var player = await GetPlayerIDsByUsername(Context, HiRez, PlayerName);
-
-                if (Context.Interaction.HasResponded)
-                {
-                    return;
-                }
 
                 if (player.Count == 0)
                 {
                     var embed = await EmbedHandler.ProfileNotFoundEmbed(PlayerName);
-                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
                     return;
                 }
                 if ((string)player[0].ret_msg == "apidown")
                 {
                     var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.RespondAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
 
                 if (player.Count == 1)
                 {
-                    await DeferAsync();
+                    if (player[0].privacy_flag == "y")
+                    {
+                        return;
+                    }
+
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
 
                     var matchHistory = await HiRez.GetMatchHistoryAsync(player[0].player_id.ToString());
@@ -1278,7 +1306,6 @@ namespace ThothBotCore.Modules
             try
             {
                 var button = new ComponentBuilder();
-                var embed = new EmbedBuilder();
                 var userInDB = await MongoConnection.GetPlayerSpecialsByDiscordIdAsync(Context.Interaction.User.Id);
                 // if the user running the command is already linked
                 if (userInDB != null)
@@ -1287,26 +1314,12 @@ namespace ThothBotCore.Modules
                     var getplayerstatus = await HiRez.GetPlayerStatusAsync(userInDB._id.ToString());
                     string statusString = $":eyes: **{getplayerstatus[0].status_string}**";
 
-                    if (getplayerstatus[0].status == 0)
-                    {
-                        statusString = $":eyes: **Last Login:** " +
-                            $"{(getplayer[0].Last_Login_Datetime != "" ? Text.RelativeTimestamp(DateTime.Parse(getplayer[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
-                    }
+                    var em = await EmbedHandler.BuildAlreadyLinkedEmbedAsync(getplayer, getplayerstatus);
                     button.WithButton($"Unlink", "unlink", ButtonStyle.Danger, Emoji.Parse("✖️"));
-                    embed.WithColor(Utilities.Constants.ErrorColor);
-                    embed.WithThumbnailUrl(getplayer[0].Avatar_URL);
-                    embed.WithTitle("You have already linked your Discord account with this SMITE account. ⏬");
-                    embed.WithDescription($"**{getplayer[0].hz_player_name + " " + getplayer[0].hz_gamer_tag}**\n" +
-                            $"<:level:529719212017451008>**Level**: {getplayer[0].Level}\n" +
-                            $"📅 **Account Created**: " +
-                            $"{(getplayer[0].Created_Datetime != "" ? Text.LongDateTimestamp(DateTime.Parse(getplayer[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}\n" +
-                            $"💭 **Personal Status Message:** {getplayer[0].Personal_Status_Message}\n" +
-                            $"⌛ **Playtime:** {getplayer[0].HoursPlayed} hours\n" +
-                            $"{statusString}\n\n" +
-                            $"**If you would like to link it to another SMITE account, please unlink the accounts by pressing the \"Unlink\" button under this message and then run the `/link` command again.**");
-                    await RespondAsync(embed: embed.Build(), components: button.Build(), ephemeral: true);
+                    await RespondAsync(embed: em, components: button.Build(), ephemeral: true);
                     return;
                 }
+                var embed = new EmbedBuilder();
                 embed.WithAuthor(x =>
                 {
                     x.Name = "Thoth Account Linking";
@@ -1321,7 +1334,6 @@ namespace ThothBotCore.Modules
                     $"\n__To start the linking process press the \"Start linking\" button and follow the instructions.__");
                 embed.WithColor(Utilities.Constants.DefaultBlueColor);
                 embed.WithFooter(x => x.Text = "This is not an official Hi-Rez linking!");
-
 
                 button.WithButton("Start linking", "startlinking", ButtonStyle.Primary, Emoji.Parse("🔗"));
                 await RespondAsync(embed: embed.Build(), components: button.Build());
@@ -1510,7 +1522,7 @@ namespace ThothBotCore.Modules
             if (actualPlayers.Count == 1 && actualPlayers[0].privacy_flag != "n")
             {
                 var embed = await EmbedHandler.HiddenProfileEmbed(Username);
-                await context.Interaction.RespondAsync(embed: embed.Build());
+                await context.Interaction.FollowupAsync(embed: embed.Build());
                 return actualPlayers;
             }
 

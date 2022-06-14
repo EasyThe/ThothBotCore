@@ -553,8 +553,7 @@ namespace ThothBotCore.Utilities
         // Tips
         public static string GetRandomTip()
         {
-            int hmm = rnd.Next(0, 100);
-            if (hmm <= 20)
+            if (rnd.Next(0, 100) <= 20)
             {
                 List<TipsModel> tips = Constants.TipsList;
                 if (tips.Count != 0)
@@ -567,10 +566,7 @@ namespace ThothBotCore.Utilities
                     return "";
                 }
             }
-            else
-            {
-                return "";
-            }
+            return "";
         }
     }
 }

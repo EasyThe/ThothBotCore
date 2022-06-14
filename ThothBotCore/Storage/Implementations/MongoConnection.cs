@@ -231,6 +231,10 @@ namespace ThothBotCore.Storage.Implementations
             var result = await GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").FindAsync(filter: x => x._id == guildId);
             return await result.FirstOrDefaultAsync();
         }
+        public static async Task RemoveGuildSettings(ulong guildId)
+        {
+            await GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").DeleteOneAsync(filter: x => x._id == guildId);
+        }
         public static List<GuildSettingsModel> GetFeedGuildsAsync(FeedType type) // this maybe doesn't work idk ? haven't tested it i think
         {
             return GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").Find(filter: x => x.Feeds.Any(x => x.Type == type)).ToList();

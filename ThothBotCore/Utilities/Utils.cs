@@ -143,11 +143,11 @@ namespace ThothBotCore.Utilities
 
                 string[] urls = new string[5]
                 {
-                    god.godAbility1_URL,
-                    god.godAbility2_URL,
-                    god.godAbility3_URL,
-                    god.godAbility4_URL,
-                    god.godAbility5_URL
+                    god.Ability_1.URL,
+                    god.Ability_2.URL,
+                    god.Ability_3.URL,
+                    god.Ability_4.URL,
+                    god.Ability_5.URL
                 };
 
                 for (int i = 0; i < urls.Length; i++)

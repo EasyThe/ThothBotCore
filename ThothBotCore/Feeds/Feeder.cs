@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
+using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
@@ -75,6 +76,11 @@ namespace ThothBotCore.Feeds
         }
         public static async Task SendServerStatusWebhooks(Embed embed, Models.GuildSettingsModel.FeedType feedType, string webhookUsername = "")
         {
+            if (Credentials.botConfig.prefix == "??")
+            {
+                Text.WriteLine("Skipping anouncing server status.");
+                return;
+            }
             var allGuildSettings = MongoConnection.GetAllGuildsSettings();
             var feedGuilds = allGuildSettings.Where(x => x.Feeds.Any(z => z.Type == feedType)).ToList();
 
@@ -90,6 +96,11 @@ namespace ThothBotCore.Feeds
                 {
                     var feed = feedGuilds[i].Feeds.Find(x => x.Type == feedType);
                     guild = Connection.Client.GetGuild(feedGuilds[i]._id);
+                    if (guild == null)
+                    {
+                        await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
+                        continue;
+                    }
                     channel = guild.GetTextChannel(feed.ChannelID);
                     if (channel != null)
                     {

@@ -925,6 +925,29 @@ namespace ThothBotCore.Discord
             
             return Task.FromResult(embed.Build());
         }
+        public static Task<Embed> BuildAlreadyLinkedEmbedAsync(List<Player.PlayerStats> getplayer, List<Player.PlayerStatus> getplayerstatus)
+        {
+            var embed = new EmbedBuilder();
+            string statusString = $":eyes: **{getplayerstatus[0].status_string}**";
+
+            if (getplayerstatus[0].status == 0)
+            {
+                statusString = $":eyes: **Last Login:** " +
+                    $"{(getplayer[0].Last_Login_Datetime != "" ? Text.RelativeTimestamp(DateTime.Parse(getplayer[0].Last_Login_Datetime, CultureInfo.InvariantCulture)) : "n/a")}";
+            }
+            embed.WithColor(Constants.ErrorColor);
+            embed.WithThumbnailUrl(getplayer[0].Avatar_URL);
+            embed.WithTitle("You have already linked your Discord account with this SMITE account. ⏬");
+            embed.WithDescription($"**{getplayer[0].hz_player_name + " " + getplayer[0].hz_gamer_tag}**\n" +
+                    $"<:level:529719212017451008>**Level**: {getplayer[0].Level}\n" +
+                    $"📅 **Account Created**: " +
+                    $"{(getplayer[0].Created_Datetime != "" ? Text.LongDateTimestamp(DateTime.Parse(getplayer[0].Created_Datetime, CultureInfo.InvariantCulture)) : "n/a")}\n" +
+                    $"💭 **Personal Status Message:** {getplayer[0].Personal_Status_Message}\n" +
+                    $"⌛ **Playtime:** {getplayer[0].HoursPlayed} hours\n" +
+                    $"{statusString}\n\n" +
+                    $"**If you would like to link it to another SMITE account, please unlink the accounts by pressing the \"Unlink\" button under this message and then run the `/link` command again.**");
+            return Task.FromResult(embed.Build());
+        }
         public static Task<Embed> BuildDescriptionEmbedAsync(string description, int r = 0, int g = 0, int b = 0)
         {
             var embed = new EmbedBuilder
@@ -1311,12 +1334,14 @@ namespace ThothBotCore.Discord
                 bans.Append(gods.Find(x => x.id == winners[0].Ban3Id)?.Emoji);
                 bans.Append(gods.Find(x => x.id == winners[0].Ban4Id)?.Emoji);
                 bans.Append(gods.Find(x => x.id == winners[0].Ban5Id)?.Emoji);
-                bans.Append('\n');
                 bans.Append(gods.Find(x => x.id == winners[0].Ban6Id)?.Emoji);
+                bans.Append('\n');
                 bans.Append(gods.Find(x => x.id == winners[0].Ban7Id)?.Emoji);
                 bans.Append(gods.Find(x => x.id == winners[0].Ban8Id)?.Emoji);
                 bans.Append(gods.Find(x => x.id == winners[0].Ban9Id)?.Emoji);
                 bans.Append(gods.Find(x => x.id == winners[0].Ban10Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == winners[0].Ban11Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == winners[0].Ban12Id)?.Emoji);
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
@@ -2003,7 +2028,7 @@ namespace ThothBotCore.Discord
                 x.Value = $"<:Basic_Attack_Damage:961778316354928650> **Basic Attack {god.basicAttack.itemDescription.menuitems[0].description}** {god.basicAttack.itemDescription.menuitems[0].value}\n" +
                           $"<:Basic_Attack_Damage:961778316354928650> **{god.basicAttack.itemDescription.menuitems[1]?.description}** {god.basicAttack.itemDescription.menuitems[1].value}\n" +
                           $"<:Attack_Speed:961778316300390450> **Attack Speed:** {god.AttackSpeed} (+{god.AttackSpeedPerLevel})\n" +
-                          $"**{(god.Type.Contains("<:Physical_Power:961778316627550228> Physical") ? "Physical" : "<:Magical_Power:961778316451409970> Magical")} Power:** " +
+                          $"**{(god.Type.Contains("Physical") ? "<:Physical_Power:961778316627550228> Physical" : "<:Magical_Power:961778316451409970> Magical")} Power:** " +
                           $"{(god.Type.Contains("Physical") ? god.PhysicalPower : god.MagicalPower)}" +
                           $"(+{(god.Type.Contains("Physical") ? god.PhysicalPowerPerLevel : god.MagicalPowerPerLevel)})";
             });

@@ -50,36 +50,31 @@ namespace ThothBotCore.Models
             public double AttackSpeedPerLevel { get; set; }
             public string Cons { get; set; }
             public double HP5PerLevel { get; set; }
-            public int Health { get; set; }
-            public int HealthPerFive { get; set; }
-            public int HealthPerLevel { get; set; }
+            public double Health { get; set; }
+            public double HealthPerFive { get; set; }
+            public double HealthPerLevel { get; set; }
             public string Lore { get; set; }
             public double MP5PerLevel { get; set; }
-            public int MagicProtection { get; set; }
+            public double MagicProtection { get; set; }
             public double MagicProtectionPerLevel { get; set; }
-            public int MagicalPower { get; set; }
+            public double MagicalPower { get; set; }
             public double MagicalPowerPerLevel { get; set; }
-            public int Mana { get; set; }
+            public double Mana { get; set; }
             public double ManaPerFive { get; set; }
-            public int ManaPerLevel { get; set; }
+            public double ManaPerLevel { get; set; }
             public string Name { get; set; }
             public string OnFreeRotation { get; set; }
             public string Pantheon { get; set; }
-            public int PhysicalPower { get; set; }
+            public double PhysicalPower { get; set; }
             public double PhysicalPowerPerLevel { get; set; }
-            public int PhysicalProtection { get; set; }
+            public double PhysicalProtection { get; set; }
             public double PhysicalProtectionPerLevel { get; set; }
             public string Pros { get; set; }
             public string Roles { get; set; }
-            public int Speed { get; set; }
+            public double Speed { get; set; }
             public string Title { get; set; }
             public string Type { get; set; }
             public Description basicAttack { get; set; }
-            public string godAbility1_URL { get; set; }
-            public string godAbility2_URL { get; set; }
-            public string godAbility3_URL { get; set; }
-            public string godAbility4_URL { get; set; }
-            public string godAbility5_URL { get; set; }
             public string godCard_URL { get; set; }
             public string godHeader_URL { get; set; }
             public string godIcon_URL { get; set; }

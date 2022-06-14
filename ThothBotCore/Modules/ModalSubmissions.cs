@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -289,6 +291,7 @@ namespace ThothBotCore.Modules
         }
 
         [ModalInteraction("submit-msgtoguild")]
+        [CustomRequireOwner]
         public async Task SubmitMessageToGuildFromModal(SendMessageByOwnerModal interaction)
         {
             try
@@ -325,9 +328,26 @@ namespace ThothBotCore.Modules
             }
         }
 
+        [ModalInteraction("submit-eval")]
+        [CustomRequireOwner]
+        public async Task SubmitEvalModal(OneParagraphModal modal)
+        {
+            await DeferAsync();
+            try
+            {
+                var result = await CSharpScript.EvaluateAsync(modal.Message, ScriptOptions.Default.WithReferences("ThothBotCore"));
+                await FollowupAsync($"```csharp\n{modal.Message}```Result:\n{result}");
+                ThothBotCore.Storage.Implementations.MongoConnection.GetFeedGuildsAsync(GuildSettingsModel.FeedType.ServerStatus).Count.ToString()
+            }
+            catch (Exception ex)
+            {
+                await FollowupAsync($"{ex.Message}");
+            }
+        }
+
         public class OneParagraphModal : IModal
         {
-            public string Title { get; set; }
+            public string Title { get; set; } = "Paragraph";
             [ModalTextInput("msg", TextInputStyle.Paragraph)]
             [RequiredInput(true)]
             public string Message { get; set; }

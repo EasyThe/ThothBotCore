@@ -80,21 +80,37 @@ namespace ThothBotCore.Discord
                     .WithSelectMenu($"playerselect-{type}", options, "Pick a player");
             return builder.Build();
         }
+        public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, bool isLive = false)
+            => await RichStatsButtonsAsync(playerId, position, new ComponentBuilder(), isLive);
+        public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, IMessage message, bool isLive = false)
+            => await RichStatsButtonsAsync(playerId, position, ComponentBuilder.FromMessage(message), isLive);
+        public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, IReadOnlyCollection<IMessageComponent> components, bool isLive = false)
+            => await RichStatsButtonsAsync(playerId, position, ComponentBuilder.FromComponents(components), isLive);
+        private static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, ComponentBuilder comps, bool isLive = false)
+        {
+            comps.WithButton("Stats", $"btn-st-{playerId}", emote: new Emoji("📊"), disabled: position == 0);
+            if (isLive)
+            {
+                comps.WithButton("Live Match", $"btn-lm-{playerId}", ButtonStyle.Success, emote: new Emoji("🔴"), disabled: position == 1);
+            }
+            comps.WithButton("Match History", $"btn-mh-{playerId}", emote: new Emoji("📚"), disabled: position == 2)
+                 .WithButton("God Worshippers", $"btn-wp-{playerId}", emote: Emote.Parse("<:wp:552579445475508229>"), disabled: position == 3)
+                 .WithButton("God Winrates", $"btn-wr-{playerId}", emote: new Emoji("⚔️"), disabled: position == 4);
+
+            return await Task.FromResult(comps.Build());
+        }
         public static async Task<MessageComponent> AboutThothButtonsAsync(bool isOwner, int position)
         {
             var builder = new ComponentBuilder()
-                    .WithButton("Statistics",
-                                "statistics",
+                    .WithButton("Statistics", "statistics",
                                 style: ButtonStyle.Secondary,
                                 emote: Emoji.Parse("📊"),
                                 disabled: position == 0)
-                    .WithButton("Send Feedback",
-                                "feedback",
+                    .WithButton("Send Feedback", "feedback",
                                 ButtonStyle.Secondary,
                                 Emote.Parse("<:isforme:847274350549401621>"),
                                 disabled: position == 1)
-                    .WithButton("Changelog",
-                                "changelog",
+                    .WithButton("Changelog", "changelog",
                                 ButtonStyle.Secondary,
                                 Emoji.Parse("⚙️"),
                                 disabled: position == 2);
@@ -119,7 +135,8 @@ namespace ThothBotCore.Discord
                        .WithButton("Tips", "tips", ButtonStyle.Secondary, new Emoji("ℹ️"))
                        .WithButton((Global.ErrorMessageByOwner.Length == 0 ? "Add Global Error Message" : "Edit Global Error Message"), "edit-globalerror", ButtonStyle.Secondary, new Emoji("🌍"))
                        .WithButton("Set Activity", "set-activity", ButtonStyle.Secondary, new Emoji("💭"))
-                       .WithButton("Register Globally", "register-globally", ButtonStyle.Danger, new Emoji("🏳️‍🌈"));
+                       .WithButton("Register Globally", "register-globally", ButtonStyle.Danger, new Emoji("🏳️‍🌈"))
+                       .WithButton("Evaluate", "open-eval", emote: new Emoji("🐊"));
             }
 
             return await Task.FromResult(builder.Build());

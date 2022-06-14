@@ -15,8 +15,6 @@ namespace ThothBotCore.Models
             public string ActivePlayerId { get; set; }
             public int Assists { get; set; }
             public string Ban1 { get; set; }
-            public string Ban10 { get; set; }
-            public int Ban10Id { get; set; }
             public int Ban1Id { get; set; }
             public string Ban2 { get; set; }
             public int Ban2Id { get; set; }
@@ -34,6 +32,12 @@ namespace ThothBotCore.Models
             public int Ban8Id { get; set; }
             public string Ban9 { get; set; }
             public int Ban9Id { get; set; }
+            public string Ban10 { get; set; }
+            public int Ban10Id { get; set; }
+            public string Ban11 { get; set; }
+            public int Ban11Id { get; set; }
+            public string Ban12 { get; set; }
+            public int Ban12Id { get; set; }
             public int Camps_Cleared { get; set; }
             public int Conquest_Losses { get; set; }
             public int Conquest_Points { get; set; }
