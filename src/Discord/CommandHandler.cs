@@ -8,6 +8,7 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using ThothBotCore.Connections;
@@ -182,7 +183,10 @@ namespace ThothBotCore.Discord
                 if (context.Guild != null)
                 {
                     var db = await Database.GetServerConfig(context.Guild.Id);
-                    serverConfig = db[0];
+                    if (db.FirstOrDefault() != null)
+                    {
+                        serverConfig = db.FirstOrDefault();
+                    }
                 }
 
                 if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)

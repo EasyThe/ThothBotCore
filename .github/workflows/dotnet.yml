@@ -1,0 +1,34 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Publish
+      run: dotnet publish src -r linux-x64 -c Release
+    - name: Copy folder content recursively to remote
+      uses: garygrossgarten/github-action-scp@release
+      with:
+        local: ${{ secrets.LOCAL_TARGET }}
+        remote: ${{ secrets.REMOTE_TARGET }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        password: ${{ secrets.REMOTE_SSH_KEY }}
+    - name: Run SSH Command
+      uses: garygrossgarten/github-action-scp@release
+      with:
+        command: sudo service tbc start
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        password: ${{ secrets.REMOTE_SSH_KEY }}

@@ -264,22 +264,21 @@ namespace ThothBotCore.Modules
 
         [ModalInteraction("set-activity-modal")]
         [CustomRequireOwner]
-        public async Task SetActivityInteraction(OneShortModal interaction)
+        public async Task SetActivityInteraction(TwoShortModal interaction)
         {
             try
             {
-                if (interaction.Message.Contains("http")) // streaming
+                if (interaction.SecondInput != null && interaction.SecondInput.Contains("http")) // streaming
                 {
-                    var da = interaction.Message.Split(' ');
-                    await Connection.Client.SetGameAsync(da[1], da[0], ActivityType.Streaming);
+                    await Connection.Client.SetGameAsync(interaction.FirstInput, interaction.SecondInput, ActivityType.Streaming);
                 }
-                else if (interaction.Message.Contains("default"))
+                else if (interaction.FirstInput.Contains("default"))
                 {
                     await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | {Connection.Client.Guilds.Count} servers", type: ActivityType.Playing);
                 }
                 else
                 {
-                    await Connection.Client.SetGameAsync(interaction.Message, type: ActivityType.Playing);
+                    await Connection.Client.SetGameAsync(interaction.FirstInput, type: ActivityType.Playing);
                 }
                 
                 await RespondAsync("👌👌👌", ephemeral: true);
@@ -371,6 +370,18 @@ namespace ThothBotCore.Modules
             [ModalTextInput("hirezid", TextInputStyle.Short)]
             [RequiredInput(false)]
             public string ActivePlayerID { get; set; }
+        }
+        public class TwoShortModal : IModal
+        {
+            public string Title { get; set; }
+
+            [ModalTextInput("first-input", TextInputStyle.Short)]
+            [RequiredInput(false)]
+            public string FirstInput { get; set; }
+
+            [ModalTextInput("second-input", TextInputStyle.Short)]
+            [RequiredInput(false)]
+            public string SecondInput { get; set; }
         }
         public class LookupEditModal : IModal
         {
