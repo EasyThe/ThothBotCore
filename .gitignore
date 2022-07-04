@@ -15,10 +15,7 @@
 # ThothBotCore 
 Config.json
 Config/
-ThothBotCore/Storage/ThothDb.db
 *.db
-ThothBotCore/Storage/ThothDb.db
-src/Storage/ThothDb.db
 
 # VSCode
 .vscode/
