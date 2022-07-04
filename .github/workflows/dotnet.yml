@@ -26,7 +26,7 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         password: ${{ secrets.REMOTE_SSH_KEY }}
     - name: Run SSH command
-      uses: garygrossgarten/github-action-ssh@v0.3.0
+      uses: garygrossgarten/github-action-ssh@v0.6.3
       with: 
         command: sudo service tbc start
         host: ${{ secrets.REMOTE_HOST }}
