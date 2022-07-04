@@ -569,10 +569,10 @@ namespace ThothBotCore.Modules
                 {
                     if (result.singlePanel.visible == "true")
                     {
-                        var first = result.singlePanel.content.FirstOrDefault(x => x.locationId == 702 && x.isStandard == "true" && x.endDate.AddHours(2) > DateTime.UtcNow);
+                        var first = result.singlePanel.content.FirstOrDefault(x => x.locationId == 702 && x.isStandard == "true" && x.endDate.HasValue && x.endDate.Value.AddHours(2) > DateTime.UtcNow);
                         if (first != null && first.isStandard == "true")
                         {
-                            embed.WithTitle($"{first.header?.@default} | Ends <t:{Text.DateTimeToUnix(first.endDate.AddHours(2))}:R>");
+                            embed.WithTitle($"{first.header?.@default} | Ends <t:{Text.DateTimeToUnix(first.endDate.Value.AddHours(2))}:R>");
                             embed.WithImageUrl(first?.imageUrl.INT);
                             await FollowupAsync(embed: embed.Build());
                             return;

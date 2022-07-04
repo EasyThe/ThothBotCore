@@ -105,8 +105,8 @@ namespace ThothBotCore.Models
         public string hideIfOwned { get; set; }
         public string showIfOwned { get; set; }
         public List<int> hideIfItemOwned { get; set; }
-        public DateTime startDate { get; set; }
-        public DateTime endDate { get; set; }
+        public DateTime? startDate { get; set; }
+        public DateTime? endDate { get; set; }
     }
 
     public class VisibleContent

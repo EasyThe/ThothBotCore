@@ -14,6 +14,11 @@
 
 # ThothBotCore 
 Config.json
+Config/
+ThothBotCore/Storage/ThothDb.db
+*.db
+ThothBotCore/Storage/ThothDb.db
+src/Storage/ThothDb.db
 
 # VSCode
 .vscode/
@@ -333,6 +338,3 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder
 .mfractor/
-ThothBotCore/Storage/ThothDb.db
-*.db
-ThothBotCore/Storage/ThothDb.db
