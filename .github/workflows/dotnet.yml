@@ -19,11 +19,20 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Publish
+      run: dotnet publish src -r linux-x64 -c Release
     - name: Copy folder content recursively to remote
       uses: garygrossgarten/github-action-scp@release
       with:
         local: /home/runner/work/ThothBotCore/src/bin/net6.0/linux-x64/
         remote: ${{ secrets.REMOTE_TARGET }}
         host: ${{ secrets.HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+    - name: Run SSH command
+      uses: garygrossgarten/github-action-scp@release
+      with: 
+        command: sudo service tbc start
+        host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
