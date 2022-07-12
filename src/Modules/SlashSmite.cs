@@ -1347,6 +1347,7 @@ namespace ThothBotCore.Modules
 
         [SlashCommand("feeds", "Set a channel to get server status notifications and more (soon™).")]
         [CustomRequireContext(Discord.ContextType.Guild)]
+        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator | GuildPermission.ManageChannels)]
         public async Task SlashFeedsCommand()
         {
             try
@@ -1391,6 +1392,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
                 int totalUsers = 0;
                 foreach (var guild in Connection.Client.Guilds)
                 {
@@ -1464,12 +1466,12 @@ namespace ThothBotCore.Modules
 
                 var buttons = await ComponentsHandler.AboutThothButtonsAsync(Context.User.Id == Utilities.Constants.OwnerID, 0);
 
-                await RespondAsync(embed: embed.Build(), components: buttons);
+                await FollowupAsync(embed: embed.Build(), components: buttons);
             }
             catch (Exception ex)
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await RespondAsync(embed: embed);
+                await FollowupAsync(embed: embed);
             }
         }
 

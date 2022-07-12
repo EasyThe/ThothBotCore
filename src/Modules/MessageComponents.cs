@@ -1851,6 +1851,11 @@ namespace ThothBotCore.Modules
                         foreach (var item in result)
                         {
                             var god = newGodList.Find(x => x.id.ToString() == item.acf.god_id);
+                            if (god == null)
+                            {
+                                System.Console.WriteLine($"God with id {item.acf.god_id} is missing, skipping to next.");
+                                continue;
+                            }
                             if (god.Ability_1.Video == null ||
                                 god.Ability_2.Video == null ||
                                 god.Ability_3.Video == null ||
@@ -1858,17 +1863,13 @@ namespace ThothBotCore.Modules
                                 god.Ability_5.Video == null ||
                                 god.godHeader_URL == null)
                             {
-                                continue;
-                            }
-                            Console.WriteLine("it didn't skip");
-                            if (god != null && god.id != 0)
-                            {
                                 god.Ability_1.Video = item.acf.abilitiy_video_1;
                                 god.Ability_2.Video = item.acf.abilitiy_video_2;
                                 god.Ability_3.Video = item.acf.abilitiy_video_3;
                                 god.Ability_4.Video = item.acf.abilitiy_video_4;
                                 god.Ability_5.Video = item.acf.ability_video_passive;
                                 god.godHeader_URL = item.acf.god_header_image;
+                                System.Console.WriteLine($"Added ability videos & godheader urls for {god.Name}");
                             }
                         }
                     }
@@ -2228,11 +2229,16 @@ namespace ThothBotCore.Modules
         {
             var mb = new ModalBuilder("Set Activity", "set-activity-modal")
                 .AddTextInput("Activity text",
-                              "msg",
-                              TextInputStyle.Paragraph,
-                              placeholder: "https://www.twitch.tv/smitegame Stream name\n/stats | Servers: 6969",
+                              "first-input",
+                              TextInputStyle.Short,
+                              placeholder: "Do 'default' for default kek",
                               value: Connection.Client.Activity?.Details,
-                              required: true);
+                              required: false)
+                .AddTextInput("Stream link",
+                              "second-input",
+                              TextInputStyle.Short,
+                              placeholder: "https://www.twitch.tv/smitegame",
+                              required: false);
 
             await Context.Interaction.RespondWithModalAsync(mb.Build());
         }

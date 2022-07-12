@@ -23,8 +23,8 @@ If you would like to contribute to this project you can join [Thoth's Support Se
 
 ## Built With 💚
 
-*  [.NET 5](https://docs.microsoft.com/en-us/dotnet/core/)
-*  [Discord .NET](https://github.com/RogueException/Discord.Net)
+*  [.NET 6](https://dotnet.microsoft.com/)
+*  [Discord .NET](https://github.com/discord-net/Discord.Net)
 *  SMITE Data provided by the Hi-Rez Public API
 
 ## Listed on

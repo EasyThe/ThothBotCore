@@ -16,6 +16,7 @@
 Config.json
 Config/
 *.db
+src/Storage/Gods
 
 # VSCode
 .vscode/
