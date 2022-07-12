@@ -26,9 +26,10 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         password: ${{ secrets.REMOTE_SSH_KEY }}
     - name: Run SSH Command
-      uses: fifsky/ssh-action@master
+      uses: D3rHase/ssh-command-action@v0.2.1
       with:
-        command: sudo service tbc start
-        host: ${{ secrets.HOST }}
-        user: ${{ secrets.REMOTE_USER }}
-        key: ${{ secrets.REMOTE_SSH_KEY }}
+        HOST: ${{ secrets.HOST }}
+        PORT: 22
+        USER: ${{ secrets.REMOTE_USER }}
+        PRIVATE_SSH_KEY: ${{ secrets.REMOTE_SSH_KEY }}
+        COMMAND: sudo service tbc start
