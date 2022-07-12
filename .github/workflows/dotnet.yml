@@ -26,10 +26,9 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         password: ${{ secrets.REMOTE_SSH_KEY }}
     - name: Run SSH Command
-      uses: appleboy/ssh-action@master
+      uses: fifsky/ssh-action@master
       with:
+        command: sudo service tbc start
         host: ${{ secrets.HOST }}
-        username: ${{ secrets.REMOTE_USER }}
-        password: ${{ secrets.REMOTE_SSH_KEY }}
-        port: 22
-        script: sudo service tbc start
+        user: ${{ secrets.REMOTE_USER }}
+        key: ${{ secrets.REMOTE_SSH_KEY }}
