@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using ThothBotCore.Models;
 
 namespace ThothBotCore.Utilities
@@ -10,6 +12,17 @@ namespace ThothBotCore.Utilities
     {
         static Random rnd = new();
         private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+        public static T DeserializeObject<T>(string json)
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                WriteIndented = true
+            };
+            options.Converters.Add(new CustomDateTimeConverter());
+            return JsonSerializer.Deserialize<T>(json, options);
+        }
 
         public static string ToTitleCase(string text)
         {
@@ -111,7 +124,7 @@ namespace ThothBotCore.Utilities
                 "Jungle" => "<:jungle:862261456527294465>",
                 "Mid" => "<:mid:862261456937812008>",
                 "Support" => "<:support:862261457110302720>",
-                "Carry" => "<:adc:862261456901111878>",
+                "Hunter" or "Carry" => "<:adc:862261456901111878>",
                 _ => ""
             };
         }
@@ -143,7 +156,7 @@ namespace ThothBotCore.Utilities
             }
             return "🔸";
         }
-        public static string URLifyGodName(string godName) => godName.Replace(" ", "-");
+        public static string URLifyGodName(string godName) => godName.Replace(" ", "-").ToLowerInvariant();
 
         // SMITE Portals
         public static string GetPortalName(int portal)
@@ -163,6 +176,7 @@ namespace ThothBotCore.Utilities
         {
             return portal switch
             {
+                "-" => "-",
                 "1" => "<:windows:587119127953670159>",// PC
                 "5" => "<:steam:581485150043373578>",// Steam
                 "9" => "<:PS4:537745670518472714>",// PS4
@@ -224,7 +238,7 @@ namespace ThothBotCore.Utilities
                 "SOLAR" => "<:SOLAR:875189087810768896>",
                 "TITAN" => "<:TITAN:875189088238600243>",
                 "VALKS" => "<:VALKS:875188135527600149>",
-                _ => ""
+                _ => "<:blank:570291209906552848>"
             };
         }
 
@@ -238,7 +252,7 @@ namespace ThothBotCore.Utilities
                 {
                     return name;
                 }
-                _ = Reporter.SendError($"**Missing Queue:**\nID:{queueID} || {name}");
+                _ = Reporter.SendErrorAsync($"**Missing Queue:**\nID:{queueID} || {name}");
                 return "Unknown Queue";
             }
             return queue;
@@ -543,12 +557,107 @@ namespace ThothBotCore.Utilities
             if (assists == 0) assists = 1;
             return (double)(kills + (assists / 2)) / deaths;
         }
-
-        public static string PlaceholderText()
+        public static string CheckMatchBans(MatchDetails.MatchDetailsPlayer match, List<Gods.God> gods)
         {
-            var plc = Constants.Placeholders;
-            return plc[rnd.Next(plc.Length)];
+            if (match.Ban1.Length != 0 || match.Ban2.Length != 0)
+            {
+                var bans = new StringBuilder();
+                bans.Append(gods.Find(x => x.id == match.Ban1Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban2Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban3Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban4Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban5Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban6Id)?.Emoji);
+                bans.Append('\n');
+                bans.Append(gods.Find(x => x.id == match.Ban7Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban8Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban9Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban10Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban11Id)?.Emoji);
+                bans.Append(gods.Find(x => x.id == match.Ban12Id)?.Emoji);
+                return bans.ToString();
+            }
+            return "";
         }
+        public static string MatchDetailsTaskForceSummary(List<MatchDetails.MatchDetailsPlayer> match, bool isRanked)
+        {
+            string teamEmo = SideEmoji(match[0].TaskForce);
+            StringBuilder sb = new();
+            string averages = "";
+
+            if (isRanked && match.Count != 1) // add average tier & mmr
+            {
+                Tuple<string, string> averageTier;
+                double averageMMR = 0;
+
+                switch (match.FirstOrDefault().match_queue_id)
+                {
+                    // Conquest
+                    case 451:
+                    case 504:
+                        averageTier = GetRankedConquest(Convert.ToInt32(match.Where(x => x.Conquest_Tier != -1).Average(x => x.Conquest_Tier)));
+                        averageMMR = match.Where(x => x.Rank_Stat_Conquest != 0).Average(x => x.Rank_Stat_Conquest);
+                        break;
+                    // Joust
+                    case 450:
+                    case 503:
+                        averageTier = GetRankedJoust(Convert.ToInt32(match.Where(x => x.Joust_Tier != -1).Average(x => x.Joust_Tier)));
+                        averageMMR = match.Where(x => x.Rank_Stat_Joust != 0).Average(x => x.Rank_Stat_Joust);
+                        break;
+                    default:
+                        averageTier = null;
+                        break;
+                }
+                if (averageTier != null)
+                {
+                    averages = $"{averageTier.Item2}{averageTier.Item1} {(averageMMR != 0 ? $"[{Math.Round(averageMMR)}]\n" : "")}";
+                }
+            }
+
+            // Arena tickets
+            int[] arenas = new[] { 435, 438, 443, 452, 457, 462, 468, 472, 508, 10151, 10158, 10163, 10167, 10195 };
+            if (arenas.Any(x => x == match[0].match_queue_id))
+            {
+                sb.Append($"🎫Tickets: {(match[0].TaskForce == 1 ? match[0].Team1Score : match[0].Team2Score)}\n");
+            }
+
+            if (match.Count != 1) // Anything but Duel
+            {
+                sb.Append($"⚔️Team KDA: {match.Sum(x => x.Kills_Player)}/{match.Sum(x => x.Deaths)}/{match.Sum(x => x.Assists)}\n" +
+                    $"{teamEmo}**Averages:**{teamEmo}\n" +
+                    $"{averages}" +
+                    $"🗡Damage: {Math.Round(match.Average(x => x.Damage_Player))}\n");
+            }
+            else // Duel
+            {
+                sb.Append($"{teamEmo}{SideName(match[0].TaskForce)}");
+            }
+            return sb.ToString();
+        }
+        public static string MatchDetailsInBetweenValue(
+            MatchDetails.MatchDetailsPlayer left, 
+            MatchDetails.MatchDetailsPlayer right, 
+            List<KeyValuePair<int, List<MatchDetails.MatchDetailsPlayer>>> parties)
+        {
+            // THIS IS NOT USED... YET
+
+            StringBuilder sb = new();
+            bool leftIsNull = false;
+            bool rightIsNull = false;
+            if (left == null) leftIsNull = true;
+            if (right == null) rightIsNull = true;
+
+            sb.Append($"{(leftIsNull ? "-" : GetPortalEmoji(left.playerPortalId))} <:blank:570291209906552848> " +
+                $"{(rightIsNull ? "-" : GetPortalEmoji(right.playerPortalId))}\n" +
+                $"{(leftIsNull ? "-" : left.PartyId != 0  ? "" : "")}");
+            // jesus, this is unreadable but shrug
+
+            //var jf = $"{(winners[i].PartyId != 0 && foundWinP.Value.Count > 1 ? Text.GetPartyEmoji(parties.IndexOf(foundWinP) + 1) : Text.GetPartyEmoji(0))} <:blank:570291209906552848> " +
+            //        $"{(losers[i].PartyId != 0 && foundLosP.Value.Count > 1 ? Text.GetPartyEmoji(parties.IndexOf(foundLosP) + 1) : Text.GetPartyEmoji(0))}";
+            return sb.ToString();
+        }
+
+        public static string PlaceholderText() => Constants.Placeholders[rnd.Next(Constants.Placeholders.Length)];
 
         // Tips
         public static string GetRandomTip()

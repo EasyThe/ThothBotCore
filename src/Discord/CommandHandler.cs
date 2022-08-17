@@ -60,15 +60,15 @@ namespace ThothBotCore.Discord
             {
                 foreach (var command in module.SlashCommands)
                 {
-                    _slashCounters.Add(_metrics.CreateCounter<int>($"slash_{command.Name}"));
+                    _slashCounters.Add(_metrics.CreateCounter<int>($"slash_{command.Name.Replace("*", "")}"));
                 }
                 foreach (var command in module.ComponentCommands)
                 {
-                    _slashCounters.Add(_metrics.CreateCounter<int>($"comp_{command.Name}"));
+                    _slashCounters.Add(_metrics.CreateCounter<int>($"comp_{command.Name.Replace("*", "")}"));
                 }
                 foreach (var command in module.ModalCommands)
                 {
-                    _slashCounters.Add(_metrics.CreateCounter<int>($"modal_{command.Name}"));
+                    _slashCounters.Add(_metrics.CreateCounter<int>($"modal_{command.Name.Replace("*", "")}"));
                 }
             }
             foreach (var module in _commands.Modules)
@@ -83,6 +83,7 @@ namespace ThothBotCore.Discord
 
         private Task InteractionExecuted(ICommandInfo arg1, IInteractionContext arg2, global::Discord.Interactions.IResult arg3)
         {
+            var name = arg1.Name.Replace("*", "");
             if (Connection.Client.CurrentUser.Id != 587623068461957121 && 
                 arg2.User.Id == 171675309177831424)
             {
@@ -90,15 +91,15 @@ namespace ThothBotCore.Discord
             }
             if (arg2.Interaction.Type == InteractionType.ApplicationCommand)
             {
-                _slashCounters.Find(x => x.Name == $"slash_{arg1.Name}").Add(1);
+                _slashCounters.Find(x => x.Name == $"slash_{name}").Add(1);
             }
             else if (arg2.Interaction.Type == InteractionType.MessageComponent)
             {
-                _slashCounters.Find(x => x.Name == $"comp_{arg1.Name}").Add(1);
+                _slashCounters.Find(x => x.Name == $"comp_{name}").Add(1);
             }
             else if (arg2.Interaction.Type == InteractionType.ModalSubmit)
             {
-                _slashCounters.Find(x => x.Name == $"modal_{arg1.Name}").Add(1);
+                _slashCounters.Find(x => x.Name == $"modal_{name}").Add(1);
             }
             // guild counter
             if (arg2.Guild.Id != 518408306415632384)

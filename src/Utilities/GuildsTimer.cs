@@ -66,7 +66,7 @@ namespace ThothBotCore.Utilities
                     }
                     catch (Exception ex)
                     {
-                        await Reporter.SendError("**TopGG.**\n" +
+                        await Reporter.SendErrorAsync("**TopGG.**\n" +
                             $"**Error Message:** {ex.Message}");
                     }
 
@@ -106,7 +106,7 @@ namespace ThothBotCore.Utilities
                     }
                     catch (Exception ex)
                     {
-                        await Reporter.SendError("**Discord.Bots.GG.**\n" +
+                        await Reporter.SendErrorAsync("**Discord.Bots.GG.**\n" +
                             $"**Error Message:** {ex.Message}");
                     }
 
@@ -123,7 +123,7 @@ namespace ThothBotCore.Utilities
                     }
                     catch (Exception ex)
                     {
-                        await Reporter.SendError("**BotsOnDiscord.**\n" +
+                        await Reporter.SendErrorAsync("**BotsOnDiscord.**\n" +
                             $"**Error Message:** {ex.Message}");
                     }
 
@@ -140,7 +140,7 @@ namespace ThothBotCore.Utilities
                     }
                     catch (Exception ex)
                     {
-                        await Reporter.SendError("**DiscordServices.**\n" +
+                        await Reporter.SendErrorAsync("**DiscordServices.**\n" +
                             $"**Error Message:** {ex.Message}");
                     }
 
@@ -159,7 +159,7 @@ namespace ThothBotCore.Utilities
                     }
                     catch (Exception ex)
                     {
-                        await Reporter.SendError("**DiscordLabs.**\n" +
+                        await Reporter.SendErrorAsync("**DiscordLabs.**\n" +
                             $"**Error Message:** {ex.Message}");
                     }
 
@@ -191,7 +191,7 @@ namespace ThothBotCore.Utilities
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendError("**StatCord.**\n" +
+                    await Reporter.SendErrorAsync("**StatCord.**\n" +
                         $"**Error Message:** {ex.Message}");
                 }
             }

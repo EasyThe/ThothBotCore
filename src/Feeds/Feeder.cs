@@ -43,7 +43,7 @@ namespace ThothBotCore.Feeds
                 }
                 catch (System.Exception ex)
                 {
-                    await Reporter.SendError($"Couldn't send status update to {notifChannels[i]._id}");
+                    await Reporter.SendErrorAsync($"Couldn't send status update to {notifChannels[i]._id}");
                     if (ex.Message.Contains("Missing"))
                     {
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
@@ -57,13 +57,13 @@ namespace ThothBotCore.Feeds
                         }
                         catch (System.Exception xx)
                         {
-                            await Reporter.SendError($"StatusNotifier.cs sending a DM failed: {xx.Message} {guild?.Name}[{guild?.Id}]");
+                            await Reporter.SendErrorAsync($"StatusNotifier.cs sending a DM failed: {xx.Message} {guild?.Name}[{guild?.Id}]");
                             continue;
                         }
                     }
                     else
                     {
-                        await Reporter.SendError("Another StatusNotifier error:\n" +
+                        await Reporter.SendErrorAsync("Another StatusNotifier error:\n" +
                             $"{ex.Message}\n" +
                             $"{ex.StackTrace}\n" +
                             $"ID: {notifChannels[i]._id}");
@@ -92,70 +92,78 @@ namespace ThothBotCore.Feeds
 
             for (int i = 0; i < feedGuilds.Count; i++)
             {
+                var feed = feedGuilds[i].Feeds.Find(x => x.Type == feedType);
                 try
                 {
-                    var feed = feedGuilds[i].Feeds.Find(x => x.Type == feedType);
-                    guild = Connection.Client.GetGuild(feedGuilds[i]._id);
-                    if (guild == null)
+                    if (feed.WebhookID != 0)
                     {
-                        await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
-                        continue;
-                    }
-                    channel = guild.GetTextChannel(feed.ChannelID);
-                    if (channel != null)
-                    {
-                        if (feed.WebhookID != 0)
-                        {
-                            using var client = new DiscordWebhookClient($"https://discord.com/api/webhooks/{feed.WebhookID}/{feed.WebhookToken}");
-                            
-                            await client.SendMessageAsync(embeds: new[] { embed },
-                                username: webhookUsername, avatarUrl: "https://i.imgur.com/onR0CEh.png");
-                        }
-                        else
-                        {
-                            await channel.SendMessageAsync(embed: embed);
-                        }
-                        SuccessCount++;
+                        // Sending via webhook
+                        using var client = new DiscordWebhookClient(feed.WebhookID, feed.WebhookToken);
+
+                        await client.SendMessageAsync(embeds: new[] { embed },
+                            username: webhookUsername, avatarUrl: "https://i.imgur.com/onR0CEh.png");
                     }
                     else
                     {
-                        var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to channel = null: {guild.Name}[{guild.Id}]");
-                        await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
+                        if (guild == null)
+                        {
+                            await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
+                            continue;
+                        }
+                        // Sending a normal message
+                        guild = Connection.Client.GetGuild(feedGuilds[i]._id);
+                        channel = guild.GetTextChannel(feed.ChannelID);
+                        if (channel != null)
+                        {
+                            await channel.SendMessageAsync(embed: embed);
+                        }
+                        else
+                        {
+                            var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to channel = null: {guild.Name}[{guild.Id}]");
+                            await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
 
-                        feedGuilds[i].Feeds[0].ChannelID = 0;
-                        feedGuilds[i].Feeds[0].WebhookID = 0;
-                        feedGuilds[i].Feeds[0].WebhookToken = null;
-                        // this is the thing u need to edit if the bot still doesn't set the settings to 0
-                        await MongoConnection.SaveGuildSettingsAsync(feedGuilds[i]);
+                            await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
+                        }
                     }
+                    SuccessCount++;
                 }
                 catch (System.Exception ex)
                 {
-                    await Reporter.SendError($"Couldn't send {feedType} feed to {feedGuilds[i]._id}");
+                    await Reporter.SendErrorAsync($"Couldn't send {feedType} feed to {feedGuilds[i]._id}, exception message: {ex.Message}");
                     if (ex.Message.Contains("Missing"))
                     {
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
                         try
                         {
-                            await user?.SendMessageAsync($":warning: Hey! I tried to send this status update to {channel?.Mention} in the {guild?.Name} server but I am missing **Access** there.\n" +
+                            await user?.SendMessageAsync($":warning: Hey! I tried to send this {nameof(feedType)} to {channel?.Mention} in the {guild?.Name} server but I am missing **Access** there.\n" +
                                 $"Please make sure I have **View Channel, Manage Webhooks**, **Use External Emojis** and **Embed Links** permissions in {channel?.Mention}." +
-                                $"You will get this message everytime I get an error by trying to send SMITE Status Feeds in {channel?.Mention}.\n" +
-                                $"If you don't want to receive SMITE Status Feeds anymore, please disable the channel by using `/feeds` in one of the channels in your server.",
+                                $"You will get this message everytime I get an error by trying to send {nameof(feedType)} in {channel?.Mention}.\n" +
+                                $"If you don't want to receive {nameof(feedType)} anymore, please disable the channel by using `/feeds` in one of the channels in your server.",
                                 embed: embed);
                         }
                         catch (System.Exception xx)
                         {
-                            await Reporter.SendError($"Feeder.cs sending a DM failed: {xx.Message} {guild?.Name}[{guild?.Id}]");
-                            continue;
+                            await Reporter.SendErrorAsync($"Feeder.cs sending a DM failed: {xx.Message} {guild?.Name}[{guild?.Id}]");
+                            continue; // why is this here?
                         }
+                    }
+                    else if (ex.Message.Contains("500: Internal Server Error"))
+                    {
+                        await Reporter.SendErrorAsync($"Got error code 500 from Discord, trying to resend.\nGuildID: {feedGuilds[i]._id}");
+                        // Trying again
+                        // Not sure if the wrapper retries the 5xx calls hmmmm TODO
+                        using var client = new DiscordWebhookClient(feed.WebhookID, feed.WebhookToken);
+
+                        await client.SendMessageAsync(embeds: new[] { embed },
+                            username: webhookUsername, avatarUrl: "https://i.imgur.com/onR0CEh.png");
                     }
                     else
                     {
-                        await Reporter.SendError("Another Feeder error:\n" +
+                        await Reporter.SendErrorAsync("Another Feeder error:\n" +
                             $"{ex.Message}\n" +
                             $"{ex.StackTrace}\n" +
                             $"ID: {feedGuilds[i]._id}");
-                        continue;
+                        continue; // why is this here?
                     }
                 }
             }

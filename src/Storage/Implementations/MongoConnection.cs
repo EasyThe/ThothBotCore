@@ -5,6 +5,7 @@ using ThothBotCore.Models;
 using System.Linq;
 using System.Collections.Generic;
 using static ThothBotCore.Models.GuildSettingsModel;
+using System;
 
 namespace ThothBotCore.Storage.Implementations
 {
@@ -38,6 +39,31 @@ namespace ThothBotCore.Storage.Implementations
                 filter: x => x.ActivePlayerId == playerStats.ActivePlayerId,
                 replacement: playerStats,
                 options: replaceOptions);
+        }
+        public static async Task SavePlayerGodRanksAsync(List<GodRanks> godRanks)
+        {
+            // I WANT TO KMS
+            foreach (var item in godRanks)
+            {
+                item.Last_Updated = DateTime.UtcNow;
+                await GetDatabase().GetCollection<GodRanks>("god_leaderboards").ReplaceOneAsync(
+                filter: x => x._id == item._id,
+                replacement: item,
+                options: replaceOptions);
+            }
+
+            //await GetDatabase().GetCollection<Player.PlayerStats>("players").ReplaceOneAsync(
+            //    filter: x => x.ActivePlayerId == playerStats.ActivePlayerId,
+            //    replacement: playerStats,
+            //    options: replaceOptions);
+
+            //await GetDatabase().GetCollection<GodRanks>("god_leaderboards").
+                //update: Builders<GodRanks>.Update.Set(),
+                //options: new UpdateOptions() { IsUpsert = true });
+
+            //await GetDatabase().GetCollection<GodRanks>("god_leaderboards").UpdateManyAsync(
+            //    filter: x => x.player_id == godRanks[0].player_id,
+            //    update: Builders<GodRanks>.Update.Set();
         }
         public static async Task<long> PlayersCount()
         {
@@ -144,7 +170,7 @@ namespace ThothBotCore.Storage.Implementations
         }
         public static async Task<List<GetItems.Item>> GetActiveActivesAsync()
         {
-            var filter = Builders<GetItems.Item>.Filter.Where(x => x.ItemTier == 2 && x.ActiveFlag == "y" && x.Type == "Active" && !x.DeviceName.Contains("Relic"));
+            var filter = Builders<GetItems.Item>.Filter.Where(x => x.ItemTier == 4 && x.ActiveFlag == "y" && x.Type == "Active" && !x.DeviceName.Contains("Relic"));
             var result = await GetDatabase().GetCollection<GetItems.Item>("items").FindAsync(
                 filter: filter);
             return await result.ToListAsync();

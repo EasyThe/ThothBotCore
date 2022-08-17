@@ -80,12 +80,16 @@ namespace ThothBotCore.Discord
                     .WithSelectMenu($"playerselect-{type}", options, "Pick a player");
             return builder.Build();
         }
+        
         public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, bool isLive = false)
             => await RichStatsButtonsAsync(playerId, position, new ComponentBuilder(), isLive);
+        
         public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, IMessage message, bool isLive = false)
             => await RichStatsButtonsAsync(playerId, position, ComponentBuilder.FromMessage(message), isLive);
+        
         public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, IReadOnlyCollection<IMessageComponent> components, bool isLive = false)
             => await RichStatsButtonsAsync(playerId, position, ComponentBuilder.FromComponents(components), isLive);
+
         private static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, ComponentBuilder comps, bool isLive = false)
         {
             comps.WithButton("Stats", $"btn-st-{playerId}", emote: new Emoji("📊"), disabled: position == 0);
@@ -99,6 +103,7 @@ namespace ThothBotCore.Discord
 
             return await Task.FromResult(comps.Build());
         }
+        
         public static async Task<MessageComponent> AboutThothButtonsAsync(bool isOwner, int position)
         {
             var builder = new ComponentBuilder()
@@ -136,7 +141,8 @@ namespace ThothBotCore.Discord
                        .WithButton((Global.ErrorMessageByOwner.Length == 0 ? "Add Global Error Message" : "Edit Global Error Message"), "edit-globalerror", ButtonStyle.Secondary, new Emoji("🌍"))
                        .WithButton("Set Activity", "set-activity", ButtonStyle.Secondary, new Emoji("💭"))
                        .WithButton("Register Globally", "register-globally", ButtonStyle.Danger, new Emoji("🏳️‍🌈"))
-                       .WithButton("Evaluate", "open-eval", emote: new Emoji("🐊"));
+                       .WithButton("Test Button", "btn-testing-random-stuff", ButtonStyle.Secondary, new Emoji("🐊"))
+                       .WithButton("Call Hi-Rez", "btn-nz", ButtonStyle.Secondary, new Emoji("🤙"));
             }
 
             return await Task.FromResult(builder.Build());
@@ -289,9 +295,14 @@ namespace ThothBotCore.Discord
                 var sorted = relatedItems.OrderByDescending(x => x.Value.ItemTier).ToDictionary(z => z.Key, y => y.Value);
                 foreach (var relitem in sorted)
                 {
+                    Emote emote = Emote.Parse("<:blank:570291209906552848>");
+                    if (relitem.Value.Emoji != null)
+                    {
+                        emote = Emote.Parse(relitem.Value.Emoji.TrimEnd());
+                    }
                     options.Add(new SelectMenuOptionBuilder()
                     {
-                        Emote = Emote.Parse(relitem.Value?.Emoji),
+                        Emote = emote,
                         Label = relitem.Value.DeviceName,
                         Value = relitem.Value.ItemId.ToString(),
                         Description = $"{(relitem.Value.Type != "Active" ? relitem.Value.Type : "Relic")} Tier: {relitem.Value.ItemTier}, Price: {relitem.Value.Price}"
@@ -313,7 +324,11 @@ namespace ThothBotCore.Discord
                         .WithButton("Skins",
                                     $"skins-{godId}",
                                     ButtonStyle.Primary,
-                                    new Emoji("🎨"));
+                                    new Emoji("🎨"))
+                        .WithButton("Lore",
+                                    $"btn-lore-{godId}",
+                                    ButtonStyle.Primary,
+                                    new Emoji("📖"));
 
             return await Task.FromResult(builder.Build());
         }
@@ -399,6 +414,15 @@ namespace ThothBotCore.Discord
                    ButtonStyle.Secondary,
                    Emote.Parse("<:back:959968077544583298>"),
                    row: 3);
+            return await Task.FromResult(builder.Build());
+        }
+        public static async Task<MessageComponent> GodsLoreButtonAsync(int godId)
+        {
+            var builder = new ComponentBuilder();
+            builder.WithButton("Back",
+                               $"godinfo-main-{godId}",
+                               ButtonStyle.Secondary,
+                               Emote.Parse("<:back:959968077544583298>"));
             return await Task.FromResult(builder.Build());
         }
     }

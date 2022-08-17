@@ -8,10 +8,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
-using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Utilities
@@ -33,12 +31,12 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await Reporter.SendError($"Missing {firstsplit[^1]} when adding new Emoji for god.\n{ex.Message}");
+                await Reporter.SendErrorAsync($"Missing {firstsplit[^1]} when adding new Emoji for god.\n{ex.Message}");
                 return "<:blank:570291209906552848>";
             }
             var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
             image.Dispose();
-            await Reporter.SendError($"**ADDED NEW GOD EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
+            await Reporter.SendErrorAsync($"**ADDED NEW GOD EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
             return $"<:{createdEmote.Name}:{createdEmote.Id}>";
         }
         private static void SaveImageToFolder(string url, bool isGod)
@@ -202,7 +200,7 @@ namespace ThothBotCore.Utilities
             {
                 int ar = rnd.Next(active.Count);
                 sb.Append(active[ar].Emoji);
-                active.RemoveAt(ar);
+                active.RemoveAll(x => x.ChildItemId == active[ar].ChildItemId);
             }
 
             // Random Starter Item

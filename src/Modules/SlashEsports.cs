@@ -16,18 +16,19 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
                 await EventIdChecker(Context);
 
                 var schedule = await APIInteractions.GetEsportsSchedule();
                 var calendar = await APIInteractions.GetSCCCalendarEvents();
                 var emb = await EmbedHandler.BuildEsportsScheduleEmbedAsync(schedule, calendar);
 
-                await RespondAsync(embed: emb);
+                await FollowupAsync(embed: emb);
             }
             catch (Exception ex)
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await RespondAsync(embed: embed);
+                await FollowupAsync(embed: embed);
             }
         }
         [SlashCommand("splstandings", "Check the Smite Pro League Standings.")]
@@ -35,16 +36,35 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                await DeferAsync();
                 await EventIdChecker(Context);
                 var standings = await APIInteractions.GetEsportsStandings();
                 var emb = await EmbedHandler.BuildEsportsStandingsEmbedAsync(standings);
 
-                await RespondAsync(embed: emb);
+                await FollowupAsync(embed: emb);
             }
             catch (Exception ex)
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await RespondAsync(embed: embed);
+                await FollowupAsync(embed: embed);
+            }
+        }
+        [SlashCommand("splstats", "Check the Smite Pro League Stats.")]
+        public async Task SlashSPLStatsCommandAsync()
+        {
+            try
+            {
+                await DeferAsync();
+                await EventIdChecker(Context);
+                var stats = await APIInteractions.GetEsportsStats();
+                var emb = await EmbedHandler.BuildEsportsStatsEmbedAsync(stats);
+
+                await FollowupAsync(embed: emb);
+            }
+            catch (Exception ex)
+            {
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await FollowupAsync(embed: embed);
             }
         }
         [SlashCommand("swc", "SMITE World Championship schedule and links.")]
@@ -86,11 +106,13 @@ namespace ThothBotCore.Modules
         {
             try
             {
+                // This doesn't work anymore
+                return;
                 var appFile = await APIInteractions.GetEsportsAppFile();
                 var appSplit = appFile.Split("<script src=\"/app-");
                 var appF = $"app-{appSplit[1].Split("\"")[0]}";
                 var result = await APIInteractions.GetEsportsEventID(appF);
-                if (result.Contains("404"))
+                if (result.Contains("Not Found"))
                 {
                     return;
                 }

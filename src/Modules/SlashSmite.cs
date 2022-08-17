@@ -616,8 +616,7 @@ namespace ThothBotCore.Modules
                 StringBuilder incominghotfix = new();
                 StringBuilder alreadyFixedInLIVE = new();
 
-                int count = 0;
-                int livecount = 0;
+                int patchCount = 0;
                 // Appending the issues
                 foreach (var item in result)
                 {
@@ -627,20 +626,19 @@ namespace ThothBotCore.Modules
                         topIssues.AppendLine($"🔹[{item.name}]({item.shortUrl})");
                     }
                     // Hotfix PatchNotes
-                    if (item.idList == "5c740da2ff81b93a4039da81" && count != 10)
+                    if (item.idList == "5c740da2ff81b93a4039da81" && hotfixNotes.Length + $"🔹[{item.name}]({item.shortUrl})".Length < 1024 && patchCount < 7)
                     {
-                        count++;
                         hotfixNotes.AppendLine($"🔹[{item.name}]({item.shortUrl})");
+                        patchCount++;
                     }
                     // Incoming hotfix
-                    if (item.idList == "5c804623d75e55500472cf9a")
+                    if (item.idList == "5c804623d75e55500472cf9a" && incominghotfix.Length + $"🔹[{item.name}]({item.shortUrl})".Length < 1024)
                     {
                         incominghotfix.AppendLine($"🔹[{item.name}]({item.shortUrl})");
                     }
                     // Fixed in LIVE
-                    if (item.idList == "5c7e9e5e30dbfd27cb7c4442" && livecount != 7)
+                    if (item.idList == "5c7e9e5e30dbfd27cb7c4442" && alreadyFixedInLIVE.Length + $"🔹[{item.name}]({item.shortUrl})".Length < 1024)
                     {
-                        livecount++;
                         alreadyFixedInLIVE.AppendLine($"🔹[{item.name}]({item.shortUrl})");
                     }
                 }
@@ -653,7 +651,7 @@ namespace ThothBotCore.Modules
                 });
 
                 // Incoming Hotfix
-                if (incominghotfix.ToString() != "")
+                if (incominghotfix.Length != 0)
                 {
                     embed.AddField(x =>
                     {
@@ -679,13 +677,13 @@ namespace ThothBotCore.Modules
                 {
                     embed.AddField(x =>
                     {
-                        x.IsInline = true;
+                        x.IsInline = false;
                         x.Name = "Hotfix Patch Notes";
                         x.Value = hotfixNotes.ToString();
                     });
                 }
 
-                embed.WithColor(210, 144, 52);
+                embed.WithColor(Utilities.Constants.FeedbackColor);
                 embed.WithTitle("All Platforms Top Issues");
                 if (!(topIssues.ToString().Length > 2048))
                 {
@@ -703,7 +701,7 @@ namespace ThothBotCore.Modules
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the Trello API is down. Try visiting the [website](https://trello.com/b/d4fJtBlo/smite-community-issues) instead.");
                 await RespondAsync(embed: embed);
-                await Reporter.SendError($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
+                await Reporter.SendErrorAsync($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -808,7 +806,7 @@ namespace ThothBotCore.Modules
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.FollowupAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed, ephemeral: true);
                     return;
                 }
 
@@ -825,17 +823,18 @@ namespace ThothBotCore.Modules
                     // Doing the stuff
                     var playerStatus = await HiRez.GetPlayerStatusAsync(player[0].player_id.ToString());
                     List<MatchPlayerDetails.PlayerMatchDetails> match = new();
-                    if (playerStatus[0].Match != 0)
+                    if (playerStatus != null && playerStatus[0].Match != 0)
                     {
                         match = await HiRez.GetMatchPlayerDetailsAsync(playerStatus[0].Match.ToString());
                     }
 
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
+                    var godRanks = await HiRez.GetGodRanksAsync(player[0].player_id.ToString());
 
                     // Generating the embed and sending to channel
                     embed = await EmbedHandler.PlayerStatsEmbed(
                         getPlayer,
-                        await HiRez.GetGodRanksAsync(player[0].player_id.ToString()),
+                        godRanks,
                         await HiRez.GetPlayerAchievementsAsync(player[0].player_id.ToString()),
                         playerStatus,
                         match);
@@ -852,6 +851,17 @@ namespace ThothBotCore.Modules
                     });
 
                     await FollowupAsync(embed: embed.Build(), components: comps);
+
+                    // Saving player to DB
+                    try
+                    {
+                        await MongoConnection.SavePlayerAsync(getPlayer[0]).ConfigureAwait(false);
+                        await MongoConnection.SavePlayerGodRanksAsync(godRanks).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Text.WriteLine(ex.Message, ConsoleColor.Red, ConsoleColor.White);
+                    }
                 }
                 else
                 {
@@ -900,7 +910,7 @@ namespace ThothBotCore.Modules
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.FollowupAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed, ephemeral: true);
                     return;
                 }
 
@@ -958,7 +968,7 @@ namespace ThothBotCore.Modules
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.FollowupAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed, ephemeral: true);
                     return;
                 }
 
@@ -1017,7 +1027,7 @@ namespace ThothBotCore.Modules
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.FollowupAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed, ephemeral: true);
                     return;
                 }
 
@@ -1126,8 +1136,12 @@ namespace ThothBotCore.Modules
                     return;
                 }
 
-                var finalembed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
-                await FollowupAsync(embed: finalembed.Build());
+                //var finalembed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
+                //await FollowupAsync(embed: finalembed.Build());
+
+                // new md kek
+                var finalembed = await EmbedHandler.BuildMatchDetailsEmbedAsync(matchDetails);
+                await FollowupAsync(embed: finalembed);
             }
             catch (Exception ex)
             {
@@ -1161,7 +1175,7 @@ namespace ThothBotCore.Modules
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.FollowupAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed, ephemeral: true);
                     return;
                 }
 
@@ -1236,7 +1250,7 @@ namespace ThothBotCore.Modules
                 else if ((string)player[0].ret_msg == "notlinked")
                 {
                     var embed = await EmbedHandler.BuildNotLinkedEmbedAsync();
-                    await Context.Interaction.FollowupAsync(embed: embed);
+                    await Context.Interaction.FollowupAsync(embed: embed, ephemeral: true);
                     return;
                 }
 
@@ -1280,11 +1294,8 @@ namespace ThothBotCore.Modules
                         return;
                     }
 
-                    // fix hirez' fault :)
-                    //matchDetails.DistinctBy(x => x.ActivePlayerId)
-
-                    var finalembed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
-                    await FollowupAsync(embed: finalembed.Build());
+                    var finalembed = await EmbedHandler.BuildMatchDetailsEmbedAsync(matchDetails);
+                    await FollowupAsync(embed: finalembed);
                 }
                 else
                 {
@@ -1347,7 +1358,7 @@ namespace ThothBotCore.Modules
 
         [SlashCommand("feeds", "Set a channel to get server status notifications and more (soon™).")]
         [CustomRequireContext(Discord.ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator | GuildPermission.ManageChannels)]
+        [RequireUserPermission(GuildPermission.ManageChannels | GuildPermission.ManageGuild)]
         public async Task SlashFeedsCommand()
         {
             try
@@ -1408,7 +1419,8 @@ namespace ThothBotCore.Modules
                         .WithName("About Thoth Bot")
                         .WithIconUrl(Utilities.Constants.botIcon);
                 });
-                embed.WithDescription($"Creator: EasyThe#2836 - {Connection.Client.GetUser(171675309177831424).Mention}");
+                embed.WithDescription($"<:Developer:747217301006319737> Owner & Developer: EasyThe#2836 - <@171675309177831424>\n" +
+                    $"⚖ Data provided by Hi-Rez. © {DateTime.Now.Year} [Hi-Rez Studios](https://www.hirezstudios.com/), Inc. All rights reserved.");
                 embed.WithColor(Utilities.Constants.DefaultBlueColor);
                 embed.AddField(x =>
                 {
@@ -1465,13 +1477,13 @@ namespace ThothBotCore.Modules
                 // BUTTONS
 
                 var buttons = await ComponentsHandler.AboutThothButtonsAsync(Context.User.Id == Utilities.Constants.OwnerID, 0);
-
                 await FollowupAsync(embed: embed.Build(), components: buttons);
             }
             catch (Exception ex)
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await FollowupAsync(embed: embed);
+                var buttons = await ComponentsHandler.AboutThothButtonsAsync(Context.User.Id == Utilities.Constants.OwnerID, 0);
+                await FollowupAsync(embed: embed, components: buttons);
             }
         }
 

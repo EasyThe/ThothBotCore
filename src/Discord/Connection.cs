@@ -122,7 +122,7 @@ namespace ThothBotCore.Discord
             catch (System.Exception ex)
             {
                 await _logger.Log("X", $"Registering commands failed. Exception: {ex.Message}");
-                await Reporter.SendError($"Registering commands failed. Exception:\n{ex.Message}");
+                await Reporter.SendErrorAsync($"Registering commands failed. Exception:\n{ex.Message}");
             }
         }
 

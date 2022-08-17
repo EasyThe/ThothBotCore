@@ -731,7 +731,7 @@ namespace ThothBotCore.Modules
                 var emb = await EmbedHandler.BuildDescriptionEmbedAsync("Starting the tracker...", Constants.VulpisColor);
                 var message = await ReplyAsync(embed: emb);
                 Global.TourneyTimerIDs = new[] { message.Channel.Id, message.Id, Context.Guild.Id };
-                await TournamentTimer.StartServerStatusTimer();
+                await TournamentTimer.StartTournamentTimer();
             }
             catch (Exception ex)
             {

@@ -58,7 +58,7 @@ namespace ThothBotCore.Models
             public int Duel_Points { get; set; }
             public int Duel_Tier { get; set; }
             public int Duel_Wins { get; set; }
-            public DateTime Entry_Datetime { get; set; }
+            public DateTime? Entry_Datetime { get; set; }
             public int Final_Match_Level { get; set; }
             public string First_Ban_Side { get; set; }
             public int GodId { get; set; }

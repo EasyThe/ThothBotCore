@@ -30,7 +30,7 @@ namespace ThothBotCore.Modules
         public HiRezAPIv2 HiRez { get; set; }
 
         HiRezAPI hirezAPI = new();
-        private const string slash = "⚠Thoth is switching to Slash Commands! Please use ";
+        private const string slash = "⚠**This command will stop working <t:1661972400:R>! Only `/` __slash commands__ will be working from then on. Please use** ";
 
         [Command("stats", true, RunMode = RunMode.Async)] // DONE
         [Summary("Display stats for the provided `PlayerName`.")]
@@ -75,17 +75,17 @@ namespace ThothBotCore.Modules
                     await hirezAPI.GetPlayerAchievements(playerID),
                     await hirezAPI.GetPlayerStatus(playerID),
                     matchJson);
-                finalEmbed.WithFooter(x => x.Text = slash + "/stats");
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
+                        x.Content = $"{slash}`/stats`";
                         x.Embed = finalEmbed.Build();
                     });
                 }
                 else
                 {
-                    sentMessage = await Context.Channel.SendMessageAsync(embed: finalEmbed.Build());
+                    sentMessage = await Context.Channel.SendMessageAsync($"{slash}`/stats`", embed: finalEmbed.Build());
                 }
 
                 // Getting the top queues
@@ -136,7 +136,7 @@ namespace ThothBotCore.Modules
                 {
                     if (!ex.Message.Contains("10008"))
                     {
-                        await Reporter.SendError($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
+                        await Reporter.SendErrorAsync($"Error in topmatches\n{ex.Message}\nStack Trace: {ex.StackTrace}");
                     }
                 }
 
@@ -260,12 +260,8 @@ namespace ThothBotCore.Modules
                     x.Name = "Latest God";
                     x.Value = $"{latestGod.Emoji} {latestGod.Name}\n🔹 {latestGod.Title}\n🔹 {latestGod.Type}, {latestGod.Roles}";
                 });
-                embed.WithFooter(x =>
-                {
-                    x.Text = $"{slash}/gods";
-                });
 
-                await ReplyAsync("", false, embed.Build());
+                await ReplyAsync($"{slash}`/gods`", false, embed.Build());
 
             }
             else
@@ -327,13 +323,8 @@ namespace ThothBotCore.Modules
                         field.Value = gods.Pros + "\u200b";
                     });
                 }
-                embed.WithFooter(x =>
-                {
-                    x.IconUrl = Constants.botIcon;
-                    x.Text = $"{slash}/god";
-                });
 
-                await ReplyAsync(embed: embed.Build(),
+                await ReplyAsync($"{slash}`/god`", embed: embed.Build(),
                     allowedMentions: AllowedMentions.None);
             }
         }
@@ -396,11 +387,7 @@ namespace ThothBotCore.Modules
                 x.Name = "Random Build";
                 x.Value = rbuild;
             });
-            embed.WithFooter(x =>
-            {
-                x.Text = $"{slash}/rgod";
-            });
-            await ReplyAsync($"{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
+            await ReplyAsync($"{slash}`/rgod`\n{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
         }
 
         [Command("rbuild", true)] // DONE
@@ -450,11 +437,7 @@ namespace ThothBotCore.Modules
                     x.Name = "Random Build";
                     x.Value = rbuild;
                 });
-                embed.WithFooter(x =>
-                {
-                    x.Text = $"{slash}/rbuild";
-                });
-                await ReplyAsync($"{Context.Message.Author.Mention}, your random build for {god.Name} is:", embed: embed.Build());
+                await ReplyAsync($"{slash}`/rbuild`\n{Context.Message.Author.Mention}, your random build for {god.Name} is:", embed: embed.Build());
             }
         }
 
@@ -483,12 +466,8 @@ namespace ThothBotCore.Modules
                     });
                     gods.RemoveAt(rr);
                 }
-                embed.WithFooter(x =>
-                {
-                    x.Text = $"{slash}/rteam";
-                });
 
-                await ReplyAsync($"Team of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
+                await ReplyAsync($"{slash}`/rteam`\nTeam of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
             }
             else
             {
@@ -541,7 +520,7 @@ namespace ThothBotCore.Modules
             }
 
             var statusEmbed = await EmbedHandler.ServerStatusEmbedAsync(smiteServerStatus, hirezServerStatus);
-            await ReplyAsync(embed: statusEmbed);
+            await ReplyAsync($"{slash}`/status`", embed: statusEmbed);
 
             bool maint = false;
             bool inci = false;
@@ -702,12 +681,10 @@ namespace ThothBotCore.Modules
                 }
                 catch (Exception ex)
                 {
-                    await Reporter.SendException(null, Context, $"Item command got an error on related items\n{ex.Message}\nOn item: {item[index].DeviceName}");
+                    //await Reporter.SendException(null, Context, $"Item command got an error on related items\n{ex.Message}\nOn item: {item[index].DeviceName}");
                 }
-                // SLASH
-                embed.WithFooter(x => x.Text = $"{slash}/item");
 
-                await ReplyAsync(embed: embed.Build());
+                await ReplyAsync($"{slash}`/item`", embed: embed.Build());
             }
             else
             {
@@ -768,8 +745,7 @@ namespace ThothBotCore.Modules
                 x.Name = "Tier 2 Starters [2/2]";
                 x.Value = sb22.ToString();
             });
-            embed.WithFooter(x => x.Text = $"{slash}/starters");
-            await ReplyAsync(embed: embed.Build());
+            await ReplyAsync($"{slash}`/itemstarters`", embed: embed.Build());
         }
 
         [Command("trello", true, RunMode = RunMode.Async)] // DONE
@@ -868,16 +844,13 @@ namespace ThothBotCore.Modules
                     embed.WithDescription(Text.Truncate(topIssues.ToString(), 2048));
                 }
 
-                // SLASH
-                embed.WithFooter(x => x.Text = $"{slash}/bugs");
-
-                await ReplyAsync(embed: embed.Build());
+                await ReplyAsync($"{slash}`/bugs`", embed: embed.Build());
             }
             catch (Exception ex)
             {
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the Trello API is down. Try visiting the [website](https://trello.com/b/d4fJtBlo/smite-community-issues) instead.");
                 await ReplyAsync(embed: embed);
-                await Reporter.SendError($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
+                await Reporter.SendErrorAsync($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -930,14 +903,14 @@ namespace ThothBotCore.Modules
                     if (sentMessage == null)
                     {
                         var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
-                        await ReplyAsync(embed: embed.Build());
+                        await ReplyAsync($"{slash}`/livemd`", embed: embed.Build());
                     }
                     else
                     {
                         var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
-                        embed.WithFooter($"{slash}/livemd");
                         await sentMessage.ModifyAsync(x =>
                         {
+                            x.Content = $"{slash}`/livemd`";
                             x.Embed = embed.Build();
                         });
                     }
@@ -1009,7 +982,7 @@ namespace ThothBotCore.Modules
                 if (matchDetailsString.ToLowerInvariant().Contains("<"))
                 {
                     await ReplyAsync("Hi-Rez API sent a weird response... Please try again later.");
-                    await Reporter.SendError(matchDetailsString);
+                    await Reporter.SendErrorAsync(matchDetailsString);
                     return;
                 }
                 else if (matchDetailsString == "[]")
@@ -1024,21 +997,21 @@ namespace ThothBotCore.Modules
                 if (matchDetails.Count == 1 && matchDetails[0].ret_msg != null)
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync(matchDetails[0].ret_msg.ToString(), $"MatchID: {mID}", 255);
-                    await ReplyAsync(embed: embed);
+                    await ReplyAsync($"{slash}`/mdlast` or `/md`", embed: embed);
                     return;
                 }
-                var finalembed = await EmbedHandler.MatchDetailsEmbed(matchDetails);
-                finalembed.WithFooter($"{slash}/mdlast or /md");
+                var finalembed = await EmbedHandler.BuildMatchDetailsEmbedAsync(matchDetails);
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Embed = finalembed.Build();
+                        x.Content = $"{slash}`/mdlast` or `/md`";
+                        x.Embed = finalembed;
                     });
                 }
                 else
                 {
-                    await ReplyAsync(embed: finalembed.Build());
+                    await ReplyAsync($"{slash}`/mdlast` or `/md`", embed: finalembed);
                 }
             }
             catch (Exception ex)
@@ -1080,18 +1053,19 @@ namespace ThothBotCore.Modules
                     return;
                 }
                 var finalembed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
-                var da = finalembed.ToEmbedBuilder().WithFooter(x => x.Text = $"{slash}/history"); // SLASH
+                var da = finalembed.ToEmbedBuilder();
 
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
+                        x.Content = $"{slash}`/history`";
                         x.Embed = da.Build();
                     });
                 }
                 else
                 {
-                    await ReplyAsync(embed: da.Build());
+                    await ReplyAsync($"{slash}`/history`", embed: da.Build());
                 }
             }
             catch (Exception ex)
@@ -1121,11 +1095,6 @@ namespace ThothBotCore.Modules
                 {
                     x.Name = "Current & Upcoming Matches Of The Day";
                     x.IconUrl = Constants.botIcon;
-                });
-                embed.WithFooter(x =>
-                {
-                    x.IconUrl = Constants.botIcon;
-                    x.Text = $"{slash}/motd";
                 });
 
                 Motd motdDay = new();
@@ -1168,7 +1137,7 @@ namespace ThothBotCore.Modules
                 {
                     embed.WithDescription("No data available.");
                 }
-                await ReplyAsync(embed: embed.Build());
+                await ReplyAsync($"{slash}`/motd`", embed: embed.Build());
             }
             catch (Exception ex)
             {
@@ -1202,18 +1171,19 @@ namespace ThothBotCore.Modules
                 var finalEmbed = await EmbedHandler.BuildWorshipersEmbedAsync(ranks, getplayer[0]);
 
                 //SLASH
-                var emm = finalEmbed.ToEmbedBuilder().WithFooter($"{slash}/wp");
+                var emm = finalEmbed.ToEmbedBuilder();
 
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
+                        x.Content = $"{slash}`/wp`";
                         x.Embed = emm.Build();
                     });
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync(embed: emm.Build());
+                    await Context.Channel.SendMessageAsync($"{slash}`/wp`", embed: emm.Build());
                 }
             }
             catch (Exception ex)
@@ -1257,7 +1227,7 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync($"{slash}/wr", embed: finalEmbed);
+                    await Context.Channel.SendMessageAsync($"{slash}`/wr`", embed: finalEmbed);
                 }
             }
             catch (Exception ex)
@@ -1305,7 +1275,7 @@ namespace ThothBotCore.Modules
                 var actualPost = await APIInteractions.GetPostBySlugAsync(foundPost[i].slug);
                 string description = await PatchPageReader.ReadPatch(actualPost);
                 Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost[i].featured_image, foundPost[i].slug);
-                await ReplyAsync($"`{slash}/updatenotes`", embed: embed);
+                await ReplyAsync($"{slash}/updatenotes", embed: embed);
             }
         }
 
@@ -1325,14 +1295,10 @@ namespace ThothBotCore.Modules
                     x.IconUrl = Constants.SmiteBolt;
                     x.Url = "https://www.smitegame.com/news/";
                 });
-                embed.WithFooter(x=> 
-                {
-                    x.Text = $"{slash}/events";
-                });
                 if (result.events.content.Count == 0)
                 {
                     embed.WithTitle("There are no events at the moment.");
-                    await ReplyAsync(embed: embed.Build());
+                    await ReplyAsync($"{slash}/events", embed: embed.Build());
                     return;
                 }
                 var header = result.events.content.FirstOrDefault().eventList.Find(x => x.header != null);
@@ -1347,7 +1313,7 @@ namespace ThothBotCore.Modules
                     sb.AppendLine($"🔹 " + (item.desc.@default.Contains("Today") ? $"**{item.desc.@default}**" : $"{item.desc.@default}"));
                 }
                 embed.WithDescription(sb.ToString());
-                await ReplyAsync(embed: embed.Build());
+                await ReplyAsync($"{slash}/events", embed: embed.Build());
             }
             catch (Exception ex)
             {
@@ -1388,7 +1354,7 @@ namespace ThothBotCore.Modules
                             }
                             else
                             {
-                                await Reporter.SendError($"{god.Name} ability 1 error.");
+                                await Reporter.SendErrorAsync($"{god.Name} ability 1 error.");
                             }
                         }
                         catch (Exception exxx)
@@ -1412,7 +1378,7 @@ namespace ThothBotCore.Modules
                             }
                             else
                             {
-                                await Reporter.SendError($"{god.Name} ability 2 error.");
+                                await Reporter.SendErrorAsync($"{god.Name} ability 2 error.");
                             }
                         }
                         catch (Exception exxx)
@@ -1436,7 +1402,7 @@ namespace ThothBotCore.Modules
                             }
                             else
                             {
-                                await Reporter.SendError($"{god.Name} ability 3 error.");
+                                await Reporter.SendErrorAsync($"{god.Name} ability 3 error.");
                             }
                         }
                         catch (Exception exxx)
@@ -1460,7 +1426,7 @@ namespace ThothBotCore.Modules
                             }
                             else
                             {
-                                await Reporter.SendError($"{god.Name} ability 4 error.");
+                                await Reporter.SendErrorAsync($"{god.Name} ability 4 error.");
                             }
                         }
                         catch (Exception exxx)
@@ -1484,7 +1450,7 @@ namespace ThothBotCore.Modules
                             }
                             else
                             {
-                                await Reporter.SendError($"{god.Name} ability 5 error.");
+                                await Reporter.SendErrorAsync($"{god.Name} ability 5 error.");
                             }
                         }
                         catch (Exception exxx)
@@ -1520,7 +1486,8 @@ namespace ThothBotCore.Modules
             {
                 if (ex.Message.Contains("2000"))
                 {
-                    await File.WriteAllTextAsync($"{endpoint}.json", json);
+                    parsedJson = JsonConvert.DeserializeObject(json);
+                    await File.WriteAllTextAsync($"{endpoint}.json", JsonConvert.SerializeObject(parsedJson, Formatting.Indented));
                     await Context.Channel.SendFileAsync($"{endpoint}.json");
                 }
                 else

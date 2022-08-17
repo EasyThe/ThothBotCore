@@ -85,7 +85,7 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 patch = "n/a";
-                await Reporter.SendError($"Error in PatchInfo from **botinfo** command.\n{ex.Message}");
+                await Reporter.SendErrorAsync($"Error in PatchInfo from **botinfo** command.\n{ex.Message}");
             }
             var embed = new EmbedBuilder();
             embed.WithAuthor(author =>

@@ -53,7 +53,7 @@ namespace ThothBotCore.Models
     {
         public int date { get; set; }
         public string phase { get; set; }
-        public int phase_id { get; set; }
+        public int? phase_id { get; set; }
         public List<Match> matches { get; set; }
         public string week { get; set; }
     }

@@ -1,7 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -64,6 +62,13 @@ namespace ThothBotCore.Modules
                 if (player.Count == 1)
                 {
                     var getplayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
+
+                    if (getplayer != null && getplayer.Count == 1 && getplayer[0].ret_msg is string && getplayer[0].ret_msg.ToString().ToLowerInvariant().Contains("privacy"))
+                    {
+                        await RespondAsync(embed: (await EmbedHandler.HiddenProfileEmbed("*")).Build(), ephemeral: true);
+                        return;
+                    }
+                    
                     var getplayerstatus = await HiRez.GetPlayerStatusAsync(player[0].player_id.ToString());
                     string randomString = Text.GenerateString(10);
                     string statusString = $":eyes: **{getplayerstatus[0].status_string}**";
@@ -120,9 +125,10 @@ namespace ThothBotCore.Modules
                 playerSpecial = await MongoConnection.GetPlayerSpecialsByPlayerIdAsync(Convert.ToInt32(lookupSearchModal.ActivePlayerID));
             }
 
-            if (playerSpecial._id == 0)
+            if (playerSpecial == null)
             {
                 await RespondAsync("The player was not found in the database.", ephemeral: true);
+                // consider adding a button to link a player manually
                 return;
             }
 
@@ -324,22 +330,6 @@ namespace ThothBotCore.Modules
             catch (Exception ex)
             {
                 await RespondAsync($"Error: {ex.Message}", ephemeral: true);
-            }
-        }
-
-        [ModalInteraction("submit-eval")]
-        [CustomRequireOwner]
-        public async Task SubmitEvalModal(OneParagraphModal modal)
-        {
-            await DeferAsync();
-            try
-            {
-                var result = await CSharpScript.EvaluateAsync(modal.Message, ScriptOptions.Default.WithReferences("ThothBotCore"));
-                await FollowupAsync($"```csharp\n{modal.Message}```Result:\n{result}");
-            }
-            catch (Exception ex)
-            {
-                await FollowupAsync($"{ex.Message}");
             }
         }
 

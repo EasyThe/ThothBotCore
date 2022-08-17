@@ -29,7 +29,7 @@ namespace ThothBotCore.Connections
             Client = new HttpClient(httpClientHandler)
             {
                 BaseAddress = new Uri(BaseURL),
-                Timeout = TimeSpan.FromSeconds(2)
+                Timeout = TimeSpan.FromSeconds(6)
             };
 
             string json = File.ReadAllText("Config/hirezapi.json");

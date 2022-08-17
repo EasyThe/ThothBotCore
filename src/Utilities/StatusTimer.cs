@@ -30,7 +30,7 @@ namespace ThothBotCore.Utilities
         {
             ServerStatusTimer.Enabled = false;
             Text.WriteLine(message);
-            await Reporter.SendError(message);
+            await Reporter.SendErrorAsync(message);
         }
         private static async void ServerStatusTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -100,7 +100,7 @@ namespace ThothBotCore.Utilities
                                         }
                                         catch (Exception ex)
                                         {
-                                            await Reporter.SendError(":warning:**Exception in StatusTimer (DB SAVE):** \n" +
+                                            await Reporter.SendErrorAsync(":warning:**Exception in StatusTimer (DB SAVE):** \n" +
                                                 $"**Message: **{ex.Message}\n" +
                                                 $"**StackTrace: **`{ex.StackTrace}`");
                                             ServerStatusTimer.Enabled = false;
@@ -197,7 +197,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await Reporter.SendError($"StatusTimer.cs Line 209 Error:\n{ex.Message}\n{ex.StackTrace}");
+                await Reporter.SendErrorAsync($"StatusTimer.cs Line 209 Error:\n{ex.Message}\n{ex.StackTrace}");
                 Text.WriteLine($"\nStatusTimer\n{ex.Message}\n{ex.StackTrace}\n");
             }
 

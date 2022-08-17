@@ -72,7 +72,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await SendError($"Error in SendJoinedServers\n**Message**: {ex.Message}\n" +
+                await SendErrorAsync($"Error in SendJoinedServers\n**Message**: {ex.Message}\n" +
                     $"**StackTrace: **`{ex.StackTrace}`").ConfigureAwait(false);
             }
         }
@@ -106,7 +106,7 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await SendError($"Error in SendLeftServers\n" +
+                await SendErrorAsync($"Error in SendLeftServers\n" +
                     $"**Message**: {ex.Message}\n" +
                     $"**StackTrace: **`{ex.StackTrace}`").ConfigureAwait(false);
             }
@@ -143,11 +143,11 @@ namespace ThothBotCore.Utilities
             catch (Exception ex)
             {
                 await SendException(ex, context, ex.Message);
-                await SendError($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
+                await SendErrorAsync($"Error in SendSuccessCommands\n**Message**: {ex.Message}");
             }
         }
 
-        public static async Task SendError(string message)
+        public static async Task SendErrorAsync(string message)
         {
             await ChannelChecker(reportsChannel);
             try
@@ -161,6 +161,8 @@ namespace ThothBotCore.Utilities
         }
         public static async Task SendException(Exception ex, SocketCommandContext context, string errorMessage = "")
         {
+            // Discontinued due to switch to slash commands
+            return;
             await ChannelChecker(reportsChannel);
             try
             {
@@ -270,6 +272,11 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<Embed> RespondToCommandOnErrorAsync(Exception ex, SocketCommandContext context, string errorMessage = "")
         {
+            return await EmbedHandler.BuildDescriptionEmbedAsync(
+                $"Normal commands have been discontinued and support for using them won't be provided. " +
+                $"Please use [slash commands](https://discord.com/blog/welcome-to-the-new-era-of-discord-apps)." +
+                $"\nVisual representation of all available `/` slash commands can be found [here](https://easythe.github.io/ThothWeb/)", 255, 0, 0);
+            // delete all this
             var sb = new StringBuilder();
             if (errorMessage == "apidown" || (ex != null && ex.Message.ToLowerInvariant().Contains("the api is unavailable")))
             {
@@ -281,14 +288,14 @@ namespace ThothBotCore.Utilities
             }
             else if (ex != null && !(ex.Message.ToLowerInvariant().Contains("database")))
             {
-                sb.Append($"An unexpected error has occured. Please try again later.\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
-                await SendException(ex, context, errorMessage);
-                SentrySdk.CaptureException(ex);
+                sb.Append($"An unexpected error has occured. Normal commands have been discontinued and support for using them won't be provided. Please use [slash commands](https://discord.com/blog/welcome-to-the-new-era-of-discord-apps).");
+                //await SendException(ex, context, errorMessage);
+                //SentrySdk.CaptureException(ex);
             }
             else if (ex == null && errorMessage != "")
             {
                 sb.Append($"An unexpected error has occured.");
-                await SendError(errorMessage);
+                await SendErrorAsync(errorMessage);
             }
             if (Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "")
             {
@@ -314,7 +321,7 @@ namespace ThothBotCore.Utilities
             else if (ex == null && errorMessage != "")
             {
                 sb.Append($"An unexpected error has occured.");
-                await SendError(errorMessage);
+                await SendErrorAsync(errorMessage);
             }
             if ((Global.ErrorMessageByOwner != null || Global.ErrorMessageByOwner != "") && !sb.ToString().StartsWith(Global.ErrorMessageByOwner))
             {

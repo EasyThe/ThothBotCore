@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
+using Unity.Interception.Utilities;
 
 namespace ThothBotCore.Discord
 {
@@ -889,33 +890,33 @@ namespace ThothBotCore.Discord
             }
             return embed;
         }
-        public static Task<EmbedBuilder> LoadingStats(string username)
+        public static async Task<EmbedBuilder> LoadingStats(string username)
         {
             var embed = new EmbedBuilder
             {
                 Description = $"<a:typing:393848431413559296> Loading {username}..."
             };
             embed.WithColor(Constants.DefaultBlueColor);
-            return Task.FromResult(embed);
+            return await Task.FromResult(embed);
         }
-        public static Task<EmbedBuilder> HiddenProfileEmbed(string username)
+        public static async Task<EmbedBuilder> HiddenProfileEmbed(string username)
         {
             var embed = new EmbedBuilder
             {
                 Description = username.StartsWith('*') ? "<:Hidden:591666971234402320>Account is hidden" : Text.UserIsHidden(username),
                 Color = new Color(254,255,255)
             };
-            return Task.FromResult(embed);
+            return await Task.FromResult(embed);
         }
-        public static Task<EmbedBuilder> ProfileNotFoundEmbed(string username)
+        public static async Task<EmbedBuilder> ProfileNotFoundEmbed(string username)
         {
             var embed = new EmbedBuilder
             {
                 Description = Text.UserNotFound(username)
             };
-            return Task.FromResult(embed);
+            return await Task.FromResult(embed);
         }
-        public static Task<Embed> BuildNotLinkedEmbedAsync()
+        public static async Task<Embed> BuildNotLinkedEmbedAsync()
         {
             var embed = new EmbedBuilder
             {
@@ -923,7 +924,7 @@ namespace ThothBotCore.Discord
                 Color = Constants.FeedbackColor
             };
             
-            return Task.FromResult(embed.Build());
+            return await Task.FromResult(embed.Build());
         }
         public static Task<Embed> BuildAlreadyLinkedEmbedAsync(List<Player.PlayerStats> getplayer, List<Player.PlayerStatus> getplayerstatus)
         {
@@ -972,6 +973,7 @@ namespace ThothBotCore.Discord
             }
             return Task.FromResult(embed.Build());
         }
+        
         public static Task<Embed> BuildDescriptionEmbedAsync(string description, string footerText, int r = 0, int g = 0, int b = 0)
         {
             var embed = new EmbedBuilder
@@ -985,6 +987,7 @@ namespace ThothBotCore.Discord
             }
             return Task.FromResult(embed.Build());
         }
+        
         public static async Task<EmbedBuilder> MultiplePlayers(List<SearchPlayers> players)
         {
             var embed = new EmbedBuilder();
@@ -1010,6 +1013,7 @@ namespace ThothBotCore.Discord
             embed.WithDescription(sb.ToString());
             return embed;
         }
+        
         public static async Task<EmbedBuilder> LiveMatchEmbed(List<MatchPlayerDetails.PlayerMatchDetails> matchPlayerDetails)
         {
             var embed = new EmbedBuilder();
@@ -1175,6 +1179,7 @@ namespace ThothBotCore.Discord
 
             return embed;
         }
+        
         public static async Task<EmbedBuilder> MatchDetailsEmbed(List<MatchDetails.MatchDetailsPlayer> matchdetailsList)
         {
             var embed = new EmbedBuilder();
@@ -1246,7 +1251,7 @@ namespace ThothBotCore.Discord
                 }
                 else
                 {
-                    await Reporter.SendError("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
+                    await Reporter.SendErrorAsync("**Yo, MatchDetails endpoint was probably changed, or the API is going wild..**");
                 }
             }
             // Sorting the parties for easier printing after
@@ -1377,9 +1382,9 @@ namespace ThothBotCore.Discord
                 x.Name = $"🔴 **{losers[0].Win_Status}** 🔴";
                 x.Value = losersVal;
             });
-            if (matchdetailsList[0].Entry_Datetime != null)
+            if (matchdetailsList[0].Entry_Datetime.HasValue)
             {
-                embed.WithTimestamp(matchdetailsList[0].Entry_Datetime);
+                embed.WithTimestamp(matchdetailsList[0].Entry_Datetime.Value);
             }
 
             var player1 = new StringBuilder();
@@ -1484,6 +1489,267 @@ namespace ThothBotCore.Discord
             }
             return embed;
         }
+        
+        public static async Task<Embed> BuildMatchDetailsEmbedAsync(List<MatchDetails.MatchDetailsPlayer> matchDetails)
+        {
+            var embed = new EmbedBuilder();
+            var gods = MongoConnection.GetAllGods();
+
+            if (matchDetails.Count == 1 && matchDetails[0].ActivePlayerId == "0")
+            {
+                embed.WithTitle("Hi-Rez API error:");
+                embed.WithDescription(matchDetails[0].ret_msg.ToString());
+                return embed.Build();
+            }
+
+            embed.WithColor(Constants.DefaultBlueColor);
+            embed.WithAuthor(author =>
+            {
+                author.WithName($"{Text.GetQueueName(matchDetails[0].match_queue_id, matchDetails[0].name)} | {matchDetails[0].Minutes} mins");
+                author.WithIconUrl(Constants.botIcon);
+                author.WithUrl($"https://smite.guru/match/{matchDetails[0].Match}");
+            });
+            embed.WithFooter(x =>
+            {
+                x.Text = $"Match ID: {matchDetails[0].Match}";
+            });
+            if (matchDetails[0].Entry_Datetime.HasValue)
+            {
+                embed.WithTimestamp(matchDetails[0].Entry_Datetime.Value);
+            }
+
+            List<MatchDetails.MatchDetailsPlayer> taskForce1, taskForce2 = new();
+            List<KeyValuePair<int, List<MatchDetails.MatchDetailsPlayer>>> parties = new();
+
+            if (matchDetails.Count > 10)
+            {
+                taskForce1 = matchDetails.Where(x => x.TaskForce == 1).ToList().DistinctBy(x => x.GodId).ToList();
+                taskForce2 = matchDetails.Where(x => x.TaskForce == 2).ToList().DistinctBy(x => x.GodId).ToList();
+                // Group parties by partyid and orderbydescending of count of players in a party
+                parties = matchDetails.GroupBy(x => x.PartyId)
+                    .ToDictionary(g => g.Key, g => g.DistinctBy(x => x.GodId)
+                    .ToList())
+                    .OrderByDescending(x => x.Value.Count)
+                    .ToList();
+            }
+            else
+            {
+                taskForce1 = matchDetails.Where(x => x.TaskForce == 1).ToList();
+                taskForce2 = matchDetails.Where(x => x.TaskForce == 2).ToList();
+                // Group parties by partyid and orderbydescending of count of players in a party
+                parties = matchDetails.GroupBy(x => x.PartyId)
+                    .ToDictionary(g => g.Key, g => g
+                    .ToList())
+                    .OrderByDescending(x => x.Value.Count)
+                    .ToList();
+            }
+            bool isRanked = Utils.IsRanked(matchDetails[0].match_queue_id.ToString());
+
+            // Left Summary
+            string winStatusEmoji = "🏆";
+            if (taskForce1[0].Winning_TaskForce == 2)
+            {
+                winStatusEmoji = "🔴";
+            }
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $"{winStatusEmoji} **{taskForce1[0].Win_Status}** {winStatusEmoji}";
+                x.Value = Text.MatchDetailsTaskForceSummary(taskForce1, isRanked);
+            });
+            // End Left Summary
+            // Bans
+            var bans = Text.CheckMatchBans(matchDetails.FirstOrDefault(), gods);
+            if (bans.Length != 0)
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "🚫 **Bans**";
+                    x.Value = bans;
+                });
+            }
+            else
+            {
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = "\u200b";
+                    x.Value = "\u200b";
+                });
+            }
+            // End Bans
+            // Right Summary
+            winStatusEmoji = "🏆";
+            if (taskForce2[0].Winning_TaskForce == 1)
+            {
+                winStatusEmoji = "🔴";
+            }
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $"{winStatusEmoji} **{taskForce2[0].Win_Status}** {winStatusEmoji}";
+                x.Value = Text.MatchDetailsTaskForceSummary(taskForce2, isRanked);
+            });
+            // End Right Summary
+
+            // Players
+            bool isMid = false; // if true, we add the mid part between players with the party icon, region and levels
+            int count = taskForce1.Count > taskForce2.Count ? taskForce1.Count : taskForce2.Count;
+            
+            for (int i = 0; i < count; i++)
+            {
+                // add left, mid and right
+                // left TF1
+                // looking for party # 
+                KeyValuePair<int, List<MatchDetails.MatchDetailsPlayer>> taskFor1Party = new();
+                KeyValuePair<int, List<MatchDetails.MatchDetailsPlayer>> taskFor2Party = new();
+                if (taskForce1.ElementAtOrDefault(i) != null)
+                {
+                    taskFor1Party = parties.Find(x => x.Key == taskForce1[i].PartyId);
+                }
+                if (taskForce2.ElementAtOrDefault(i) != null)
+                {
+                    taskFor2Party = parties.Find(x => x.Key == taskForce2[i].PartyId);
+                }
+                
+                if (taskForce1.ElementAtOrDefault(i) != null)
+                {
+                    string value = "";
+
+                    // ranked data
+                    if (isRanked)
+                    {
+                        Tuple<string, string> tuple = null;
+                        if (taskForce1[i].match_queue_id == 451 || taskForce1[i].match_queue_id == 504) // Conquest
+                        {
+                            tuple = Text.GetRankedConquest(taskForce1[i].Conquest_Tier);
+                            value = $"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(taskForce1[i].Rank_Stat_Conquest, 0)}]\n" +
+                            $"{Text.SideEmoji(taskForce1[i].TaskForce)}W/L: {taskForce1[i].Conquest_Wins}/{taskForce1[i].Conquest_Losses}" +
+                            $"<:blank:570291209906552848>{taskForce1[i].Conquest_Points} TP\n";
+                        }
+                        else if (taskForce1[i].match_queue_id == 450 || taskForce1[i].match_queue_id == 503) // Joust
+                        {
+                            tuple = Text.GetRankedJoust(taskForce1[i].Joust_Tier);
+                            value = $"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(taskForce1[i].Rank_Stat_Joust, 0)}]\n" +
+                            $"{Text.SideEmoji(taskForce1[i].TaskForce)}W/L: {taskForce1[i].Joust_Wins}/{taskForce1[i].Joust_Losses}" +
+                            $"<:blank:570291209906552848>{taskForce1[i].Joust_Points} TP\n";
+                        }
+                        else // Duel
+                        {
+                            tuple = Text.GetRankedDuel(taskForce1[i].Duel_Tier);
+                            value = $"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(taskForce1[i].Rank_Stat_Duel, 0)}]\n" +
+                            $"{Text.SideEmoji(taskForce1[i].TaskForce)}W/L: {taskForce1[i].Duel_Wins}/{taskForce1[i].Duel_Losses}" +
+                            $"<:blank:570291209906552848>{taskForce1[i].Duel_Points} TP\n";
+                        }
+                    }
+                    // end ranked data
+
+                    value += $"{await Utils.GetItemsBuiltAsync(taskForce1[i])}\n" +
+                    $"⚔️KDA: {taskForce1[i].Kills_Player}/{taskForce1[i].Deaths}/{taskForce1[i].Assists}\n" +
+                    $"🗡Damage: {taskForce1[i].Damage_Player}";
+
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = Utils.FindGodEmoji(gods, taskForce1[i].GodId) +
+                        $" {Text.HiddenProfileCheck(taskForce1[i].playerName, taskForce1[i].hz_player_name, taskForce1[i].hz_gamer_tag, taskForce1[i].ret_msg)}";
+                        x.Value = value;
+                    });
+                }
+                else
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "\u200b";
+                        x.Value = "\u200b";
+                    });
+                }
+                bool leftIsNull = taskForce1.ElementAtOrDefault(i) != null;
+                bool rightIsNull = taskForce2.ElementAtOrDefault(i) != null;
+                // mid
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"**{(leftIsNull ? taskForce1[i].Account_Level : "<:blank:570291209906552848>")} " +
+                    $"**<:level:529719212017451008>** " +
+                    $"{(rightIsNull ? taskForce2[i].Account_Level : "<:blank:570291209906552848>")}**\n" +
+                    $"{(leftIsNull ? Text.AbbreviationRegions(taskForce1[i].Region) : "<:blank:570291209906552848>")} 🌐 " +
+                    $"{(rightIsNull ? Text.AbbreviationRegions(taskForce2[i].Region) : "<:blank:570291209906552848>")}";
+                    x.Value = $"{(taskForce1.ElementAtOrDefault(i) != null ? Text.GetPortalEmoji(taskForce1[i].playerPortalId) : "<:blank:570291209906552848>")} " +
+                    $"<:blank:570291209906552848> " +
+                    $"{(rightIsNull ? Text.GetPortalEmoji(taskForce2[i].playerPortalId) : "\u200b")}\n" +
+                    $"{(leftIsNull && taskForce1[i]?.PartyId != 0 && taskFor1Party.Value != null && taskFor1Party.Value.Count > 1 ? Text.GetPartyEmoji(parties.IndexOf(taskFor1Party) + 1) : Text.GetPartyEmoji(0))} " +
+                    $"<:blank:570291209906552848> " +
+                    $"{(rightIsNull && taskForce2[i]?.PartyId != 0 && taskFor2Party.Value != null && taskFor2Party.Value.Count > 1 ? Text.GetPartyEmoji(parties.IndexOf(taskFor2Party) + 1) : Text.GetPartyEmoji(0))}";
+                });
+                // right TF2
+                if (taskForce2.ElementAtOrDefault(i) != null)
+                {
+                    string value = "";
+
+                    // ranked data
+                    if (isRanked)
+                    {
+                        Tuple<string, string> tuple = null;
+                        if (taskForce2[i].match_queue_id == 451 || taskForce2[i].match_queue_id == 504) // Conquest
+                        {
+                            tuple = Text.GetRankedConquest(taskForce2[i].Conquest_Tier);
+                            value = $"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(taskForce2[i].Rank_Stat_Conquest, 0)}]\n" +
+                            $"{Text.SideEmoji(taskForce2[i].TaskForce)}W/L: {taskForce2[i].Conquest_Wins}/{taskForce2[i].Conquest_Losses}" +
+                            $"<:blank:570291209906552848>{taskForce2[i].Conquest_Points} TP\n";
+                        }
+                        else if (taskForce2[i].match_queue_id == 450 || taskForce2[i].match_queue_id == 503) // Joust
+                        {
+                            tuple = Text.GetRankedJoust(taskForce2[i].Joust_Tier);
+                            value = $"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(taskForce2[i].Rank_Stat_Joust, 0)}]\n" +
+                            $"{Text.SideEmoji(taskForce2[i].TaskForce)}W/L: {taskForce2[i].Joust_Wins}/{taskForce2[i].Joust_Losses}" +
+                            $"<:blank:570291209906552848>{taskForce2[i].Joust_Points} TP\n";
+                        }
+                        else // Duel
+                        {
+                            tuple = Text.GetRankedDuel(taskForce2[i].Duel_Tier);
+                            value = $"{tuple.Item2}{tuple.Item1} " +
+                            $"[{Math.Round(taskForce2[i].Rank_Stat_Duel, 0)}]\n" +
+                            $"{Text.SideEmoji(taskForce2[i].TaskForce)}W/L: {taskForce2[i].Duel_Wins}/{taskForce2[i].Duel_Losses}" +
+                            $"<:blank:570291209906552848>{taskForce2[i].Duel_Points} TP\n";
+                        }
+                    }
+                    // end ranked data
+
+                    value += $"{await Utils.GetItemsBuiltAsync(taskForce2[i])}\n" +
+                    $"⚔️KDA: {taskForce2[i].Kills_Player}/{taskForce2[i].Deaths}/{taskForce2[i].Assists}\n" +
+                    $"🗡Damage: {taskForce2[i].Damage_Player}";
+
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = Utils.FindGodEmoji(gods, taskForce2[i].GodId) +
+                        $" {Text.HiddenProfileCheck(taskForce2[i].playerName, taskForce2[i].hz_player_name, taskForce2[i].hz_gamer_tag, taskForce2[i].ret_msg)}";
+                        x.Value = value;
+                    });
+                }
+                else
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "\u200b";
+                        x.Value = "\u200b";
+                    });
+                }
+            }
+            // END Players
+
+            return await Task.FromResult(embed.Build());
+        }
+        
         public static async Task<Embed> BuildMatchHistoryEmbedAsync(List<MatchHistoryModel> matchHistory)
         {
             if (matchHistory.Count == 1 && matchHistory[0].playerId == 0)
@@ -1529,6 +1795,7 @@ namespace ThothBotCore.Discord
             });
             return embed.Build();
         }
+        
         public static async Task<Embed> BuildWorshipersEmbedAsync(List<GodRanks> ranks, Player.PlayerStats player)
         {
             var sb = new StringBuilder();
@@ -1584,6 +1851,7 @@ namespace ThothBotCore.Discord
             });
             return await Task.FromResult(embed.Build());
         }
+        
         public static async Task<Embed> BuildWinRatesEmbedAsync(List<GodRanks> ranks, Player.PlayerStats player)
         {
             var sb = new StringBuilder();
@@ -1608,7 +1876,7 @@ namespace ThothBotCore.Discord
             var sortedRanksByWinRate = ranks.OrderByDescending(x=>x.WinRate).ToList();
             for (int i = 0; i < sortedRanksByWinRate.Count; i++)
             {
-                string godEmoji = Utils.FindGodEmoji(gods, Int32.Parse(sortedRanksByWinRate[i].god_id));
+                string godEmoji = Utils.FindGodEmoji(gods, Int32.Parse(sortedRanksByWinRate[i]._id.god_id));
                 if (godEmoji.Length + 
                     sortedRanksByWinRate[i].god.Length + 
                     Math.Round(sortedRanksByWinRate[i].WinRate, 2).ToString().Length + 
@@ -1790,6 +2058,7 @@ namespace ThothBotCore.Discord
             });
             return await Task.FromResult(embed.Build());
         }
+        
         public static async Task<Embed> BuildEsportsScheduleEmbedAsync(SPLSchedule schedule, GoogleCalendarModel calendar)
         {
             var unixToday = Text.DateTimeToUnix(DateTime.UtcNow.AddDays(-5));
@@ -1799,13 +2068,13 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.SPLColor);
             embed.WithAuthor(x =>
             {
-                x.Name = $"SPL Schedule - {schedule.phases[^1].title} [{schedule.date_range}]";
+                x.Name = $"Smite Pro League Schedule - {schedule.phases[^1].title} [{schedule.date_range}]";
                 x.IconUrl = Constants.SmiteBolt;
                 x.Url = "https://www.smiteproleague.com/schedule";
             });
             embed.WithFooter(x =>
             {
-                x.Text = "This command is still in beta. It may break at any point.";
+                x.Text = "This command is still in beta. It may break at any point or show outdated or wrong data.";
             });
             foreach (var item in schedule.schedule)
             {
@@ -1849,6 +2118,7 @@ namespace ThothBotCore.Discord
             }
             return await Task.FromResult(embed.Build());
         }
+        
         public static async Task<Embed> BuildEsportsStandingsEmbedAsync(List<SPLStandings> standings)
         {
             var unixToday = Text.DateTimeToUnix(DateTime.UtcNow.AddDays(-5));
@@ -1857,13 +2127,13 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.SPLColor);
             embed.WithAuthor(x =>
             {
-                x.Name = "SPL Standings";
+                x.Name = "Smite Pro League Standings";
                 x.IconUrl = Constants.SmiteBolt;
                 x.Url = "https://www.smiteproleague.com/standings";
             });
             embed.WithFooter(x =>
             {
-                x.Text = "This command is still in beta. It may break at any point.";
+                x.Text = "This command is still in beta. It may break at any point or show outdated or wrong data.";
             });
             for (int i = 0; i < standings.Count; i++)
             {
@@ -1877,6 +2147,122 @@ namespace ThothBotCore.Discord
             if (embed.Fields?.Count == 0)
             {
                 embed.WithDescription("No standings found. Try again later.");
+            }
+            return await Task.FromResult(embed.Build());
+        }
+
+        public static async Task<Embed> BuildEsportsStatsEmbedAsync(SPLStats stats)
+        {
+            StringBuilder sb = new();
+            var embed = new EmbedBuilder();
+            embed.WithColor(Constants.SPLColor);
+            embed.WithAuthor(x =>
+            {
+                x.Name = "Smite Pro League Statistics";
+                x.IconUrl = Constants.SmiteBolt;
+                x.Url = "https://www.smiteproleague.com/stats";
+            });
+            embed.WithFooter(x =>
+            {
+                x.Text = "This command is still in beta. It may break at any point or show outdated or wrong data.";
+            });
+
+            // POTW
+            for (int i = 0; i < stats.potw.Length; i++)
+            {
+                sb.AppendLine($"{Text.GetRoleIcon(stats.potw[i].role)} [{stats.potw[i].name}](https://www.smiteproleague.com/players/{stats.potw[i].name.ToLowerInvariant()})");
+            }
+
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $"Players of the Week";
+                x.Value = sb.ToString();
+            });
+
+            sb.Clear();
+            //Trending KDA
+            sb.AppendLine($"{Text.GetRoleIcon(stats.trending[0].role)} [{stats.trending[0].name}](https://www.smiteproleague.com/players/{stats.trending[0].name.ToLowerInvariant()})\n" +
+                $"{Text.GetEsportsTeamEmoji(stats.trending[0].short_name)} [[{stats.trending[0].team}](https://www.smiteproleague.com/teams/{stats.trending[0].short_name.ToLowerInvariant()})]\n" +
+                $"⚔ KDA [{stats.trending[0].stats[0].value}]\n" +
+                $"🗡 Kills: {stats.trending[0].stats[1].value}\n" +
+                $"☠ Deaths: {stats.trending[0].stats[2].value}\n" +
+                $"🤝 Assists: {stats.trending[0].stats[3].value}");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Highest Player KDA";
+                x.Value = sb.ToString();
+            });
+
+            sb.Clear();
+            // Trending Gold
+            sb.AppendLine($"{Text.GetRoleIcon(stats.trending[1].role)} [{stats.trending[1].name}](https://www.smiteproleague.com/players/{stats.trending[1].name.ToLowerInvariant()})\n" +
+                $"{Text.GetEsportsTeamEmoji(stats.trending[1].short_name)}[[{stats.trending[1].team}](https://www.smiteproleague.com/teams/{stats.trending[1].short_name.ToLowerInvariant()})]\n" +
+                $"<:coins:590942235474919464> Gold: {stats.trending[1].stats[0].value}\n" +
+                $"⌚ GPM: {stats.trending[1].stats[1].value}");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Highest Player Gold";
+                x.Value = sb.ToString();
+            });
+
+            sb.Clear();
+            // Trending Most Damage
+            sb.AppendLine($"{Text.GetRoleIcon(stats.trending[2].role)} [{stats.trending[2].name}](https://www.smiteproleague.com/players/{stats.trending[2].name.ToLowerInvariant()})\n" +
+                $"{Text.GetEsportsTeamEmoji(stats.trending[2].short_name)} [[{stats.trending[2].team}](https://www.smiteproleague.com/teams/{stats.trending[2].short_name.ToLowerInvariant()})]\n" +
+                $"🩸 Damage: {stats.trending[2].stats[0].value}\n" +
+                $"🗡 Kills: {stats.trending[2].stats[1].value}\n" +
+                $"🤝 Assists: {stats.trending[2].stats[2].value}");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Highest Player Damage";
+                x.Value = sb.ToString();
+            });
+
+            sb.Clear();
+            //KDA Team
+            sb.AppendLine($"{Text.GetEsportsTeamEmoji(stats.team_leaders[0].short_name)} " +
+                $"[{stats.team_leaders[0].team}](https://www.smiteproleague.com/teams/{stats.team_leaders[0].short_name.ToLowerInvariant()})\n" +
+                $"⚔ K/D/A: {stats.team_leaders[0].stats[1].value} [{stats.team_leaders[0].stats[0].value}]");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Highest Team KDA";
+                x.Value = sb.ToString();
+            });
+
+            sb.Clear();
+            //Gold Team
+            sb.AppendLine($"{Text.GetEsportsTeamEmoji(stats.team_leaders[1].short_name)} " +
+                $"[{stats.team_leaders[1].team}](https://www.smiteproleague.com/teams/{stats.team_leaders[1].short_name.ToLowerInvariant()})\n" +
+                $"<:coins:590942235474919464> Gold: {stats.team_leaders[1].stats[0].value}\n" +
+                $"⌚ GPM: {stats.team_leaders[1].stats[1].value}");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Highest Team Gold";
+                x.Value = sb.ToString();
+            });
+
+            sb.Clear();
+            //Most Objectives
+            sb.AppendLine($"{Text.GetEsportsTeamEmoji(stats.team_leaders[2].short_name)} " +
+                $"[{stats.team_leaders[2].team}](https://www.smiteproleague.com/teams/{stats.team_leaders[2].short_name.ToLowerInvariant()})\n" +
+                $"👱‍♀️ {stats.team_leaders[2].stats[0].title}: {stats.team_leaders[2].stats[0].value}\n" +
+                $"🔥 {stats.team_leaders[2].stats[1].title}: {stats.team_leaders[2].stats[1].value}");
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = "Most Objectives by Team";
+                x.Value = sb.ToString();
+            });
+
+            if (embed.Fields?.Count == 0)
+            {
+                embed.WithDescription("No stats found. Try again later.");
             }
             return await Task.FromResult(embed.Build());
         }
@@ -1931,6 +2317,7 @@ namespace ThothBotCore.Discord
             }
             return await Task.FromResult(embed.Build());
         }
+        
         public static async Task<Embed> BuildPlayerLookupEmbedAsync(PlayerSpecial playerSpecial)
         {
             var embed = new EmbedBuilder();
@@ -2032,6 +2419,34 @@ namespace ThothBotCore.Discord
                           $"{(god.Type.Contains("Physical") ? god.PhysicalPower : god.MagicalPower)}" +
                           $"(+{(god.Type.Contains("Physical") ? god.PhysicalPowerPerLevel : god.MagicalPowerPerLevel)})";
             });
+
+            return await Task.FromResult(embed.Build());
+        }
+
+        public static async Task<Embed> BuildGodLorePageEmbedAsync(Gods.God god)
+        {
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(author =>
+            {
+                author.WithName(god.Name);
+                author.WithIconUrl(god.godIcon_URL);
+                author.WithUrl($"https://www.smitegame.com/gods/{Text.URLifyGodName(god.Name)}");
+            });
+            embed.WithTitle($"Lore of {god.Name}, {god.Title}");
+            embed.WithThumbnailUrl(god.godIcon_URL);
+            if (god.Lore.Length < 5900)
+            {
+                embed.WithDescription(god.Lore.Replace("\\n", "\n"));
+            }
+            else
+            {
+                embed.WithDescription("Oops, the lore is too long to display here.");
+                await Reporter.SendErrorAsync("Lore for " + god.Name + " is too long to display in a single embed.");
+            }
+            if (god.DomColor != 0)
+            {
+                embed.WithColor(new Color((uint)god.DomColor));
+            }
 
             return await Task.FromResult(embed.Build());
         }

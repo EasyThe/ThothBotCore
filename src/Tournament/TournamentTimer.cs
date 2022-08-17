@@ -13,9 +13,9 @@ namespace ThothBotCore.Tournament
     public static class TournamentTimer
     {
         private static Timer PlayersStatusCheckerTimer;
-        private static HiRezAPI HiRezAPI = new();
+        private static HiRezAPIv2 HiRezAPI = new();
         private static int MatchId1, MatchId2;
-        public static Task StartServerStatusTimer()
+        public static Task StartTournamentTimer()
         {
             PlayersStatusCheckerTimer = new Timer() 
             {
@@ -49,6 +49,8 @@ namespace ThothBotCore.Tournament
                 string player1, player2;
                 foreach (var match in openMatches)
                 {
+                    MatchId1 = 0;
+                    MatchId2 = 0;
                     player1 = await PlayerChecker(participants.Find(x => x.participant.id == match.match.player1_id).participant.name, false);
                     player2 = await PlayerChecker(participants.Find(x => x.participant.id == match.match.player2_id).participant.name, true);
                     embed.AddField(x =>
@@ -88,14 +90,13 @@ namespace ThothBotCore.Tournament
             Global.TourneyTimerIDs = null;
             PlayersStatusCheckerTimer.Enabled = false;
             Text.WriteLine(message);
-            await Reporter.SendError(message);
+            await Reporter.SendErrorAsync(message);
         }
         private static async Task<string> PlayerChecker(string PlayerName, bool isRight)
         {
             List<SearchPlayers> finalsearchPlayers = new();
-            string json;
 
-            var searchPlayers = await HiRezAPI.SearchPlayer(PlayerName);
+            var searchPlayers = await HiRezAPI.SearchPlayersAsync(PlayerName);
             if (searchPlayers.Count != 0)
             {
                 foreach (var pl in searchPlayers)
@@ -113,14 +114,13 @@ namespace ThothBotCore.Tournament
                 {
                     if (isRight)
                     {
-                        return $"{finalsearchPlayers[0].Name} <:Hidden:591666971234402320>";
+                        return $"{finalsearchPlayers[0].Name} [Hidden]";
                     }
-                    return $"<:Hidden:591666971234402320> {finalsearchPlayers[0].Name}";
+                    return $"[Hidden] {finalsearchPlayers[0].Name}";
                 }
                 else
                 {
-                    json = await HiRezAPI.GetPlayerStatus(finalsearchPlayers[0].player_id);
-                    var playerStatus = JsonConvert.DeserializeObject<List<Player.PlayerStatus>>(json);
+                    var playerStatus = await HiRezAPI.GetPlayerStatusAsync(finalsearchPlayers[0].player_id.ToString());
                     if (playerStatus[0].status == 3 && playerStatus[0].Match != 0)
                     {
                         if (isRight)

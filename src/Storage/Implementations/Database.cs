@@ -26,7 +26,7 @@ namespace ThothBotCore.Storage
             }
             catch (Exception ex)
             {
-                await Reporter.SendError($"**Error in InsertServerStatusUpdates\n{ex.Message}");
+                await Reporter.SendErrorAsync($"**Error in InsertServerStatusUpdates\n{ex.Message}");
             }
         }
         public static List<string> GetServerStatusUpdates(string id)

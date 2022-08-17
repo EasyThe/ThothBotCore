@@ -76,6 +76,17 @@ namespace ThothBotCore.Connections
             }
             return new List<SPLStandings>();
         }
+        public static async Task<SPLStats> GetEsportsStats()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://esports.hirezstudios.com/esportsAPI/smite/eventoverview/{Constants.BotSettings.s[4]}");
+            var response = await httpClient.SendAsync(request);
+            string json = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return JsonConvert.DeserializeObject<SPLStats>(json);
+            }
+            return new SPLStats();
+        }
 
         public static async Task<string> GetEsportsAppFile()
         {
@@ -91,7 +102,7 @@ namespace ThothBotCore.Connections
 
         public static async Task<string> GetEsportsEventID(string appFile)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.smiteproleague.com/{appFile}.js");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.smiteproleague.com/{appFile}");
             var response = await httpClient.SendAsync(request);
             string json = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
@@ -130,7 +141,7 @@ namespace ThothBotCore.Connections
             }
             catch (System.Exception ex)
             {
-                await Reporter.SendError($"===\nGetStatusSummary Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
+                await Reporter.SendErrorAsync($"===\nGetStatusSummary Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
                 return "";
             }
         }
@@ -150,12 +161,12 @@ namespace ThothBotCore.Connections
                 {
                     return JsonConvert.DeserializeObject<GoogleCalendarModel>(json);
                 }
-                await Reporter.SendError($"GetSCCCalendarEvents error, status code: {response.StatusCode}");
+                await Reporter.SendErrorAsync($"GetSCCCalendarEvents error, status code: {response.StatusCode}");
                 return new GoogleCalendarModel();
             }
             catch (Exception ex)
             {
-                await Reporter.SendError($"===\nGetSCCCalendarEvents Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
+                await Reporter.SendErrorAsync($"===\nGetSCCCalendarEvents Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
                 return new GoogleCalendarModel();
             }
         }
@@ -175,15 +186,14 @@ namespace ThothBotCore.Connections
                     return JsonConvert.DeserializeObject<GoogleVisionAPIResponseModel>(json);
                 }
 
-                await Reporter.SendError($"GetDominantColorFromCloudVisionAsync error, status code: {response.StatusCode}\n```\n{json}```");
+                await Reporter.SendErrorAsync($"GetDominantColorFromCloudVisionAsync error, status code: {response.StatusCode}\n```\n{json}```");
                 return new GoogleVisionAPIResponseModel();
             }
             catch (Exception ex)
             {
-                await Reporter.SendError($"===\nGetDominantColorFromCloudVisionAsync Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
+                await Reporter.SendErrorAsync($"===\nGetDominantColorFromCloudVisionAsync Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
                 return new GoogleVisionAPIResponseModel();
             }
         }
-        
     }
 }
