@@ -573,7 +573,7 @@ namespace ThothBotCore.Modules
                 var playerstatus = await HiRez.GetPlayerStatusAsync(player);
 
                 // Checking if the player is online and is in match
-                if (playerstatus[0].status != 3 && playerstatus[0].Match == 0)
+                if (playerstatus[0].Match == 0)
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{getPlayer[0].hz_player_name ?? getPlayer[0].hz_gamer_tag} is not in a match. [{playerstatus[0].status_string}]");
                     await Context.Interaction.ModifyOriginalResponseAsync(x =>
@@ -651,7 +651,7 @@ namespace ThothBotCore.Modules
                 var playerstatus = await HiRez.GetPlayerStatusAsync(player);
 
                 // Checking if the player is online and is in match
-                if (playerstatus[0].status != 3 && playerstatus[0].Match == 0)
+                if (playerstatus[0].Match == 0)
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{getPlayer[0].hz_player_name ?? getPlayer[0].hz_gamer_tag} is not in a match. [{playerstatus[0].status_string}]");
                     var comps = await ComponentsHandler.RichStatsButtonsAsync(player, 1, true);

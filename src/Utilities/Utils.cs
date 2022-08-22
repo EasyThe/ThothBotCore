@@ -205,9 +205,16 @@ namespace ThothBotCore.Utilities
 
             // Random Starter Item
             var allitems = MongoConnection.GetAllActiveItems();
-            var starters = allitems.FindAll(x => x.StartingItem && x.GodType != null && x.GodType.Contains(godType) && x.ItemTier == 2);
+            var starters = allitems.FindAll(x => x.StartingItem && 
+                                                 x.GodType != null && 
+                                                 x.GodType.Contains(godType) && 
+                                                 x.ItemTier == 2 && 
+                                                 !x.RestrictedRoles.Contains(god.Roles.ToLowerInvariant()));
 
-            sb.Append(starters[rnd.Next(starters.Count)].Emoji);
+            if (starters != null && starters.Count != 0)
+            {
+                sb.Append(starters[rnd.Next(starters.Count)].Emoji);
+            }
 
             // Boots or Shoes depending on the god type | hehe rip boots
             if (god.Name == "Ratatoskr")

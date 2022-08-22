@@ -1191,7 +1191,7 @@ namespace ThothBotCore.Modules
                     var playerstatus = await HiRez.GetPlayerStatusAsync(player[0].player_id.ToString());
 
                     // Checking if the player is online and is in match
-                    if (playerstatus[0].status != 3 && playerstatus[0].Match == 0)
+                    if (playerstatus[0].Match == 0)
                     {
                         var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{getPlayer[0].hz_player_name ?? getPlayer[0].hz_gamer_tag} is not in a match. [{playerstatus[0].status_string}]");
                         await FollowupAsync(embed: embed);
@@ -1200,12 +1200,18 @@ namespace ThothBotCore.Modules
 
                     var matchPlayerDetails = await HiRez.GetMatchPlayerDetailsAsync(playerstatus[0].Match.ToString());
 
+                    if (matchPlayerDetails == null || matchPlayerDetails.Count == 0)
+                    {
+                        var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, but this match seems to be unavailable to show.");
+                        await FollowupAsync(embed: embed);
+                        return;
+                    }
                     if (matchPlayerDetails[0].ret_msg == null)
                     {
                         var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
                         await FollowupAsync(embed: embed.Build());
                     }
-                    else
+                    else if (matchPlayerDetails.Count > 1 && matchPlayerDetails[0].ret_msg != null)
                     {
                         await FollowupAsync(matchPlayerDetails[0].ret_msg.ToString());
                         await Reporter.SlashRespondToCommandOnErrorAsync(null, Context, matchPlayerDetails[0].ret_msg.ToString());
