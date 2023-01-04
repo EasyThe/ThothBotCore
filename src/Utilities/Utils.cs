@@ -16,7 +16,6 @@ namespace ThothBotCore.Utilities
 {
     public class Utils
     {
-        private static readonly Random rnd = new();
         private static StringBuilder builder;
         public static async Task<string> AddNewGodEmojiInGuild(Gods.God god)
         {
@@ -198,7 +197,7 @@ namespace ThothBotCore.Utilities
             var active = await MongoConnection.GetActiveActivesAsync();
             for (int a = 0; a < 2; a++)
             {
-                int ar = rnd.Next(active.Count);
+                int ar = Random.Shared.Next(active.Count);
                 sb.Append(active[ar].Emoji);
                 active.RemoveAll(x => x.ChildItemId == active[ar].ChildItemId);
             }
@@ -213,7 +212,7 @@ namespace ThothBotCore.Utilities
 
             if (starters != null && starters.Count != 0)
             {
-                sb.Append(starters[rnd.Next(starters.Count)].Emoji);
+                sb.Append(starters[Random.Shared.Next(starters.Count)].Emoji);
             }
 
             // Boots or Shoes depending on the god type | hehe rip boots
@@ -228,7 +227,7 @@ namespace ThothBotCore.Utilities
             // Finishing the build
             for (int i = 0; i < itemsCount; i++)
             {
-                int r = rnd.Next(items.Count);
+                int r = Random.Shared.Next(items.Count);
                 sb.Append(items[r].Emoji);
                 items.RemoveAt(r);
             }
@@ -241,11 +240,11 @@ namespace ThothBotCore.Utilities
             if (godName != "Ratatoskr")
             {
                 var boots = await MongoConnection.GetBootsOrShoesAsync(godType);
-                int boot = rnd.Next(boots.Count);
+                int boot = Random.Shared.Next(boots.Count);
                 return boots[boot].Emoji;
             }
             var bootsr = await MongoConnection.GetBootsOrShoesAsync("ratatoskr");
-            return bootsr[rnd.Next(bootsr.Count)].Emoji;
+            return bootsr[Random.Shared.Next(bootsr.Count)].Emoji;
         }
         public static async Task<string> GetItemsBuiltAsync(MatchHistoryModel match)
         {

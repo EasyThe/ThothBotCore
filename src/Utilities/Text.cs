@@ -243,7 +243,7 @@ namespace ThothBotCore.Utilities
         }
 
         // SMITE Queue names
-        public static string GetQueueName(int queueID, string name = "")
+        public static string GetQueueName(int queueID, string matchId, string name = "")
         {
             var queue = Constants.SmiteQueues.FirstOrDefault(x => x.Key == queueID.ToString()).Value;
             if (queue == null)
@@ -252,7 +252,7 @@ namespace ThothBotCore.Utilities
                 {
                     return name;
                 }
-                _ = Reporter.SendErrorAsync($"**Missing Queue:**\nID:{queueID} || {name}");
+                _ = Reporter.SendErrorAsync($"**Missing Queue:**\nID:{queueID} || {name} || MatchID: {matchId}");
                 return "Unknown Queue";
             }
             return queue;

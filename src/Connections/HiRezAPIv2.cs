@@ -221,6 +221,7 @@ namespace ThothBotCore.Connections
                     // Consider logging those non-ok status codes.
                     return null;
                 }
+                //Console.WriteLine(url);
                 var json = await response.Content.ReadAsStringAsync();
                 if (json.ToLowerInvariant().Contains("<html>"))
                 {

@@ -26,7 +26,7 @@ namespace ThothBotCore.Autocomplete
                     Value = s.DeviceName // here's what will actually go into the slashcommand argument on tapping the suggestion
                 });
 
-                return AutocompletionResult.FromSuccess(autocompleteResults);
+                return AutocompletionResult.FromSuccess(autocompleteResults.Take(25));
             }
             catch (Exception ex)
             {

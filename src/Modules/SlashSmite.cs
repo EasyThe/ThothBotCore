@@ -903,7 +903,8 @@ namespace ThothBotCore.Modules
 
                 if ((string)player[0].ret_msg == "apidown" || !isAlive)
                 {
-                    var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
+                    Console.WriteLine(player[0].ret_msg.ToString());
+                    var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
                     await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
@@ -961,7 +962,7 @@ namespace ThothBotCore.Modules
 
                 if ((string)player[0].ret_msg == "apidown" || !isAlive)
                 {
-                    var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
+                    var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
                     await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
@@ -1075,7 +1076,7 @@ namespace ThothBotCore.Modules
                         string godemoji = Utils.FindGodEmoji(Utilities.Constants.GodsHashSet.ToList(), matchHistory[i].GodId);
                         options.Add(new SelectMenuOptionBuilder()
                         {
-                            Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
+                            Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Match.ToString(), matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
                             Description = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists}",
                             Emote = Emote.Parse(godemoji),
                             Value = matchHistory[i].Match.ToString()
@@ -1168,7 +1169,7 @@ namespace ThothBotCore.Modules
 
                 if ((string)player[0].ret_msg == "apidown")
                 {
-                    var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
+                    var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
                     await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
@@ -1249,7 +1250,7 @@ namespace ThothBotCore.Modules
                 }
                 if ((string)player[0].ret_msg == "apidown")
                 {
-                    var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
+                    var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
                     await Context.Interaction.FollowupAsync(embed: embed);
                     return;
                 }
@@ -1594,6 +1595,10 @@ namespace ThothBotCore.Modules
         public static async Task<bool> IsSmiteApiAlive(HiRezAPIv2 api)
         {
             var status = await api.GetPlayerStatusAsync("2615245");
+            if (status.Count == 0)
+            {
+                Console.WriteLine($"IsSmiteApiAlive returned 0 results - API DOWN");
+            }
             return status.Count != 0;
         }
         public static string GetUptime()

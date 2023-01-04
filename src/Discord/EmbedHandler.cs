@@ -296,13 +296,13 @@ namespace ThothBotCore.Discord
                         {
                             if (int.Parse(matchPlayerDetails[s].playerId) == playerStats[0].ActivePlayerId)
                             {
-                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**, " +
+                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id, playerStatus[0].Match.ToString())}**, " +
                                     $"playing as {matchPlayerDetails[s].GodName}");
                             }
                         }
                         else
                         {
-                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**");
+                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id, playerStatus[0].Match.ToString())}**");
                         }
                     }
                 }
@@ -631,13 +631,13 @@ namespace ThothBotCore.Discord
                         {
                             if (Int32.Parse(matchPlayerDetails[s].playerId) == playerStats[0].ActivePlayerId)
                             {
-                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**, " +
+                                embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id, playerStatus[0].Match.ToString())}**, " +
                                     $"playing as {matchPlayerDetails[s].GodName}");
                             }
                         }
                         else
                         {
-                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id)}**");
+                            embed.WithDescription($":eyes: {playerStatus[0].status_string}: **{Text.GetQueueName(playerStatus[0].match_queue_id, playerStatus[0].Match.ToString())}**");
                         }
                     }
                 }
@@ -1022,7 +1022,9 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
-                author.WithName($"{Text.GetQueueName(Int32.Parse(matchPlayerDetails[0].Queue))}");
+                author.WithName($"{Text.GetQueueName(
+                    Int32.Parse(matchPlayerDetails[0].Queue), 
+                    matchPlayerDetails[0].Match.ToString())}");
                 author.WithIconUrl(Constants.botIcon);
             });
             embed.WithFooter(x =>
@@ -1196,7 +1198,7 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
-                author.WithName($"{Text.GetQueueName(matchdetailsList[0].match_queue_id, matchdetailsList[0].name)} | {matchdetailsList[0].Minutes} mins");
+                author.WithName($"{Text.GetQueueName(matchdetailsList[0].match_queue_id, matchdetailsList[0].Match.ToString(), matchdetailsList[0].name)} | {matchdetailsList[0].Minutes} mins");
                 author.WithIconUrl(Constants.botIcon);
                 author.WithUrl($"https://smite.guru/match/{matchdetailsList[0].Match}");
             });
@@ -1505,7 +1507,7 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
-                author.WithName($"{Text.GetQueueName(matchDetails[0].match_queue_id, matchDetails[0].name)} | {matchDetails[0].Minutes} mins");
+                author.WithName($"{Text.GetQueueName(matchDetails[0].match_queue_id, matchDetails[0].Match.ToString(), matchDetails[0].name)} | {matchDetails[0].Minutes} mins");
                 author.WithIconUrl(Constants.botIcon);
                 author.WithUrl($"https://smite.guru/match/{matchDetails[0].Match}");
             });
@@ -1776,7 +1778,7 @@ namespace ThothBotCore.Discord
                     embed.AddField(async x =>
                     {
                         x.IsInline = false;
-                        x.Name = $"{godemoji} `{matchHistory[i].Win_Status}` {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - " +
+                        x.Name = $"{godemoji} `{matchHistory[i].Win_Status}` {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Match.ToString(), matchHistory[i].Queue)} - " +
                         $"{matchHistory[i].Minutes} min - {Text.RelativeTimestamp(Convert.ToDateTime(matchHistory[i].Match_Time, CultureInfo.InvariantCulture))} " +
                         $"`[{matchHistory[i].Match}]`";
                         x.Value = $"⚔**KDA:** {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists} | " +

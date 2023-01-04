@@ -225,10 +225,11 @@ namespace ThothBotCore.Utilities
                             sb.Append($" `{item}`");
                         }
                     }
-                }
+                } // any other?
                 else
                 {
                     sb.Append(context?.Interaction.Data);
+                    
                 }
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{sb}\n" +
                     $"**User: **{context?.Interaction.User} [{context?.Interaction.User.Id}]\n" +

@@ -181,14 +181,6 @@ namespace ThothBotCore.Discord
             try
             {
                 var serverConfig = new Models.ServerConfig { prefix = Credentials.botConfig.prefix };
-                if (context.Guild != null)
-                {
-                    var db = await Database.GetServerConfig(context.Guild.Id);
-                    if (db.FirstOrDefault() != null)
-                    {
-                        serverConfig = db.FirstOrDefault();
-                    }
-                }
 
                 if ((msg.HasStringPrefix(Credentials.botConfig.prefix, ref argPos)
                 || msg.HasStringPrefix(serverConfig.prefix, ref argPos)

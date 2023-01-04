@@ -422,40 +422,6 @@ namespace ThothBotCore.Modules
             Text.WriteLine((count - 2).ToString());
         }
 
-        [Command("guild", true, RunMode = RunMode.Async)]
-        public async Task CheckGuildOwnerCommand(ulong id = 0)
-        {
-            if (id == 0)
-            {
-                id = Context.Guild.Id;
-            }
-            var embed = new EmbedBuilder();
-            var guild = Connection.Client.GetGuild(id);
-            var guildinfo = await Database.GetServerConfig(id);
-            embed.WithTitle("Database");
-            embed.WithDescription($"ID: {guildinfo[0]._id}\n" +
-                $"Prefix: {guildinfo[0].prefix}\n" +
-                $"Status Updates Enabled: {guildinfo[0].statusBool}\n" +
-                $"Status Updates Channel: {guildinfo[0].statusChannel}");
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "More";
-                x.Value = $"Name: {guild.Name}\n" +
-                $"Owner: {guild.Owner} [{guild.OwnerId}]\n" +
-                $"Preferred Culture: {guild.PreferredCulture}\n" +
-                $"Preferred Locale: {guild.PreferredLocale}\n" +
-                $"Channels: {guild.TextChannels.Count}\n" +
-                $"Users: {guild.MemberCount}\n" +
-                $"Shard: {Connection.Client.GetShardIdFor(Context.Guild)}";
-            });
-            if (guild.IconUrl != null)
-            {
-                embed.WithThumbnailUrl(guild.IconUrl);
-            }
-            await ReplyAsync(embed: embed.Build());
-        }
-
         [Command("searchguild")]
         public async Task SearchGuildCommand([Remainder] string term)
         {
@@ -471,37 +437,6 @@ namespace ThothBotCore.Modules
                 }
             }
             await ReplyAsync($"{count} results\n{sb}");
-        }
-
-        [Command("checkguilds", true, RunMode = RunMode.Async)]
-        public async Task CheckAllGuilds()
-        {
-            await ReplyAsync("Starting now...");
-            var guilds = Connection.Client.Guilds;
-            var sb = new StringBuilder();
-            int missingCount = 0;
-
-            foreach (var guild in guilds)
-            {
-                var config = await Database.GetServerConfig(guild.Id);
-                string gname;
-
-                if (config.Count == 0)
-                {
-                    gname = guild.Name;
-                    if (gname.Contains("'"))
-                    {
-                        gname.Replace("'", "''");
-                    }
-                    Text.WriteLine($"{guild.Name} [{guild.Id}]");
-                    await Database.SetGuild(guild.Id);
-                    missingCount++;
-                    sb.AppendLine($"{guild.Name} [{guild.Id}]");
-                }
-            }
-            await ReplyAsync($"Finished!\n" +
-                $"Missing: {missingCount}\n" +
-                $"{sb}");
         }
 
         [Command("permcheck", true, RunMode = RunMode.Async)]

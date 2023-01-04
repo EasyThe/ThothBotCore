@@ -44,7 +44,7 @@ namespace ThothBotCore.Modules
 
                 if ((string)player[0].ret_msg == "apidown")
                 {
-                    var embed = await Reporter.RespondToCommandOnErrorAsync(null, null, "apidown");
+                    var embed = await Reporter.SlashRespondToCommandOnErrorAsync(null, null, "apidown");
                     await RespondAsync(embed: embed, ephemeral: true);
                     return;
                 }

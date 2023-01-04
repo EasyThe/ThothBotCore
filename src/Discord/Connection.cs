@@ -128,7 +128,6 @@ namespace ThothBotCore.Discord
 
         private async Task ClientLeftGuildTask(SocketGuild arg)
         {
-            await Database.DeleteServerConfig(arg.Id);
             await MongoConnection.RemoveGuildSettings(arg.Id);
 
             await Reporter.SendLeftServers(arg);
@@ -136,7 +135,6 @@ namespace ThothBotCore.Discord
 
         private async Task JoinedNewGuildActions(SocketGuild guild)
         {
-            await Database.SetGuild(guild.Id);
             await Reporter.SendJoinedServerEmbedAsync(guild);
         }
     }

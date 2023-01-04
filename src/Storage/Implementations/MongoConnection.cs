@@ -51,23 +51,23 @@ namespace ThothBotCore.Storage.Implementations
                 replacement: item,
                 options: replaceOptions);
             }
-
-            //await GetDatabase().GetCollection<Player.PlayerStats>("players").ReplaceOneAsync(
-            //    filter: x => x.ActivePlayerId == playerStats.ActivePlayerId,
-            //    replacement: playerStats,
-            //    options: replaceOptions);
-
-            //await GetDatabase().GetCollection<GodRanks>("god_leaderboards").
-                //update: Builders<GodRanks>.Update.Set(),
-                //options: new UpdateOptions() { IsUpsert = true });
-
-            //await GetDatabase().GetCollection<GodRanks>("god_leaderboards").UpdateManyAsync(
-            //    filter: x => x.player_id == godRanks[0].player_id,
-            //    update: Builders<GodRanks>.Update.Set();
         }
         public static async Task<long> PlayersCount()
         {
             return await GetDatabase().GetCollection<Player.PlayerStats>("players").CountDocumentsAsync(_ => true);
+        }
+        public static async Task<List<Player.PlayerStats>> GetAllPlayersAsync()
+        {
+            try
+            {
+                var res = await GetDatabase().GetCollection<Player.PlayerStats>("players").FindAsync(_ => true);
+                return await res.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new List<Player.PlayerStats>();
+            }
         }
 
         // Player Specials

@@ -1,10 +1,13 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Models
 {
+    [BsonIgnoreExtraElements]
     public class Player
     {
+        [BsonIgnoreExtraElements]
         public class PlayerStats
         {
             public int ActivePlayerId { get; set; }
@@ -18,7 +21,9 @@ namespace ThothBotCore.Models
             public int Level { get; set; }
             public int Losses { get; set; }
             public int MasteryLevel { get; set; }
+            [BsonIgnore]
             public object MergedPlayers { get; set; }
+            // comment out the two lines ^^ if importing data to mongodb for godranks
             public int MinutesPlayed { get; set; }
             public string Name { get; set; }
             public string Personal_Status_Message { get; set; }

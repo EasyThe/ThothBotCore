@@ -10,14 +10,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Models.Gods;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace ThothBotCore.Modules
@@ -25,7 +23,6 @@ namespace ThothBotCore.Modules
     public class MessageComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
     {
         public HiRezAPIv2 HiRez { get; set; }
-        static Random rnd = new();
 
         [ComponentInteraction("playerselect-stats")]
         public async Task PlayerSelectStats(string[] selectedPlayer)
@@ -431,7 +428,7 @@ namespace ThothBotCore.Modules
                     string godemoji = Utils.FindGodEmoji(Utilities.Constants.GodsHashSet.ToList(), matchHistory[i].GodId);
                     options.Add(new SelectMenuOptionBuilder()
                     {
-                        Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
+                        Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Match.ToString(), matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
                         Description = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists}",
                         Emote = Emote.Parse(godemoji),
                         Value = matchHistory[i].Match.ToString()
@@ -518,7 +515,7 @@ namespace ThothBotCore.Modules
                     string godemoji = Utils.FindGodEmoji(Utilities.Constants.GodsHashSet.ToList(), matchHistory[i].GodId);
                     options.Add(new SelectMenuOptionBuilder()
                     {
-                        Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
+                        Label = $"[{matchHistory[i].Win_Status}] {Text.GetQueueName(matchHistory[i].Match_Queue_Id, matchHistory[i].Match.ToString(), matchHistory[i].Queue)} - ID: {matchHistory[i].Match}",
                         Description = $"KDA: {matchHistory[i].Kills}/{matchHistory[i].Deaths}/{matchHistory[i].Assists}",
                         Emote = Emote.Parse(godemoji),
                         Value = matchHistory[i].Match.ToString()
@@ -2314,11 +2311,21 @@ namespace ThothBotCore.Modules
             await DeferAsync();
             try
             {
-               
-                var md = JsonConvert.DeserializeObject<List<MatchDetails.MatchDetailsPlayer>>(await File.ReadAllTextAsync("D:\\2021\\Thoth\\ssd\\getmatchdetails (1).json"));
-
-                await FollowupAsync(embed: await EmbedHandler.BuildMatchDetailsEmbedAsync(md),
-                    ephemeral: true);
+                Console.WriteLine("Getting players from DB");
+                var allPlayers = await MongoConnection.GetAllPlayersAsync();
+                Console.WriteLine($"Got {allPlayers.Count} players\n" +
+                    $"Starting...");
+                int counter = 1;
+                foreach (var item in allPlayers)
+                {
+                    var godRanks = await HiRez.GetGodRanksAsync(item.ActivePlayerId.ToString());
+                    if (godRanks != null && godRanks.Count != 0)
+                    {
+                        await MongoConnection.SavePlayerGodRanksAsync(godRanks);
+                    }
+                    Console.WriteLine($"[{counter++}/{allPlayers.Count}] {(godRanks != null ? godRanks.Count : 0)} god ranks");
+                    Thread.Sleep(500);
+                }
             }
             catch (Exception ex)
             {
