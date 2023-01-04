@@ -1022,9 +1022,7 @@ namespace ThothBotCore.Discord
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithAuthor(author =>
             {
-                author.WithName($"{Text.GetQueueName(
-                    Int32.Parse(matchPlayerDetails[0].Queue), 
-                    matchPlayerDetails[0].Match.ToString())}");
+                author.WithName($"{Text.GetQueueName(Int32.Parse(matchPlayerDetails[0].Queue), matchPlayerDetails[0].Match.ToString())}");
                 author.WithIconUrl(Constants.botIcon);
             });
             embed.WithFooter(x =>
