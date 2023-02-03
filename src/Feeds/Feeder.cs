@@ -97,7 +97,7 @@ namespace ThothBotCore.Feeds
                     }
                     else if (ex.Message.Contains("Could not find a webhook with the supplied credentials"))
                     {
-                        var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to not finding webhook with supplied credentials: {guild.Name}[{guild.Id}]");
+                        var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to not finding webhook with supplied credentials: {guild?.Name}[{guild?.Id}]");
                         await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
 
                         await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
@@ -127,6 +127,7 @@ namespace ThothBotCore.Feeds
                 {
                     case Models.GuildSettingsModel.FeedType.ServerStatus:
                         await Connection.Logger.Log($"Feeds|{feedType}", $"[{msg}] Starting announcing to {count} servers.");
+                        
                         return;
                     case Models.GuildSettingsModel.FeedType.UpdateNotes:
                         return;

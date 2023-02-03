@@ -309,8 +309,7 @@ namespace ThothBotCore.Discord
                     });
                 }
             }
-
-            builder.WithSelectMenu("related-items-select", options, "Related Items");
+            builder.WithSelectMenu("related-items-select", options.Take(25).ToList(), "Related Items");
 
             return await Task.FromResult(builder.Build());
         }

@@ -17,6 +17,7 @@ using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Models.Gods;
 using System.Reflection;
+using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 
 namespace ThothBotCore.Modules
 {
@@ -1192,8 +1193,11 @@ namespace ThothBotCore.Modules
                 return;
             }
             var god = await MongoConnection.GetGodByIDAsync(id);
-            await RespondAsync(embed: await EmbedHandler.BuildGodLorePageEmbedAsync(god),
-                               components: await ComponentsHandler.GodsLoreButtonAsync(god.id));
+            await Context.Interaction.UpdateAsync(async x =>
+            {
+                x.Embed = await EmbedHandler.BuildGodLorePageEmbedAsync(god);
+                x.Components = await ComponentsHandler.GodsLoreButtonAsync(god.id);
+            });
         }
 
         [ComponentInteraction("related-items-select")]
@@ -1829,7 +1833,7 @@ namespace ThothBotCore.Modules
                         }
                     }
                 }
-                Thread.Sleep(200);
+                Thread.Sleep(100);
                 
                 // Missing DomColor?
                 if (newGodList.Any(x => x.DomColor == 0))
@@ -1847,7 +1851,12 @@ namespace ThothBotCore.Modules
                             {
                                 if (god.godIcon_URL != "")
                                 {
-                                    god.DomColor = DominantColor.GetDomColor(god.godIcon_URL);
+                                    var colors = await APIInteractions.GetDominantColorFromCloudVisionAsync(god.godIcon_URL);
+                                    var clr = new Color(colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.red,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.green,
+                                        colors.responses.FirstOrDefault().imagePropertiesAnnotation.dominantColors.colors.FirstOrDefault().color.blue);
+
+                                    god.DomColor = (int)clr.RawValue;
                                 }
                                 else
                                 {
@@ -2181,41 +2190,40 @@ namespace ThothBotCore.Modules
                 }
 
                 // Missing Emoji?
-                if (newItemsList.Any(x => x.Emoji == null && x.ActiveFlag == "y"))
+                if (newItemsList.Any(x => (x.Emoji == null || x.Emoji == "") && x.ActiveFlag == "y"))
                 {
-                    foreach (var item in newItemsList)
+                    foreach (var item in newItemsList.Where(x => (x.Emoji == null || x.Emoji == "") && x.ActiveFlag == "y"))
                     {
-                        if (item.Emoji == null && item.ActiveFlag == "y")
+                        try
                         {
-                            try
-                            {
-                                item.Emoji = await Utils.AddMissingItemEmojiAsync(item);
-                            }
-                            catch (Exception exx)
-                            {
-                                await ReplyAsync($"{item.DeviceName} {exx.Message}");
-                            }
+                            await ReplyAsync($"Adding emoji for {item.DeviceName}");
+                            item.Emoji = await Utils.AddMissingItemEmojiAsync(item);
+                        }
+                        catch (Exception exx)
+                        {
+                            await ReplyAsync($"{item.DeviceName} {exx.Message}");
                         }
                     }
                 }
 
                 // Missing DomColor?
-                if (newItemsList.Any(x => x.DomColor == 0))
+                if (newItemsList.Any(x => x.DomColor == 0 && x.ActiveFlag == "y"))
                 {
-                    foreach (var item in newItemsList)
+                    await Context.Interaction.ModifyOriginalResponseAsync(x =>
                     {
-                        if (item.DomColor == 0 && item.ActiveFlag == "y")
+                        x.Content = "Missing domcolor on items, working on that..";
+                    });
+                    foreach (var item in newItemsList.Where(x => x.DomColor == 0 && x.ActiveFlag == "y"))
+                    {
+                        if (item.itemIcon_URL != "")
                         {
-                            if (item.itemIcon_URL != "")
+                            try
                             {
-                                try
-                                {
-                                    item.DomColor = DominantColor.GetDomColor(item.itemIcon_URL);
-                                }
-                                catch (Exception x)
-                                {
-                                    await ReplyAsync($"{item.DeviceName} {x.Message}");
-                                }
+                                item.DomColor = DominantColor.GetDomColor(item.itemIcon_URL);
+                            }
+                            catch (Exception x)
+                            {
+                                await ReplyAsync($"**Hell** {item.DeviceName} {x.Message}");
                             }
                         }
                     }

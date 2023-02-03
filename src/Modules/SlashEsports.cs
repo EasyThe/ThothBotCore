@@ -75,7 +75,7 @@ namespace ThothBotCore.Modules
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
             {
-                x.Name = "SMITE World Championship 2022";
+                x.Name = "SMITE World Championship";
                 x.Url = "https://www.hirezshowcase.com/?utm_source=ThothBot&utm_campaign=swc2022";
                 x.IconUrl = "https://i.imgur.com/sOsJR9V.png";
             });
@@ -88,7 +88,7 @@ namespace ThothBotCore.Modules
             embed.AddField(x =>
             {
                 x.Name = "Twitch Drops";
-                x.Value = $"[⚡Info Here]({settings.s[6]}?utm_source=ThothBot&utm_campaign=swc2022)";
+                x.Value = $"[⚡Info Here]({settings.s[6]}?utm_source=ThothBot&utm_campaign=swc)";
                 x.IsInline = true;
             });
             embed.AddField(x =>

@@ -14,7 +14,7 @@ using ThothBotCore.Storage.Implementations;
 
 namespace ThothBotCore.Utilities
 {
-    public class Utils
+    public partial class Utils
     {
         private static StringBuilder builder;
         public static async Task<string> AddNewGodEmojiInGuild(Gods.God god)
@@ -80,10 +80,12 @@ namespace ThothBotCore.Utilities
                 Connection.Client.GetGuild(772225406195466241),
                 Connection.Client.GetGuild(772225707560140831),
                 Connection.Client.GetGuild(803964049217028096),
-                Connection.Client.GetGuild(803964253576495136)
+                Connection.Client.GetGuild(803964253576495136),
+                Connection.Client.GetGuild(1071045463924539423),
+                Connection.Client.GetGuild(1071045531213778944)
             };
             string emojiname = item.DeviceName.Trim().Replace("\'", "").ToLowerInvariant();
-            emojiname = Regex.Replace(emojiname, @"\s+", "");
+            emojiname = MyRegex().Replace(emojiname, "");
 
             string[] splitLink = item.itemIcon_URL.Split('/');
 
@@ -101,7 +103,7 @@ namespace ThothBotCore.Utilities
                 }
                 if (guild.Emotes.Count != 50)
                 {
-                    Thread.Sleep(200);
+                    Thread.Sleep(100);
                     var image = new Image($"Storage/Items/{splitLink[5]}");
                     Text.WriteLine(emojiname);
                     var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
@@ -437,5 +439,8 @@ namespace ThothBotCore.Utilities
             if (find != null) return find.Emoji;
             return "<:blank:570291209906552848>";
         }
+
+        [GeneratedRegex("\\s+")]
+        private static partial Regex MyRegex();
     }
 }

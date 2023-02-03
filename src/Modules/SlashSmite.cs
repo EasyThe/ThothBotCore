@@ -549,11 +549,17 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [SlashCommand("events", "Shows if there are any events currently available in-game.")]
+        [SlashCommand("events", "[Command Disabled] Shows if there are any events currently available in-game.")]
         public async Task SlashEventsCommand()
         {
             try
             {
+                //disabled
+                var em = await EmbedHandler.BuildDescriptionEmbedAsync(
+                    "Due to the removal of the Events tab in-game this command has been disabled until a new way of retrieving events data is found.\n" +
+                    "Apologies for the inconvenience caused!");
+                await RespondAsync(embed: em);
+                return;
                 await DeferAsync();
                 StringBuilder sb = new();
                 var result = await APIInteractions.GetLandingPanel();
@@ -565,7 +571,7 @@ namespace ThothBotCore.Modules
                     x.IconUrl = Utilities.Constants.SmiteBolt;
                     x.Url = "https://www.smitegame.com/news/";
                 });
-                if (result.events.content.Count == 0)
+                if (result?.events?.content?.Count == 0)
                 {
                     if (result.singlePanel.visible == "true")
                     {
@@ -829,6 +835,10 @@ namespace ThothBotCore.Modules
                     }
 
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
+                    if (getPlayer.Count == 0)
+                    {
+                        await Reporter.SendMsgToBotLogsChannel($"Slash command stats, line 834\ngetPlayer count is 0, ID: {player[0].player_id} Name: {player[0].Name}");
+                    }
                     var godRanks = await HiRez.GetGodRanksAsync(player[0].player_id.ToString());
 
                     // Generating the embed and sending to channel

@@ -268,7 +268,19 @@ namespace ThothBotCore.Utilities
             }
             catch (Exception ex)
             {
-                await reportsChannel.SendMessageAsync($"Error in SendEmbedError().\n{ex.Message}");
+                await reportsChannel.SendMessageAsync($"Error in SendEmbedToBotLogsChannel().\n{ex.Message}");
+            }
+        }
+        public static async Task SendMsgToBotLogsChannel(string message)
+        {
+            await ChannelChecker(botlogs);
+            try
+            {
+                await botlogs.SendMessageAsync(message);
+            }
+            catch (Exception ex)
+            {
+                await reportsChannel.SendMessageAsync($"Error in SendMsgToBotLogsChannel().\n{ex.Message}");
             }
         }
         public static async Task<Embed> RespondToCommandOnErrorAsync(Exception ex, SocketCommandContext context, string errorMessage = "")
