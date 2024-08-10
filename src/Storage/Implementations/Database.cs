@@ -21,7 +21,7 @@ namespace ThothBotCore.Storage
                 using (IDbConnection cnn = new SQLiteConnection(LoadConnectionString()))
                 {
                     await cnn.ExecuteAsync($"INSERT OR IGNORE INTO ServerStatusUpdates(id, inciID, type, status, name, body, createdAt) " +
-                        $"VALUES(\"{id}\", \"{inciID}\", \"{type}\", \"{status}\", \"{name}\", \"{body}\", \"{createdAt}\")");
+                        $"VALUES(\'{id}\', \'{inciID}\', \'{type}\', \'{status}\', \'{name}\', \'{body}\', \'{createdAt}\')");
                 }
             }
             catch (Exception ex)

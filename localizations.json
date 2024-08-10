@@ -1,0 +1,200 @@
+{
+  "splschedule": {
+    "name": "splschedule",
+    "description": "Check the Smite Pro League Schedule."
+  },
+  "splstandings": {
+    "name": "splstandings",
+    "description": "Check the Smite Pro League Standings."
+  },
+  "splstats": {
+    "name": "splstats",
+    "description": "Check the Smite Pro League Stats."
+  },
+  "swc": {
+    "name": "swc",
+    "description": "SMITE World Championship schedule and links."
+  },
+  "gods": {
+    "name": "gods",
+    "description": "Overall information about the gods & skins in the game and current free god rotation."
+  },
+  "god": {
+    "name": "god",
+    "description": "Provides information about the requested god.",
+    "god-name": {
+      "name": "god-name",
+      "description": "Start typing the name of the god and you will get recommendations."
+    }
+  },
+  "rgod": {
+    "name": "rgod",
+    "description": "Gives you a random God and randomised build.",
+    "choice": {
+      "name": "choice",
+      "description": "What class or type should the random god be?",
+      "Mage": {
+        "name": "Mage"
+      },
+      "Warrior": {
+        "name": "Warrior"
+      },
+      "Hunter": {
+        "name": "Hunter"
+      },
+      "Guardian": {
+        "name": "Guardian"
+      },
+      "Assassin": {
+        "name": "Assassin"
+      },
+      "Ranged": {
+        "name": "Ranged"
+      },
+      "Melee": {
+        "name": "Melee"
+      },
+      "Physical": {
+        "name": "Physical"
+      },
+      "Magical": {
+        "name": "Magical"
+      }
+    }
+  },
+  "rteam": {
+    "name": "rteam",
+    "description": "Gives you random Gods with randomised builds for them.",
+    "option": {
+      "name": "option",
+      "description": "How many gods would you like? Or you want randomized gods respecting the in-game Assault rules?",
+      "2 gods": {
+        "name": "2 gods"
+      },
+      "3 gods": {
+        "name": "3 gods"
+      },
+      "4 gods": {
+        "name": "4 gods"
+      },
+      "5 gods": {
+        "name": "5 gods"
+      },
+      "Assault (2 teams)": {
+        "name": "Assault (2 teams)"
+      }
+    }
+  },
+  "rbuild": {
+    "name": "rbuild",
+    "description": "Gives you a random build for the requested god",
+    "god-name": {
+      "name": "god-name",
+      "description": "Start typing the name of the god and you will get recommendations."
+    }
+  },
+  "rank": {
+    "name": "rank",
+    "description": "Gives you random SMITE Ranked division."
+  },
+  "item": {
+    "name": "item",
+    "description": "Provides information about the requested item.",
+    "item-name": {
+      "name": "item-name",
+      "description": "Start typing the name of the item and you will get recommendations."
+    }
+  },
+  "itemstarters": {
+    "name": "itemstarters",
+    "description": "Provides a list with all starting items."
+  },
+  "status": {
+    "name": "status",
+    "description": "Check the status of SMITE Servers."
+  },
+  "updatenotes": {
+    "name": "updatenotes",
+    "description": "Sends the last two update notes posted on the SMITEgame.com website"
+  },
+  "events": {
+    "name": "events",
+    "description": "[Command Disabled] Shows if there are any events currently available in-game."
+  },
+  "bugs": {
+    "name": "bugs",
+    "description": "Checks the SMITE Community Issues Trello Board for current and fixed issues."
+  },
+  "motd": {
+    "name": "motd",
+    "description": "Information about upcoming MOTDs in the game."
+  },
+  "stats": {
+    "name": "stats",
+    "description": "Display stats for the requested PlayerName.",
+    "player-name": {
+      "name": "player-name",
+      "description": "The in-game name of a SMITE player"
+    }
+  },
+  "wp": {
+    "name": "wp",
+    "description": "Shows all masteries for gods played for the requested PlayerName.",
+    "player-name": {
+      "name": "player-name",
+      "description": "The in-game name of a SMITE player"
+    }
+  },
+  "wr": {
+    "name": "wr",
+    "description": "Shows win rate percentage for gods played for the requested PlayerName.",
+    "player-name": {
+      "name": "player-name",
+      "description": "The in-game name of a SMITE player"
+    }
+  },
+  "history": {
+    "name": "history",
+    "description": "Latest match history for the requested PlayerName.",
+    "player-name": {
+      "name": "player-name",
+      "description": "The in-game name of a SMITE player"
+    }
+  },
+  "md": {
+    "name": "md",
+    "description": "Match details for the requested MatchID.",
+    "match-id": {
+      "name": "match-id",
+      "description": "MatchID"
+    }
+  },
+  "livemd": {
+    "name": "livemd",
+    "description": "Live match details for the requested PlayerName if they are currently in a match.",
+    "player-name": {
+      "name": "player-name",
+      "description": "The in-game name of a SMITE player"
+    }
+  },
+  "mdlast": {
+    "name": "mdlast",
+    "description": "Match details for last match of the requested PlayerName.",
+    "player-name": {
+      "name": "player-name",
+      "description": "The in-game name of a SMITE player"
+    }
+  },
+  "link": {
+    "name": "link",
+    "description": "Link your Discord and SMITE accounts in Thoth's database."
+  },
+  "feeds": {
+    "name": "feeds",
+    "description": "Set a channel to get server status notifications and more (soon™)."
+  },
+  "about": {
+    "name": "about",
+    "description": "Check out bot statistics, invite link, support server or send feedback."
+  }
+}

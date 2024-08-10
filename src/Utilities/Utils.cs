@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,13 +18,31 @@ namespace ThothBotCore.Utilities
     public partial class Utils
     {
         private static StringBuilder builder;
-        public static async Task<string> AddNewGodEmojiInGuild(Gods.God god)
+        public static async Task<string> AddNewGodEmojiInGuild(Gods.God god, bool smite2 = false)
         {
             Image image;
             var thothGods3guild = Connection.Client.GetGuild(591932765880975370);
             SaveImageToFolder(god.godIcon_URL, true);
             string[] firstsplit = god.godIcon_URL.Split('/');
             string[] secondsplit = firstsplit[^1].Split('.');
+            if (smite2)
+            {
+                // Adding the emote to the application emotes
+                try
+                {
+                    image = new Image($"Storage/Gods/{firstsplit[^1]}");
+                }
+                catch (Exception ex)
+                {
+                    await Reporter.SendErrorAsync($"Missing {firstsplit[^1]} when adding new Emoji for god.\n{ex.Message}");
+                    return "<:blank:570291209906552848>";
+                }
+                var created = await Connection.Client.Rest.CreateApplicationEmoteAsync(secondsplit[0].Replace("-", string.Empty).Replace("\'", string.Empty), image);
+                image.Dispose();
+                await Reporter.SendErrorAsync($"**ADDED NEW GOD EMOTE **<:{created.Name}:{created.Id}>");
+                return $"<:{created.Name}:{created.Id}>";
+            }
+            
             try
             {
                 image = new Image($"Storage/Gods/{firstsplit[^1]}");
@@ -33,7 +52,7 @@ namespace ThothBotCore.Utilities
                 await Reporter.SendErrorAsync($"Missing {firstsplit[^1]} when adding new Emoji for god.\n{ex.Message}");
                 return "<:blank:570291209906552848>";
             }
-            var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0], image);
+            var createdEmote = await thothGods3guild.CreateEmoteAsync(secondsplit[0].Replace("-", string.Empty).Replace("\'", string.Empty), image);
             image.Dispose();
             await Reporter.SendErrorAsync($"**ADDED NEW GOD EMOTE **<:{createdEmote.Name}:{createdEmote.Id}>");
             return $"<:{createdEmote.Name}:{createdEmote.Id}>";
@@ -69,7 +88,7 @@ namespace ThothBotCore.Utilities
                 Text.WriteLine(ex.Message);
             }
         }
-        public static async Task<string> AddMissingItemEmojiAsync(GetItems.Item item)
+        public static async Task<string> AddMissingItemEmojiAsync(GetItems.Item item) // SMITE 2 should use application emotes
         {
             var emoteGuilds = new List<SocketGuild>
             {
@@ -85,7 +104,7 @@ namespace ThothBotCore.Utilities
                 Connection.Client.GetGuild(1071045531213778944)
             };
             string emojiname = item.DeviceName.Trim().Replace("\'", "").ToLowerInvariant();
-            emojiname = MyRegex().Replace(emojiname, "");
+            emojiname = MyRegex().Replace(emojiname, "").Replace("-", "");
 
             string[] splitLink = item.itemIcon_URL.Split('/');
 
@@ -94,6 +113,7 @@ namespace ThothBotCore.Utilities
             // Adding the image as emoji in emojiguilds
             foreach (var guild in emoteGuilds)
             {
+                // Check for already existing emoji and use that instead of creating a new one
                 foreach (var emote in guild.Emotes)
                 {
                     if (emote.Name == emojiname)
@@ -118,7 +138,7 @@ namespace ThothBotCore.Utilities
             }
             return "";
         }
-        public static async Task<string[]> AddMissingAbilityEmojiAsync(Gods.God god)
+        public static async Task<string[]> AddMissingAbilityEmojiAsync(Gods.God god, bool smite2 = false)
         {
             string[] emojis = new string[5];
             try
@@ -138,32 +158,84 @@ namespace ThothBotCore.Utilities
                     Connection.Client.GetGuild(958117687731556352),
                     Connection.Client.GetGuild(958117713228730420),
                     Connection.Client.GetGuild(958117755456991262),
+                    Connection.Client.GetGuild(1226270398677516461)
                 };
 
-                string[] urls = new string[5]
-                {
+                string[] urls =
+                [
                     god.Ability_1.URL,
                     god.Ability_2.URL,
                     god.Ability_3.URL,
                     god.Ability_4.URL,
                     god.Ability_5.URL
-                };
+                ];
+                string[] abilityNames =
+                [
+                    god.Ability_1.Summary,
+                    god.Ability_2.Summary,
+                    god.Ability_3.Summary,
+                    god.Ability_4.Summary,
+                    god.Ability_5.Summary
+                ];
 
                 for (int i = 0; i < urls.Length; i++)
                 {
                     string emojiname = urls[i].Split("/")[^1].Split(".")[0].Replace("-", "_");
+                    int index = 5;
+
+                    if (smite2)
+                    {
+                        emojiname = Text.CleanDirtyText(abilityNames[i]).Replace(" ", "_").Replace("-", "_");
+                        index = 4;
+                    }
 
                     string[] splitLink = urls[i].Split('/');
 
                     SaveImageToFolder(urls[i], false);
 
+                    // application emojis for smite 2 only
+                    if (smite2)
+                    {
+                        // Check for already existing emoji and use that instead of creating a new one
+                        var appEmotes = await Connection.Client.Rest.GetApplicationEmotesAsync();
+                        var foundEmote = appEmotes.FirstOrDefault(x => x.Name == emojiname);
+                        if (foundEmote != null && foundEmote.Id != 0)
+                        {
+                            emojis[i] = $"<:{foundEmote.Name}:{foundEmote.Id}>";
+                            continue;
+                        }
+
+                        using var image = new Image($"Storage/Items/{splitLink[index]}");
+                        Text.WriteLine(emojiname);
+                        var insertedEmote = await Connection.Client.Rest.CreateApplicationEmoteAsync(emojiname, image);
+                        emojis[i] = $"<:{insertedEmote.Name}:{insertedEmote.Id}>";
+                        continue;
+                    }
+
                     // Adding the image as emoji in emojiguilds
                     foreach (var guild in emoteGuilds)
                     {
+                        // Check for already existing emoji and use that instead of creating a new one
+                        if (!smite2)
+                        {
+                            foreach (var emote in guild.Emotes)
+                            {
+                                if (emote.Name == emojiname)
+                                {
+                                    emojis[i] = $"<:{emote.Name}:{emote.Id}>";
+                                    continue;
+                                }
+                            }
+                        }
+
                         if (guild.Emotes.Count != 50)
                         {
+                            if (emojis[i] != null && emojis[i].Length != 0)
+                            {
+                                break;
+                            }
                             Thread.Sleep(500);
-                            using var image = new Image($"Storage/Items/{splitLink[5]}");
+                            using var image = new Image($"Storage/Items/{splitLink[index]}");
                             Text.WriteLine(emojiname);
                             var insertedEmote = await guild.CreateEmoteAsync(emojiname, image);
                             emojis[i] = $"<:{insertedEmote.Name}:{insertedEmote.Id}>";
@@ -201,7 +273,7 @@ namespace ThothBotCore.Utilities
             {
                 int ar = Random.Shared.Next(active.Count);
                 sb.Append(active[ar].Emoji);
-                active.RemoveAll(x => x.ChildItemId == active[ar].ChildItemId);
+                active.RemoveAll(x => x.RootItemId == active[ar].RootItemId);
             }
 
             // Random Starter Item
@@ -250,7 +322,7 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<string> GetItemsBuiltAsync(MatchHistoryModel match)
         {
-            var items = MongoConnection.GetAllItems();
+            var items = Constants.ItemsHashSet.ToList();
             var build = new StringBuilder();
             build.Append(items.Find(x => x.ItemId == match.ItemId1)?.Emoji);
             build.Append(items.Find(x => x.ItemId == match.ItemId2)?.Emoji);
@@ -262,7 +334,7 @@ namespace ThothBotCore.Utilities
         }
         public static async Task<string> GetItemsBuiltAsync(MatchDetails.MatchDetailsPlayer match)
         {
-            var items = MongoConnection.GetAllItems();
+            var items = Constants.ItemsHashSet.ToList();
             var build = new StringBuilder();
             build.Append(items.Find(x => x.ItemId == match.ItemId1)?.Emoji);
             build.Append(items.Find(x => x.ItemId == match.ItemId2)?.Emoji);

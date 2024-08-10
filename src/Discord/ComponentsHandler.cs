@@ -1,9 +1,12 @@
 ﻿using Discord;
+using MongoDB.Driver.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Models;
 using ThothBotCore.Utilities;
+using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Discord
 {
@@ -77,31 +80,87 @@ namespace ThothBotCore.Discord
                 });
             }
             var builder = new ComponentBuilder()
-                    .WithSelectMenu($"playerselect-{type}", options, "Pick a player");
+                    .WithSelectMenu($"playerselect-{type}", options, "Pick a player", row: 4);
             return builder.Build();
         }
-        
+
+        public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, SelectMenuBuilder selectMenuBuilder)
+            => await RichStatsButtonsAsync(playerId, position, new ComponentBuilder(), selectMenuBuilder: selectMenuBuilder);
+
         public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, bool isLive = false)
             => await RichStatsButtonsAsync(playerId, position, new ComponentBuilder(), isLive);
         
         public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, IMessage message, bool isLive = false)
             => await RichStatsButtonsAsync(playerId, position, ComponentBuilder.FromMessage(message), isLive);
         
+        /// <summary>
+        /// Used only when multiple players are found 
+        /// </summary>
         public static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, IReadOnlyCollection<IMessageComponent> components, bool isLive = false)
-            => await RichStatsButtonsAsync(playerId, position, ComponentBuilder.FromComponents(components), isLive);
-
-        private static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, ComponentBuilder comps, bool isLive = false)
         {
-            comps.WithButton("Stats", $"btn-st-{playerId}", emote: new Emoji("📊"), disabled: position == 0);
+            // we pick only the select menu just so on when the user goes around all possible players, 
+            // it reloads the components with the proper buttons
+            var row = components.Where(x => x.Type == ComponentType.ActionRow && 
+                (x as ActionRowComponent).Components.Any(z => z.Type == ComponentType.SelectMenu)).First() as ActionRowComponent;
+            var comp = (row.Components.Where(x => x.Type == ComponentType.SelectMenu).First() as SelectMenuComponent).ToBuilder();
+            if (comp.Options.Any(x => x.IsDefault == true))
+            {
+                comp.Options.Find(x => x.IsDefault == true).IsDefault = false;
+            }
+            comp.Options.Find(x => x.Value == playerId).IsDefault = true;
+            var newcomp = new ComponentBuilder().WithSelectMenu(comp, 3);
+
+            return await RichStatsButtonsAsync(playerId, position, newcomp, isLive);
+        }
+
+        private static async Task<MessageComponent> RichStatsButtonsAsync(string playerId, int position, ComponentBuilder comps, bool isLive = false, SelectMenuBuilder selectMenuBuilder = null)
+        {
+            int row = 0;
+            if (selectMenuBuilder != null)
+            {
+                row = 1;
+                comps.WithSelectMenu(selectMenuBuilder, row: 0);
+            }
+            comps.WithButton("Stats", $"btn-st-{playerId}", emote: new Emoji("📊"), disabled: position == 0, row: row);
             if (isLive)
             {
-                comps.WithButton("Live Match", $"btn-lm-{playerId}", ButtonStyle.Success, emote: new Emoji("🔴"), disabled: position == 1);
+                comps.WithButton("Live Match", $"btn-lm-{playerId}", ButtonStyle.Success, emote: new Emoji("🔴"), disabled: position == 1, row: row);
             }
-            comps.WithButton("Match History", $"btn-mh-{playerId}", emote: new Emoji("📚"), disabled: position == 2)
-                 .WithButton("God Worshippers", $"btn-wp-{playerId}", emote: Emote.Parse("<:wp:552579445475508229>"), disabled: position == 3)
-                 .WithButton("God Winrates", $"btn-wr-{playerId}", emote: new Emoji("⚔️"), disabled: position == 4);
-
+            comps.WithButton("Match History", $"btn-mh-{playerId}", emote: new Emoji("📚"), disabled: position == 2, row: row)
+                 //.WithButton("God Stats", $"btn-godstats-{playerId}", emote: Emote.Parse("<:Gods:567146088985919498>"), disabled: position == 3, row: row)
+                 .WithButton("God Worshippers", $"btn-wp-{playerId}", emote: Emote.Parse("<:wp:552579445475508229>"), disabled: position == 3, row: row)
+                 .WithButton("God Winrates", $"btn-wr-{playerId}", emote: new Emoji("⚔️"), disabled: position == 4, row: row)
+                 .WithButton("Queue Stats", $"btn-queues-{playerId}", emote: Emote.Parse("<:matches:579604410569850891>"), disabled: position == 5, row: row);
+            //comps.ActionRows.Reverse(); // put the select menu under the buttons
             return await Task.FromResult(comps.Build());
+        }
+
+        public static async Task<MessageComponent> KeepSelectionOnSelectMenuAsync(string pickedOption, IReadOnlyCollection<IMessageComponent> components)
+        {
+            var row = components.Where(x => x.Type == ComponentType.ActionRow &&
+                (x as ActionRowComponent).Components.Any(z => z.Type == ComponentType.SelectMenu)).Cast<ActionRowComponent>().ToList();
+            List<SelectMenuBuilder> menus = new();
+            foreach (var r in row)
+            {
+                var selectMenu = (r.Components.Where(x => x.Type == ComponentType.SelectMenu).First() as SelectMenuComponent).ToBuilder();
+                if (selectMenu.Options.Any(x => x.IsDefault == true))
+                {
+                    selectMenu.Options.Find(x => x.IsDefault == true).IsDefault = false;
+                }
+                var idk = selectMenu.Options.Find(x => x.Value == pickedOption);
+                if (idk != null)
+                {
+                    idk.IsDefault = true;
+                }
+                menus.Add(selectMenu);
+            }
+            
+            var newcomp = ComponentBuilder.FromComponents(components).RemoveComponentsOfType(ComponentType.SelectMenu);
+            foreach (var menu in menus)
+            {
+                newcomp.WithSelectMenu(menu);
+            }
+            return await Task.FromResult(newcomp.Build());
         }
         
         public static async Task<MessageComponent> AboutThothButtonsAsync(bool isOwner, int position)
@@ -150,73 +209,81 @@ namespace ThothBotCore.Discord
         public static async Task<MessageComponent> FeedsSelectMenuAsync(GuildSettingsModel guildSettings, IInteractionContext context)
         {
             var builder = new ComponentBuilder();
-            var options = new List<SelectMenuOptionBuilder>();
             var channels = await context.Guild.GetTextChannelsAsync();
             IWebhook webhook = null;
 
-            // if a channel is set, add that channel to the list
-            if (guildSettings != null && guildSettings.Feeds.Find(x => x.Type == GuildSettingsModel.FeedType.ServerStatus)?.WebhookID != 0)
+            foreach (var type in (GuildSettingsModel.FeedType[]) Enum.GetValues(typeof(FeedType)))
             {
-                var settings = guildSettings.Feeds.Find(x => x.Type == GuildSettingsModel.FeedType.ServerStatus);
-                webhook = await context.Guild.GetWebhookAsync(settings.WebhookID);
-                if (webhook != null)
+                var options = new List<SelectMenuOptionBuilder>();
+                var found = guildSettings.Feeds.Find(x => x.Type == type);
+                // if a channel is set, add that channel to the list
+                if (found?.WebhookID != 0)
                 {
-                    options.Add(new SelectMenuOptionBuilder()
+                    var settings = guildSettings.Feeds.Find(x => x.Type == type);
+                    if (settings != null)
                     {
-                        Emote = Emoji.Parse("❌"),
-                        Label = "No Channel",
-                        Description = "Disable SMITE Status Feeds",
-                        Value = "0"
-                    });
-                    var channel = await context.Guild.GetTextChannelAsync(webhook.ChannelId);
-                    options.Add(new SelectMenuOptionBuilder()
+                        webhook = await context.Guild.GetWebhookAsync(settings.WebhookID);
+                        if (webhook != null)
+                        {
+                            options.Add(new SelectMenuOptionBuilder()
+                            {
+                                Emote = Emoji.Parse("❌"),
+                                Label = "No Channel",
+                                Description = $"Disable {Text.SplitCamelCase(type.ToString())} Feeds",
+                                Value = "0"
+                            });
+                            var channel = await context.Guild.GetTextChannelAsync(webhook.ChannelId.Value);
+                            options.Add(new SelectMenuOptionBuilder()
+                            {
+                                IsDefault = true,
+                                Label = channel.Name,
+                                Value = webhook.ChannelId.ToString(),
+                                Description = $"This channel is set to receive {Text.SplitCamelCase(type.ToString())} Feeds",
+                                Emote = Emote.Parse("<:channel_green:957042306521894984>"),
+                            });
+                        }
+                    }
+                    else
                     {
-                        IsDefault = true,
-                        Label = channel.Name,
-                        Value = webhook.ChannelId.ToString(),
-                        Description = "This channel is set to receive SMITE Status Feeds",
-                        Emote = Emote.Parse("<:channel_green:957042306521894984>"),
-                    });
+                        options.Add(new SelectMenuOptionBuilder()
+                        {
+                            Emote = Emote.Parse("<:channel_green:957042306521894984>"),
+                            Label = context.Channel.Name,
+                            Description = "This channel",
+                            Value = context.Channel.Id.ToString()
+                        });
+                    }
                 }
-                else
+                if (!options.Exists(x => x.Value == context.Channel.Id.ToString()))
                 {
                     options.Add(new SelectMenuOptionBuilder()
                     {
-                        Emote = Emote.Parse("<:channel_green:957042306521894984>"),
+                        Emote = Emote.Parse("<:channel:957042306723246100>"),
                         Label = context.Channel.Name,
                         Description = "This channel",
                         Value = context.Channel.Id.ToString()
                     });
                 }
-            }
-            if (!options.Exists(x => x.Value == context.Channel.Id.ToString()))
-            {
-                options.Add(new SelectMenuOptionBuilder()
+                foreach (var channel in channels)
                 {
-                    Emote = Emote.Parse("<:channel:957042306723246100>"),
-                    Label = context.Channel.Name,
-                    Description = "This channel",
-                    Value = context.Channel.Id.ToString()
-                });
-            }
-            foreach (var channel in channels)
-            {
-                if (options.Count == 25)
-                {
-                    break;
-                }
-                // <:channel_green:957042306521894984>
-                if (!options.Exists(x => x.Value == channel.Id.ToString()))
-                {
-                    options.Add(new SelectMenuOptionBuilder()
+                    if (options.Count == 25)
                     {
-                        Emote = Emote.Parse("<:channel:957042306723246100>"),
-                        Label = channel.Name,
-                        Value = channel.Id.ToString()
-                    });
+                        break;
+                    }
+                    // <:channel_green:957042306521894984>
+                    if (!options.Exists(x => x.Value == channel.Id.ToString()))
+                    {
+                        options.Add(new SelectMenuOptionBuilder()
+                        {
+                            Emote = Emote.Parse("<:channel:957042306723246100>"),
+                            Label = channel.Name,
+                            Value = channel.Id.ToString()
+                        });
+                    }
                 }
+                builder.WithSelectMenu($"feeds-{type.ToString().ToLowerInvariant()}", options, $"Set channel for {Text.SplitCamelCase(type.ToString())} Feeds");
             }
-            builder.WithSelectMenu($"feeds-serverstatus", options, "Set channel for SMITE Status Feeds");
+            
             return await Task.FromResult(builder.Build());
         }
         public static async Task<MessageComponent> RelatedItemsSelectMenuAsync(List<GetItems.Item> itemList, GetItems.Item currentItem)
@@ -328,6 +395,10 @@ namespace ThothBotCore.Discord
                                     $"btn-lore-{godId}",
                                     ButtonStyle.Primary,
                                     new Emoji("📖"));
+                        //.WithButton("Recommended Items",
+                        //            $"btn-recitems-{godId}",
+                        //            ButtonStyle.Primary,
+                        //            new Emoji("💡"));
 
             return await Task.FromResult(builder.Build());
         }
@@ -394,20 +465,33 @@ namespace ThothBotCore.Discord
         {
             var builder = new ComponentBuilder();
             var options = new List<SelectMenuOptionBuilder>();
+            var optionsMore = new List<SelectMenuOptionBuilder>();
 
             var ordered = god.Skins.OrderByDescending(x => x.obtainability);
             foreach (var item in ordered)
             {
-                options.Add(new SelectMenuOptionBuilder
+                var thing = new SelectMenuOptionBuilder
                 {
                     Label = $"{item.skin_name} [{item.obtainability}]",
                     Description = $"{(item.godSkin_URL != null && item.godSkin_URL.Length != 0 ? "" : "Missing Card Art - ")}" +
                     $"{(item.price_favor != 0 ? $"{item.price_favor} favor" : "")} {(item.price_gems != 0 ? $"{item.price_gems} gems" : "")}",
                     Value = $"{item.god_id}-{item.skin_id1}"
-                });
+                };
+                if (options.Count < 25)
+                {
+                    options.Add(thing);
+                }
+                else
+                {
+                    optionsMore.Add(thing);
+                }
             }
 
             builder.WithSelectMenu($"skin", options, "Select a skin to see the card art");
+            if (optionsMore.Count > 0)
+            {
+                builder.WithSelectMenu("moreskin", optionsMore, "Select a skin to see the card art");
+            }
             builder.WithButton("Back",
                    $"godinfo-main-{god.id}",
                    ButtonStyle.Secondary,
@@ -420,6 +504,147 @@ namespace ThothBotCore.Discord
             var builder = new ComponentBuilder();
             builder.WithButton("Back",
                                $"godinfo-main-{godId}",
+                               ButtonStyle.Secondary,
+                               Emote.Parse("<:back:959968077544583298>"));
+            return await Task.FromResult(builder.Build());
+        }
+        public static async Task<MessageComponent> GodsRecommendedItemsButtonAsync(int godId)
+        {
+            var builder = new ComponentBuilder();
+            builder.WithButton("Back",
+                               $"godinfo-main-{godId}",
+                               ButtonStyle.Secondary,
+                               Emote.Parse("<:back:959968077544583298>"));
+            return await Task.FromResult(builder.Build());
+        }
+
+        // SMITE2
+
+        public static async Task<MessageComponent> Gods2InfoButtonsAsync(int godId)
+        {
+            var builder = new ComponentBuilder()
+                        .WithButton("Abilities",
+                                    $"btn-abilities2-{godId}",
+                                    ButtonStyle.Primary,
+                                    new Emoji("🪄"))
+                        .WithButton("Skins",
+                                    $"btn-skins2-{godId}",
+                                    ButtonStyle.Primary,
+                                    new Emoji("🎨"))
+                        .WithButton("Lore",
+                                    $"btn-lore2-{godId}",
+                                    ButtonStyle.Primary,
+                                    new Emoji("📖"));
+
+            return await Task.FromResult(builder.Build());
+        }
+        public static async Task<MessageComponent> Gods2AbilitiesButtonsAsync(Gods.God god, int position = 0)
+        {
+            Gods.Ability ability = null;
+            var builder = new ComponentBuilder();
+            builder.WithButton($"P. {god.Ability_1.Summary}",
+                                $"btn-abi2-{god.id}-1",
+                                ButtonStyle.Secondary,
+                                god.Ability_1.Emoji != null ? Emote.Parse(god.Ability_1.Emoji) : null,
+                                disabled: position == 1);
+            builder.WithButton($"1. {god.Ability_2.Summary}",
+                                $"btn-abi2-{god.id}-2",
+                                ButtonStyle.Secondary,
+                                god.Ability_2.Emoji != null ? Emote.Parse(god.Ability_2.Emoji) : null,
+                                disabled: position == 2);
+            builder.WithButton($"2. {god.Ability_3.Summary}",
+                                $"btn-abi2-{god.id}-3",
+                                ButtonStyle.Secondary,
+                                god.Ability_3.Emoji != null ? Emote.Parse(god.Ability_3.Emoji) : null,
+                                disabled: position == 3);
+            builder.WithButton($"3. {god.Ability_4.Summary}",
+                                $"btn-abi2-{god.id}-4",
+                                ButtonStyle.Secondary,
+                                god.Ability_4.Emoji != null ? Emote.Parse(god.Ability_4.Emoji) : null,
+                                disabled: position == 4);
+            builder.WithButton($"4. {god.Ability_5.Summary}",
+                                $"btn-abi2-{god.id}-5",
+                                ButtonStyle.Secondary,
+                                god.Ability_5.Emoji != null ? Emote.Parse(god.Ability_5.Emoji) : null,
+                                disabled: position == 5);
+            switch (position)
+            {
+                case 1:
+                    ability = god.Ability_1;
+                    break;
+                case 2:
+                    ability = god.Ability_2;
+                    break;
+                case 3:
+                    ability = god.Ability_3;
+                    break;
+                case 4:
+                    ability = god.Ability_4;
+                    break;
+                case 5:
+                    ability = god.Ability_5;
+                    break;
+                default:
+                    break;
+            }
+            if (ability != null && ability.Video != null)
+            {
+                builder.WithButton($"{ability.Summary} [Video]",
+                                   $"btn-abiyt2-{ability.Video}",
+                                   ButtonStyle.Secondary,
+                                   Emote.Parse("<:YT:962689918763692043>"),
+                                   row: 2);
+            }
+            builder.WithButton("Back",
+                               $"btn-godinfo2-main-{god.id}",
+                               ButtonStyle.Secondary,
+                               Emote.Parse("<:back:959968077544583298>"),
+                               row: 3);
+            return await Task.FromResult(builder.Build());
+        }
+        public static async Task<MessageComponent> Gods2SkinsSelectMenuAsync(Gods.God god)
+        {
+            var builder = new ComponentBuilder();
+            var options = new List<SelectMenuOptionBuilder>();
+            var optionsMore = new List<SelectMenuOptionBuilder>();
+
+            var ordered = god.Skins;
+            foreach (var item in ordered)
+            {
+                var thing = new SelectMenuOptionBuilder
+                {
+                    Label = $"{item.skin_name}",
+                    //Description = $"{(item.godSkin_URL != null && item.godSkin_URL.Length != 0 ? "" : "Missing Card Art - ")}" +
+                    //$"{(item.price_favor != 0 ? $"{item.price_favor} favor" : "")} {(item.price_gems != 0 ? $"{item.price_gems} gems" : "")}",
+                    Value = $"{item.god_id}-{item.skin_id1}"
+                };
+                if (options.Count < 25)
+                {
+                    options.Add(thing);
+                }
+                else
+                {
+                    optionsMore.Add(thing);
+                }
+            }
+
+            builder.WithSelectMenu($"select-skin2", options, "Select a skin to see the card art");
+            if (optionsMore.Count > 0)
+            {
+                builder.WithSelectMenu("moreskin", optionsMore, "Select a skin to see the card art");
+            }
+            builder.WithButton("Back",
+                   $"btn-godinfo2-main-{god.id}",
+                   ButtonStyle.Secondary,
+                   Emote.Parse("<:back:959968077544583298>"),
+                   row: 3);
+            return await Task.FromResult(builder.Build());
+        }
+        public static async Task<MessageComponent> Gods2LoreButtonAsync(int godId)
+        {
+            var builder = new ComponentBuilder();
+            builder.WithButton("Back",
+                               $"btn-godinfo2-main-{godId}",
                                ButtonStyle.Secondary,
                                Emote.Parse("<:back:959968077544583298>"));
             return await Task.FromResult(builder.Build());

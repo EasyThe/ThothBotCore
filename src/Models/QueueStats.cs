@@ -16,6 +16,30 @@ namespace ThothBotCore.Models
         public string Queue { get; set; }
         public int Wins { get; set; }
         public string player_id { get; set; }
+        /// <summary>
+        /// Not returned by Hi-Rez
+        /// </summary>
+        public int QueueID { get; set; }
+        /// <summary>
+        /// Not returned by Hi-Rez
+        /// </summary>
+        public double KDA { get; set; }
+        /// <summary>
+        /// Not returned by Hi-Rez
+        /// </summary>
+        public double WinRatio { get; set; }
+        /// <summary>
+        /// Not returned by Hi-Rez
+        /// </summary>
+        public string GodRole { get; set; }
         public object ret_msg { get; set; }
+    }
+
+    public class RoleStatistics
+    {
+        public string Role { get; set; }
+        public int MatchCount { get; set; }
+        public double AverageKDA { get; set; }
+        public double AverageWinRatio { get; set; }
     }
 }

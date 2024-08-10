@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using MethodTimer;
 using Newtonsoft.Json;
 using Sentry;
 using System;
@@ -11,24 +12,28 @@ using System.Threading.Tasks;
 using ThothBotCore.Autocomplete;
 using ThothBotCore.Connections;
 using ThothBotCore.Discord;
+using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using ThothBotCore.Utilities.Smite;
+using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Modules
 {
+    [IntegrationType(ApplicationIntegrationType.UserInstall)]
     public class SlashSmite : InteractionModuleBase
     {
         static Random rnd = new();
         public HiRezAPIv2 HiRez { get; set; }
 
+        [Time]
         [SlashCommand("gods", "Overall information about the gods & skins in the game and current free god rotation.")]
         public async Task SlashGodsCommand()
         {
             try
             {
-                List<Gods.God> gods = MongoConnection.GetAllGods();
+                List<Gods.God> gods = Utilities.Constants.GodsHashSet.ToList();
                 StringBuilder sb = new();
 
                 // Most skins
@@ -162,32 +167,37 @@ namespace ThothBotCore.Modules
         }
 
         [SlashCommand("rgod", "Gives you a random God and randomised build.")]
-        public async Task SlashRangomGodCommand([Summary("godClass", "What class should the random god be?")][Choice("Mage","mage"), 
+        public async Task SlashRangomGodCommand([Summary("choice", "What class or type should the random god be?")]
+                                                [Choice("Mage","mage"), 
                                                  Choice("Warrior", "warrior"), 
                                                  Choice("Hunter", "hunter"),
                                                  Choice("Guardian", "guardian"),
-                                                 Choice("Assassin", "assassin")] string godClass = "")
+                                                 Choice("Assassin", "assassin"),
+                                                 Choice("Ranged", "ranged"),
+                                                 Choice("Melee", "melee"),
+                                                 Choice("Physical", "physical"),
+                                                 Choice("Magical", "magical")] string choice = "")
         {
             try
             {
-                List<Gods.God> godsF = MongoConnection.GetAllGods();
-                List<Gods.God> gods = null;
-                if (godClass != "")
+                List<Gods.God> godsF = Utilities.Constants.GodsHashSet.ToList();
+                List<Gods.God> gods = godsF;
+                if (choice != "")
                 {
-                    godClass = godClass.ToLowerInvariant().Trim();
-                    gods = godClass switch
+                    choice = choice.ToLowerInvariant().Trim();
+                    gods = choice switch
                     {
                         "mage" => godsF.Where(x => x.Roles.Contains("Mage")).ToList(),
                         "warrior" => godsF.Where(x => x.Roles.Contains("Warrior")).ToList(),
                         "hunter" => godsF.Where(x => x.Roles.Contains("Hunter")).ToList(),
                         "guardian" => godsF.Where(x => x.Roles.Contains("Guardian")).ToList(),
                         "assassin" => godsF.Where(x => x.Roles.Contains("Assassin")).ToList(),
+                        "ranged" => godsF.Where(x => x.Type.Contains("Ranged")).ToList(),
+                        "melee" => godsF.Where(x => x.Type.Contains("Melee")).ToList(),
+                        "physical" => godsF.Where(x => x.Type.Contains("Physical")).ToList(),
+                        "magical" => godsF.Where(x => x.Type.Contains("Magical")).ToList(),
                         _ => godsF,
                     };
-                }
-                else
-                {
-                    gods = godsF;
                 }
                 int rr = rnd.Next(gods.Count);
                 string rbuild = await Utils.RandomBuilderAsync(gods[rr]);
@@ -254,7 +264,7 @@ namespace ThothBotCore.Modules
                 }
 
                 var embed = new EmbedBuilder();
-                var gods = MongoConnection.GetAllGods();
+                var gods = Utilities.Constants.GodsHashSet.ToList();
 
                 embed.WithColor(Utilities.Constants.DefaultBlueColor);
 
@@ -383,7 +393,7 @@ namespace ThothBotCore.Modules
             try
             {
                 int index = 0;
-                var item = await MongoConnection.GetSpecificItemAsync(ItemName);
+                var item = await MongoConnection.GetSpecificActiveItemAsync(ItemName);
                 if (item.Count != 0)
                 {
                     if (item.Any(x => x.DeviceName.ToLowerInvariant() == ItemName.ToLowerInvariant()))
@@ -414,54 +424,76 @@ namespace ThothBotCore.Modules
         [SlashCommand("itemstarters", "Provides a list with all starting items.")]
         public async Task SlashItemStartersCommand()
         {
-            var items = MongoConnection.GetAllActiveItems();
-            var starters = items.FindAll(x => x.StartingItem && x.ActiveFlag == "y");
-            int maxCount = starters.FindAll(x => x.ItemTier == 2).Count / 2;
-            int counter = 0;
-            StringBuilder sb21 = new();
-            StringBuilder sb22 = new();
-            StringBuilder sb1 = new();
-            foreach (var item in starters)
+            try
             {
-                if (item.ItemTier == 2)
+                var items = MongoConnection.GetAllActiveItems();
+                var starters = items.FindAll(x => x.StartingItem && x.ActiveFlag == "y");
+                int maxCount = starters.FindAll(x => x.ItemTier == 2).Count / 2;
+                int counter = 0;
+                StringBuilder sb21 = new();
+                StringBuilder sb22 = new();
+                StringBuilder sb23 = new();
+                StringBuilder sb1 = new();
+                foreach (var item in starters)
                 {
-                    if (counter! > maxCount - 1)
+                    if (item.ItemTier == 2)
                     {
-                        sb22.AppendLine($"{item.Emoji} {item.DeviceName}");
+                        if (counter! > maxCount - 1 && sb22.Length + $"{item.Emoji} {item.DeviceName}".Length < 1024)
+                        {
+                            sb22.AppendLine($"{item.Emoji} {item.DeviceName}");
+                        }
+                        else if (sb21.Length + $"{item.Emoji} {item.DeviceName}".Length < 1024)
+                        {
+                            sb21.AppendLine($"{item.Emoji} {item.DeviceName}");
+                        }
+                        else
+                        {
+                            sb23.AppendLine($"{item.Emoji} {item.DeviceName}");
+                        }
+                        counter++;
                     }
                     else
                     {
-                        sb21.AppendLine($"{item.Emoji} {item.DeviceName}");
+                        sb1.AppendLine($"{item.Emoji} {item.DeviceName}");
                     }
-                    counter++;
                 }
-                else
+                EmbedBuilder embed = new();
+                embed.WithColor(Utilities.Constants.DefaultBlueColor);
+                embed.WithTitle($"List of all {starters.Count} starting items");
+                embed.AddField(x =>
                 {
-                    sb1.AppendLine($"{item.Emoji} {item.DeviceName}");
+                    x.IsInline = true;
+                    x.Name = "Tier 1 Starters";
+                    x.Value = sb1.ToString();
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"Tier 2 Starters [1/{(sb23.Length > 0 ? "3" : "2")}]";
+                    x.Value = sb21.ToString();
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"Tier 2 Starters [2/{(sb23.Length > 0 ? "3" : "2")}]";
+                    x.Value = sb22.ToString();
+                });
+                if (sb23.Length != 0)
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = $"Tier 2 Starters [2/{(sb23.Length > 0 ? "3" : "2")}]";
+                        x.Value = sb23.ToString();
+                    });
                 }
+                await RespondAsync(embed: embed.Build());
             }
-            EmbedBuilder embed = new();
-            embed.WithColor(Utilities.Constants.DefaultBlueColor);
-            embed.WithTitle($"List of all {starters.Count} starting items");
-            embed.AddField(x =>
+            catch (Exception ex)
             {
-                x.IsInline = true;
-                x.Name = "Tier 1 Starters";
-                x.Value = sb1.ToString();
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Tier 2 Starters [1/2]";
-                x.Value = sb21.ToString();
-            });
-            embed.AddField(x =>
-            {
-                x.IsInline = true;
-                x.Name = "Tier 2 Starters [2/2]";
-                x.Value = sb22.ToString();
-            });
-            await RespondAsync(embed: embed.Build());
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await RespondAsync(embed: embed);
+            }
         }
 
         [SlashCommand("status", "Check the status of SMITE Servers.")]
@@ -532,13 +564,33 @@ namespace ThothBotCore.Modules
                 await DeferAsync();
                 List<Embed> embs = new();
                 var posts = await APIInteractions.FetchPostsAsync();
-                var foundPost = posts.FindAll(x => x.real_categories.ToLowerInvariant().Contains("notes"));
-                for (int i = 0; i < 2; i++)
+                var settings = MongoConnection.GetBotSettings();
+                if (posts != null && posts.Count != 0)
                 {
-                    var actualPost = await APIInteractions.GetPostBySlugAsync(foundPost[i].slug);
-                    string description = await PatchPageReader.ReadPatch(actualPost);
-                    Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost[i]?.large_image, foundPost[i].slug);
-                    embs.Add(embed);
+                    var foundPost = posts?.FindAll(x => x.real_categories.ToLowerInvariant().Contains("notes"));
+                    foundPost = foundPost?.OrderBy(x => x.timestamp).TakeLast(2).ToList();
+                    settings.UpdateNotes?.Clear();
+                    for (int i = 0; i < 2; i++)
+                    {
+                        var actualPost = await APIInteractions.GetPostBySlugAsync(foundPost[i].slug);
+                        string description = await PatchPageReader.ReadPatch(actualPost);
+                        Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost[i]?.large_image, foundPost[i].slug);
+                        embs.Add(embed);
+
+                        // Save to db
+                        settings.UpdateNotes.Add(new[] { actualPost.title, description, foundPost[i]?.large_image, foundPost[i].slug });
+                    }
+                    await MongoConnection.SaveBotSettingsAsync(settings);
+                    Constants.ReloadConstants();
+                }
+                else
+                {
+                    // get from db
+                    foreach (var note in settings.UpdateNotes)
+                    {
+                        Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(note[0], note[1], note[2], note[3]);
+                        embs.Add(embed);
+                    }
                 }
                 await FollowupAsync(embeds: embs.ToArray());
             }
@@ -549,65 +601,65 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [SlashCommand("events", "[Command Disabled] Shows if there are any events currently available in-game.")]
-        public async Task SlashEventsCommand()
-        {
-            try
-            {
-                //disabled
-                var em = await EmbedHandler.BuildDescriptionEmbedAsync(
-                    "Due to the removal of the Events tab in-game this command has been disabled until a new way of retrieving events data is found.\n" +
-                    "Apologies for the inconvenience caused!");
-                await RespondAsync(embed: em);
-                return;
-                await DeferAsync();
-                StringBuilder sb = new();
-                var result = await APIInteractions.GetLandingPanel();
-                var embed = new EmbedBuilder();
-                embed.WithColor(Utilities.Constants.FeedbackColor);
-                embed.WithAuthor(x =>
-                {
-                    x.Name = "SMITE Events";
-                    x.IconUrl = Utilities.Constants.SmiteBolt;
-                    x.Url = "https://www.smitegame.com/news/";
-                });
-                if (result?.events?.content?.Count == 0)
-                {
-                    if (result.singlePanel.visible == "true")
-                    {
-                        var first = result.singlePanel.content.FirstOrDefault(x => x.locationId == 702 && x.isStandard == "true" && x.endDate.HasValue && x.endDate.Value.AddHours(2) > DateTime.UtcNow);
-                        if (first != null && first.isStandard == "true")
-                        {
-                            embed.WithTitle($"{first.header?.@default} | Ends <t:{Text.DateTimeToUnix(first.endDate.Value.AddHours(2))}:R>");
-                            embed.WithImageUrl(first?.imageUrl.INT);
-                            await FollowupAsync(embed: embed.Build());
-                            return;
-                        }
-                    }
-                    embed.WithTitle("There are no events at the moment.");
-                    await FollowupAsync(embed: embed.Build());
-                    return;
-                }
-                var header = result.events.content.FirstOrDefault().eventList.Find(x => x.header != null);
-                if (header != null)
-                {
-                    embed.WithTitle(header.header.@default);
-                }
-                embed.WithImageUrl(result.events.content.FirstOrDefault()?.imageUrl);
-                embed.WithColor(Utilities.Constants.FeedbackColor);
-                foreach (var item in result.events.content[0].eventList)
-                {
-                    sb.AppendLine($"🔹 " + (item.desc.@default.Contains("Today") ? $"**{item.desc.@default}**" : $"{item.desc.@default}"));
-                }
-                embed.WithDescription(sb.ToString());
-                await FollowupAsync(embed: embed.Build());
-            }
-            catch (Exception ex)
-            {
-                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
-                await FollowupAsync(embed: embed);
-            }
-        }
+        //[SlashCommand("events", "[Command Disabled] Shows if there are any events currently available in-game.")]
+        //public async Task SlashEventsCommand()
+        //{
+        //    try
+        //    {
+        //        //disabled
+        //        var em = await EmbedHandler.BuildDescriptionEmbedAsync(
+        //            "Due to the removal of the Events tab in-game this command has been disabled until a new way of retrieving events data is found.\n" +
+        //            "Apologies for the inconvenience caused!");
+        //        await RespondAsync(embed: em);
+        //        return;
+        //        await DeferAsync();
+        //        StringBuilder sb = new();
+        //        var result = await APIInteractions.GetLandingPanel();
+        //        var embed = new EmbedBuilder();
+        //        embed.WithColor(Utilities.Constants.FeedbackColor);
+        //        embed.WithAuthor(x =>
+        //        {
+        //            x.Name = "SMITE Events";
+        //            x.IconUrl = Utilities.Constants.SmiteBolt;
+        //            x.Url = "https://www.smitegame.com/news/";
+        //        });
+        //        if (result?.events?.content?.Count == 0)
+        //        {
+        //            if (result.singlePanel.visible == "true")
+        //            {
+        //                var first = result.singlePanel.content.FirstOrDefault(x => x.locationId == 702 && x.isStandard == "true" && x.endDate.HasValue && x.endDate.Value.AddHours(2) > DateTime.UtcNow);
+        //                if (first != null && first.isStandard == "true")
+        //                {
+        //                    embed.WithTitle($"{first.header?.@default} | Ends <t:{Text.DateTimeToUnix(first.endDate.Value.AddHours(2))}:R>");
+        //                    embed.WithImageUrl(first?.imageUrl.INT);
+        //                    await FollowupAsync(embed: embed.Build());
+        //                    return;
+        //                }
+        //            }
+        //            embed.WithTitle("There are no events at the moment.");
+        //            await FollowupAsync(embed: embed.Build());
+        //            return;
+        //        }
+        //        var header = result.events.content.FirstOrDefault().eventList.Find(x => x.header != null);
+        //        if (header != null)
+        //        {
+        //            embed.WithTitle(header.header.@default);
+        //        }
+        //        embed.WithImageUrl(result.events.content.FirstOrDefault()?.imageUrl);
+        //        embed.WithColor(Utilities.Constants.FeedbackColor);
+        //        foreach (var item in result.events.content[0].eventList)
+        //        {
+        //            sb.AppendLine($"🔹 " + (item.desc.@default.Contains("Today") ? $"**{item.desc.@default}**" : $"{item.desc.@default}"));
+        //        }
+        //        embed.WithDescription(sb.ToString());
+        //        await FollowupAsync(embed: embed.Build());
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+        //        await FollowupAsync(embed: embed);
+        //    }
+        //}
 
         [SlashCommand("bugs", "Checks the SMITE Community Issues Trello Board for current and fixed issues.")]
         public async Task SlashTrelloBoardCommand()
@@ -718,7 +770,7 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                var motdList = await HiRez.GetMOTD();
+                var motdList = await HiRez.GetMOTDAsync();
                 string desc = "";
                 string embedValue = "";
                 bool addedTodaysMotd = false;
@@ -824,7 +876,7 @@ namespace ThothBotCore.Modules
                     }
 
                     EmbedBuilder embed;
-                    string mostplayed = await CalculateTopGameModesForStatsAsync(HiRez, player[0].player_id.ToString());
+                    string[] topModesAndClassess = await CalculateTopGameModesForStatsAsync(HiRez, player[0].player_id.ToString());
 
                     // Doing the stuff
                     var playerStatus = await HiRez.GetPlayerStatusAsync(player[0].player_id.ToString());
@@ -837,17 +889,18 @@ namespace ThothBotCore.Modules
                     var getPlayer = await HiRez.GetPlayerAsync(player[0].player_id.ToString());
                     if (getPlayer.Count == 0)
                     {
-                        await Reporter.SendMsgToBotLogsChannel($"Slash command stats, line 834\ngetPlayer count is 0, ID: {player[0].player_id} Name: {player[0].Name}");
+                        await Reporter.SendMsgToBotLogsChannel($"Slash command stats `SendMsgToBotLogsChannel()`\ngetPlayer count is 0, ID: {player[0].player_id} Name: {player[0].Name}");
                     }
                     var godRanks = await HiRez.GetGodRanksAsync(player[0].player_id.ToString());
 
                     // Generating the embed and sending to channel
-                    embed = await EmbedHandler.PlayerStatsEmbed(
+                    embed = await EmbedHandler.NewPlayerStatsEmbed(
                         getPlayer,
                         godRanks,
                         await HiRez.GetPlayerAchievementsAsync(player[0].player_id.ToString()),
                         playerStatus,
                         match);
+                    embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
 
                     // Buttons
                     var comps = await ComponentsHandler.RichStatsButtonsAsync(player[0].player_id.ToString(), 0, playerStatus[0].Match != 0);
@@ -857,7 +910,7 @@ namespace ThothBotCore.Modules
                     {
                         field.IsInline = true;
                         field.Name = $"<:matches:579604410569850891>Most Played Modes";
-                        field.Value = mostplayed;
+                        field.Value = topModesAndClassess[0];
                     });
 
                     await FollowupAsync(embed: embed.Build(), components: comps);
@@ -866,7 +919,8 @@ namespace ThothBotCore.Modules
                     try
                     {
                         await MongoConnection.SavePlayerAsync(getPlayer[0]).ConfigureAwait(false);
-                        await MongoConnection.SavePlayerGodRanksAsync(godRanks).ConfigureAwait(false);
+                        //await MongoConnection.SavePlayerGodRanksAsync(godRanks).ConfigureAwait(false);
+                        // commenting it out until i find a better way of handling this data
                     }
                     catch (Exception ex)
                     {
@@ -1074,12 +1128,14 @@ namespace ThothBotCore.Modules
                     //    await FollowupAsync(embed: emb);
                     //    return;
                     //}
-                    
+
+                    matchHistory = matchHistory.DistinctBy(x => x.Match).ToList();
+
                     // Match details select menu
                     List<SelectMenuOptionBuilder> options = new();
                     for (int i = 0; i < matchHistory.Count; i++)
                     {
-                        if (i == 24)
+                        if (i == 25)
                         {
                             break;
                         }
@@ -1094,7 +1150,7 @@ namespace ThothBotCore.Modules
                     }
                     var comp = new ComponentBuilder().WithSelectMenu("mdselect", placeholder: "Show match details", options: options);
 
-                    var embed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
+                    var embed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory, getPlayer);
 
                     await FollowupAsync(embed: embed, components: comp.Build());
                 }
@@ -1328,6 +1384,26 @@ namespace ThothBotCore.Modules
             }
         }
 
+        //[SlashCommand("clan", "Check a clan in SMITE")]
+        //public async Task SlashClanDetailsCommand()//get id lmao
+        //{
+        //    try
+        //    {
+        //        // 299565
+        //        string id = "299565";
+        //        var details = await HiRez.GetTeamDetailsAsync(id);
+        //        var players = await HiRez.GetTeamPlayersAsync(id);
+        //        var embed = await EmbedHandler.BuildClanEmbedAsync(details, players);
+
+        //        await RespondAsync(embed: embed);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        var embedd = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+        //        await RespondAsync(embed: embedd);
+        //    }
+        //}
+
         [SlashCommand("link", "Link your Discord and SMITE accounts in Thoth's database.")]
         public async Task SlashLinkingInfoCommand()
         {
@@ -1355,7 +1431,8 @@ namespace ThothBotCore.Modules
                 });
                 embed.WithDescription($"Thoth Account Linking will link your Discord and SMITE account in our database which will " +
                     $"allow executing commands without providing PlayerName. \nCommands using this feature are:\n\n" +
-                    $"`/stats`, `/livemd`, `/mdlast`, `/history`, `/wp`, `/wr`\n\n" +
+                    $"</stats:969453246701789240>, </livemd:969453246819209297>, </mdlast:969453246819209298>, </history:969453246701789243>, " +
+                    $"</wp:969453246701789241>, </wr:969453246701789242>\n\n" +
                     $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! " +
                     $"Linking requires changing your Personal Status Message in-game to verify that the account you're trying to link is yours.** " +
                     $"You can keep using your previous status message after linking is completed." +
@@ -1376,34 +1453,41 @@ namespace ThothBotCore.Modules
         [SlashCommand("feeds", "Set a channel to get server status notifications and more (soon™).")]
         [CustomRequireContext(Discord.ContextType.Guild)]
         [RequireUserPermission(GuildPermission.ManageChannels | GuildPermission.ManageGuild)]
+        [IntegrationType(ApplicationIntegrationType.GuildInstall)]
         public async Task SlashFeedsCommand()
         {
             try
             {
                 var guildSettings = await MongoConnection.GetGuildSettingsAsync(Context.Guild.Id);
                 var textChannels = await Context.Guild.GetTextChannelsAsync();
-                string serverStString = "";
 
-                if (guildSettings != null)
+                foreach (var type in (FeedType[])Enum.GetValues(typeof(FeedType)))
                 {
-                    var statusFeeds = guildSettings.Feeds.Find(x => x.Type == GuildSettingsModel.FeedType.ServerStatus);
-                    if (statusFeeds.WebhookID != 0)
+                    if (guildSettings != null) // settings for the server exist
                     {
-                        var webhook = await Context.Guild.GetWebhookAsync(statusFeeds.WebhookID);
-                        var channel = await Context.Guild.GetTextChannelAsync(webhook.ChannelId);
-                        if (webhook != null)
+                        var settings = guildSettings.Feeds.Find(x => x.Type == type);
+                        if (settings != null) // there are settings for that feed type
                         {
-                            serverStString = channel.Mention.ToString();
-                            if (channel.Id != statusFeeds.ChannelID)
+                            if (settings.WebhookID != 0)
                             {
-                                statusFeeds.ChannelID = channel.Id;
-                                await MongoConnection.SaveGuildSettingsAsync(guildSettings);
+                                var webhook = await Context.Guild.GetWebhookAsync(settings.WebhookID);
+                                if (webhook == null) // remove the data from db cuz webhook doesnt exist
+                                {
+                                    settings.WebhookID = 0;
+                                    settings.ChannelID = 0;
+                                    settings.WebhookToken = null;
+                                    await MongoConnection.SaveGuildSettingsAsync(guildSettings);
+                                }
                             }
+                        }
+                        else // there are no settings for that feed type, create some
+                        {
+                            guildSettings.Feeds.Add(new() { Type = type, ChannelID = 0, WebhookID = 0, WebhookToken = null });
+                            await MongoConnection.SaveGuildSettingsAsync(guildSettings);
                         }
                     }
                 }
-
-                var embed = await EmbedHandler.BuildDefaultFeedsPage(serverStString, textChannels.Count > 25);
+                var embed = await EmbedHandler.BuildDefaultFeedsPage(guildSettings ??= new(), textChannels.Count > 25);
 
                 var buttons = await ComponentsHandler.FeedsSelectMenuAsync(guildSettings, Context);
                 await RespondAsync(embed: embed, components: buttons);
@@ -1434,9 +1518,9 @@ namespace ThothBotCore.Modules
                 {
                     author
                         .WithName("About Thoth Bot")
-                        .WithIconUrl(Utilities.Constants.botIcon);
+                        .WithIconUrl(Constants.botIcon);
                 });
-                embed.WithDescription($"<:Developer:747217301006319737> Owner & Developer: EasyThe#2836 - <@171675309177831424>\n" +
+                embed.WithDescription($"<:Developer:747217301006319737> Owner & Developer: @easythe - <@171675309177831424>\n" +
                     $"⚖ Data provided by Hi-Rez. © {DateTime.Now.Year} [Hi-Rez Studios](https://www.hirezstudios.com/), Inc. All rights reserved.");
                 embed.WithColor(Utilities.Constants.DefaultBlueColor);
                 embed.AddField(x =>
@@ -1444,7 +1528,7 @@ namespace ThothBotCore.Modules
                     x.IsInline = true;
                     x.Name = "Statistics";
                     x.Value = $":stopwatch: **Uptime**: {GetUptime()}\n" +
-                    $"⛓ **Shards Connected: **{Connection.shardsConnected.Count}\n" +
+                    $":chains: **Shards Connected: **{Connection.shardsConnected.Count}\n" +
                     $":chart_with_upwards_trend: **Servers**: {Connection.Client.Guilds.Count}\n" +
                     $":busts_in_silhouette: **Users**: {totalUsers}\n" +
                     $":1234: **Commands Run**: {Global.CommandsRun}\n" +
@@ -1452,15 +1536,17 @@ namespace ThothBotCore.Modules
                 });
                 long playersCount = await MongoConnection.PlayersCount();
                 long linkedCount = await MongoConnection.LinkedPlayersCount();
-                var feedsStatusCount = MongoConnection.GetFeedGuildsAsync(GuildSettingsModel.FeedType.ServerStatus);
-                var statusCount = feedsStatusCount.Where(x => x.Feeds.Exists(z => z.Type == GuildSettingsModel.FeedType.ServerStatus && z.WebhookID != 0)).ToList().Count;
+                var feedsStatusCount = MongoConnection.GetFeedGuildsAsync(FeedType.SMITEServerStatus);
+                var smite2Count = MongoConnection.GetFeedGuildsAsync(FeedType.SMITE2News);
+                var statusCount = feedsStatusCount.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITEServerStatus && z.WebhookID != 0)).ToList().Count;
                 embed.AddField(x =>
                 {
                     x.IsInline = true;
-                    x.Name = "Thoth's Database";
+                    x.Name = $"Thoth's {(Credentials.botConfig.IsDev == 0 ? "" : "DEV")} Database";
                     x.Value = $":video_game: **Players**: {playersCount}\n" +
                     $":link: **Linked Players**: {linkedCount}\n" +
-                    $":loudspeaker: **SMITE Status Subs**: {statusCount}\n" +
+                    $":loudspeaker: **{FeedType.SMITEServerStatus}**: {statusCount}\n" +
+                    $":loudspeaker: **{FeedType.SMITE2News}**: {smite2Count.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2News && z.WebhookID != 0)).Count()}\n" +
                     $"<:Gods:567146088985919498> **SMITE Version**: {patch}";
                 });
                 var settings = MongoConnection.GetBotSettings();
@@ -1553,37 +1639,65 @@ namespace ThothBotCore.Modules
             if (actualPlayers.Count == 1 && actualPlayers[0].privacy_flag != "n")
             {
                 var embed = await EmbedHandler.HiddenProfileEmbed(Username);
-                await context.Interaction.FollowupAsync(embed: embed.Build());
+                if (context.Interaction.HasResponded)
+                {
+                    await context.Interaction.FollowupAsync(embed: embed.Build(), ephemeral: true);
+                }
+                
                 return actualPlayers;
             }
 
             return actualPlayers;
         }
-        public static async Task<string> CalculateTopGameModesForStatsAsync(HiRezAPIv2 hiRez, string playerId)
+        /// <summary>
+        /// First returned string is top queues, second is top classes
+        /// </summary>
+        /// <param name="hiRez"></param>
+        /// <param name="playerId"></param>
+        /// <returns></returns>
+        public static async Task<string[]> CalculateTopGameModesForStatsAsync(HiRezAPIv2 hiRez, string playerId)
         {
             try
             {
+                string[] result = new string[2];
                 var allQueue = new List<AllQueueStats>();
-                for (int i = 0; i < Text.LegitQueueIDs().Count; i++)
+                // !! If legit queues become more than 20, we need to refactor the code because the batch endpoint can get max 20 queues
+                int matches = 0;
+                string queueIDs = String.Join(",", Text.LegitQueueIDs().Select(x => x.ToString()));
+                var queueStats = await hiRez.GetQueueStatsBatchAsync(playerId, queueIDs);
+                if (queueStats.Count != 0 && (string)queueStats[0]?.ret_msg != "apidown")
                 {
-                    int matches = 0;
-                    var queueStats = await hiRez.GetQueueStats(playerId, Text.LegitQueueIDs()[i]);
-                    if (queueStats.Count != 0 && (string)queueStats[0]?.ret_msg != "apidown")
+                    // Top Classes
+                    foreach (var god in queueStats)
                     {
-                        for (int c = 0; c < queueStats.Count; c++)
+                        if (god.GodId == 2071) // ZEUS "Redesign"
                         {
-                            if (queueStats[c].Matches != 0)
-                            {
-                                matches += queueStats[c].Matches;
-                            }
+                            god.GodRole = "Mage";
                         }
-                        allQueue.Add(new AllQueueStats { queueName = queueStats[0].Queue, matches = matches });
+                        else
+                        {
+                            god.GodRole = Constants.GodsHashSet.Where(x => x.id == god.GodId).FirstOrDefault().Roles;
+                        }
+                    }
+                    // Top Queues
+                    var topQueues = queueStats.GroupBy(x => x.Queue).ToList();
+                    for (int c = 0; c < topQueues.Count; c++)
+                    {
+                        if (topQueues[c].Any())
+                        {
+                            matches = 0;
+                            for (int e = 0; e < topQueues[c].Count(); e++)
+                            {
+                                matches += topQueues[c].ElementAt(e).Matches;
+                            }
+                            allQueue.Add(new AllQueueStats { queueName = topQueues[c].Key, matches = matches, queueStats = topQueues[c].ToList() });
+                        }
                     }
                 }
                 var orderedQueues = allQueue.OrderByDescending(x => x.matches).ToList();
                 if (orderedQueues.Count != 0)
                 {
-                    return orderedQueues.Count switch
+                    result[0] = orderedQueues.Count switch
                     {
                         1 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]",
                         2 => $":first_place:{orderedQueues[0].queueName} [{orderedQueues[0].matches}]\n" +
@@ -1593,13 +1707,47 @@ namespace ThothBotCore.Modules
                              $":third_place:{orderedQueues[2].queueName} [{orderedQueues[2].matches}]",
                     };
                 }
-                return "No match data was found.";
+                else
+                {
+                    result[0] = "No match data was found.";
+                }
+
+                // Top Classes
+                var topRoles = allQueue
+                    .SelectMany(queue => queue.queueStats)
+                    .GroupBy(qs => qs.GodRole)
+                    .Select(group => new RoleStatistics
+                    {
+                        Role = group.Key,
+                        MatchCount = group.Sum(stats => stats.Matches),
+                    })
+                    .OrderByDescending(stats => stats.MatchCount)
+                    .Take(5)
+                    .ToList();
+
+                var allMatchCountSum = topRoles.Sum(stats => stats.MatchCount);
+
+                result[1] = topRoles.Count switch
+                {
+                    1 => $"{Text.GetGodRoleEmoji(topRoles[0].Role)} {topRoles[0].MatchCount} [{Math.Round(((double)topRoles[0].MatchCount / allMatchCountSum) * 100, 2)}%]",
+                    2 => $"{Text.GetGodRoleEmoji(topRoles[0].Role)} {topRoles[0].MatchCount} [{Math.Round(((double)topRoles[0].MatchCount / allMatchCountSum) * 100, 2)}%]\n" +
+                         $"{Text.GetGodRoleEmoji(topRoles[1].Role)} {topRoles[1].MatchCount} [{Math.Round(((double)topRoles[1].MatchCount / allMatchCountSum) * 100, 2)}%]",
+                    3 => $"{Text.GetGodRoleEmoji(topRoles[0].Role)} {topRoles[0].MatchCount} [{Math.Round(((double)topRoles[0].MatchCount / allMatchCountSum) * 100, 2)}%]\n" +
+                         $"{Text.GetGodRoleEmoji(topRoles[1].Role)} {topRoles[1].MatchCount} [{Math.Round(((double)topRoles[1].MatchCount / allMatchCountSum) * 100, 2)}%]\n" +
+                         $"{Text.GetGodRoleEmoji(topRoles[2].Role)} {topRoles[2].MatchCount} [{Math.Round(((double)topRoles[2].MatchCount / allMatchCountSum) * 100, 2)}%]",
+                    _ => $"{Text.GetGodRoleEmoji(topRoles[0].Role)} {topRoles[0].MatchCount} [{Math.Round(((double)topRoles[0].MatchCount / allMatchCountSum) * 100, 2)}%]\n" +
+                         $"{Text.GetGodRoleEmoji(topRoles[1].Role)} {topRoles[1].MatchCount} [{Math.Round(((double)topRoles[1].MatchCount / allMatchCountSum) * 100, 2)}%]\n" +
+                         $"{Text.GetGodRoleEmoji(topRoles[2].Role)} {topRoles[2].MatchCount} [{Math.Round(((double)topRoles[2].MatchCount / allMatchCountSum) * 100, 2)}%]\n" +
+                         $"{Text.GetGodRoleEmoji(topRoles[3].Role)} {topRoles[3].MatchCount} [{Math.Round(((double)topRoles[3].MatchCount / allMatchCountSum) * 100, 2)}%]",
+                };
+
+                return result;
             }
             catch (Exception ex)
             {
                 SentrySdk.CaptureException(ex);
                 Console.WriteLine($"CalculateTopGameModesForStatsAsync[CapturedBySentry] - {ex.Message}");
-                return "n/a";
+                return ["n/a"];
             }
         }
         public static async Task<bool> IsSmiteApiAlive(HiRezAPIv2 api)

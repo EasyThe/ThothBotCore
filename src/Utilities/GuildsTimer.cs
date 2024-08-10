@@ -44,11 +44,13 @@ namespace ThothBotCore.Utilities
                     _guildsCounter = Global.Metrics.CreateObservableGauge("guilds", () => Connection.Client.Guilds.Count);
                     _usersCounter = Global.Metrics.CreateObservableGauge("users", () => totalUsers);
                 }
-                
+
+                await Connection.Client.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {Connection.Client.Guilds.Count}"); // remove this
+
                 if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)
                 {
                     joinedGuilds = Connection.Client.Guilds.Count;
-                    await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
+                    await Connection.Client.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
 
                     Text.WriteLine("Users: " + totalUsers);
 
@@ -71,23 +73,21 @@ namespace ThothBotCore.Utilities
                     }
 
                     //DiscordBotList.com
-                    // Disabled because they don't care about the list anymore, API throwing 5xx codes
-                    //try
-                    //{
-                    //    using (var webclient = new HttpClient())
-                    //    using (var content = new StringContent($"{{ \"guilds\": {Connection.Client.Guilds.Count}, \"users\": {totalUsers} }}", Encoding.UTF8, "application/json"))
-                    //    {
-                    //        webclient.DefaultRequestHeaders.Add("Authorization", Credentials.botConfig.dblAPI);
-                    //        var dblcomResponse = await webclient.PostAsync("https://discordbotlist.com/api/v1/bots/454145330347376651/stats", content);
-                    //        await BotListCallResponse("DiscordBotList.com", dblcomResponse);
-                    //    }
-
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    await Reporter.SendError("**DiscordBotList.**\n" +
-                    //        $"**Error Message:** {ex.Message}");
-                    //}
+                    try
+                    {
+                        using (var webclient = new HttpClient())
+                        using (var content = new StringContent($"{{ \"guilds\": {Connection.Client.Guilds.Count}, \"users\": {totalUsers} }}", Encoding.UTF8, "application/json"))
+                        {
+                            webclient.DefaultRequestHeaders.Add("Authorization", Credentials.botConfig.dblAPI);
+                            var dblcomResponse = await webclient.PostAsync("https://discordbotlist.com/api/v1/bots/454145330347376651/stats", content);
+                            await BotListCallResponse("DiscordBotList.com", dblcomResponse);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await Reporter.SendErrorAsync("**DiscordBotList.**\n" +
+                            $"**Error Message:** {ex.Message}");
+                    }
 
                     //Discord.Bots.GG
                     try
@@ -144,56 +144,37 @@ namespace ThothBotCore.Utilities
                             $"**Error Message:** {ex.Message}");
                     }
 
-                    //DiscordLabs
-                    try
-                    {
-                        using (var webclient = new HttpClient())
-                        using (var content = new StringContent(
-                            $"{{ \"token\": \"{Credentials.botConfig.DiscordLabsAPI}\", " +
-                            $"\"server_count\": \"{Connection.Client.Guilds.Count}\"," +
-                            $"\"shard_count\": {Connection.Client.Shards.Count} }}", Encoding.UTF8, "application/json"))
-                        {
-                            var response = await webclient.PostAsync($"https://bots.discordlabs.org/v2/bot/{Connection.Client.CurrentUser.Id}/stats", content);
-                            await BotListCallResponse("DiscordLabs", response);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        await Reporter.SendErrorAsync("**DiscordLabs.**\n" +
-                            $"**Error Message:** {ex.Message}");
-                    }
-
                     await Connection.Logger.Log("i", $"Guilds count updated! New count: {joinedGuilds}");
                 }
 
-                double cpuPercentage = await GetCpuUsageForProcess();
-                // StatCord
-                try
-                {
-                    long linkedPlayers = await Storage.Implementations.MongoConnection.LinkedPlayersCount();
-                    using var webclient = new HttpClient();
-                    using var content = new StringContent(
-                        $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
-                        $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
-                        $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
-                        $"\"users\": \"{totalUsers}\", " +
-                        $"\"active\": [], " +
-                        $"\"commands\": \"0\", " +
-                        $"\"popular\": []," +
-                        $"\"memactive\": \"{GetMemoryUsageForProcess()}\"," +
-                        $"\"memload\": \"0\"," +
-                        $"\"cpuload\": \"{cpuPercentage}\"," +
-                        $"\"bandwidth\": \"0\"," +
-                        $"\"custom1\": \"{linkedPlayers}\"," +
-                        $"\"custom2\": \"{Storage.Database.CountOfStatusUpdatesActivatedInDB()[0]}\" }}", Encoding.UTF8, "application/json");
-                    var response = await webclient.PostAsync("https://api.statcord.com/v3/stats", content);
-                    await BotListCallResponse("StatCord", response);
-                }
-                catch (Exception ex)
-                {
-                    await Reporter.SendErrorAsync("**StatCord.**\n" +
-                        $"**Error Message:** {ex.Message}");
-                }
+                // double cpuPercentage = await GetCpuUsageForProcess();
+                // StatCord is dead
+                //try
+                //{
+                //    long linkedPlayers = await Storage.Implementations.MongoConnection.LinkedPlayersCount();
+                //    using var webclient = new HttpClient();
+                //    using var content = new StringContent(
+                //        $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
+                //        $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
+                //        $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
+                //        $"\"users\": \"{totalUsers}\", " +
+                //        $"\"active\": [], " +
+                //        $"\"commands\": \"0\", " +
+                //        $"\"popular\": []," +
+                //        $"\"memactive\": \"{GetMemoryUsageForProcess()}\"," +
+                //        $"\"memload\": \"0\"," +
+                //        $"\"cpuload\": \"{cpuPercentage}\"," +
+                //        $"\"bandwidth\": \"0\"," +
+                //        $"\"custom1\": \"{linkedPlayers}\"," +
+                //        $"\"custom2\": \"{Storage.Database.CountOfStatusUpdatesActivatedInDB()[0]}\" }}", Encoding.UTF8, "application/json");
+                //    var response = await webclient.PostAsync("https://api.statcord.com/v3/stats", content);
+                //    await BotListCallResponse("StatCord", response);
+                //}
+                //catch (Exception ex)
+                //{
+                //    await Reporter.SendErrorAsync("**StatCord.**\n" +
+                //        $"**Error Message:** {ex.Message}");
+                //}
             }
 
             GuildCountTimer.Interval = 60000;

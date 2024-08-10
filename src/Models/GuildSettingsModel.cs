@@ -7,57 +7,21 @@ namespace ThothBotCore.Models
     public class GuildSettingsModel
     {
         public ulong _id { get; set; }
-        public List<Feed> Feeds { get; set; } = new List<Feed>()
-        {
-            new Feed()
+        public List<Feed> Feeds { get; set; } =
+        [
+            new()
             {
-                Type = FeedType.ServerStatus,
+                Type = FeedType.SMITEServerStatus,
                 WebhookID = 0,
                 WebhookToken = null
             },
             new Feed()
             {
-                Type = FeedType.UpdateNotes,
+                Type = FeedType.SMITE2News,
                 WebhookID = 0,
                 WebhookToken = null
-            },
-            new Feed()
-            {
-                Type = FeedType.BlogPosts,
-                WebhookID = 0,
-                WebhookToken = null
-            },
-            new Feed()
-            {
-                Type = FeedType.Datamining,
-                WebhookID = 0,
-                WebhookToken = null
-            },
-            new Feed()
-            {
-                Type = FeedType.GameTwitter,
-                WebhookID = 0,
-                WebhookToken = null
-            },
-            new Feed()
-            {
-                Type = FeedType.GameYouTube,
-                WebhookID = 0,
-                WebhookToken = null
-            },
-            new Feed()
-            {
-                Type = FeedType.ProTwitter,
-                WebhookID = 0,
-                WebhookToken = null
-            },
-            new Feed()
-            {
-                Type = FeedType.ProBlogPosts,
-                WebhookID = 0,
-                WebhookToken = null
-            },
-        };
+            }
+        ];
 
         public class Feed
         {
@@ -72,14 +36,15 @@ namespace ThothBotCore.Models
 
         public enum FeedType
         {
-            ServerStatus,
-            UpdateNotes,
-            BlogPosts,
-            Datamining,
-            GameTwitter,
-            GameYouTube,
-            ProTwitter,
-            ProBlogPosts
+            SMITEServerStatus,
+            SMITE2News
+            //UpdateNotes,
+            //BlogPosts,
+            //Datamining,
+            //GameTwitter,
+            //GameYouTube,
+            //ProTwitter,
+            //ProBlogPosts
         }
     }
 }

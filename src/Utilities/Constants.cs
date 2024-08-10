@@ -24,6 +24,8 @@ namespace ThothBotCore.Utilities
         public static readonly Color SPLColor = new(255, 194, 67);
         public static readonly Color SuccessColor = new(67, 181, 129);
         public static readonly Color FeedsColor = new(51, 212, 163);
+        public static readonly Color SMITE2GoldColor = new(242, 197, 114);
+        public static readonly Color SMITE2BlueColor = new(38, 46, 66);
         public static List<TipsModel> TipsList = MongoConnection.GetAllTips();
         public static List<CommunityModel> CommList = MongoConnection.GetAllCommunities();
         public static BotSettingsModel BotSettings = MongoConnection.GetBotSettings();
@@ -31,6 +33,7 @@ namespace ThothBotCore.Utilities
         public static string[] Placeholders = BotSettings.Placeholders;
         public static HashSet<Gods.God> GodsHashSet = new(MongoConnection.GetAllGods());
         public static HashSet<GetItems.Item> ItemsHashSet = new(MongoConnection.GetAllActiveItems());
+        public static HashSet<Gods.God> SMITE2GodsHashSet = new(MongoConnection.GetAllGods(true));
 
         // Vulpis
         public static readonly string VulpisLogoLink = "https://i.imgur.com/WePnHmR.png";
@@ -42,6 +45,7 @@ namespace ThothBotCore.Utilities
             BotSettings = MongoConnection.GetBotSettings();
             GodsHashSet = new HashSet<Gods.God>(MongoConnection.GetAllGods());
             ItemsHashSet = new HashSet<GetItems.Item>(MongoConnection.GetAllActiveItems());
+            SMITE2GodsHashSet = new(MongoConnection.GetAllGods(true));
         }
     }
 }

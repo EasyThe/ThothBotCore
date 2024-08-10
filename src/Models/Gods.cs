@@ -84,6 +84,21 @@ namespace ThothBotCore.Models
             public int DomColor { get; set; }
             public string Emoji { get; set; }
             public List<GodSkinModel> Skins { get; set; }
+            public List<RecommendedItem> RecommendedItems { get; set; }
         }
+
+        [BsonIgnoreExtraElements]
+        public class RecommendedItem
+        {
+            public string Category { get; set; }
+            public string Item { get; set; }
+            public string Role { get; set; }
+            public int category_value_id { get; set; }
+            public int icon_id { get; set; }
+            public int item_id { get; set; }
+            public object ret_msg { get; set; }
+            public int role_value_id { get; set; }
+        }
+
     }
 }

@@ -2,6 +2,13 @@
   "profiles": {
     "ThothBotCore": {
       "commandName": "Project"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "ThothOnLinux": {
+      "commandName": "WSL2"
     }
   }
 }

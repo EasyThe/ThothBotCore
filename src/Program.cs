@@ -5,6 +5,10 @@ using Sentry;
 using ThothBotCore.Discord.Entities;
 using OpenTelemetry.Metrics;
 using OpenTelemetry;
+using Microsoft.Extensions.DependencyInjection;
+using Discord.WebSocket;
+using Discord.Rest;
+using ThothBotCore.Tasks;
 
 namespace ThothBotCore
 {
@@ -19,20 +23,52 @@ namespace ThothBotCore
         }
         private static async Task MainAsync()
         {
+            var serviceCollection = new ServiceCollection();
+            ServiceCollectionExtensions.ConfigureServices(serviceCollection);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            // Now you can resolve services
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            var connection = serviceProvider.GetRequiredService<Connection>();
+            var smite2NewsTask = serviceProvider.GetRequiredService<Smite2NewsTask>();
+            smite2NewsTask.Start();
+            var smite2GodsTask = serviceProvider.GetRequiredService<Smite2GodsTask>();
+            smite2GodsTask.Start();
+            var advertiserTask = serviceProvider.GetRequiredService<AdvertiserTask>();
+            advertiserTask.Start();
+
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter("ThothBotMetrics")
-                .AddPrometheusExporter(opt =>
+                .AddPrometheusHttpListener(opt =>
                 {
-                    opt.HttpListenerPrefixes = new string[] { $"http://localhost:{Credentials.botConfig.MetricsPort}/" };
                     opt.ScrapeEndpointPath = "/metrics";
-                    opt.StartHttpListener = true;
+                    opt.UriPrefixes = [$"http://localhost:{Credentials.botConfig.MetricsPort}/"];
                 })
                 .Build();
 
-            var connection = Unity.Resolve<Connection>();
             await connection.ConnectAsync();
 
             Console.ReadKey();
+        }
+
+        public static class ServiceCollectionExtensions
+        {
+            public static void ConfigureServices(IServiceCollection services)
+            {
+                // Register dependencies
+                services.AddSingleton<ILogger, Logger>();
+                services.AddSingleton(provider => SocketConfig.GetDefault());
+                services.AddSingleton(provider =>
+                {
+                    var config = provider.GetRequiredService<DiscordSocketConfig>();
+                    return new DiscordShardedClient(config);
+                });
+                services.AddSingleton<DiscordLogger>();
+                services.AddSingleton<Connection>();
+                services.AddSingleton(provider => new Smite2NewsTask(TimeSpan.FromMinutes(6)));
+                services.AddSingleton(provider => new Smite2GodsTask(TimeSpan.FromDays(1)));
+                services.AddSingleton(provider => new AdvertiserTask(TimeSpan.FromMinutes(10)));
+            }
         }
     }
 }

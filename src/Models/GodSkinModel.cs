@@ -1,5 +1,9 @@
-﻿namespace ThothBotCore.Models
+﻿using MongoDB.Bson.Serialization.Attributes;
+using ThothBotCore.Models.SMITE2;
+
+namespace ThothBotCore.Models
 {
+    [BsonIgnoreExtraElements]
     public class GodSkinModel
     {
         public string godIcon_URL { get; set; }
@@ -13,5 +17,6 @@
         public int skin_id1 { get; set; }
         public int skin_id2 { get; set; }
         public string skin_name { get; set; }
+        public Smite2GodsModel.ImgFormats imageFormats { get; set; }
     }
 }

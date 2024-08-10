@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
-using ThothBotCore.Discord.Entities;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 
@@ -12,13 +11,8 @@ namespace ThothBotCore.Feeds
 {
     public static class Feeder
     {
-        public static async Task SendServerStatusWebhooks(Embed embed, Models.GuildSettingsModel.FeedType feedType, string webhookUsername = "")
+        public static async Task SendFeedWebhooks(Embed embed, Models.GuildSettingsModel.FeedType feedType, string webhookUsername = "", string msg = "")
         {
-            if (Credentials.botConfig.prefix == "??")
-            {
-                Text.WriteLine("Skipping anouncing server status.");
-                return;
-            }
             var allGuildSettings = MongoConnection.GetAllGuildsSettings();
             var feedGuilds = allGuildSettings.Where(x => x.Feeds.Any(z => z.Type == feedType)).ToList();
 
@@ -26,7 +20,7 @@ namespace ThothBotCore.Feeds
             SocketGuild guild = null;
             int SuccessCount = 0;
 
-            await FeedLogger(feedType, true, embed, feedGuilds.Count);
+            await FeedLogger(feedType, true, embed, feedGuilds.Count, msg: msg);
 
             for (int i = 0; i < feedGuilds.Count; i++)
             {
@@ -38,7 +32,7 @@ namespace ThothBotCore.Feeds
                         // Sending via webhook
                         using var client = new DiscordWebhookClient(feed.WebhookID, feed.WebhookToken);
 
-                        await client.SendMessageAsync(embeds: new[] { embed },
+                        await client.SendMessageAsync(embeds: [embed],
                             username: webhookUsername, avatarUrl: "https://i.imgur.com/onR0CEh.png");
                     }
                     else
@@ -57,8 +51,8 @@ namespace ThothBotCore.Feeds
                         }
                         else
                         {
-                            var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to channel = null: {guild.Name}[{guild.Id}]");
-                            await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
+                            var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed {feedType} feed due to channel = null: {guild.Name}[{guild.Id}]");
+                            await Reporter.SendEmbedToBotLogsChannelAsync(emb);
 
                             await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
                         }
@@ -73,11 +67,12 @@ namespace ThothBotCore.Feeds
                         IUser user = Connection.Client.GetUser(guild.OwnerId);
                         try
                         {
-                            await user?.SendMessageAsync($":warning: Hey! I tried to send this {nameof(feedType)} to {channel?.Mention} in the {guild?.Name} server but I am missing **Access** there.\n" +
+                            await user?.SendMessageAsync($":warning: Hey! I tried to send this {nameof(feedType)} to {channel?.Mention} " +
+                                $"in the {guild?.Name} server but I am missing **Access** there.\n" +
                                 $"Please make sure I have **View Channel, Manage Webhooks**, **Use External Emojis** and **Embed Links** permissions in {channel?.Mention}." +
                                 $"You will get this message everytime I get an error by trying to send {nameof(feedType)} in {channel?.Mention}.\n" +
                                 $"If you don't want to receive {nameof(feedType)} anymore, please disable the channel by using `/feeds` in one of the channels in your server.",
-                                embed: embed);
+                                embed: embed); // maybe add a button under this message to disable the feed?
                         }
                         catch (System.Exception xx)
                         {
@@ -98,7 +93,7 @@ namespace ThothBotCore.Feeds
                     else if (ex.Message.Contains("Could not find a webhook with the supplied credentials"))
                     {
                         var emb = await EmbedHandler.BuildDescriptionEmbedAsync($"Removed SMITE Status Feed due to not finding webhook with supplied credentials: {guild?.Name}[{guild?.Id}]");
-                        await Reporter.SendEmbedToBotLogsChannel(emb.ToEmbedBuilder());
+                        await Reporter.SendEmbedToBotLogsChannelAsync(emb);
 
                         await MongoConnection.RemoveGuildSettings(feedGuilds[i]._id);
                     }
@@ -112,64 +107,26 @@ namespace ThothBotCore.Feeds
                     }
                 }
             }
-            await FeedLogger(feedType, false, embed, feedGuilds.Count, SuccessCount);
+            await FeedLogger(feedType, false, embed, feedGuilds.Count, SuccessCount, msg);
         }
-        private static async Task FeedLogger(Models.GuildSettingsModel.FeedType feedType, bool isStarting, Embed embed, int count, int successCount = 0)
+        private static async Task FeedLogger(Models.GuildSettingsModel.FeedType feedType, bool isStarting, Embed embed, int count, int successCount = 0, string msg = "")
         {
-            string msg = "";
             if (embed.Fields.Length != 0)
             {
                 msg = embed?.Fields[0].Name.Split('>')[^1].Trim();
             }
             if (isStarting)
             {
-                switch (feedType)
-                {
-                    case Models.GuildSettingsModel.FeedType.ServerStatus:
-                        await Connection.Logger.Log($"Feeds|{feedType}", $"[{msg}] Starting announcing to {count} servers.");
-                        
-                        return;
-                    case Models.GuildSettingsModel.FeedType.UpdateNotes:
-                        return;
-                    case Models.GuildSettingsModel.FeedType.BlogPosts:
-                        return;
-                    case Models.GuildSettingsModel.FeedType.Datamining:
-                        return;
-                    case Models.GuildSettingsModel.FeedType.GameTwitter:
-                        return;
-                    case Models.GuildSettingsModel.FeedType.GameYouTube:
-                        return;
-                    case Models.GuildSettingsModel.FeedType.ProTwitter:
-                        return;
-                    case Models.GuildSettingsModel.FeedType.ProBlogPosts:
-                        return;
-                    default:
-                        return;
-                }
+                var e = await EmbedHandler.BuildDescriptionEmbedAsync($"**[Feeds | {feedType}] [{msg}]** Starting announcing to {count} servers.", Constants.SMITE2GoldColor);
+                await Reporter.SendEmbedToBotLogsChannelAsync(e);
+                await Connection.Logger.Log($"Feeds | {feedType}", $"[{msg}] Starting announcing to {count} servers.");
+                return;
             }
-            switch (feedType)
-            {
-                case Models.GuildSettingsModel.FeedType.ServerStatus:
-                    await Connection.Logger.Log($"Feeds|{feedType}", $"[{msg}] " +
+            var em = await EmbedHandler.BuildDescriptionEmbedAsync($"**[Feeds | {feedType}] [{msg}]** " +
+                    $"Success: {successCount}, Failed: {count - successCount}, out of {count}", Constants.SMITE2GoldColor);
+            await Connection.Logger.Log($"Feeds | {feedType}", $"[{msg}] " +
                     $"Success: {successCount}, Failed: {count - successCount}, out of {count}");
-                    return;
-                case Models.GuildSettingsModel.FeedType.UpdateNotes:
-                    return;
-                case Models.GuildSettingsModel.FeedType.BlogPosts:
-                    return;
-                case Models.GuildSettingsModel.FeedType.Datamining:
-                    return;
-                case Models.GuildSettingsModel.FeedType.GameTwitter:
-                    return;
-                case Models.GuildSettingsModel.FeedType.GameYouTube:
-                    return;
-                case Models.GuildSettingsModel.FeedType.ProTwitter:
-                    return;
-                case Models.GuildSettingsModel.FeedType.ProBlogPosts:
-                    return;
-                default:
-                    return;
-            }
+            await Reporter.SendEmbedToBotLogsChannelAsync(em);
         }
     }
 }

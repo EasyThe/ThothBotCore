@@ -48,12 +48,13 @@ namespace ThothBotCore.Modules
                     await RespondAsync(embed: embed, ephemeral: true);
                     return;
                 }
-                if ((string)player[0].ret_msg == "privacy")
+                if (player[0].privacy_flag == "y")
                 {
                     var embed = new EmbedBuilder();
-                    embed.WithDescription($"{modal.Message} is hidden. " +
+                    embed.WithDescription($"**{modal.Message}** is hidden. " +
                                 $"Please unhide your profile by unchecking the \"Hide my Profile\" checkbox under the Profile tab in SMITE and try again.");
                     embed.WithImageUrl("https://cdn.discordapp.com/attachments/528621646626684928/951230342579232778/unknown.png");
+                    embed.WithColor(Constants.ErrorColor);
 
                     await RespondAsync(embed: embed.Build(), ephemeral: true);
                     return;
@@ -274,17 +275,17 @@ namespace ThothBotCore.Modules
         {
             try
             {
-                if (interaction.SecondInput != null && interaction.SecondInput.Contains("http")) // streaming
+                if (interaction.SecondInput != null && interaction.SecondInput.Contains("twitch")) // streaming
                 {
                     await Connection.Client.SetGameAsync(interaction.FirstInput, interaction.SecondInput, ActivityType.Streaming);
                 }
                 else if (interaction.FirstInput.Contains("default"))
                 {
-                    await Connection.Client.SetGameAsync($"{Credentials.botConfig.setGame} | {Connection.Client.Guilds.Count} servers", type: ActivityType.Playing);
+                    await Connection.Client.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | {Connection.Client.Guilds.Count} servers");
                 }
                 else
                 {
-                    await Connection.Client.SetGameAsync(interaction.FirstInput, type: ActivityType.Playing);
+                    await Connection.Client.SetCustomStatusAsync(interaction.FirstInput);
                 }
                 
                 await RespondAsync("👌👌👌", ephemeral: true);

@@ -3,7 +3,6 @@ using Discord.WebSocket;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ThothBotCore.Discord.Entities;
-using ThothBotCore.Storage;
 using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 
@@ -14,7 +13,7 @@ namespace ThothBotCore.Discord
         private readonly DiscordShardedClient _client;
         private readonly DiscordLogger _logger;
         public static List<int> shardsConnected = new();
-        public const int ShardCount = 4;
+        public const int ShardCount = 5;
         
         public static DiscordShardedClient Client;
         public static DiscordLogger Logger;
@@ -84,7 +83,7 @@ namespace ThothBotCore.Discord
                     shardsConnected.Add(arg.ShardId);
                 }
 
-                if (shardsConnected.Count == ShardCount || Connection.Client.CurrentUser.Id == 587623068461957121)
+                if (shardsConnected.Count == ShardCount || Client.CurrentUser.Id == 587623068461957121)
                 {
                     await _logger.Log("i", "Starting ServerStatusTimer & GuildsCountTimer");
                     await StatusTimer.StartServerStatusTimer();
@@ -115,6 +114,7 @@ namespace ThothBotCore.Discord
                     else
                     {
                         await Global.interactionService.RegisterCommandsToGuildAsync(518408306415632384, true);
+                        //await Global.interactionService.RegisterCommandsGloballyAsync(true);
                         await _logger.Log("√", "Registered commands to dev guild!");
                     }
                 }

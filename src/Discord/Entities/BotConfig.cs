@@ -60,5 +60,6 @@ namespace ThothBotCore.Discord.Entities
         public string GoogleAPIKey { get; set; } = "GoogleAPIKey";
         public string MetricsPort { get; set; } = "9284";
         public bool Debug { get; set; } = false;
+        public int IsDev { get; set; } = 0; // 0 = PROD, 1 = DEV
     }
 }

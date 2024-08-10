@@ -24,7 +24,7 @@ namespace ThothBotCore.Utilities
         private static string FindItem(string itemName)
         {
             string result = "";
-            var items = MongoConnection.GetAllItems();
+            var items = Constants.ItemsHashSet.ToList();
             if (items.Any(x => x.DeviceName.ToLowerInvariant().Contains(itemName.ToLowerInvariant())))
             {
                 var foundItem = items.Find(x => x.DeviceName.ToLowerInvariant().Contains(itemName.ToLowerInvariant()));

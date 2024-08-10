@@ -24,7 +24,28 @@ namespace ThothBotCore.Models
         public List<Top> Pantheons { get; set; }
         public List<Top> Skins { get; set; }
         public string Changelog { get; set; }
-        
+        public Dictionary<string, string> Healers { get; set; } = new()
+        {
+            // Assault Healers
+            // godid, tier
+            { "1898", "1" }, // aphrodite
+            { "1718", "1" }, // hel
+            { "3811", "1" }, // yemoja
+            { "1698", "2" }, // ra
+            { "1763", "2" }, // guan yu
+            { "4242", "2" }, // ix chel
+            { "1921", "2" }, // change
+            { "2030", "2" }, // sylvanus
+            { "2147", "2" }, // terra
+            { "3611", "2" }, // horus
+            { "3518", "3" }, // baron samedi
+            { "3664", "3" }, // olorun
+            { "1918", "3" }, // eset
+            { "3336", "3" }, // artio
+            { "1778", "3" }, // cupid
+        };
+        public List<string[]> UpdateNotes { get; set; } = new();
+
         public class Top
         {
             public string Emoji { get; set; }

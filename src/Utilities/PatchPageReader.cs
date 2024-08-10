@@ -14,7 +14,7 @@ namespace ThothBotCore.Utilities.Smite
     {
         public static Task<string> ReadPatch(WebAPIPostModel patchPost)
         {
-            List<Gods.God> gods = MongoConnection.GetAllGods().OrderBy(x => x.Name).ToList();
+            List<Gods.God> gods = Constants.GodsHashSet.ToList().OrderBy(x => x.Name).ToList();
             var doc = new HtmlDocument();
             doc.LoadHtml(patchPost.content);
             var sb = new StringBuilder();
@@ -35,13 +35,13 @@ namespace ThothBotCore.Utilities.Smite
             if (newGodElement != null)
             {
                 var h51 = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'new-god')]//h5");
-                var godTitle = doc.DocumentNode.SelectSingleNode("/div[1]/div[1]/h5[1]");
+                var godTitle = doc.DocumentNode.SelectSingleNode("/div[2]/div/h5");
                 var godNameElement = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'new-god')]//h3");
                 if (!gods.Any(x=> x.Name == godNameElement.InnerText))
                 {
                     gods.Add(new Gods.God { Name = godNameElement.InnerText });
                 }
-                return $"<:Gods:567146088985919498> **{h51.InnerText}**: {godNameElement.InnerText}, {godTitle.InnerText}";
+                return $"<:Gods:567146088985919498> **{h51?.InnerText}**: {godNameElement?.InnerText}, {godTitle?.InnerText}";
             }
             else
             {
@@ -205,7 +205,7 @@ namespace ThothBotCore.Utilities.Smite
             var allChangedGodDivs = doc.DocumentNode.SelectNodes("//div[contains(@class, 'god--name')]").ToList();
             if (allChangedGodDivs.Count != 0)
             {
-                sb.Append("↔ **God Changes:** ");
+                sb.Append(":twisted_rightwards_arrows: **God Changes:** ");
                 foreach (var gd in gods)
                 {
                     if (allChangedGodDivs.Any(x => x.InnerText.Contains(gd.Name)))

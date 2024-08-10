@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
+using ThothBotCore.Models.SMITE2;
 using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Connections
@@ -14,6 +15,23 @@ namespace ThothBotCore.Connections
     {
         private static readonly HttpClientHandler handler = new();
         private static readonly HttpClient httpClient = new(handler, false);
+
+        // SMITE 2
+        public static async Task<List<Smite2NewsModel>> FetchSmite2NewsAsync()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://webcms.hirezstudios.com/smite2/api/posts/?lng=en-US&populate=*");
+            var response = await httpClient.SendAsync(request);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<Smite2NewsModel>>(json);
+        }
+        public static async Task<Smite2GodsModel> FetchSmite2GodsAsync(string slug = null)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://webcms.hirezstudios.com/smite2/api/gods/?lng=en-US&populate[0]=Ability&populate[1]=Ability.YouTubeLink&populate[2]=Ability.Buffs&populate[3]=Ability.Icon&populate[4]=Ability.Buffs.Icon&populate[5]=difficulty&populate[6]=HeaderImage&populate[7]=pantheon&populate[8]=pantheon.Image&populate[9]=pantheon.localizations&populate[10]=Portrait&populate[11]=roles&populate[12]=roles.gods&populate[13]=roles.gods.pantheon&populate[14]=roles.gods.pantheon.Image&populate[15]=roles.gods.Portrait&populate[16]=roles.Image&populate[17]=roles.localizations&populate[18]=Skin&populate[19]=Skin.Image&populate[20]=type" +
+                $"{(slug != null ? $"/{slug}" : "")}");
+            var response = await httpClient.SendAsync(request);
+            string json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Smite2GodsModel>(json);
+        }
 
         public static async Task<List<WebAPIPostsModel>> FetchPostsAsync()
         {

@@ -152,11 +152,12 @@ namespace ThothBotCore.Utilities
             await ChannelChecker(reportsChannel);
             try
             {
-                await reportsChannel.SendMessageAsync($"> {message}\n{DateTime.Now}");
+                var em = await EmbedHandler.BuildDescriptionEmbedAsync($"SendErrorAsync()\n{message}");
+                await reportsChannel.SendMessageAsync(embed: em);
             }
             catch (Exception ex)
             {
-                Text.WriteLine(ex.Message);
+                Text.WriteLine($"{ex.Message}\n{message}");
             }
         }
         public static async Task SendException(Exception ex, SocketCommandContext context, string errorMessage = "")
@@ -226,6 +227,10 @@ namespace ThothBotCore.Utilities
                         }
                     }
                 } // any other?
+                else if (context?.Interaction.Data is IModalInteractionData modalData)
+                {
+                    sb.Append($"**Modal:** {modalData.CustomId}");
+                }
                 else
                 {
                     sb.Append(context?.Interaction.Data);
@@ -259,12 +264,14 @@ namespace ThothBotCore.Utilities
             }
         }
 
-        public static async Task SendEmbedToBotLogsChannel(EmbedBuilder embed)
+        public static async Task SendEmbedToBotLogsChannelAsync(EmbedBuilder embed) =>
+            await SendEmbedToBotLogsChannelAsync(embed.Build());
+        public static async Task SendEmbedToBotLogsChannelAsync(Embed embed)
         {
             await ChannelChecker(botlogs);
             try
             {
-                await botlogs.SendMessageAsync(embed: embed.Build());
+                await botlogs.SendMessageAsync(embed: embed);
             }
             catch (Exception ex)
             {

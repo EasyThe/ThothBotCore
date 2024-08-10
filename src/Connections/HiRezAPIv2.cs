@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
 using ThothBotCore.Models;
+using static ThothBotCore.Models.Gods;
 
 namespace ThothBotCore.Connections
 {
@@ -29,7 +30,7 @@ namespace ThothBotCore.Connections
             Client = new HttpClient(httpClientHandler)
             {
                 BaseAddress = new Uri(BaseURL),
-                Timeout = TimeSpan.FromSeconds(6)
+                Timeout = TimeSpan.FromSeconds(10)
             };
 
             string json = File.ReadAllText("Config/hirezapi.json");
@@ -104,6 +105,11 @@ namespace ThothBotCore.Connections
             string json = await SendRequestAsync("getgodskins", $"{godId}/1");
             return json == null ? new List<GodSkinModel>() : JsonConvert.DeserializeObject<List<GodSkinModel>>(json);
         }
+        public async Task<List<RecommendedItem>> GetGodRecommendedItemsAsync(int godId = -1)
+        {
+            string json = await SendRequestAsync("getgodrecommendeditems", $"{godId}/1");
+            return json == null ? new List<RecommendedItem>() : JsonConvert.DeserializeObject<List<RecommendedItem>>(json);
+        }
         public async Task<List<GetItems.Item>> GetItemsAsync()
         {
             string json = await SendRequestAsync("getitems", "1");
@@ -171,7 +177,7 @@ namespace ThothBotCore.Connections
             string json = await SendRequestAsync("getmatchplayerdetails", player);
             return json == null ? new List<MatchPlayerDetails.PlayerMatchDetails>() : JsonConvert.DeserializeObject<List<MatchPlayerDetails.PlayerMatchDetails>>(json);
         }
-        public async Task<List<Motd>> GetMOTD()
+        public async Task<List<Motd>> GetMOTDAsync()
         {
             string json = await SendRequestAsync("getmotd");
             return json == null ? new List<Motd>() : JsonConvert.DeserializeObject<List<Motd>>(json);
@@ -194,7 +200,7 @@ namespace ThothBotCore.Connections
             }
             return JsonConvert.DeserializeObject<List<SearchPlayers>>(json);
         }
-        public async Task<List<QueueStats>> GetQueueStats(string playerid, int queueid)
+        public async Task<List<QueueStats>> GetQueueStatsAsync(string playerid, int queueid)
         {
             string json = await SendRequestAsync("getqueuestats", $"{playerid}/{queueid}");
             if (json == null)
@@ -206,6 +212,45 @@ namespace ThothBotCore.Connections
                 return ret;
             }
             return JsonConvert.DeserializeObject<List<QueueStats>>(json);
+        }
+        public async Task<List<QueueStats>> GetQueueStatsBatchAsync(string playerid, string queueids)
+        {
+            string json = await SendRequestAsync("getqueuestatsbatch", $"{playerid}/{queueids}");
+            if (json == null)
+            {
+                var ret = new List<QueueStats>
+                {
+                    new() { ret_msg = "apidown" }
+                };
+                return ret;
+            }
+            return JsonConvert.DeserializeObject<List<QueueStats>>(json);
+        }
+        public async Task<List<TeamDetailsModel>> GetTeamDetailsAsync(string clanId)
+        {
+            string json = await SendRequestAsync("getteamdetails", clanId);
+            if (json == null)
+            {
+                var ret = new List<TeamDetailsModel>
+                {
+                    new() { ret_msg = "apidown" }
+                };
+                return ret;
+            }
+            return JsonConvert.DeserializeObject<List<TeamDetailsModel>>(json);
+        }
+        public async Task<List<TeamPlayersModel.TeamPlayer>> GetTeamPlayersAsync(string clanId)
+        {
+            string json = await SendRequestAsync("getteamplayers", clanId);
+            if (json == null)
+            {
+                var ret = new List<TeamPlayersModel.TeamPlayer>
+                {
+                    new() { ret_msg = "apidown" }
+                };
+                return ret;
+            }
+            return JsonConvert.DeserializeObject<List<TeamPlayersModel.TeamPlayer>>(json);
         }
 
         private async Task<string> SendRequestAsync(string endpoint, string value = "")

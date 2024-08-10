@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using static ThothBotCore.Models.GuildSettingsModel;
 using System;
+using static ThothBotCore.Models.Gods;
 
 namespace ThothBotCore.Storage.Implementations
 {
@@ -17,18 +18,12 @@ namespace ThothBotCore.Storage.Implementations
         private static readonly ReplaceOptions replaceOptions = new() { IsUpsert = true };
         private static void GetClient()
         {
-            if (client == null)
-            {
-                client = new MongoClient(Credentials.botConfig.MongoDbURL);
-            }
+            client ??= new MongoClient(Credentials.botConfig.MongoDbURL);
         }
         public static IMongoDatabase GetDatabase(string dbName = "thothbot")
         {
             GetClient();
-            if (database == null)
-            {
-                database = client.GetDatabase(dbName);
-            }
+            database ??= client.GetDatabase(Credentials.botConfig.IsDev == 1 ? "thothbotdev" : dbName);
             return database;
         }
 
@@ -135,25 +130,25 @@ namespace ThothBotCore.Storage.Implementations
         }
 
         // Gods
-        public static async Task SaveGodAsync(Gods.God god)
+        public static async Task SaveGodAsync(God god, bool smite2 = false)
         {
-            await GetDatabase().GetCollection<Gods.God>("gods").ReplaceOneAsync(
+            await GetDatabase().GetCollection<God>($"gods{(smite2 ? "_smite2": "")}").ReplaceOneAsync(
                 filter: x => x.id == god.id,
                 replacement: god,
                 options: replaceOptions);
         }
-        public static List<Gods.God> GetAllGods()
+        public static List<God> GetAllGods(bool smite2 = false)
         {
-            return GetDatabase().GetCollection<Gods.God>("gods").AsQueryable().ToList();
+            return GetDatabase().GetCollection<God>($"gods{(smite2 ? "_smite2": "")}").AsQueryable().ToList();
         }
-        public static async Task<Gods.God> GetGodByNameAsync(string godname)
+        public static async Task<God> GetGodByNameAsync(string godname, bool smite2 = false)
         {
-            var result = await GetDatabase().GetCollection<Gods.God>("gods").FindAsync(filter: x => x.Name.Contains(godname));
+            var result = await GetDatabase().GetCollection<God>($"gods{(smite2 ? "_smite2": "")}").FindAsync(filter: x => x.Name.Contains(godname));
             return await result.FirstOrDefaultAsync();
         }
-        public static async Task<Gods.God> GetGodByIDAsync(int godId)
+        public static async Task<God> GetGodByIDAsync(int godId, bool smite2 = false)
         {
-            var result = await GetDatabase().GetCollection<Gods.God>("gods").FindAsync(filter: x => x.id == godId);
+            var result = await GetDatabase().GetCollection<God>($"gods{(smite2 ? "_smite2": "")}").FindAsync(filter: x => x.id == godId);
             return await result.FirstOrDefaultAsync();
         }
 
@@ -195,7 +190,7 @@ namespace ThothBotCore.Storage.Implementations
                 filter: filter);
             return await result.ToListAsync();
         }
-        public static async Task<List<GetItems.Item>> GetSpecificItemAsync(string searchWord)
+        public static async Task<List<GetItems.Item>> GetSpecificActiveItemAsync(string searchWord)
         {
             var filter = Builders<GetItems.Item>.Filter.Where(x=>
                 x.ActiveFlag == "y" &&
@@ -261,17 +256,22 @@ namespace ThothBotCore.Storage.Implementations
         {
             await GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").DeleteOneAsync(filter: x => x._id == guildId);
         }
+        public static async Task SaveGuildSettingsAsync(GuildSettingsModel settings)
+        {
+            await GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").ReplaceOneAsync(
+                filter: x => x._id == settings._id,
+                replacement: settings,
+                options: replaceOptions);
+        }
+
+        // Feeds
         public static List<GuildSettingsModel> GetFeedGuildsAsync(FeedType type) // this maybe doesn't work idk ? haven't tested it i think
         {
             return GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").Find(filter: x => x.Feeds.Any(x => x.Type == type)).ToList();
         }
-
-        public static async Task SaveGuildSettingsAsync(GuildSettingsModel settings)
-        {
-            await GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").ReplaceOneAsync(
-                filter: x => x._id == settings._id, 
-                replacement: settings, 
-                options: replaceOptions);
-        }
+        public static async Task<bool> FeedContentExistsAsync(FeedType type, string id) => 
+            await GetDatabase().GetCollection<FeedsContentModel>($"feeds_{type.ToString().ToLowerInvariant()}").Find(x => x._id == id).AnyAsync();
+        public static async Task SaveFeedContentAsync(FeedType type, string uniqueId) =>
+            await GetDatabase().GetCollection<FeedsContentModel>($"feeds_{type.ToString().ToLowerInvariant()}").InsertOneAsync(new() { _id = uniqueId });
     }
 }

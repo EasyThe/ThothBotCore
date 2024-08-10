@@ -34,7 +34,7 @@ namespace ThothBotCore.Modules
             try
             {
                 var em = await EmbedHandler.BuildDescriptionEmbedAsync(text);
-                await Feeds.Feeder.SendServerStatusWebhooks(em, GuildSettingsModel.FeedType.ServerStatus, "Testing Webhook");
+                await Feeds.Feeder.SendFeedWebhooks(em, GuildSettingsModel.FeedType.SMITEServerStatus, "Testing Webhook");
                 await ReplyAsync(":pray:");
             }
             catch (Exception ex)

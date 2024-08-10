@@ -7,7 +7,7 @@ namespace ThothBotCore
     {
         public void Log(string severity, string message)
         {
-            Text.WriteLine($"{DateTime.UtcNow:[HH:mm:ss]}[{severity}] {message}");
+            Text.WriteLine($"{DateTime.UtcNow:[dd.MM.yyyy|HH:mm:ss]}[{severity}] {message}");
         }
     }
 }

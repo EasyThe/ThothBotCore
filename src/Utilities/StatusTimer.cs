@@ -111,7 +111,7 @@ namespace ThothBotCore.Utilities
                             if (incidentEmbed.Length != 0)
                             {
                                 // Sending the Incident to the servers
-                                await Feeder.SendServerStatusWebhooks(incidentEmbed.Build(), Models.GuildSettingsModel.FeedType.ServerStatus, "SMITE Server Incident");
+                                await Feeder.SendFeedWebhooks(incidentEmbed.Build(), Models.GuildSettingsModel.FeedType.SMITEServerStatus, "SMITE Server Incident");
                             }
                         }
 
@@ -189,7 +189,7 @@ namespace ThothBotCore.Utilities
                             //Sending maintenance embed
                             if (embed.Fields.Count != 0)
                             {
-                                await Feeder.SendServerStatusWebhooks(embed.Build(), Models.GuildSettingsModel.FeedType.ServerStatus, "SMITE Server Maintenance");
+                                await Feeder.SendFeedWebhooks(embed.Build(), Models.GuildSettingsModel.FeedType.SMITEServerStatus, "SMITE Server Maintenance");
                             }
                         }
                     }

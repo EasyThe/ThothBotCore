@@ -30,7 +30,7 @@ namespace ThothBotCore.Modules
         public HiRezAPIv2 HiRez { get; set; }
 
         HiRezAPI hirezAPI = new();
-        private const string slash = "⚠**This command will stop working <t:1661972400:R>! Only `/` __slash commands__ will be working from then on. Please use** ";
+        private const string slash = "⚠**This command is out of support! Please use**";
 
         [Command("stats", true, RunMode = RunMode.Async)] // DONE
         [Summary("Display stats for the provided `PlayerName`.")]
@@ -79,13 +79,13 @@ namespace ThothBotCore.Modules
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Content = $"{slash}`/stats`";
+                        x.Content = $"{slash} </stats:969453246701789240>";
                         x.Embed = finalEmbed.Build();
                     });
                 }
                 else
                 {
-                    sentMessage = await Context.Channel.SendMessageAsync($"{slash}`/stats`", embed: finalEmbed.Build());
+                    sentMessage = await Context.Channel.SendMessageAsync($"{slash} </stats:969453246701789240>", embed: finalEmbed.Build());
                 }
 
                 // Getting the top queues
@@ -217,7 +217,7 @@ namespace ThothBotCore.Modules
         [Alias("годс")]
         public async Task GodsCommand()
         {
-            List<Gods.God> gods = MongoConnection.GetAllGods();
+            List<Gods.God> gods = Constants.GodsHashSet.ToList();
 
             if (gods.Count != 0)
             {
@@ -261,7 +261,7 @@ namespace ThothBotCore.Modules
                     x.Value = $"{latestGod.Emoji} {latestGod.Name}\n🔹 {latestGod.Title}\n🔹 {latestGod.Type}, {latestGod.Roles}";
                 });
 
-                await ReplyAsync($"{slash}`/gods`", false, embed.Build());
+                await ReplyAsync($"{slash} </gods:969453246534008865>", false, embed.Build());
 
             }
             else
@@ -324,7 +324,7 @@ namespace ThothBotCore.Modules
                     });
                 }
 
-                await ReplyAsync($"{slash}`/god`", embed: embed.Build(),
+                await ReplyAsync($"{slash} </god:969453246534008866>", embed: embed.Build(),
                     allowedMentions: AllowedMentions.None);
             }
         }
@@ -335,7 +335,7 @@ namespace ThothBotCore.Modules
         [Alias("rg", "randomgod", "random")]
         public async Task RandomGod([Remainder]string godClass = "")
         {
-            List<Gods.God> godsF = MongoConnection.GetAllGods();
+            List<Gods.God> godsF = Constants.GodsHashSet.ToList();
             List<Gods.God> gods = null;
             if (godClass != "")
             {
@@ -387,7 +387,7 @@ namespace ThothBotCore.Modules
                 x.Name = "Random Build";
                 x.Value = rbuild;
             });
-            await ReplyAsync($"{slash}`/rgod`\n{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
+            await ReplyAsync($"{slash} </rgod:969453246534008867>\n{Context.Message.Author.Mention}, your random god is:", false, embed.Build());
         }
 
         [Command("rbuild", true)] // DONE
@@ -437,7 +437,7 @@ namespace ThothBotCore.Modules
                     x.Name = "Random Build";
                     x.Value = rbuild;
                 });
-                await ReplyAsync($"{slash}`/rbuild`\n{Context.Message.Author.Mention}, your random build for {god.Name} is:", embed: embed.Build());
+                await ReplyAsync($"{slash} </rbuild:969453246534008869>\n{Context.Message.Author.Mention}, your random build for {god.Name} is:", embed: embed.Build());
             }
         }
 
@@ -449,7 +449,7 @@ namespace ThothBotCore.Modules
             if (!(number > 5))
             {
                 var embed = new EmbedBuilder();
-                var gods = MongoConnection.GetAllGods();
+                var gods = Constants.GodsHashSet.ToList();
 
                 embed.WithColor(Constants.DefaultBlueColor);
 
@@ -467,7 +467,7 @@ namespace ThothBotCore.Modules
                     gods.RemoveAt(rr);
                 }
 
-                await ReplyAsync($"{slash}`/rteam`\nTeam of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
+                await ReplyAsync($"{slash} </rteam:969453246534008868>\nTeam of {number} for you, {Context.Message.Author.Mention}!", false, embed.Build());
             }
             else
             {
@@ -480,7 +480,7 @@ namespace ThothBotCore.Modules
         [Alias("ri")]
         public async Task RandomItemCommand()
         {
-            var item = MongoConnection.GetAllItems().FindAll(x => x.ActiveFlag == "y" && x.ItemTier == 3 && x.Type == "Item");
+            var item = Constants.ItemsHashSet.ToList().FindAll(x => x.ActiveFlag == "y" && x.ItemTier == 3 && x.Type == "Item");
             int r = rnd.Next(item.Count);
             var embed = new EmbedBuilder();
             embed.WithAuthor(x =>
@@ -520,7 +520,7 @@ namespace ThothBotCore.Modules
             }
 
             var statusEmbed = await EmbedHandler.ServerStatusEmbedAsync(smiteServerStatus, hirezServerStatus);
-            await ReplyAsync($"{slash}`/status`", embed: statusEmbed);
+            await ReplyAsync($"{slash} </status:969453246701789235>", embed: statusEmbed);
 
             bool maint = false;
             bool inci = false;
@@ -570,7 +570,7 @@ namespace ThothBotCore.Modules
         [RequireOwner(Group = "Owner")]
         public async Task SetStatusUpdatesChannel()
         {
-            await ReplyAsync("Please use `/feeds` to set or unset a channel.");
+            await ReplyAsync("Please use </feeds:969453246819209301> to set or unset a channel.");
         }
 
         [Command("item")] // DONE
@@ -579,7 +579,7 @@ namespace ThothBotCore.Modules
         public async Task ItemInfoCommand([Remainder] string ItemName)
         {
             int index = 0;
-            var item = await MongoConnection.GetSpecificItemAsync(ItemName);
+            var item = await MongoConnection.GetSpecificActiveItemAsync(ItemName);
             if (item.Count != 0)
             {
                 if (item.Any(x=> x.DeviceName.ToLowerInvariant() == ItemName.ToLowerInvariant()))
@@ -647,7 +647,7 @@ namespace ThothBotCore.Modules
                 // related items
                 try
                 {
-                    var allitems = MongoConnection.GetAllItems();
+                    var allitems = Constants.ItemsHashSet.ToList();
                     allitems.RemoveAll(x => x.ActiveFlag != "y");
                     List<GetItems.Item> relatedItems = new();
                     relatedItems.AddRange(allitems.FindAll(x => x.ChildItemId == item[index].ItemId));
@@ -684,7 +684,7 @@ namespace ThothBotCore.Modules
                     //await Reporter.SendException(null, Context, $"Item command got an error on related items\n{ex.Message}\nOn item: {item[index].DeviceName}");
                 }
 
-                await ReplyAsync($"{slash}`/item`", embed: embed.Build());
+                await ReplyAsync($"{slash} </item:969453246534008871>", embed: embed.Build());
             }
             else
             {
@@ -698,7 +698,7 @@ namespace ThothBotCore.Modules
         [Alias("starters")]
         public async Task ItemStartersCommand()
         {
-            var items = MongoConnection.GetAllItems();
+            var items = Constants.ItemsHashSet.ToList();
             var starters = items.FindAll(x => x.StartingItem && x.ActiveFlag == "y");
             int maxCount = starters.FindAll(x => x.ItemTier == 2).Count / 2;
             int counter = 0;
@@ -745,7 +745,7 @@ namespace ThothBotCore.Modules
                 x.Name = "Tier 2 Starters [2/2]";
                 x.Value = sb22.ToString();
             });
-            await ReplyAsync($"{slash}`/itemstarters`", embed: embed.Build());
+            await ReplyAsync($"{slash} </itemstarters:969453246701789234>", embed: embed.Build());
         }
 
         [Command("trello", true, RunMode = RunMode.Async)] // DONE
@@ -844,7 +844,7 @@ namespace ThothBotCore.Modules
                     embed.WithDescription(Text.Truncate(topIssues.ToString(), 2048));
                 }
 
-                await ReplyAsync($"{slash}`/bugs`", embed: embed.Build());
+                await ReplyAsync($"{slash} </bugs:969453246701789238>", embed: embed.Build());
             }
             catch (Exception ex)
             {
@@ -903,14 +903,14 @@ namespace ThothBotCore.Modules
                     if (sentMessage == null)
                     {
                         var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
-                        await ReplyAsync($"{slash}`/livemd`", embed: embed.Build());
+                        await ReplyAsync($"{slash} </livemd:969453246819209297>", embed: embed.Build());
                     }
                     else
                     {
                         var embed = await EmbedHandler.LiveMatchEmbed(matchPlayerDetails);
                         await sentMessage.ModifyAsync(x =>
                         {
-                            x.Content = $"{slash}`/livemd`";
+                            x.Content = $"{slash} </livemd:969453246819209297>";
                             x.Embed = embed.Build();
                         });
                     }
@@ -997,7 +997,7 @@ namespace ThothBotCore.Modules
                 if (matchDetails.Count == 1 && matchDetails[0].ret_msg != null)
                 {
                     var embed = await EmbedHandler.BuildDescriptionEmbedAsync(matchDetails[0].ret_msg.ToString(), $"MatchID: {mID}", 255);
-                    await ReplyAsync($"{slash}`/mdlast` or `/md`", embed: embed);
+                    await ReplyAsync($"{slash} </mdlast:969453246819209298> or </md:969453246819209296>", embed: embed);
                     return;
                 }
                 var finalembed = await EmbedHandler.BuildMatchDetailsEmbedAsync(matchDetails);
@@ -1005,13 +1005,13 @@ namespace ThothBotCore.Modules
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Content = $"{slash}`/mdlast` or `/md`";
+                        x.Content = $"{slash} </mdlast:969453246819209298> or </md:969453246819209296>";
                         x.Embed = finalembed;
                     });
                 }
                 else
                 {
-                    await ReplyAsync($"{slash}`/mdlast` or `/md`", embed: finalembed);
+                    await ReplyAsync($"{slash} </mdlast:969453246819209298> or </md:969453246819209296>", embed: finalembed);
                 }
             }
             catch (Exception ex)
@@ -1052,20 +1052,20 @@ namespace ThothBotCore.Modules
                     await ReplyAsync(embed: emb);
                     return;
                 }
-                var finalembed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory);
+                var finalembed = await EmbedHandler.BuildMatchHistoryEmbedAsync(matchHistory, null);
                 var da = finalembed.ToEmbedBuilder();
 
                 if (sentMessage != null)
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Content = $"{slash}`/history`";
+                        x.Content = $"{slash} </history:969453246701789243>";
                         x.Embed = da.Build();
                     });
                 }
                 else
                 {
-                    await ReplyAsync($"{slash}`/history`", embed: da.Build());
+                    await ReplyAsync($"{slash} </history:969453246701789243>", embed: da.Build());
                 }
             }
             catch (Exception ex)
@@ -1137,7 +1137,7 @@ namespace ThothBotCore.Modules
                 {
                     embed.WithDescription("No data available.");
                 }
-                await ReplyAsync($"{slash}`/motd`", embed: embed.Build());
+                await ReplyAsync($"{slash} </motd:969453246701789239>", embed: embed.Build());
             }
             catch (Exception ex)
             {
@@ -1177,13 +1177,13 @@ namespace ThothBotCore.Modules
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Content = $"{slash}`/wp`";
+                        x.Content = $"{slash} </wp:969453246701789241>";
                         x.Embed = emm.Build();
                     });
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync($"{slash}`/wp`", embed: emm.Build());
+                    await Context.Channel.SendMessageAsync($"{slash} </wp:969453246701789241>", embed: emm.Build());
                 }
             }
             catch (Exception ex)
@@ -1221,13 +1221,13 @@ namespace ThothBotCore.Modules
                 {
                     await sentMessage.ModifyAsync(x =>
                     {
-                        x.Content = $"{slash}`/wr`";
+                        x.Content = $"{slash} </wr:969453246701789242>";
                         x.Embed = finalEmbed;
                     });
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync($"{slash}`/wr`", embed: finalEmbed);
+                    await Context.Channel.SendMessageAsync($"{slash} </wr:969453246701789242>", embed: finalEmbed);
                 }
             }
             catch (Exception ex)
@@ -1255,7 +1255,7 @@ namespace ThothBotCore.Modules
                 $"❗**Before starting the linking process, make sure your account in SMITE is NOT hidden! " +
                 $"Linking requires changing your Personal Status Message in-game to verify that the said account is yours.** " +
                 $"You can change it to your previous status message after linking is completed." +
-                $"\n\n__To start the linking process use `/link` and follow the instructions.__");
+                $"\n\n__To start the linking process use </link:969453246819209299> and follow the instructions.__");
             embed.WithColor(Constants.DefaultBlueColor);
             embed.WithFooter(x => x.Text = $"This is not an official Hi-Rez linking!\n{slash}/link");
 
@@ -1275,7 +1275,7 @@ namespace ThothBotCore.Modules
                 var actualPost = await APIInteractions.GetPostBySlugAsync(foundPost[i].slug);
                 string description = await PatchPageReader.ReadPatch(actualPost);
                 Embed embed = await EmbedHandler.BuildPatchNotesEmbedAsync(actualPost, description, foundPost[i].featured_image, foundPost[i].slug);
-                await ReplyAsync($"{slash}/updatenotes", embed: embed);
+                await ReplyAsync($"{slash} </updatenotes>969453246701789236>", embed: embed);
             }
         }
 

@@ -2,15 +2,17 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Web;
 using ThothBotCore.Models;
 
 namespace ThothBotCore.Utilities
 {
     public class Text
     {
-        static Random rnd = new();
         private const string alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
 
         public static T DeserializeObject<T>(string json)
@@ -24,6 +26,16 @@ namespace ThothBotCore.Utilities
             return JsonSerializer.Deserialize<T>(json, options);
         }
 
+        public static string RemoveHtmlEntities(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            return HttpUtility.HtmlDecode(input);
+        }
+        public static string SplitCamelCase(string source) => string.Join(" ", Regex.Split(source, @"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])"));
         public static string ToTitleCase(string text)
         {
             return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
@@ -66,7 +78,7 @@ namespace ThothBotCore.Utilities
             char[] chars = new char[count];
             for (int i = 0; i < count; i++)
             {
-                chars[i] = alphabet[rnd.Next(alphabet.Length)];
+                chars[i] = alphabet[Random.Shared.Next(alphabet.Length)];
             }
             return new string(chars);
         }
@@ -77,9 +89,9 @@ namespace ThothBotCore.Utilities
             Console.WriteLine(message);
             Console.ResetColor();
         }
-        public static void WriteLine(string message)
+        public static void WriteLine(string message, [CallerMemberName] string name = null, [CallerLineNumber] int line = 0, [CallerFilePath] string file = null)
         {
-            Console.WriteLine(message);
+            Console.WriteLine($"[{name}]{message}");
         }
         public static string AbbreviationRegions(string region)
         {
@@ -285,6 +297,49 @@ namespace ThothBotCore.Utilities
                 _ => "<:Solo:857722598721060884>"
             };
         }
+
+        public static string GetSMITE2RoleIcon(string role)
+        {
+            StringBuilder sb = new();
+            foreach (var r in role.Split(' '))
+            {
+                switch (r)
+                {
+                    case string a when a.Contains("Solo"):
+                        sb.Append("<:Solo:1246832568486199377>");
+                        break;
+                    case string a when a.Contains("Jungle"):
+                        sb.Append("<:Jungle:1246838304524210347>");
+                        break;
+                    case string a when a.Contains("Mid"):
+                        sb.Append("<:Mid:1246832566611218517>");
+                        break;
+                    case string a when a.Contains("Support"):
+                        sb.Append("<:Support:1246838382693453854>");
+                        break;
+                    case string a when a.Contains("Carry"):
+                        sb.Append("<:Carry:1246833067750854696>");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return sb.ToString();
+        }
+        public static string GetSMITE2PantheonEmoji(string pantheon)
+        {
+            return pantheon switch
+            {
+                "Egyptian" => "<:Egyptian:1246832121847349352>",
+                "Greek" => "<:Greek:1246839555030782086>",
+                "Maya" => "<:Maya:1246833291491807262>",
+                "Norse" => "<:Nordic:1246832230915899565>",
+                "Roman" => "<:Roman:1246833102693859430>",
+                "Celtic" => "<:Celtic:1246839855842066452>",
+                "Japanese" => "<:Japanese:1271749551774105652>",
+                _ => "<:blank:570291209906552848>"
+            };
+        }
         /// <param name="pantheon">lower case</param>
         /// <returns></returns>
         public static string GetPantheonEmoji(string pantheon)
@@ -325,6 +380,19 @@ namespace ThothBotCore.Utilities
         {
             return type == "magical" ? "<:Magical:960310480533090324>" : "<:Physical:960310480759586836>";
         }
+        public static string GetQueueEmoji(int queueId) => queueId switch
+        {
+                423 or 426 or 430 or 451 or 504 or 10193 => "<:conquesticon:528673820060418061>",
+                433 => "<:Domination:1141078608702611550>", // Domination
+                435 or 452 or 10195 => "<:Arena:1141068137916285100>", // Arena
+                459 => "<:Siege:1141068133541609503>", // Siege
+                466 => "<:Clash:1141068130169409629>", // Clash
+                10189 => "<:Slash:1141068136691544175>", // Slash
+                440 or 502 => "<:jousticon:528673820018737163>", // Duel
+                445 => "<:Assault:1141068129007566928>", // Assault
+                448 or 450 or 503 or 10197 => "<:Joust:1141068132522393640>", // Joust
+                _ => "<:blank:570291209906552848>" // Unknown
+        };
         public static Tuple<string, string> GetRankedConquest(int tier)
         {
             return tier switch
@@ -395,7 +463,6 @@ namespace ThothBotCore.Utilities
                 _ => Tuple.Create("Thot", "Begone"),
             };
         }
-
         public static Tuple<string, string> GetRankedDuel(int tier)
         {
             return tier switch
@@ -434,7 +501,7 @@ namespace ThothBotCore.Utilities
 
         public static List<int> LegitQueueIDs()
         {
-            List<int> list = new() { 423, 426, 430, 433, 435, 440, 445, 448, 450, 451, 452, 459, 466, 502, 503, 504, 10189 };
+            List<int> list = [423, 426, 430, 433, 435, 440, 445, 448, 450, 451, 452, 459, 466, 502, 503, 504, 10189, 10193, 10195, 10197];
             return list;
         }
 
@@ -454,7 +521,9 @@ namespace ThothBotCore.Utilities
         }
         public static string ReformatSecondaryItemDescription(string text)
         {
-            return text != null ? text.Replace("PASSIVE", "**PASSIVE**")
+            return text != null ? text
+                       .Replace("PASSIVE", "**PASSIVE**")
+                       .Replace("PSV", "**PSV**")
                        .Replace("<n>", "\n")
                        .Replace("GLYPH", "**GLYPH**")
                        .Replace("<font color='#42F46E'>", "")
@@ -464,15 +533,16 @@ namespace ThothBotCore.Utilities
         }
         public static string CleanDirtyText(string dirty)
         {
-            return dirty.Replace("\\", String.Empty)
-                        .Replace("/", String.Empty)
-                        .Replace("*", String.Empty)
-                        .Replace(".", String.Empty)
-                        .Replace(",", String.Empty)
-                        .Replace("?", String.Empty)
-                        .Replace("!", String.Empty)
-                        .Replace(";", String.Empty)
-                        .Replace(":", String.Empty);
+            return dirty.Replace("\\", string.Empty)
+                        .Replace("/", string.Empty)
+                        .Replace("*", string.Empty)
+                        .Replace(".", string.Empty)
+                        .Replace(",", string.Empty)
+                        .Replace("?", string.Empty)
+                        .Replace("!", string.Empty)
+                        .Replace(";", string.Empty)
+                        .Replace(":", string.Empty)
+                        .Replace("'", string.Empty);
         }
 
         public static string EmptyStringCheck(string value)
@@ -657,17 +727,17 @@ namespace ThothBotCore.Utilities
             return sb.ToString();
         }
 
-        public static string PlaceholderText() => Constants.Placeholders[rnd.Next(Constants.Placeholders.Length)];
+        public static string PlaceholderText() => Constants.Placeholders[Random.Shared.Next(Constants.Placeholders.Length)];
 
         // Tips
         public static string GetRandomTip()
         {
-            if (rnd.Next(0, 100) <= 20)
+            if (Random.Shared.Next(0, 100) <= 20)
             {
                 List<TipsModel> tips = Constants.TipsList;
                 if (tips.Count != 0)
                 {
-                    int n = rnd.Next(tips.Count);
+                    int n = Random.Shared.Next(tips.Count);
                     return $"ℹ Tip: {tips[n].TipText}";
                 }
                 else
