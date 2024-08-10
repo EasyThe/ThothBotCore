@@ -11,6 +11,7 @@ using ThothBotCore.Utilities;
 
 namespace ThothBotCore.Modules
 {
+    [IntegrationType(ApplicationIntegrationType.UserInstall, ApplicationIntegrationType.GuildInstall)]
     public class SlashSmite2 : InteractionModuleBase
     {
         static Random rnd = new();

@@ -21,7 +21,7 @@ using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Modules
 {
-    [IntegrationType(ApplicationIntegrationType.UserInstall)]
+    [IntegrationType(ApplicationIntegrationType.UserInstall, ApplicationIntegrationType.GuildInstall)]
     public class SlashSmite : InteractionModuleBase
     {
         static Random rnd = new();
