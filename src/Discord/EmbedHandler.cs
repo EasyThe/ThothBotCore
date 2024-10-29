@@ -27,11 +27,12 @@ namespace ThothBotCore.Discord
                 author.WithIconUrl(Constants.botIcon);
             });
             var smiteCat = smiteStatus.components.Find(x => x.id == "542zlqj9nwr6");
-            if (smiteCat.status == "operational")
+            var smite2Cat = smiteStatus.components.Find(x => x.id == "ycvd07tgm0g3");
+            if (smiteCat.status == "operational" || smite2Cat.status == "operational")
             {
                 embed.WithColor(new Color(0, 255, 0));
             }
-            else if (smiteCat.status == "under_maintenance")
+            else if (smiteCat.status == "under_maintenance" || smite2Cat.status == "under_maintenance")
             {
                 embed.WithColor(new Color(52, 152, 219));
             }
@@ -100,6 +101,40 @@ namespace ThothBotCore.Discord
                 field.Name = "<:PC:537746891610259467> SMITE PTS";
                 field.Value = $"{Text.StatusEmoji(Text.EmptyStringCheck(apiPTS?.Status.ToLowerInvariant()))}{Text.EmptyStringCheck(apiPTS?.Status)}\nVersion: {Text.EmptyStringCheck(apiPTS?.Version)}";
             });
+
+            // SMITE 2
+            foreach (var item in smite2Cat.components)
+            {
+                var comp = smiteStatus.components.Find(x => x.id == item);
+                var sb = new StringBuilder();
+
+                if (comp.name.ToLowerInvariant().Contains("steam"))
+                {
+                    sb.Append("<:steam:581485150043373578> ");
+
+                }
+                else if (comp.name.ToLowerInvariant().Contains("xbox"))
+                {
+                    sb.Append("<:XB:537749895029850112> ");
+                }
+                else if (comp.name.ToLowerInvariant().Contains("psn"))
+                {
+                    sb.Append("<:PS4:537745670518472714> ");
+                }
+                else if (comp.name.ToLowerInvariant().Contains("epic"))
+                {
+                    sb.Append("<:egs:705963938340274247> ");
+                }
+                sb.Append(comp.name);
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = sb.ToString();
+                    x.Value = $"{Text.StatusEmoji(comp.status)}" +
+                    $"{(comp.status.Contains('_') ? Text.ToTitleCase(comp.status.Replace("_", " ")) : Text.ToTitleCase(comp.status))}";
+                });
+            }
+
             embed.WithFooter(x =>
             {
                 x.Text = $"If you want to be notified for SMITE Status changes use /feeds";
@@ -1019,7 +1054,7 @@ namespace ThothBotCore.Discord
             {
                 field.IsInline = true;
                 field.Name = $"<:fill:862261456756801537>Most Played Classes";
-                field.Value = $"lol";
+                field.Value = $"No data was found.";
             });
 
             // Ranked Modes check for PC or Console

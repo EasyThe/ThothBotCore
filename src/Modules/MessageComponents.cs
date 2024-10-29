@@ -72,7 +72,10 @@ namespace ThothBotCore.Modules
                     await HiRez.GetPlayerAchievementsAsync(player),
                     playerStatus,
                     match);
-                embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
+                if (embed.Fields.Any(x => x.Name.Contains("Classes")) && topModesAndClassess.Length == 2)
+                {
+                    embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
+                }
 
                 // Add Most played matches
                 embed.AddField(field =>
@@ -160,7 +163,10 @@ namespace ThothBotCore.Modules
                     await HiRez.GetPlayerAchievementsAsync(player),
                     playerStatus,
                     match);
-                embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
+                if (embed.Fields.Any(x => x.Name.Contains("Classes")) && topModesAndClassess.Length == 2)
+                {
+                    embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
+                }
 
                 // Add Most played matches
                 embed.AddField(field =>
@@ -2721,38 +2727,18 @@ namespace ThothBotCore.Modules
             await DeferAsync();
             try
             {
-                await HiRez.GetQueueStatsBatchAsync("2615245", "426,435");
-                //var da = await HiRez.GetQueueStatsAsync("3868182", 426);
+                var db = MongoConnection.GetAllGods(true);
 
-                //var em = await EmbedHandler.BuildDescriptionEmbedAsync(da, new() { Name = "mihso" }, "426");
-                //await FollowupAsync($"Yes\n{sb}");
+                foreach (var god in db)
+                {
+                    god.Ability_1.Emoji = null;
+                    god.Ability_2.Emoji = null;
+                    god.Ability_3.Emoji = null;
+                    god.Ability_4.Emoji = null;
+                    god.Ability_5.Emoji = null;
+                }
 
-                //Console.WriteLine("Getting players from DB");
-                //var allPlayers = await MongoConnection.GetAllPlayersAsync();
-                //Console.WriteLine($"Got {allPlayers.Count} players\n" +
-                //    $"Starting...");
-                //int counter = 1;
-                //foreach (var item in allPlayers)
-                //{
-                //    var godRanks = await HiRez.GetGodRanksAsync(item.ActivePlayerId.ToString());
-                //    if (godRanks != null && godRanks.Count != 0)
-                //    {
-                //        await MongoConnection.SavePlayerGodRanksAsync(godRanks);
-                //    }
-                //    Console.WriteLine($"[{counter++}/{allPlayers.Count}] {(godRanks != null ? godRanks.Count : 0)} god ranks");
-                //    Thread.Sleep(500);
-                //}
-
-                //var gods = MongoConnection.GetAllGods();
-
-                //foreach (var god in gods)
-                //{
-                //    var items = await HiRez.GetGodRecommendedItemsAsync(god.id);
-                //    god.RecommendedItems = items;
-                //    await MongoConnection.SaveGodAsync(god);
-                //}
-
-                //await FollowupAsync("Done!", ephemeral: true);
+                await FollowupAsync("Done!", ephemeral: true);
 
             }
             catch (Exception ex)

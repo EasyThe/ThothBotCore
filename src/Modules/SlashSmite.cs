@@ -507,8 +507,7 @@ namespace ThothBotCore.Modules
                 var hirezServerStatus = await HiRez.GetHiRezServerStatusAsync();
 
                 var statusEmbed = await EmbedHandler.ServerStatusEmbedAsync(smiteServerStatus, hirezServerStatus);
-                List<Embed> embeds = new();
-                embeds.Add(statusEmbed);
+                List<Embed> embeds = [statusEmbed];
 
                 bool maint = false;
                 bool inci = false;
@@ -900,7 +899,6 @@ namespace ThothBotCore.Modules
                         await HiRez.GetPlayerAchievementsAsync(player[0].player_id.ToString()),
                         playerStatus,
                         match);
-                    embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
 
                     // Buttons
                     var comps = await ComponentsHandler.RichStatsButtonsAsync(player[0].player_id.ToString(), 0, playerStatus[0].Match != 0);
@@ -912,6 +910,10 @@ namespace ThothBotCore.Modules
                         field.Name = $"<:matches:579604410569850891>Most Played Modes";
                         field.Value = topModesAndClassess[0];
                     });
+                    if (embed.Fields.Any(x => x.Name.Contains("Classes")) && topModesAndClassess.Length == 2)
+                    {
+                        embed.Fields.Where(x => x.Name.Contains("Classes")).FirstOrDefault().Value = topModesAndClassess[1];
+                    }
 
                     await FollowupAsync(embed: embed.Build(), components: comps);
 
@@ -1690,7 +1692,7 @@ namespace ThothBotCore.Modules
                             {
                                 matches += topQueues[c].ElementAt(e).Matches;
                             }
-                            allQueue.Add(new AllQueueStats { queueName = topQueues[c].Key, matches = matches, queueStats = topQueues[c].ToList() });
+                            allQueue.Add(new AllQueueStats { queueName = topQueues[c].Key, matches = matches, queueStats = [.. topQueues[c]] });
                         }
                     }
                 }

@@ -74,16 +74,19 @@ namespace ThothBotCore.Modules
                     });
 
                     sb.Clear();
-                    foreach (var latestGod in latestGods)
+                    if (latestGods != null && latestGods.Count != 0)
                     {
-                        sb.Append($"{latestGod.Emoji} {latestGod.Name}\n🔹 {latestGod.Title}\n🔹 {latestGod.Roles}\n\n");
+                        foreach (var latestGod in latestGods)
+                        {
+                            sb.Append($"{latestGod.Emoji} {latestGod.Name}\n🔹 {latestGod.Title}\n🔹 {latestGod.Roles}\n\n");
+                        }
+                        embed.AddField(x =>
+                        {
+                            x.IsInline = true;
+                            x.Name = $"Latest God{(latestGods.Count > 1 ? "s" : "")}";
+                            x.Value = sb.ToString();
+                        });
                     }
-                    embed.AddField(x =>
-                    {
-                        x.IsInline = true;
-                        x.Name = $"Latest God{(latestGods.Count > 1 ? "s": "")}";
-                        x.Value = sb.ToString();
-                    });
                     //if (sb.Length != 0)
                     //{
                     //    embed.AddField(x =>
@@ -102,7 +105,7 @@ namespace ThothBotCore.Modules
                 }
                 else
                 {
-                    await RespondAsync($"Something is not right... Please report this in my [support server]({Utilities.Constants.SupportServerInvite}).");
+                    await RespondAsync($"Something is not right... Please report this in my [support server]({Constants.SupportServerInvite}).");
                 }
             }
             catch (Exception ex)
