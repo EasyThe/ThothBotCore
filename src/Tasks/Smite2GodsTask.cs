@@ -1,5 +1,6 @@
 ﻿using Discord;
 using MongoDB.Driver;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,6 +43,7 @@ namespace ThothBotCore.Tasks
                     }
                     running = true;
                     var webGods = await APIInteractions.FetchSmite2GodsAsync();
+                    int godsFromAPI = webGods.data.Length;
                     var localGods = new List<Gods.God>();
                     foreach (var god in webGods.data)
                     {
@@ -89,8 +91,12 @@ namespace ThothBotCore.Tasks
                                         description = Text.RemoveHtmlEntities(
                                             ab1?.Description
                                             .Replace("<p>", "")
-                                            .Replace("</p>", "")
-                                            .Replace("<br>", "\n")),
+                                            .Replace("</p>", "\n")
+                                            .Replace("<br>", "\n")
+                                            .Replace("</li>", "")
+                                            .Replace("<ul>", "")
+                                            .Replace("<li>", "\n* ")
+                                            .Replace("</ul>", "")),
                                     }
                                 },
                                 Video = ab1?.YouTubeLink,
@@ -107,8 +113,12 @@ namespace ThothBotCore.Tasks
                                         description = Text.RemoveHtmlEntities(
                                             ab2?.Description
                                             .Replace("<p>", "")
-                                            .Replace("</p>", "")
-                                            .Replace("<br>", "\n")),
+                                            .Replace("</p>", "\n")
+                                            .Replace("<br>", "\n")
+                                            .Replace("</li>", "")
+                                            .Replace("<ul>", "")
+                                            .Replace("<li>", "\n* ")
+                                            .Replace("</ul>", "")),
                                     }
                                 },
                                 Video = ab2?.YouTubeLink,
@@ -125,8 +135,12 @@ namespace ThothBotCore.Tasks
                                         description = Text.RemoveHtmlEntities(
                                             ab3?.Description
                                             .Replace("<p>", "")
-                                            .Replace("</p>", "")
-                                            .Replace("<br>", "\n")),
+                                            .Replace("</p>", "\n")
+                                            .Replace("<br>", "\n")
+                                            .Replace("</li>", "")
+                                            .Replace("<ul>", "")
+                                            .Replace("<li>", "\n* ")
+                                            .Replace("</ul>", "")),
                                     }
                                 },
                                 Video = ab3?.YouTubeLink,
@@ -143,8 +157,12 @@ namespace ThothBotCore.Tasks
                                         description = Text.RemoveHtmlEntities(
                                             ab4?.Description
                                             .Replace("<p>", "")
-                                            .Replace("</p>", "")
-                                            .Replace("<br>", "\n")),
+                                            .Replace("</p>", "\n")
+                                            .Replace("<br>", "\n")
+                                            .Replace("</li>", "")
+                                            .Replace("<ul>", "")
+                                            .Replace("<li>", "\n* ")
+                                            .Replace("</ul>", "")),
                                     }
                                 },
                                 Video = ab4?.YouTubeLink,
@@ -161,8 +179,12 @@ namespace ThothBotCore.Tasks
                                         description = Text.RemoveHtmlEntities(
                                             ab5?.Description
                                             .Replace("<p>", "")
-                                            .Replace("</p>", "")
-                                            .Replace("<br>", "\n")),
+                                            .Replace("</p>", "\n")
+                                            .Replace("<br>", "\n")
+                                            .Replace("</li>", "")
+                                            .Replace("<ul>", "")
+                                            .Replace("<li>", "\n* ")
+                                            .Replace("</ul>", "")),
                                     }
                                 },
                                 Video = ab5?.YouTubeLink,
@@ -173,6 +195,7 @@ namespace ThothBotCore.Tasks
 
                     // check locals first
                     var dbGods = MongoConnection.GetAllGods(true);
+                    int godsInDBcount = dbGods.Count;
                     foreach (var god in localGods)
                     {
                         var found = dbGods.Find(x => x.Name == god.Name);
@@ -212,7 +235,11 @@ namespace ThothBotCore.Tasks
                         }
 
                         // emojis
-                        if (god.Ability_1?.Emoji == null || god.Ability_1.Emoji?.Length == 0)
+                        if ((god.Ability_1?.Emoji == null || god.Ability_1.Emoji?.Length == 0) ||
+                            (god.Ability_2?.Emoji == null || god.Ability_2.Emoji?.Length == 0) ||
+                            (god.Ability_3?.Emoji == null || god.Ability_3.Emoji?.Length == 0) ||
+                            (god.Ability_4?.Emoji == null || god.Ability_4.Emoji?.Length == 0) ||
+                            (god.Ability_5?.Emoji == null || god.Ability_5.Emoji?.Length == 0))
                         {
                             Text.WriteLine($"Missing emojis for {god.Name}");
                             var emojis = await Utils.AddMissingAbilityEmojiAsync(god, true);
@@ -229,18 +256,22 @@ namespace ThothBotCore.Tasks
                         // save to db
                         await MongoConnection.SaveGodAsync(god, true);
                     }
-                    await Reporter.SendMsgToBotLogsChannel($"{localGods.Count} gods for SMITE 2 were saved to db.");
+                    if (godsFromAPI > godsInDBcount)
+                    {
+                        await Reporter.SendMsgToBotLogsChannel($"{localGods.Count} gods for SMITE 2 were saved to db.");
+                    }
                     Constants.ReloadConstants();
                     if (webGods == null)
                     {
                         await Reporter.SendMsgToBotLogsChannel("**Tasker**\nGods is null or count = 0");
                         continue;
                     }
-                    
+                    running = false;
                 }
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 if (ex.Message != "Operation is not valid due to the current state of the object.")
                 {
                     await Reporter.SendErrorAsync($"<@171675309177831424> **Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");

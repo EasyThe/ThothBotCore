@@ -2833,7 +2833,7 @@ namespace ThothBotCore.Discord
         public static async Task<Embed> BuildDefaultFeedsPage(GuildSettingsModel guildSettings, bool hasTooManyChannels)
         {
             var embed = new EmbedBuilder();
-            embed.WithTitle("️📃 Feeds");
+            embed.WithTitle("️📃 Feeds Overview");
             embed.WithThumbnailUrl("https://i.imgur.com/tba1Sjh.png");
             embed.WithColor(Constants.FeedsColor);
             embed.WithDescription("**What are \"feeds\"?**\n> *Feeds is a name for the various content that you can \"subscribe\" to to get " +
@@ -2841,11 +2841,14 @@ namespace ThothBotCore.Discord
                 $"{(hasTooManyChannels ? "__If you don't see the channel you want to set, run the command in that channel and it will be the first option.__" : "")}");
             var serverStatus = guildSettings.Feeds.Find(x => x.Type == GuildSettingsModel.FeedType.SMITEServerStatus);
             var smite2News = guildSettings.Feeds.Find(x => x.Type == GuildSettingsModel.FeedType.SMITE2News);
+            var updateNotes = guildSettings.Feeds.Find(x => x.Type == GuildSettingsModel.FeedType.SMITE2UpdateNotes);
 
             embed.AddField($"🔹 {Text.SplitCamelCase(GuildSettingsModel.FeedType.SMITEServerStatus.ToString())}", 
                 (serverStatus == null || serverStatus?.ChannelID == 0 ? "Channel not set" : $"Set to <#{serverStatus.ChannelID}>"), true);
             embed.AddField($"🔹 {Text.SplitCamelCase(GuildSettingsModel.FeedType.SMITE2News.ToString())}", 
                 (smite2News == null || smite2News?.ChannelID == 0 ? "Channel not set" : $"Set to <#{smite2News.ChannelID}>"), true);
+            embed.AddField($"🔹 {Text.SplitCamelCase(GuildSettingsModel.FeedType.SMITE2UpdateNotes.ToString())}",
+                (updateNotes == null || updateNotes?.ChannelID == 0 ? "Channel not set" : $"Set to <#{updateNotes.ChannelID}>"), true);
 
             return await Task.FromResult(embed.Build());
         }

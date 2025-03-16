@@ -238,7 +238,7 @@ namespace ThothBotCore.Utilities
                 }
                 var embed = await EmbedHandler.BuildDescriptionEmbedAsync($"{sb}\n" +
                     $"**User: **{context?.Interaction.User} [{context?.Interaction.User.Id}]\n" +
-                    $"**Server and Channel: **{context?.Guild.Id}[{context?.Channel.Id}]\n" +
+                    $"**Server and Channel: **{context?.Guild.Id}[{context?.Interaction.ChannelId}]\n" +
                     $"**Exception Message: **{(ex != null ? ex.Message : errorMessage)}\n" +
                     $"```csharp\n{(ex != null ? ex.StackTrace : errorMessage)}```", 200);
                 await reportsChannel.SendMessageAsync(embed: embed);

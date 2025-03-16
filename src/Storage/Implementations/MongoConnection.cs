@@ -61,7 +61,7 @@ namespace ThothBotCore.Storage.Implementations
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return new List<Player.PlayerStats>();
+                return [];
             }
         }
 
@@ -265,9 +265,14 @@ namespace ThothBotCore.Storage.Implementations
         }
 
         // Feeds
-        public static List<GuildSettingsModel> GetFeedGuildsAsync(FeedType type) // this maybe doesn't work idk ? haven't tested it i think
+        public static List<GuildSettingsModel> GetFeedGuilds(FeedType type)
         {
-            return GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").Find(filter: x => x.Feeds.Any(x => x.Type == type)).ToList();
+            return GetDatabase().GetCollection<GuildSettingsModel>("guild_settings")
+                .Find(filter: x => x.Feeds.Any(x => x.Type == type && x.ChannelID != 0)).ToList();
+        }
+        public static GuildSettingsModel GetFeedSettingsForGuild(FeedType type, ulong guildId = 0) 
+        {
+            return GetDatabase().GetCollection<GuildSettingsModel>("guild_settings").Find(filter: x => x.Feeds.Any(x => x.Type == type) && x._id == guildId).FirstOrDefault();
         }
         public static async Task<bool> FeedContentExistsAsync(FeedType type, string id) => 
             await GetDatabase().GetCollection<FeedsContentModel>($"feeds_{type.ToString().ToLowerInvariant()}").Find(x => x._id == id).AnyAsync();

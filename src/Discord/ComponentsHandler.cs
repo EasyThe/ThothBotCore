@@ -1,10 +1,12 @@
 ﻿using Discord;
+using Google.Api;
 using MongoDB.Driver.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Models;
+using ThothBotCore.Storage.Implementations;
 using ThothBotCore.Utilities;
 using static ThothBotCore.Models.GuildSettingsModel;
 
@@ -139,7 +141,7 @@ namespace ThothBotCore.Discord
         {
             var row = components.Where(x => x.Type == ComponentType.ActionRow &&
                 (x as ActionRowComponent).Components.Any(z => z.Type == ComponentType.SelectMenu)).Cast<ActionRowComponent>().ToList();
-            List<SelectMenuBuilder> menus = new();
+            List<SelectMenuBuilder> menus = [];
             foreach (var r in row)
             {
                 var selectMenu = (r.Components.Where(x => x.Type == ComponentType.SelectMenu).First() as SelectMenuComponent).ToBuilder();
@@ -206,82 +208,15 @@ namespace ThothBotCore.Discord
 
             return await Task.FromResult(builder.Build());
         }
-        public static async Task<MessageComponent> FeedsSelectMenuAsync(GuildSettingsModel guildSettings, IInteractionContext context)
+        public static async Task<MessageComponent> FeedsButtons(GuildSettingsModel guildSettings, IInteractionContext context)
         {
             var builder = new ComponentBuilder();
             var channels = await context.Guild.GetTextChannelsAsync();
             IWebhook webhook = null;
 
-            foreach (var type in (GuildSettingsModel.FeedType[]) Enum.GetValues(typeof(FeedType)))
+            foreach (var type in Enum.GetValues<FeedType>())
             {
-                var options = new List<SelectMenuOptionBuilder>();
-                var found = guildSettings.Feeds.Find(x => x.Type == type);
-                // if a channel is set, add that channel to the list
-                if (found?.WebhookID != 0)
-                {
-                    var settings = guildSettings.Feeds.Find(x => x.Type == type);
-                    if (settings != null)
-                    {
-                        webhook = await context.Guild.GetWebhookAsync(settings.WebhookID);
-                        if (webhook != null)
-                        {
-                            options.Add(new SelectMenuOptionBuilder()
-                            {
-                                Emote = Emoji.Parse("❌"),
-                                Label = "No Channel",
-                                Description = $"Disable {Text.SplitCamelCase(type.ToString())} Feeds",
-                                Value = "0"
-                            });
-                            var channel = await context.Guild.GetTextChannelAsync(webhook.ChannelId.Value);
-                            options.Add(new SelectMenuOptionBuilder()
-                            {
-                                IsDefault = true,
-                                Label = channel.Name,
-                                Value = webhook.ChannelId.ToString(),
-                                Description = $"This channel is set to receive {Text.SplitCamelCase(type.ToString())} Feeds",
-                                Emote = Emote.Parse("<:channel_green:957042306521894984>"),
-                            });
-                        }
-                    }
-                    else
-                    {
-                        options.Add(new SelectMenuOptionBuilder()
-                        {
-                            Emote = Emote.Parse("<:channel_green:957042306521894984>"),
-                            Label = context.Channel.Name,
-                            Description = "This channel",
-                            Value = context.Channel.Id.ToString()
-                        });
-                    }
-                }
-                if (!options.Exists(x => x.Value == context.Channel.Id.ToString()))
-                {
-                    options.Add(new SelectMenuOptionBuilder()
-                    {
-                        Emote = Emote.Parse("<:channel:957042306723246100>"),
-                        Label = context.Channel.Name,
-                        Description = "This channel",
-                        Value = context.Channel.Id.ToString()
-                    });
-                }
-                foreach (var channel in channels)
-                {
-                    if (options.Count == 25)
-                    {
-                        break;
-                    }
-                    // <:channel_green:957042306521894984>
-                    if (!options.Exists(x => x.Value == channel.Id.ToString()))
-                    {
-                        options.Add(new SelectMenuOptionBuilder()
-                        {
-                            Emote = Emote.Parse("<:channel:957042306723246100>"),
-                            Label = channel.Name,
-                            Value = channel.Id.ToString()
-                        });
-                    }
-                }
-                builder.WithSelectMenu($"feeds-{type.ToString().ToLowerInvariant()}", options, $"Set channel for {Text.SplitCamelCase(type.ToString())} Feeds");
+                builder.WithButton($"{type}", $"btn-feeds-settings-{type}", ButtonStyle.Success);
             }
             
             return await Task.FromResult(builder.Build());

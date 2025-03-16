@@ -20,6 +20,12 @@ namespace ThothBotCore.Models
                 Type = FeedType.SMITE2News,
                 WebhookID = 0,
                 WebhookToken = null
+            },
+            new Feed()
+            {
+                Type = FeedType.SMITE2UpdateNotes,
+                WebhookID = 0,
+                WebhookToken = null
             }
         ];
 
@@ -32,13 +38,15 @@ namespace ThothBotCore.Models
             public ulong ChannelID { get; set; }
             public ulong WebhookID { get; set; }
             public string WebhookToken { get; set; }
+            public ulong MentionID { get; set; }
+            public bool IsThreadChannel { get; set; }
         }
 
         public enum FeedType
         {
             SMITEServerStatus,
-            SMITE2News
-            //UpdateNotes,
+            SMITE2News,
+            SMITE2UpdateNotes
             //BlogPosts,
             //Datamining,
             //GameTwitter,

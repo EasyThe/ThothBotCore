@@ -44,7 +44,9 @@ namespace ThothBotCore.Models
             { "3336", "3" }, // artio
             { "1778", "3" }, // cupid
         };
-        public List<string[]> UpdateNotes { get; set; } = new();
+        public List<string[]> UpdateNotes { get; set; } = [];
+        public List<Top> Smite2Pantheons { get; set; }
+        public List<Top> Smite2Skins { get; set; }
 
         public class Top
         {

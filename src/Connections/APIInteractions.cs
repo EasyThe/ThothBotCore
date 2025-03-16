@@ -26,7 +26,7 @@ namespace ThothBotCore.Connections
         }
         public static async Task<Smite2GodsModel> FetchSmite2GodsAsync(string slug = null)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://webcms.hirezstudios.com/smite2/api/gods/?lng=en-US&populate[0]=Ability&populate[1]=Ability.YouTubeLink&populate[2]=Ability.Buffs&populate[3]=Ability.Icon&populate[4]=Ability.Buffs.Icon&populate[5]=difficulty&populate[6]=HeaderImage&populate[7]=pantheon&populate[8]=pantheon.Image&populate[9]=pantheon.localizations&populate[10]=Portrait&populate[11]=roles&populate[12]=roles.gods&populate[13]=roles.gods.pantheon&populate[14]=roles.gods.pantheon.Image&populate[15]=roles.gods.Portrait&populate[16]=roles.Image&populate[17]=roles.localizations&populate[18]=Skin&populate[19]=Skin.Image&populate[20]=type" +
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://webcms.hirezstudios.com/smite2/api/gods/?lng=en-US&pagination[page]=1&pagination[pageSize]=100&populate[0]=Ability&populate[1]=Ability.YouTubeLink&populate[2]=Ability.Buffs&populate[3]=Ability.Icon&populate[4]=Ability.Buffs.Icon&populate[5]=difficulty&populate[6]=HeaderImage&populate[7]=pantheon&populate[8]=pantheon.Image&populate[9]=pantheon.localizations&populate[10]=Portrait&populate[11]=roles&populate[12]=roles.gods&populate[13]=roles.gods.pantheon&populate[14]=roles.gods.pantheon.Image&populate[15]=roles.gods.Portrait&populate[16]=roles.Image&populate[17]=roles.localizations&populate[18]=Skin&populate[19]=Skin.Image&populate[20]=type&populate[21]=CommunityGuide&populate[22]=CommunityGuide.previewThumbnail" +
                 $"{(slug != null ? $"/{slug}" : "")}");
             var response = await httpClient.SendAsync(request);
             string json = await response.Content.ReadAsStringAsync();
@@ -140,7 +140,19 @@ namespace ThothBotCore.Connections
             {
                 return JsonConvert.DeserializeObject<List<TrelloModel>>(json);
             }
-            return new List<TrelloModel>();
+            return [];
+        }
+        // SMITE 2 Trello
+        public static async Task<List<TrelloModel>> GetSMITE2TrelloCards()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.trello.com/1/boards/mrW6CEFO/cards?key={Credentials.botConfig.trelloKey}&token={Credentials.botConfig.trelloToken}");
+            var response = await httpClient.SendAsync(request);
+            string json = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return JsonConvert.DeserializeObject<List<TrelloModel>>(json);
+            }
+            return [];
         }
 
         // Server status
@@ -157,7 +169,7 @@ namespace ThothBotCore.Connections
                 }
                 return "";
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 await Reporter.SendErrorAsync($"===\nGetStatusSummary Call Error: [APIInteractions.cs]\n" + ex.Message + ex.InnerException + "\n===");
                 return "";

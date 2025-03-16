@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Google.Api;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -511,6 +512,15 @@ namespace ThothBotCore.Utilities
             if (find != null) return find.Emoji;
             return "<:blank:570291209906552848>";
         }
+
+        public static string FeedsChannelEmote(ChannelType type) => type switch
+        {
+            ChannelType.News => "<:news:1346601824420888586>",
+            ChannelType.PublicThread or ChannelType.PrivateThread => "<:thread:1346599176519290931>",
+            _ => "<:channel:957042306723246100>"
+        };
+
+        public static bool IsThreadChannel(ChannelType type) => type == ChannelType.PublicThread || type == ChannelType.PrivateThread;
 
         [GeneratedRegex("\\s+")]
         private static partial Regex MyRegex();

@@ -7,7 +7,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Discord.WebSocket;
-using Discord.Rest;
 using ThothBotCore.Tasks;
 
 namespace ThothBotCore
@@ -27,7 +26,7 @@ namespace ThothBotCore
             ServiceCollectionExtensions.ConfigureServices(serviceCollection);
             var serviceProvider = serviceCollection.BuildServiceProvider();
 
-            // Now you can resolve services
+            // resolve services
             var logger = serviceProvider.GetRequiredService<ILogger>();
             var connection = serviceProvider.GetRequiredService<Connection>();
             var smite2NewsTask = serviceProvider.GetRequiredService<Smite2NewsTask>();
@@ -36,6 +35,8 @@ namespace ThothBotCore
             smite2GodsTask.Start();
             var advertiserTask = serviceProvider.GetRequiredService<AdvertiserTask>();
             advertiserTask.Start();
+            var updateNotesTask = serviceProvider.GetRequiredService<Smite2UpdateNotes>();
+            updateNotesTask.Start();
 
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter("ThothBotMetrics")
@@ -68,6 +69,7 @@ namespace ThothBotCore
                 services.AddSingleton(provider => new Smite2NewsTask(TimeSpan.FromMinutes(6)));
                 services.AddSingleton(provider => new Smite2GodsTask(TimeSpan.FromDays(1)));
                 services.AddSingleton(provider => new AdvertiserTask(TimeSpan.FromMinutes(10)));
+                services.AddSingleton(provider => new Smite2UpdateNotes(TimeSpan.FromMinutes(8)));
             }
         }
     }

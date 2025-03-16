@@ -49,7 +49,7 @@ namespace ThothBotCore.Utilities
             }
             return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
         }
-        public static string Truncate(string value, int maxChars) // Didnt try if works
+        public static string Truncate(string value, int maxChars)
         {
             return value.Length <= maxChars ? value : value.Substring(0, maxChars - 3) + "...";
         }
@@ -337,6 +337,12 @@ namespace ThothBotCore.Utilities
                 "Roman" => "<:Roman:1246833102693859430>",
                 "Celtic" => "<:Celtic:1246839855842066452>",
                 "Japanese" => "<:Japanese:1271749551774105652>",
+                "VooDoo" => "<:VooDoo:1327596801456476163>",
+                "Chinese" => "<:Chinese:1327624962563112962>",
+                "Arthurian" => "<:Arthurian:1327625144113299576>",
+                "Yoruba" => "<:Yoruba:1327625300686934038>",
+                "Polynesian" => "<:Polynesian:1327625420291444830>",
+                "Hindu" => "<:Hindu:1327625593294164039>",
                 _ => "<:blank:570291209906552848>"
             };
         }
@@ -542,7 +548,9 @@ namespace ThothBotCore.Utilities
                         .Replace("!", string.Empty)
                         .Replace(";", string.Empty)
                         .Replace(":", string.Empty)
-                        .Replace("'", string.Empty);
+                        .Replace("'", string.Empty)
+                        .Replace("(", string.Empty)
+                        .Replace(")", string.Empty);
         }
 
         public static string EmptyStringCheck(string value)

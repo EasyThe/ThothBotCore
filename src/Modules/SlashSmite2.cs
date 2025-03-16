@@ -14,7 +14,6 @@ namespace ThothBotCore.Modules
     [IntegrationType(ApplicationIntegrationType.UserInstall, ApplicationIntegrationType.GuildInstall)]
     public class SlashSmite2 : InteractionModuleBase
     {
-        static Random rnd = new();
         public HiRezAPIv2 HiRez { get; set; }
 
         //[SlashCommand("smite2", "The Battleground of the Gods has Evolved")]
@@ -143,6 +142,108 @@ namespace ThothBotCore.Modules
             {
                 var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
                 await RespondAsync(embed: embed);
+            }
+        }
+
+        [SlashCommand("bugs2", "Checks the SMITE 2 Known Issues Trello Board for current and fixed issues.")]
+        public async Task SlashTrelloBoardCommand()
+        {
+            try
+            {
+                var embed = new EmbedBuilder();
+                var result = await APIInteractions.GetSMITE2TrelloCards();
+
+                StringBuilder topIssues = new();
+                StringBuilder hotfixNotes = new();
+                StringBuilder incominghotfix = new();
+                StringBuilder alreadyFixedInLIVE = new();
+
+                int patchCount = 0;
+                // Appending the issues
+                foreach (var item in result)
+                {
+                    // Top Issues
+                    if (item.idList == "6626f5a181e79b9c170f012e")
+                    {
+                        topIssues.AppendLine($"🔹[{item.name}]({item.shortUrl})");
+                    }
+                    // Hotfix PatchNotes
+                    if (item.idList == "66eae28467dff5302630ab44" && hotfixNotes.Length + $"🔹[{item.name}]({item.shortUrl})".Length < 1024 && patchCount < 7)
+                    {
+                        hotfixNotes.AppendLine($"🔹[{item.name}]({item.shortUrl})");
+                        patchCount++;
+                    }
+                    // Incoming hotfix
+                    if (item.idList == "665d158d655c9066c382e89a" && incominghotfix.Length + $"🔹[{item.name}]({item.shortUrl})".Length < 1024)
+                    {
+                        incominghotfix.AppendLine($"🔹[{item.name}]({item.shortUrl})");
+                    }
+                    // Fixed in LIVE
+                    if (item.idList == "6626f5afc74f6ab41358b700" && alreadyFixedInLIVE.Length + $"🔹[{item.name}]({item.shortUrl})".Length < 1024)
+                    {
+                        alreadyFixedInLIVE.AppendLine($"🔹[{item.name}]({item.shortUrl})");
+                    }
+                }
+
+                embed.WithAuthor(x =>
+                {
+                    x.Name = "SMITE 2 Known Issues Trello Board";
+                    x.Url = "https://trello.com/b/mrW6CEFO/";
+                    x.IconUrl = "https://cdn3.iconfinder.com/data/icons/popular-services-brands-vol-2/512/trello-512.png";
+                });
+
+                // Incoming Hotfix
+                if (incominghotfix.Length != 0)
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "🛠️ In Progress";
+                        x.Value = incominghotfix.ToString();
+                    });
+                }
+
+                // Already in LIVE
+                if (alreadyFixedInLIVE.Length != 0)
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = "✨ Resolved Issues";
+                        x.Value = alreadyFixedInLIVE.ToString();
+                    });
+                }
+
+                // Hotfix Patch Notes
+                if (hotfixNotes.ToString() != "")
+                {
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = false;
+                        x.Name = "⚙️ Live Patch Notes";
+                        x.Value = hotfixNotes.ToString();
+                    });
+                }
+
+                embed.WithColor(Constants.FeedbackColor);
+                embed.WithTitle("🐛 Known Bugs");
+                if (!(topIssues.ToString().Length > 2048))
+                {
+                    embed.WithDescription(topIssues.ToString());
+                }
+                else
+                {
+                    // Its longer than 2048
+                    embed.WithDescription(Text.Truncate(topIssues.ToString(), 2048));
+                }
+
+                await RespondAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                var embed = await EmbedHandler.BuildDescriptionEmbedAsync("Sorry, the Trello API is down. Try visiting the [website](https://trello.com/b/d4fJtBlo/smite-community-issues) instead.");
+                await RespondAsync(embed: embed);
+                await Reporter.SendErrorAsync($"**Trello Error: **\n{ex.Message}\n{ex.StackTrace}");
             }
         }
     }

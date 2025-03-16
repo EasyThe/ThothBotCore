@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Sentry;
 using System;
 using System.Linq;
 using System.Threading;
@@ -11,16 +12,11 @@ using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Tasks
 {
-    public class Smite2NewsTask
+    public class Smite2NewsTask(TimeSpan interval)
     {
         private Task _timerTask;
-        private readonly PeriodicTimer _timer;
+        private readonly PeriodicTimer _timer = new PeriodicTimer(interval);
         private readonly CancellationTokenSource _cts = new();
-
-        public Smite2NewsTask(TimeSpan interval)
-        {
-            _timer = new PeriodicTimer(interval);
-        }
 
         public async void Start()
         {
@@ -66,7 +62,7 @@ namespace ThothBotCore.Tasks
                                 x.IconUrl = "https://i.imgur.com/VjciMdI.png";
                             });
 
-                            await Feeder.SendFeedWebhooks(emb.Build(), FeedType.SMITE2News, "SMITE2 News", post.attributes.slug);
+                            await Feeder.SendFeedWebhooks(emb.Build(), FeedType.SMITE2News, Text.SplitCamelCase(FeedType.SMITE2News.ToString()), post.attributes.slug);
                             // Save so we dont post it again
                             await MongoConnection.SaveFeedContentAsync(FeedType.SMITE2News, post.attributes.slug);
                         }
@@ -75,6 +71,9 @@ namespace ThothBotCore.Tasks
             }
             catch (Exception ex)
             {
+                Text.WriteLine(ex.Message, ConsoleColor.Red, ConsoleColor.White);
+                SentrySdk.CaptureException(ex);
+                await Reporter.SendMsgToBotLogsChannel("Smite2 News Task has crashed ;( <@171675309177831424>");
                 if (ex.Message != "Operation is not valid due to the current state of the object.")
                 {
                     await Reporter.SendErrorAsync($"<@171675309177831424> **Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");

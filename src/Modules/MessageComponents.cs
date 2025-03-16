@@ -1496,7 +1496,7 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [ComponentInteraction("feeds-*")] // select menu
+        [ComponentInteraction("feeds-*")] // setting with select menu for channel of feeds
         [CustomRequireUserPermission(GuildPermission.ManageGuild)]
         public async Task FeedsServerStatusSet(string feedType, string[] id)
         {
@@ -1505,7 +1505,7 @@ namespace ThothBotCore.Modules
                 await DeferAsync();
                 var selectedId = Convert.ToUInt64(id.FirstOrDefault());
                 var guildSettings = await MongoConnection.GetGuildSettingsAsync(Context.Guild.Id);
-                FeedType feed = (FeedType)Enum.Parse(typeof(FeedType), feedType, true);
+                FeedType feed = Enum.Parse<FeedType>(feedType, true);
                 // get the feed settings
                 var feeds = guildSettings?.Feeds.Find(x => x.Type == feed);
 
@@ -1520,7 +1520,7 @@ namespace ThothBotCore.Modules
                     await MongoConnection.SaveGuildSettingsAsync(guildSettings);
 
                     var em = await EmbedHandler.BuildDefaultFeedsPage(guildSettings, Context.Guild.TextChannels.Count > 25);
-                    var comp = await ComponentsHandler.FeedsSelectMenuAsync(guildSettings, Context);
+                    var comp = await ComponentsHandler.FeedsButtons(guildSettings, Context);
                     await Context.Interaction.ModifyOriginalResponseAsync(x =>
                     {
                         x.Embed = em;
@@ -1533,19 +1533,16 @@ namespace ThothBotCore.Modules
                 RestWebhook webhook = null;
                 // get the selected channel
                 var selectedChannel = Context.Guild.GetTextChannel(selectedId);
-                
+
                 // if the webhook is not in this channel
-                var webhooksInChannel = await selectedChannel.GetWebhooksAsync();
+
+                // check if channel is thread
+                var webhooksInChannel = selectedChannel.ChannelType == ChannelType.PublicThread || selectedChannel.ChannelType == ChannelType.PrivateThread ? 
+                    await Context.Guild.GetTextChannel((selectedChannel as SocketThreadChannel).ParentChannel.Id).GetWebhooksAsync() : 
+                    await selectedChannel.GetWebhooksAsync();
                 if (webhooksInChannel.Count != 0)
                 {
-                    foreach (var wh in webhooksInChannel)
-                    {
-                        if (wh.Creator.IsBot && wh.Creator.Id == Connection.Client.CurrentUser.Id)
-                        {
-                            webhook = wh;
-                            break;
-                        }
-                    }
+                    webhook = webhooksInChannel?.Where(x => x.Creator.IsBot && x.Creator.Id == Connection.Client.CurrentUser.Id).FirstOrDefault();
                 }
 
                 if (webhook == null)
@@ -1555,32 +1552,109 @@ namespace ThothBotCore.Modules
                 }
 
                 // if guild has never been in the db
+                Feed found = null;
                 if (guildSettings == null)
                 {
                     guildSettings = new()
                     {
                         _id = Context.Guild.Id
                     };
-                    var found = guildSettings.Feeds.Find(x => x.Type == feed);
+                    found = guildSettings.Feeds.Find(x => x.Type == feed);
                     found.ChannelID = selectedChannel.Id;
                     found.WebhookID = webhook.Id;
                     found.WebhookToken = webhook.Token;
+                    found.IsThreadChannel = Utils.IsThreadChannel(selectedChannel.ChannelType);
                 }
                 else
                 {
-                    guildSettings.Feeds.Find(x => x.Type == feed).ChannelID = selectedChannel.Id;
-                    guildSettings.Feeds.Find(x => x.Type == feed).WebhookID = webhook.Id;
-                    guildSettings.Feeds.Find(x => x.Type == feed).WebhookToken = webhook.Token;
+                    found = guildSettings.Feeds.Find(x => x.Type == feed);
+                    found.ChannelID = selectedChannel.Id;
+                    found.WebhookID = webhook.Id;
+                    found.WebhookToken = webhook.Token;
+                    found.IsThreadChannel = Utils.IsThreadChannel(selectedChannel.ChannelType);
                 }
 
                 await MongoConnection.SaveGuildSettingsAsync(guildSettings);
 
                 var embed = await EmbedHandler.BuildDefaultFeedsPage(guildSettings, Context.Guild.TextChannels.Count > 25);
-                var comps = await ComponentsHandler.FeedsSelectMenuAsync(guildSettings, Context);
+
+                // generating the updated select menu
+                List<SelectMenuOptionBuilder> options = [];
+
+                if (found?.WebhookID != 0) // if there's a set channel and webhook exists in our DB
+                {
+                    if (found != null)
+                    {
+                        if (webhook != null)
+                        {
+                            options.Add(new SelectMenuOptionBuilder()
+                            {
+                                Emote = Emoji.Parse("❌"),
+                                Label = "No Channel",
+                                Description = $"Disable {Text.SplitCamelCase(feedType.ToString())} Feeds",
+                                Value = "0"
+                            });
+                            // Adding already set channel to the list
+                            IChannel channel =
+                                found.IsThreadChannel ? Context.Guild.GetThreadChannel(found.ChannelID) : Context.Guild.GetTextChannel(webhook.ChannelId.Value);
+                            options.Add(new SelectMenuOptionBuilder()
+                            {
+                                IsDefault = true,
+                                Label = channel.Name,
+                                Value = channel.Id.ToString(),
+                                Description = $"This channel is set to receive {Text.SplitCamelCase(feedType.ToString())} Feeds",
+                                Emote = found.IsThreadChannel ? Emote.Parse("<:thread_green:1346592539905495102>") : Emote.Parse("<:channel_green:957042306521894984>"),
+                            });
+                        }
+                    }
+                    else
+                    {
+                        options.Add(new SelectMenuOptionBuilder()
+                        { // i dont like that next line :)
+                            Emote = Utils.IsThreadChannel(Context.Channel.ChannelType) ? Emote.Parse("<:thread_green:1346592539905495102>") : Emote.Parse("<:channel_green:957042306521894984>"),
+                            Label = Context.Channel.Name,
+                            Description = "This channel",
+                            Value = Context.Channel.Id.ToString()
+                        });
+                    }
+                }
+                if (!options.Exists(x => x.Value == Context?.Channel?.Id.ToString()) ||
+                    !options.Exists(x => x.Value == Context?.Interaction?.InteractionChannel?.Id.ToString()))
+                {
+                    options.Add(new SelectMenuOptionBuilder()
+                    {
+                        Emote = Emote.Parse(Utils.FeedsChannelEmote(Context.Channel.ChannelType)),
+                        Label = Context.Interaction.InteractionChannel.Name,
+                        Description = "This " + (Utils.IsThreadChannel(Context.Interaction.Channel.ChannelType) ? "thread" : "channel"),
+                        Value = Context.Interaction.InteractionChannel.Id.ToString()
+                    });
+                }
+                var channels = Context.Guild.TextChannels.Where(x => !Utils.IsThreadChannel(x.ChannelType)).ToList();
+                foreach (var channel in channels)
+                {
+                    if (options.Count == 25)
+                    {
+                        break;
+                    }
+                    // <:channel_green:957042306521894984>
+                    if (!options.Exists(x => x.Value == channel.Id.ToString()))
+                    {
+                        options.Add(new SelectMenuOptionBuilder()
+                        {
+                            Emote = Emote.Parse(Utils.FeedsChannelEmote(channel.ChannelType)),
+                            Label = channel.Name,
+                            Value = channel.Id.ToString()
+                        });
+                    }
+                }
+                var comps = new ComponentBuilder()
+                    .WithSelectMenu($"feeds-{feedType.ToString().ToLowerInvariant()}", options, $"Set channel for {Text.SplitCamelCase(feedType.ToString())} Feeds")
+                    .WithButton($"Back", "btn-feeds-main", ButtonStyle.Secondary, Emote.Parse("<:back:959968077544583298>"));
+
                 await Context.Interaction.ModifyOriginalResponseAsync(x =>
                 {
                     x.Embed = embed;
-                    x.Components = comps;
+                    x.Components = comps.Build();
                 });
 
                 if (selectedId != 0) // send ephemeral asking to send a test message
@@ -1591,6 +1665,17 @@ namespace ThothBotCore.Modules
                     if (feed != FeedType.SMITEServerStatus)
                     {
                         em.WithDescription($"**Would you like to send the latest {Text.SplitCamelCase(feed.ToString())} to <#{selectedId}> right now?**");
+                        // News channel check
+                        if (selectedChannel.ChannelType == ChannelType.News)
+                        {
+                            em.AddField(x =>
+                            {
+                                x.Name = "\u200b​​";
+                                x.Value = $":warning: I see {selectedChannel.Mention} is an :loudspeaker: __Announcement channel__. If you want " +
+                                $"the messages sent by {Context.Client.CurrentUser.Mention} to be automatically \"**Published**\" :sparkles:, make sure that " +
+                                $"the bot has \"Manage Messages\" permision enabled in that channel.";
+                            });
+                        }
                         var comp = new ComponentBuilder();
                         comp.WithButton("Send Now!", $"btn-send-{feed.ToString().ToLowerInvariant()}-{Context.Interaction.GuildId}", ButtonStyle.Primary, new Emoji("📤"));
                         await FollowupAsync(embed: em.Build(), components: comp.Build(), ephemeral: true);
@@ -1634,43 +1719,71 @@ namespace ThothBotCore.Modules
             }
         }
 
-        [ComponentInteraction("btn-send-*-*")]
+        [ComponentInteraction("btn-send-*-*")] // Feeds send now
         [CustomRequireUserPermission(GuildPermission.ManageGuild)]
         public async Task FeedsSendNow(string type, string guild)
         {
             var guildId = Convert.ToUInt64(guild);
-            FeedType feed = (FeedType)Enum.Parse(typeof(FeedType), type, true);
+            FeedType feed = Enum.Parse<FeedType>(type, true);
             var settings = await MongoConnection.GetGuildSettingsAsync(guildId);
             try
             {
-                var posts = await APIInteractions.FetchSmite2NewsAsync();
-                if (posts == null || posts.Count == 0)
+                var emb = new EmbedBuilder();
+                if (feed == FeedType.SMITE2News)
                 {
-                    await Reporter.SendMsgToBotLogsChannel("**FeedsSendNow**\nPosts is null or count = 0");
-                    await RespondAsync("Apologies, but something went wrong. Please try again later" +
-                        $"or reach out to Thoth's developer [here]({Constants.SupportServerInvite})", ephemeral: true);
+                    var posts = await APIInteractions.FetchSmite2NewsAsync();
+                    if (posts == null || posts.Count == 0)
+                    {
+                        await Reporter.SendMsgToBotLogsChannel("**FeedsSendNow**\nPosts is null or count = 0");
+                        await RespondAsync("Apologies, but something went wrong. Please try again later" +
+                            $"or reach out to Thoth's developer [here]({Constants.SupportServerInvite})", ephemeral: true);
+                    }
+                    posts = [.. posts.OrderByDescending(x => x.attributes.publishedAt)];
+
+                    emb.WithTitle(posts[0].attributes.title);
+                    emb.WithImageUrl(posts[0].attributes?.header_image?.data?.attributes?.url);
+                    emb.WithDescription(Text.RemoveHtmlEntities(posts[0].attributes.content));
+                    emb.WithUrl($"https://smite2.com/news/{posts[0].attributes.slug}");
+                    emb.WithColor(Constants.SMITE2GoldColor);
+                    emb.WithTimestamp(posts[0].attributes.publishedAt);
+                    emb.WithAuthor(x =>
+                    {
+                        x.Url = "https://www.smite2.com/";
+                        x.Name = "SMITE 2 News";
+                        x.IconUrl = "https://i.imgur.com/VjciMdI.png";
+                    });
                 }
-                posts = [.. posts.OrderByDescending(x => x.attributes.publishedAt)]; 
-                var emb = new EmbedBuilder();// The embed here should respect the feed type. But because we use this only
-                // for smite 2 news for now, I will keep it that way.
-                emb.WithTitle(posts[0].attributes.title);
-                emb.WithImageUrl(posts[0].attributes?.header_image?.data?.attributes?.url);
-                emb.WithDescription(Text.RemoveHtmlEntities(posts[0].attributes.content));
-                emb.WithUrl($"https://smite2.com/news/{posts[0].attributes.slug}");
-                emb.WithColor(Constants.SMITE2GoldColor);
-                emb.WithTimestamp(posts[0].attributes.publishedAt);
-                emb.WithAuthor(x =>
+                else if (feed == FeedType.SMITE2UpdateNotes)
                 {
-                    x.Url = "https://www.smite2.com/";
-                    x.Name = "SMITE 2 News";
-                    x.IconUrl = "https://i.imgur.com/VjciMdI.png";
-                });
+                    var posts = await APIInteractions.FetchSmite2NewsAsync();
+                    if (posts == null || posts.Count == 0)
+                    {
+                        await Reporter.SendMsgToBotLogsChannel("**Tasker**\nPosts is null or count = 0");
+                        return;
+                    }
+                    posts = [.. posts.OrderByDescending(x => x.attributes.publishedAt)];
+                    var first = posts.FirstOrDefault(x => x.attributes.title.ToLowerInvariant().Contains("update notes"));
+                    emb.WithTitle(first.attributes.title);
+                    emb.WithImageUrl(first.attributes?.header_image?.data?.attributes?.url);
+                    emb.WithDescription(Text.RemoveHtmlEntities(first.attributes.content));
+                    emb.WithUrl($"https://smite2.com/news/{first.attributes.slug}");
+                    emb.WithColor(Constants.SMITE2GoldColor);
+                    //emb.WithThumbnailUrl("https://i.imgur.com/TR9dSLn.png");
+                    emb.WithTimestamp(first.attributes.publishedAt);
+                    emb.WithAuthor(x =>
+                    {
+                        x.Url = "https://www.smite2.com/";
+                        x.Name = "SMITE 2 Update Notes";
+                        x.IconUrl = "https://i.imgur.com/VjciMdI.png";
+                    });
+                }
 
-                var feeed = settings.Feeds.Where(x => x.Type == feed).FirstOrDefault();
-                using var client = new DiscordWebhookClient(feeed.WebhookID, feeed.WebhookToken);
+                var feeed = settings.Feeds.FirstOrDefault(x => x.Type == feed);
+                using var webhookClient = new DiscordWebhookClient(feeed.WebhookID, feeed.WebhookToken);
 
-                var msg = await client.SendMessageAsync(embeds: [emb.Build()],
-                    username: "SMITE2 News", avatarUrl: "https://i.imgur.com/onR0CEh.png");
+                var msg = await webhookClient.SendMessageAsync(embeds: [emb.Build()],
+                    username: Text.SplitCamelCase(feed.ToString()), avatarUrl: "https://i.imgur.com/onR0CEh.png",
+                    threadId: feeed.IsThreadChannel ? feeed.ChannelID : null);
 
                 var em = await EmbedHandler.BuildDescriptionEmbedAsync($"✅ There you go! " +
                     $"https://discord.com/channels/{Context.Interaction.GuildId}/{feeed.ChannelID}/{msg}", Constants.FeedsColor);
@@ -1697,7 +1810,125 @@ namespace ThothBotCore.Modules
                     x.Components = null;
                 });
             }
+        }
 
+        [ComponentInteraction("btn-feeds-settings-*")]
+        [CustomRequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task FeedsSelectMenuInteraction(string feedType)
+        {
+            await DeferAsync();
+
+            try
+            {
+                FeedType feed = Enum.Parse<FeedType>(feedType, true);
+                var db = MongoConnection.GetFeedSettingsForGuild(feed, (ulong) Context.Interaction.GuildId);
+                var found = db.Feeds.Where(x => x.Type == feed).FirstOrDefault();
+                List<SelectMenuOptionBuilder> options = [];
+                if (found?.WebhookID != 0) // if there's a set channel and webhook exists in our DB
+                {
+                    if (found != null)
+                    {
+                        var webhook = await Context.Guild.GetWebhookAsync(found.WebhookID);
+                        if (webhook != null)
+                        {
+                            options.Add(new SelectMenuOptionBuilder()
+                            {
+                                Emote = Emoji.Parse("❌"),
+                                Label = "No Channel",
+                                Description = $"Disable {Text.SplitCamelCase(feedType.ToString())} Feeds",
+                                Value = "0"
+                            });
+                            // Adding already set channel to the list
+                            IChannel channel = 
+                                found.IsThreadChannel ? Context.Guild.GetThreadChannel(found.ChannelID) : Context.Guild.GetTextChannel(webhook.ChannelId.Value);
+                            options.Add(new SelectMenuOptionBuilder()
+                            {
+                                IsDefault = true,
+                                Label = channel.Name,
+                                Value = channel.Id.ToString(),
+                                Description = $"This channel is set to receive {Text.SplitCamelCase(feedType.ToString())} Feeds",
+                                Emote = found.IsThreadChannel ? Emote.Parse("<:thread_green:1346592539905495102>") : Emote.Parse("<:channel_green:957042306521894984>"),
+                            });
+                        }
+                    }
+                    else
+                    {
+                        options.Add(new SelectMenuOptionBuilder()
+                        { // i dont like that next line :)
+                            Emote = Utils.IsThreadChannel(Context.Channel.ChannelType) ? Emote.Parse("<:thread_green:1346592539905495102>") : Emote.Parse("<:channel_green:957042306521894984>"),
+                            Label = Context.Channel.Name,
+                            Description = "This channel",
+                            Value = Context.Channel.Id.ToString()
+                        });
+                    }
+                }
+                if (!options.Exists(x => x.Value == Context?.Channel?.Id.ToString()) ||
+                    !options.Exists(x => x.Value == Context?.Interaction?.InteractionChannel?.Id.ToString()))
+                {
+                    options.Add(new SelectMenuOptionBuilder()
+                    {
+                        Emote = Emote.Parse(Utils.FeedsChannelEmote(Context.Channel.ChannelType)),
+                        Label = Context.Interaction.InteractionChannel.Name,
+                        Description = "This " + (Utils.IsThreadChannel(Context.Interaction.Channel.ChannelType) ? "thread" : "channel"),
+                        Value = Context.Interaction.InteractionChannel.Id.ToString()
+                    });
+                }
+                var channels = Context.Guild.TextChannels.Where(x => !Utils.IsThreadChannel(x.ChannelType)).ToList();
+                foreach (var channel in channels)
+                {
+                    if (options.Count == 25)
+                    {
+                        break;
+                    }
+                    // <:channel_green:957042306521894984>
+                    if (!options.Exists(x => x.Value == channel.Id.ToString()))
+                    {
+                        options.Add(new SelectMenuOptionBuilder()
+                        {
+                            Emote = Emote.Parse(Utils.FeedsChannelEmote(channel.ChannelType)),
+                            Label = channel.Name,
+                            Value = channel.Id.ToString()
+                        });
+                    }
+                }
+                var comps = new ComponentBuilder()
+                    .WithSelectMenu($"feeds-{feedType.ToString().ToLowerInvariant()}", options, $"Set channel for {Text.SplitCamelCase(feedType.ToString())} Feeds")
+                    .WithButton($"Back", "btn-feeds-main", ButtonStyle.Secondary, Emote.Parse("<:back:959968077544583298>"));
+                await Context.Interaction.Message.ModifyAsync(x =>
+                {
+                    x.Components = comps.Build();
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Missing Permissions"))
+                {
+                    var emb = await EmbedHandler.BuildDescriptionEmbedAsync(
+                        $"The bot is missing permissions for **\"Manage Webhooks\"** in <#{Context.Interaction?.ChannelId}>. " +
+                        "Please grant them and try again.", Constants.ErrorColor);
+                    await FollowupAsync(embed: emb, ephemeral: true);
+                    return;
+                }
+                var embed = await Reporter.SlashRespondToCommandOnErrorAsync(ex, Context);
+                await Context.Interaction.Message.ModifyAsync(x =>
+                {
+                    x.Embed = embed;
+                    x.Components = null;
+                });
+            }
+        }
+
+        [ComponentInteraction("btn-feeds-main")]
+        [CustomRequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task FeedsMainMenuButton()
+        {
+            var guildSettings = await MongoConnection.GetGuildSettingsAsync(Context.Guild.Id);
+            var buttons = await ComponentsHandler.FeedsButtons(guildSettings, Context);
+
+            await Context.Interaction.UpdateAsync(x =>
+            {
+                x.Components = buttons;
+            });
         }
 
         // About & Admin interactions ;)
@@ -1735,8 +1966,9 @@ namespace ThothBotCore.Modules
             });
             long playersCount = await MongoConnection.PlayersCount();
             long linkedCount = await MongoConnection.LinkedPlayersCount();
-            var feedsStatusCount = MongoConnection.GetFeedGuildsAsync(FeedType.SMITEServerStatus);
-            var smite2Count = MongoConnection.GetFeedGuildsAsync(FeedType.SMITE2News);
+            var feedsStatusCount = MongoConnection.GetFeedGuilds(FeedType.SMITEServerStatus);
+            var smite2Count = MongoConnection.GetFeedGuilds(FeedType.SMITE2News);
+            var smite2notesCount = MongoConnection.GetFeedGuilds(FeedType.SMITE2UpdateNotes);
             var statusCount = feedsStatusCount.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITEServerStatus && z.WebhookID != 0)).ToList().Count;
             embed.AddField(x =>
             {
@@ -1744,8 +1976,6 @@ namespace ThothBotCore.Modules
                 x.Name = $"Thoth's {(Credentials.botConfig.IsDev == 0 ? "" : "DEV")} Database";
                 x.Value = $":video_game: **Players**: {playersCount}\n" +
                 $":link: **Linked Players**: {linkedCount}\n" +
-                $":loudspeaker: **{FeedType.SMITEServerStatus}**: {statusCount}\n" +
-                $":loudspeaker: **{FeedType.SMITE2News}**: {smite2Count.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2News && z.WebhookID != 0)).Count()}\n" +
                 $"<:Gods:567146088985919498> **SMITE Version**: {patch}";
             });
             var settings = MongoConnection.GetBotSettings();
@@ -1770,6 +2000,14 @@ namespace ThothBotCore.Modules
                 x.IsInline = true;
                 x.Name = "Links";
                 x.Value = links;
+            });
+            embed.AddField(x =>
+            {
+                x.IsInline = true;
+                x.Name = $"Feeds Subscribers";
+                x.Value = $":loudspeaker: **{Text.SplitCamelCase(FeedType.SMITEServerStatus.ToString())}**: {statusCount}\n" +
+                $":loudspeaker: **{Text.SplitCamelCase(FeedType.SMITE2News.ToString())}**: {smite2Count.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2News && z.WebhookID != 0)).Count()}\n" +
+                $":loudspeaker: **{Text.SplitCamelCase(FeedType.SMITE2UpdateNotes.ToString())}**: {smite2notesCount.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2UpdateNotes && z.WebhookID != 0)).Count()}";
             });
             embed.WithFooter(x =>
             {
@@ -2512,7 +2750,7 @@ namespace ThothBotCore.Modules
                                    group g by g.Pantheon into p
                                    select new { Pantheon = p.Key, Gods = p.ToList() };
                 var orderedPanth = topPantheons.OrderByDescending(x => x.Gods.Count).ToList();
-                List<BotSettingsModel.Top> topPanth = new();
+                List<BotSettingsModel.Top> topPanth = [];
                 foreach (var pant in orderedPanth)
                 {
                     topPanth.Add(new BotSettingsModel.Top

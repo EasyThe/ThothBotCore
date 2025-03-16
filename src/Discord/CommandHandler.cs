@@ -23,9 +23,9 @@ namespace ThothBotCore.Discord
         InteractionService _interactionService;
         HiRezAPIv2 _HiRez;
         Meter _metrics;
-        List<Counter<int>> _slashCounters = new();
-        List<Counter<int>> _normalCounters = new();
-        List<Counter<int>> _guildCounters = new();
+        List<Counter<int>> _slashCounters = [];
+        List<Counter<int>> _normalCounters = [];
+        List<Counter<int>> _guildCounters = [];
 
         public IServiceProvider _services;
         public async Task InitializeAsync(DiscordShardedClient client)
@@ -154,7 +154,7 @@ namespace ThothBotCore.Discord
             catch (Exception ex)
             {
                 Console.WriteLine($"HandleInteractionAsync (CommandHandler.cs) - " + ex);
-
+                SentrySdk.CaptureException(ex);
                 // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
                 // response, or at least let the user know that something went wrong during the command execution.
                 if (arg.Type == InteractionType.ApplicationCommand)

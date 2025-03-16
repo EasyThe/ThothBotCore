@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using ThothBotCore.Discord;
 using ThothBotCore.Discord.Entities;
+using ThothBotCore.Storage.Implementations;
+using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Utilities
 {
@@ -17,6 +19,7 @@ namespace ThothBotCore.Utilities
         static internal int joinedGuilds = 0;
         static ObservableGauge<int> _guildsCounter = null;
         static ObservableGauge<int> _usersCounter = null;
+        static ObservableGauge<int> _feedSubCounters = null;
 
         public static Task StartGuildsCountTimer()
         {
@@ -43,6 +46,10 @@ namespace ThothBotCore.Utilities
                 {
                     _guildsCounter = Global.Metrics.CreateObservableGauge("guilds", () => Connection.Client.Guilds.Count);
                     _usersCounter = Global.Metrics.CreateObservableGauge("users", () => totalUsers);
+                    foreach (var feedType in Enum.GetValues<FeedType>())
+                    {
+                        _feedSubCounters = Global.Metrics.CreateObservableGauge($"f_{feedType}", () => MongoConnection.GetFeedGuilds(feedType).Count);
+                    }
                 }
 
                 await Connection.Client.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {Connection.Client.Guilds.Count}"); // remove this

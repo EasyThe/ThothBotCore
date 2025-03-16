@@ -15,17 +15,19 @@ namespace ThothBotCore.Autocomplete
             {
                 var value = autocompleteInteraction.Data.Current.Value as string; // what the user managed to type into the textbox so far
 
-                if (string.IsNullOrEmpty(value))
-                    return AutocompletionResult.FromSuccess();
-
-                var suggestions = Constants.ItemsHashSet.Where(x => x.DeviceName.ToLowerInvariant().Contains(value.ToLowerInvariant()));
-
+                var suggestions = Constants.ItemsHashSet;
                 var autocompleteResults = suggestions.Select(s => new AutocompleteResult
                 {
                     Name = s.DeviceName, // here's what will appear in the suggestions list
                     Value = s.DeviceName // here's what will actually go into the slashcommand argument on tapping the suggestion
                 });
 
+                if (string.IsNullOrEmpty(value))
+                {
+                    return AutocompletionResult.FromSuccess(autocompleteResults.Take(25));
+                }
+                // else
+                autocompleteResults = autocompleteResults.Where(x => x.Name.ToLowerInvariant().Contains(value.ToLowerInvariant()));
                 return AutocompletionResult.FromSuccess(autocompleteResults.Take(25));
             }
             catch (Exception ex)

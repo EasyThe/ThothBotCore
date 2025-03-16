@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using MethodTimer;
 using Newtonsoft.Json;
 using Sentry;
@@ -740,7 +741,7 @@ namespace ThothBotCore.Modules
                     });
                 }
 
-                embed.WithColor(Utilities.Constants.FeedbackColor);
+                embed.WithColor(Constants.FeedbackColor);
                 embed.WithTitle("All Platforms Top Issues");
                 if (!(topIssues.ToString().Length > 2048))
                 {
@@ -1463,7 +1464,7 @@ namespace ThothBotCore.Modules
                 var guildSettings = await MongoConnection.GetGuildSettingsAsync(Context.Guild.Id);
                 var textChannels = await Context.Guild.GetTextChannelsAsync();
 
-                foreach (var type in (FeedType[])Enum.GetValues(typeof(FeedType)))
+                foreach (var type in Enum.GetValues<FeedType>())
                 {
                     if (guildSettings != null) // settings for the server exist
                     {
@@ -1489,10 +1490,25 @@ namespace ThothBotCore.Modules
                         }
                     }
                 }
-                var embed = await EmbedHandler.BuildDefaultFeedsPage(guildSettings ??= new(), textChannels.Count > 25);
 
-                var buttons = await ComponentsHandler.FeedsSelectMenuAsync(guildSettings, Context);
-                await RespondAsync(embed: embed, components: buttons);
+                var embed = await EmbedHandler.BuildDefaultFeedsPage(guildSettings ??= new(), textChannels.Count > 25); // the guild ID check is beta check
+
+                var buttons = await ComponentsHandler.FeedsButtons(guildSettings, Context); // the guild ID check is beta check
+
+                if (Context.Interaction is SocketSlashCommand sh && 
+                    sh.InteractionChannel.ChannelType == ChannelType.PrivateThread &&
+                    sh.Channel is null) // I hate private threads
+                {
+                    await RespondAsync(":warning: This is a **Private Thread**. If you want to set feeds in this channel, " +
+                        "please give the bot **Manage Threads** permission OR **add the bot into this thread**, " +
+                        "and then run the command again to check the Feeds settings. Thanks!" +
+                        $"\nIf you believe this is an error, please don't hesitate to contact the bot developer in " +
+                        $"the Support Server [here]({Constants.SupportServerInvite})");
+                }
+                else
+                {
+                    await RespondAsync(embed: embed, components: buttons);
+                }
             }
             catch (Exception ex)
             {
@@ -1538,8 +1554,9 @@ namespace ThothBotCore.Modules
                 });
                 long playersCount = await MongoConnection.PlayersCount();
                 long linkedCount = await MongoConnection.LinkedPlayersCount();
-                var feedsStatusCount = MongoConnection.GetFeedGuildsAsync(FeedType.SMITEServerStatus);
-                var smite2Count = MongoConnection.GetFeedGuildsAsync(FeedType.SMITE2News);
+                var feedsStatusCount = MongoConnection.GetFeedGuilds(FeedType.SMITEServerStatus);
+                var smite2Count = MongoConnection.GetFeedGuilds(FeedType.SMITE2News);
+                var smite2notesCount = MongoConnection.GetFeedGuilds(FeedType.SMITE2UpdateNotes);
                 var statusCount = feedsStatusCount.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITEServerStatus && z.WebhookID != 0)).ToList().Count;
                 embed.AddField(x =>
                 {
@@ -1547,8 +1564,6 @@ namespace ThothBotCore.Modules
                     x.Name = $"Thoth's {(Credentials.botConfig.IsDev == 0 ? "" : "DEV")} Database";
                     x.Value = $":video_game: **Players**: {playersCount}\n" +
                     $":link: **Linked Players**: {linkedCount}\n" +
-                    $":loudspeaker: **{FeedType.SMITEServerStatus}**: {statusCount}\n" +
-                    $":loudspeaker: **{FeedType.SMITE2News}**: {smite2Count.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2News && z.WebhookID != 0)).Count()}\n" +
                     $"<:Gods:567146088985919498> **SMITE Version**: {patch}";
                 });
                 var settings = MongoConnection.GetBotSettings();
@@ -1573,6 +1588,14 @@ namespace ThothBotCore.Modules
                     x.IsInline = true;
                     x.Name = "Links";
                     x.Value = links;
+                });
+                embed.AddField(x =>
+                {
+                    x.IsInline = true;
+                    x.Name = $"Feeds Subscribers";
+                    x.Value = $":loudspeaker: **{Text.SplitCamelCase(FeedType.SMITEServerStatus.ToString())}**: {statusCount}\n" +
+                    $":loudspeaker: **{Text.SplitCamelCase(FeedType.SMITE2News.ToString())}**: {smite2Count.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2News && z.WebhookID != 0)).Count()}\n" +
+                    $":loudspeaker: **{Text.SplitCamelCase(FeedType.SMITE2UpdateNotes.ToString())}**: {smite2notesCount.Where(x => x.Feeds.Exists(z => z.Type == FeedType.SMITE2UpdateNotes && z.WebhookID != 0)).Count()}";
                 });
                 embed.WithFooter(x =>
                 {

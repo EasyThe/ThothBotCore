@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sentry;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,6 +49,7 @@ namespace ThothBotCore.Tasks
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 if (ex.Message != "Operation is not valid due to the current state of the object.")
                 {
                     await Reporter.SendErrorAsync($"<@171675309177831424> **Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");
