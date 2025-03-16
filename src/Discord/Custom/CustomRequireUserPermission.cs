@@ -32,7 +32,7 @@ namespace ThothBotCore.Discord
                 }
                 if (!guildUser.GuildPermissions.Has(GuildPermission.Value))
                 {
-                    context.Interaction.RespondAsync("Sorry, you need **Manage Server** permission in this server to do this. ", ephemeral: true);
+                    context.Interaction.RespondAsync($"Sorry, you need **{GuildPermission.Value}** permission in this server to do this. ", ephemeral: true);
                     return Task.FromResult(PreconditionResult.FromError(ErrorMessage ?? $"User requires guild permission {GuildPermission.Value}."));
                 }
             }
@@ -51,7 +51,7 @@ namespace ThothBotCore.Discord
 
                 if (!perms.Has(ChannelPermission.Value))
                 {
-                    context.Interaction.RespondAsync("Sorry, you need **Manage Server** permission in this channel to do this. ", ephemeral: true);
+                    context.Interaction.RespondAsync($"Sorry, you need **{ChannelPermission.Value}** permission in this channel to do this. ", ephemeral: true);
                     return Task.FromResult(PreconditionResult.FromError(ErrorMessage ?? $"User requires channel permission {ChannelPermission.Value}."));
                 }
             }

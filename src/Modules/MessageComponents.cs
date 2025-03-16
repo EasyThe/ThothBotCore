@@ -1497,7 +1497,7 @@ namespace ThothBotCore.Modules
         }
 
         [ComponentInteraction("feeds-*")] // setting with select menu for channel of feeds
-        [CustomRequireUserPermission(GuildPermission.ManageGuild)]
+        [CustomRequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task FeedsServerStatusSet(string feedType, string[] id)
         {
             try
@@ -1720,7 +1720,7 @@ namespace ThothBotCore.Modules
         }
 
         [ComponentInteraction("btn-send-*-*")] // Feeds send now
-        [CustomRequireUserPermission(GuildPermission.ManageGuild)]
+        [CustomRequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task FeedsSendNow(string type, string guild)
         {
             var guildId = Convert.ToUInt64(guild);
@@ -1813,7 +1813,7 @@ namespace ThothBotCore.Modules
         }
 
         [ComponentInteraction("btn-feeds-settings-*")]
-        [CustomRequireUserPermission(GuildPermission.ManageGuild)]
+        [CustomRequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task FeedsSelectMenuInteraction(string feedType)
         {
             await DeferAsync();
@@ -1919,7 +1919,7 @@ namespace ThothBotCore.Modules
         }
 
         [ComponentInteraction("btn-feeds-main")]
-        [CustomRequireUserPermission(GuildPermission.ManageGuild)]
+        [CustomRequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task FeedsMainMenuButton()
         {
             var guildSettings = await MongoConnection.GetGuildSettingsAsync(Context.Guild.Id);

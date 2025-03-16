@@ -1455,7 +1455,7 @@ namespace ThothBotCore.Modules
 
         [SlashCommand("feeds", "Set a channel to get server status notifications and more (soon™).")]
         [CustomRequireContext(Discord.ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.ManageChannels | GuildPermission.ManageGuild)]
+        [CustomRequireUserPermission(ChannelPermission.ManageChannels)]
         [IntegrationType(ApplicationIntegrationType.GuildInstall)]
         public async Task SlashFeedsCommand()
         {
