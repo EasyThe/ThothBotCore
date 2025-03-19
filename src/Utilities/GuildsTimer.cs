@@ -134,54 +134,8 @@ namespace ThothBotCore.Utilities
                             $"**Error Message:** {ex.Message}");
                     }
 
-                    //DiscordServices
-                    try
-                    {
-                        using (var webclient = new HttpClient())
-                        using (var content = new StringContent($"{{ \"servers\": {Connection.Client.Guilds.Count} }}", Encoding.UTF8, "application/json"))
-                        {
-                            webclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Credentials.botConfig.DiscordServicesAPI);
-                            var response = await webclient.PostAsync("https://api.discordservices.net/bot/454145330347376651/stats", content);
-                            await BotListCallResponse("DiscordServices", response);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        await Reporter.SendErrorAsync("**DiscordServices.**\n" +
-                            $"**Error Message:** {ex.Message}");
-                    }
-
                     await Connection.Logger.Log("i", $"Guilds count updated! New count: {joinedGuilds}");
                 }
-
-                // double cpuPercentage = await GetCpuUsageForProcess();
-                // StatCord is dead
-                //try
-                //{
-                //    long linkedPlayers = await Storage.Implementations.MongoConnection.LinkedPlayersCount();
-                //    using var webclient = new HttpClient();
-                //    using var content = new StringContent(
-                //        $"{{ \"id\": \"{Connection.Client.CurrentUser.Id}\", " +
-                //        $"\"key\": \"{Credentials.botConfig.StatCordAPI}\", " +
-                //        $"\"servers\": \"{Connection.Client.Guilds.Count}\", " +
-                //        $"\"users\": \"{totalUsers}\", " +
-                //        $"\"active\": [], " +
-                //        $"\"commands\": \"0\", " +
-                //        $"\"popular\": []," +
-                //        $"\"memactive\": \"{GetMemoryUsageForProcess()}\"," +
-                //        $"\"memload\": \"0\"," +
-                //        $"\"cpuload\": \"{cpuPercentage}\"," +
-                //        $"\"bandwidth\": \"0\"," +
-                //        $"\"custom1\": \"{linkedPlayers}\"," +
-                //        $"\"custom2\": \"{Storage.Database.CountOfStatusUpdatesActivatedInDB()[0]}\" }}", Encoding.UTF8, "application/json");
-                //    var response = await webclient.PostAsync("https://api.statcord.com/v3/stats", content);
-                //    await BotListCallResponse("StatCord", response);
-                //}
-                //catch (Exception ex)
-                //{
-                //    await Reporter.SendErrorAsync("**StatCord.**\n" +
-                //        $"**Error Message:** {ex.Message}");
-                //}
             }
 
             GuildCountTimer.Interval = 60000;

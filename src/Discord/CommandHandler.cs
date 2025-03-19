@@ -162,9 +162,7 @@ namespace ThothBotCore.Discord
             }
         }
 
-        private IServiceProvider ConfigureServices()
-        {
-            return new ServiceCollection()
+        private IServiceProvider ConfigureServices() => new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton<CommandService>()
                 .AddSingleton<CommandHandler>()
@@ -178,7 +176,6 @@ namespace ThothBotCore.Discord
                 .AddSingleton(new HiRezAPIv2())
                 .AddSingleton(new Meter("ThothBotMetrics"))
                 .BuildServiceProvider();
-        }
 
         private async Task HandleCommandAsync(SocketMessage s)
         {
@@ -208,7 +205,7 @@ namespace ThothBotCore.Discord
                         await context.Channel.SendMessageAsync($"I love you too, {msg.Author.Mention} :heart:");
                         await Reporter.SendSuccessCommands(context, null);
                     }
-                    if ((result.IsSuccess || !result.IsSuccess) && context.Message.Author.Id != Utilities.Constants.OwnerID)
+                    if ((result.IsSuccess || !result.IsSuccess) && context.Message.Author.Id != Constants.OwnerID)
                     {
                         await Reporter.SendSuccessCommands(context, result);
                     }

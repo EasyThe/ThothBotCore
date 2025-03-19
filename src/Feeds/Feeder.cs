@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
+using Sentry;
 using System.Linq;
 using System.Threading.Tasks;
 using ThothBotCore.Discord;
@@ -79,6 +80,7 @@ namespace ThothBotCore.Feeds
                 }
                 catch (System.Exception ex)
                 {
+                    SentrySdk.CaptureException(ex);
                     await Reporter.SendErrorAsync($"Couldn't send {feedType} feed to {feedGuilds[i]._id}, exception message: {ex.Message}");
                     if (ex.Message.Contains("Missing"))
                     {
@@ -171,6 +173,7 @@ namespace ThothBotCore.Feeds
             }
             catch (System.Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 if (Credentials.botConfig.Debug)
                 {
                     Text.WriteLine($"FeedCrossposter failed to crosspost: {ex.Message}");

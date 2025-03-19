@@ -326,6 +326,7 @@ namespace ThothBotCore.Utilities
 
         public static async Task<Embed> SlashRespondToCommandOnErrorAsync(Exception ex, IInteractionContext context, string errorMessage = "")
         {
+            SentrySdk.CaptureException(ex);
             var sb = new StringBuilder();
             if (errorMessage == "apidown" || (ex != null && ex.Message.ToLowerInvariant().Contains("the api is unavailable")))
             {
@@ -336,7 +337,6 @@ namespace ThothBotCore.Utilities
                 sb.Append($"{(Global.ErrorMessageByOwner != null && Global.ErrorMessageByOwner != "" ? Global.ErrorMessageByOwner : "An unexpected error has occured. Please try again later.")}" +
                     $"\nIf the error persists, don't hesitate to [contact]({Constants.SupportServerInvite}) the bot developer for further assistance.");
                 await SlashSendException(ex, context, errorMessage);
-                SentrySdk.CaptureException(ex);
             }
             else if (ex == null && errorMessage != "")
             {
