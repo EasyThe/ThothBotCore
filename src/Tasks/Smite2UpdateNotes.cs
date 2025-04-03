@@ -35,7 +35,7 @@ namespace ThothBotCore.Tasks
                         continue;
                     }
                     await BlogUpdateNotes();
-                    await BugFixes();
+                    //await BugFixes(); its gone :(
                 }
             }
             catch (Exception ex)
