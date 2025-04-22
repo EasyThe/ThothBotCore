@@ -35,7 +35,7 @@ namespace ThothBotCore.Utilities
 
         internal static async void GuildCountTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (Connection.Client.LoginState.ToString() == "LoggedIn" && Connection.Client.CurrentUser != null)
+            if (Connection.Client?.LoginState.ToString() == "LoggedIn" && Connection.Client.CurrentUser != null)
             {
                 int totalUsers = 0;
                 foreach (var guild in Connection.Client.Guilds)
@@ -52,12 +52,12 @@ namespace ThothBotCore.Utilities
                     }
                 }
 
-                await Connection.Client.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {Connection.Client.Guilds.Count}"); // remove this
+                //await Connection.Client?.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {Connection.Client?.Guilds?.Count}"); // remove this
 
-                if (joinedGuilds != Connection.Client.Guilds.Count && Connection.Client.CurrentUser.Id != 587623068461957121)
+                if (joinedGuilds != Connection.Client?.Guilds.Count && Connection.Client?.CurrentUser.Id != 587623068461957121)
                 {
                     joinedGuilds = Connection.Client.Guilds.Count;
-                    await Connection.Client.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
+                    await Connection.Client?.SetCustomStatusAsync($"{Credentials.botConfig.setGame} | Servers: {joinedGuilds}");
 
                     Text.WriteLine("Users: " + totalUsers);
 

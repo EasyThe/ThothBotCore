@@ -513,7 +513,7 @@ namespace ThothBotCore.Modules
                 bool maint = false;
                 bool inci = false;
                 // Incidents
-                if (smiteServerStatus.incidents.Count >= 1)
+                if (smiteServerStatus?.incidents.Count >= 1)
                 {
                     for (int i = 0; i < smiteServerStatus.incidents.Count; i++)
                     {
@@ -531,7 +531,7 @@ namespace ThothBotCore.Modules
                     embeds.Add(inciEmbed.Build());
                 }
                 // Scheduled Maintenances
-                if (smiteServerStatus.scheduled_maintenances.Count >= 1)
+                if (smiteServerStatus?.scheduled_maintenances.Count >= 1)
                 {
                     for (int c = 0; c < smiteServerStatus.scheduled_maintenances.Count; c++)
                     {
@@ -547,7 +547,7 @@ namespace ThothBotCore.Modules
                     embeds.Add(maintEmbed.Build());
                 }
 
-                await FollowupAsync(embeds: embeds.ToArray<Embed>());
+                await FollowupAsync(embeds: [.. embeds]);
             }
             catch (Exception ex)
             {

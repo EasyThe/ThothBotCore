@@ -185,7 +185,7 @@ namespace ThothBotCore.Connections
         public async Task<List<HiRezServerStatus>> GetHiRezServerStatusAsync()
         {
             string json = await SendRequestAsync("gethirezserverstatus");
-            return json == null ? new List<HiRezServerStatus>() : JsonConvert.DeserializeObject<List<HiRezServerStatus>>(json);
+            return json == null ? [] : JsonConvert.DeserializeObject<List<HiRezServerStatus>>(json);
         }
         public async Task<List<SearchPlayers>> SearchPlayersAsync(string player)
         {

@@ -26,13 +26,19 @@ namespace ThothBotCore.Discord
                 author.WithUrl("http://status.hirezstudios.com/");
                 author.WithIconUrl(Constants.botIcon);
             });
-            var smiteCat = smiteStatus.components.Find(x => x.id == "542zlqj9nwr6");
-            var smite2Cat = smiteStatus.components.Find(x => x.id == "ycvd07tgm0g3");
-            if (smiteCat.status == "operational" || smite2Cat.status == "operational")
+            embed.WithDescription("Hey there! http://status.hirezstudios.com/ has been disabled or deleted or whatever so the bot has no reliable way of receiving any " +
+                "information either about SMITE or SMITE 2. There's nothing I can do about it. :)");
+
+            return await Task.FromResult(embed.Build());
+
+            // idk bro
+            var smiteCat = smiteStatus?.components.Find(x => x.id == "542zlqj9nwr6");
+            var smite2Cat = smiteStatus?.components.Find(x => x.id == "ycvd07tgm0g3");
+            if (smiteCat != null && (smiteCat.status == "operational" || smite2Cat.status == "operational"))
             {
                 embed.WithColor(new Color(0, 255, 0));
             }
-            else if (smiteCat.status == "under_maintenance" || smite2Cat.status == "under_maintenance")
+            else if (smiteCat != null && (smiteCat.status == "under_maintenance" || smite2Cat.status == "under_maintenance"))
             {
                 embed.WithColor(new Color(52, 152, 219));
             }
@@ -48,7 +54,7 @@ namespace ThothBotCore.Discord
             var apiSw = hiRezServerStatus.Find(x => x.Platform == "switch" && x.Environment == "live");
             var apiPTS = hiRezServerStatus?.Find(x => x.Environment == "pts" && x.Platform == "pc");
 
-            foreach (var item in smiteCat.components)
+            foreach (var item in smiteCat?.components)
             {
                 var comp = smiteStatus.components.Find(x => x.id == item);
                 var sb = new StringBuilder();
@@ -58,8 +64,8 @@ namespace ThothBotCore.Discord
                 {
                     sb.Append("<:PC:537746891610259467> ");
                     apiInfo = $"{Text.StatusEmoji(apiPc != null && apiPc.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiPc?.Status.ToLowerInvariant()))}" +
-                        (apiPc != null && apiPc.Limited_access ? "Limited Access" :  Text.EmptyStringCheck(apiPc?.Status));
-                    
+                        (apiPc != null && apiPc.Limited_access ? "Limited Access" : Text.EmptyStringCheck(apiPc?.Status));
+
                 }
                 else if (comp.name.ToLowerInvariant().Contains("xbox"))
                 {
@@ -77,7 +83,7 @@ namespace ThothBotCore.Discord
                 {
                     sb.Append("<:SW:537752006719176714> ");
                     apiInfo = $"{Text.StatusEmoji(apiSw != null && apiSw.Limited_access ? "limited_access" : Text.EmptyStringCheck(apiSw?.Status.ToLowerInvariant()))}" +
-                        (apiSw != null && apiSw.Limited_access ? "Limited Access" :  Text.EmptyStringCheck(apiSw?.Status));
+                        (apiSw != null && apiSw.Limited_access ? "Limited Access" : Text.EmptyStringCheck(apiSw?.Status));
                 }
                 else if (comp.name.ToLowerInvariant().Contains("epic"))
                 {
@@ -86,7 +92,7 @@ namespace ThothBotCore.Discord
                         (apiPc != null && apiPc.Limited_access ? "Limited Access" : Text.EmptyStringCheck(apiPc?.Status));
                 }
                 sb.Append(comp.name);
-                embed.AddField(x=>
+                embed.AddField(x =>
                 {
                     x.IsInline = true;
                     x.Name = sb.ToString();
@@ -103,36 +109,39 @@ namespace ThothBotCore.Discord
             });
 
             // SMITE 2
-            foreach (var item in smite2Cat.components)
+            if (smite2Cat != null) // if status page is down, we dont have more info :)
             {
-                var comp = smiteStatus.components.Find(x => x.id == item);
-                var sb = new StringBuilder();
+                foreach (var item in smite2Cat.components)
+                {
+                    var comp = smiteStatus.components.Find(x => x.id == item);
+                    var sb = new StringBuilder();
 
-                if (comp.name.ToLowerInvariant().Contains("steam"))
-                {
-                    sb.Append("<:steam:581485150043373578> ");
+                    if (comp.name.ToLowerInvariant().Contains("steam"))
+                    {
+                        sb.Append("<:steam:581485150043373578> ");
 
+                    }
+                    else if (comp.name.ToLowerInvariant().Contains("xbox"))
+                    {
+                        sb.Append("<:XB:537749895029850112> ");
+                    }
+                    else if (comp.name.ToLowerInvariant().Contains("psn"))
+                    {
+                        sb.Append("<:PS4:537745670518472714> ");
+                    }
+                    else if (comp.name.ToLowerInvariant().Contains("epic"))
+                    {
+                        sb.Append("<:egs:705963938340274247> ");
+                    }
+                    sb.Append(comp.name);
+                    embed.AddField(x =>
+                    {
+                        x.IsInline = true;
+                        x.Name = sb.ToString();
+                        x.Value = $"{Text.StatusEmoji(comp.status)}" +
+                        $"{(comp.status.Contains('_') ? Text.ToTitleCase(comp.status.Replace("_", " ")) : Text.ToTitleCase(comp.status))}";
+                    });
                 }
-                else if (comp.name.ToLowerInvariant().Contains("xbox"))
-                {
-                    sb.Append("<:XB:537749895029850112> ");
-                }
-                else if (comp.name.ToLowerInvariant().Contains("psn"))
-                {
-                    sb.Append("<:PS4:537745670518472714> ");
-                }
-                else if (comp.name.ToLowerInvariant().Contains("epic"))
-                {
-                    sb.Append("<:egs:705963938340274247> ");
-                }
-                sb.Append(comp.name);
-                embed.AddField(x =>
-                {
-                    x.IsInline = true;
-                    x.Name = sb.ToString();
-                    x.Value = $"{Text.StatusEmoji(comp.status)}" +
-                    $"{(comp.status.Contains('_') ? Text.ToTitleCase(comp.status.Replace("_", " ")) : Text.ToTitleCase(comp.status))}";
-                });
             }
 
             embed.WithFooter(x =>
