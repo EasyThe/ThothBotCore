@@ -12,60 +12,103 @@ using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Tasks
 {
-    public class Smite2UpdateNotes(TimeSpan interval)
+    public class Smite2UpdateNotes
     {
-        private Task _timerTask;
-        private readonly PeriodicTimer _timer = new PeriodicTimer(interval);
-        private readonly CancellationTokenSource _cts = new();
+        private readonly TimeSpan _interval;
+        private Task? _timerTask;
+        private PeriodicTimer? _timer;
+        private CancellationTokenSource? _cts;
 
-        public async void Start()
+        public Smite2UpdateNotes(TimeSpan interval)
         {
-            _timerTask = DoSmite2UpdateNotesAsync();
+            _interval = interval;
         }
-        
-        private async Task DoSmite2UpdateNotesAsync()
+
+        public void Start()
+        {
+            // Clean up any previous instance
+            if (_cts != null)
+            {
+                try
+                {
+                    _cts.Cancel();
+                }
+                catch { /* ignore */ }
+                _cts.Dispose();
+            }
+
+            _cts = new CancellationTokenSource();
+            _timer = new PeriodicTimer(_interval);
+            _timerTask = Task.Run(() => DoSmite2UpdateNotesAsync(_cts.Token));
+        }
+
+        private async Task DoSmite2UpdateNotesAsync(CancellationToken token)
         {
             try
             {
-                while (await _timer.WaitForNextTickAsync(_cts.Token))
+                while (_timer is not null && await _timer.WaitForNextTickAsync(token))
                 {
-                    if (Discord.Connection.Client.LoginState.ToString() != "LoggedIn")
+                    try
                     {
-                        Text.WriteLine($"Tasker skipping because client is not logged in [{Discord.Connection.Client?.LoginState}]");
-                        continue;
+                        if (Discord.Connection.Client?.LoginState.ToString() != "LoggedIn")
+                        {
+                            Text.WriteLine($"Tasker skipping because client is not logged in [{Discord.Connection.Client?.LoginState}]");
+                            continue;
+                        }
+
+                        await BlogUpdateNotes();
+                        // await BugFixes(); // dead
                     }
-                    await BlogUpdateNotes();
-                    //await BugFixes(); its gone :(
+                    catch (OperationCanceledException)
+                    {
+                        // cancellation requested - exit loop cleanly
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        SentrySdk.CaptureException(ex);
+                        await Reporter.SendErrorAsync($"Smite2 UpdateNotes iteration failed:\n{ex.Message}");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 SentrySdk.CaptureException(ex);
-                if (ex.Message != "Operation is not valid due to the current state of the object.")
-                {
-                    await Reporter.SendErrorAsync($"<@171675309177831424> **Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");
-                    await StopAsync();
-                    Start();
-                }
-                else
-                {
-                    await Reporter.SendErrorAsync($"# <@171675309177831424> **__You need to restart the timer!__**\n**Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");
-                }
+                await Reporter.SendErrorAsync($"Smite2 UpdateNotes Task crashed:\n{ex}");
             }
         }
 
         public async Task StopAsync()
         {
-            if (_timerTask is null)
-            {
+            if (_cts == null)
                 return;
+
+            try
+            {
+                _cts.Cancel();
+            }
+            catch { /* ignore */ }
+
+            if (_timerTask != null)
+            {
+                try
+                {
+                    await _timerTask;
+                }
+                catch (Exception ex)
+                {
+                    SentrySdk.CaptureException(ex);
+                }
             }
 
-            _cts.Cancel();
-            await _timerTask;
-            _cts.Dispose();
-            await Console.Out.WriteLineAsync("Tasker was stopped.");
-            await Reporter.SendMsgToBotLogsChannel($"Tasker was stopped.");
+            _timer?.Dispose();
+            _cts?.Dispose();
+
+            _timerTask = null;
+            _timer = null;
+            _cts = null;
+
+            await Reporter.SendMsgToBotLogsChannel("Tasker stopped.");
         }
 
         private static async Task BlogUpdateNotes()
@@ -76,13 +119,17 @@ namespace ThothBotCore.Tasks
                 await Reporter.SendMsgToBotLogsChannel("**Tasker**\nPosts is null or count = 0");
                 return;
             }
-            posts = [.. posts.OrderBy(x => x.attributes.publishedAt)];
-            foreach (var post in posts)
+
+            var sorted = posts.OrderBy(x => x.attributes.publishedAt).ToList();
+
+            foreach (var post in sorted)
             {
-                if (!post.attributes.title.ToLowerInvariant().Contains("update notes"))
+                if (string.IsNullOrEmpty(post.attributes?.title) ||
+                    !post.attributes.title.ToLowerInvariant().Contains("update"))
                 {
                     continue;
                 }
+
                 bool exists = await MongoConnection.FeedContentExistsAsync(FeedType.SMITE2UpdateNotes, post.attributes.slug);
                 if (!exists)
                 {
@@ -103,7 +150,6 @@ namespace ThothBotCore.Tasks
                     });
 
                     await Feeder.SendFeedWebhooks(emb.Build(), FeedType.SMITE2UpdateNotes, Text.SplitCamelCase(FeedType.SMITE2UpdateNotes.ToString()), post.attributes.slug);
-                    // Save so we dont post it again
                     await MongoConnection.SaveFeedContentAsync(FeedType.SMITE2UpdateNotes, post.attributes.slug);
                 }
             }
@@ -122,13 +168,14 @@ namespace ThothBotCore.Tasks
 
             foreach (var patch in hotfixes)
             {
-                bool exists = await MongoConnection.FeedContentExistsAsync(FeedType.SMITE2UpdateNotes, patch.shortLink); // shortlink is kinda slug
+                bool exists = await MongoConnection.FeedContentExistsAsync(FeedType.SMITE2UpdateNotes, patch.shortLink);
                 if (!exists)
                 {
                     await Console.Out.WriteLineAsync($"[{exists}] {patch.name}");
                     var emb = new EmbedBuilder();
+                    var desc = patch?.desc ?? string.Empty;
                     emb.WithTitle($"SMITE 2 Hotfix - {patch.name}");
-                    emb.WithDescription(patch?.desc.Length > 4096 ? HotfixToucher(Text.Truncate(patch.desc, 4096)) : HotfixToucher(patch?.desc));
+                    emb.WithDescription(desc.Length > 4096 ? HotfixToucher(Text.Truncate(desc, 4096)) : HotfixToucher(desc));
                     emb.WithUrl(patch.url);
                     emb.WithColor(Constants.SMITE2GoldColor);
                     //emb.WithThumbnailUrl("https://i.imgur.com/TR9dSLn.png");
@@ -141,7 +188,6 @@ namespace ThothBotCore.Tasks
                     });
 
                     await Feeder.SendFeedWebhooks(emb.Build(), FeedType.SMITE2UpdateNotes, Text.SplitCamelCase(FeedType.SMITE2UpdateNotes.ToString()), patch.shortLink);
-                    // Save so we dont post it again
                     await MongoConnection.SaveFeedContentAsync(FeedType.SMITE2UpdateNotes, patch.shortLink);
                 }
             }

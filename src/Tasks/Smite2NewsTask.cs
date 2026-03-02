@@ -12,93 +12,142 @@ using static ThothBotCore.Models.GuildSettingsModel;
 
 namespace ThothBotCore.Tasks
 {
-    public class Smite2NewsTask(TimeSpan interval)
+    public class Smite2NewsTask
     {
-        private Task _timerTask;
-        private readonly PeriodicTimer _timer = new PeriodicTimer(interval);
-        private readonly CancellationTokenSource _cts = new();
+        private readonly TimeSpan _interval;
+        private Task? _timerTask;
+        private PeriodicTimer? _timer;
+        private CancellationTokenSource? _cts;
 
-        public async void Start()
+        public Smite2NewsTask(TimeSpan interval)
         {
-            _timerTask = DoSmite2NewsAsync();
+            _interval = interval;
         }
 
-        private async Task DoSmite2NewsAsync()
+        public void Start()
+        {
+            // Ensure previous instances are cleaned up if Start is called again
+            if (_cts != null)
+            {
+                try
+                {
+                    _cts.Cancel();
+                }
+                catch { /* ignore */ }
+                _cts.Dispose();
+            }
+
+            _cts = new CancellationTokenSource();
+            _timer = new PeriodicTimer(_interval);
+            _timerTask = Task.Run(() => DoSmite2NewsAsync(_cts.Token));
+        }
+
+        private async Task DoSmite2NewsAsync(CancellationToken token)
         {
             try
             {
-                while (await _timer.WaitForNextTickAsync(_cts.Token))
+                // loop until cancelled
+                while (_timer is not null && await _timer.WaitForNextTickAsync(token))
                 {
-                    if (Discord.Connection.Client.LoginState.ToString() != "LoggedIn")
+                    try
                     {
-                        Text.WriteLine($"Tasker skipping because client is not logged in [{Discord.Connection.Client?.LoginState}]");
-                        continue;
-                    }
-                    var posts = await APIInteractions.FetchSmite2NewsAsync();
-                    if (posts == null || posts.Count == 0)
-                    {
-                        await Reporter.SendMsgToBotLogsChannel("**Tasker**\nPosts is null or count = 0");
-                        continue;
-                    }
-                    posts = [.. posts.OrderBy(x => x.attributes.publishedAt)];
-                    foreach (var post in posts)
-                    {
-                        bool exists = await MongoConnection.FeedContentExistsAsync(FeedType.SMITE2News, post.attributes.slug);
-                        if (!exists)
+                        if (Discord.Connection.Client.LoginState.ToString() != "LoggedIn")
                         {
-                            await Console.Out.WriteLineAsync($"[{exists}] {post.attributes.slug}");
-                            var emb = new EmbedBuilder();
-                            emb.WithTitle(post.attributes.title);
-                            emb.WithImageUrl(post.attributes?.header_image?.data?.attributes?.url);
-                            emb.WithDescription(Text.RemoveHtmlEntities(post.attributes.content));
-                            emb.WithUrl($"https://smite2.com/news/{post.attributes.slug}");
-                            emb.WithColor(Constants.SMITE2GoldColor);
-                            //emb.WithThumbnailUrl("https://i.imgur.com/TR9dSLn.png");
-                            emb.WithTimestamp(post.attributes.publishedAt);
-                            emb.WithAuthor(x =>
-                            {
-                                x.Url = "https://www.smite2.com/";
-                                x.Name = "SMITE 2 News";
-                                x.IconUrl = "https://i.imgur.com/VjciMdI.png";
-                            });
-
-                            await Feeder.SendFeedWebhooks(emb.Build(), FeedType.SMITE2News, Text.SplitCamelCase(FeedType.SMITE2News.ToString()), post.attributes.slug);
-                            // Save so we dont post it again
-                            await MongoConnection.SaveFeedContentAsync(FeedType.SMITE2News, post.attributes.slug);
+                            Text.WriteLine($"Task skipping, not logged in.");
+                            continue;
                         }
+
+                        var posts = await APIInteractions.FetchSmite2NewsAsync();
+                        if (posts == null || posts.Count == 0)
+                        {
+                            await Reporter.SendMsgToBotLogsChannel("**Tasker**: No posts.");
+                            continue;
+                        }
+
+                        foreach (var post in posts.OrderBy(x => x.attributes.publishedAt))
+                        {
+                            bool exists = await MongoConnection.FeedContentExistsAsync(FeedType.SMITE2News, post.attributes.slug);
+                            if (!exists)
+                            {
+                                await Console.Out.WriteLineAsync($"[{exists}] {post.attributes.slug}");
+                                var emb = new EmbedBuilder();
+                                emb.WithTitle(post.attributes.title);
+                                emb.WithImageUrl(post.attributes?.header_image?.data?.attributes?.url);
+                                emb.WithDescription(Text.RemoveHtmlEntities(post.attributes.content));
+                                emb.WithUrl($"https://smite2.com/news/{post.attributes.slug}");
+                                emb.WithColor(Constants.SMITE2GoldColor);
+                                //emb.WithThumbnailUrl("https://i.imgur.com/TR9dSLn.png");
+                                emb.WithTimestamp(post.attributes.publishedAt);
+                                emb.WithAuthor(x =>
+                                {
+                                    x.Url = "https://www.smite2.com/";
+                                    x.Name = "SMITE 2 News";
+                                    x.IconUrl = "https://i.imgur.com/VjciMdI.png";
+                                });
+
+                                await Feeder.SendFeedWebhooks(emb.Build(), FeedType.SMITE2News, Text.SplitCamelCase(FeedType.SMITE2News.ToString()), post.attributes.slug);
+                                // Save so we dont post it again
+                                await MongoConnection.SaveFeedContentAsync(FeedType.SMITE2News, post.attributes.slug);
+                            }
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // cancellation requested - break out cleanly
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        // log *per-iteration* exceptions
+                        SentrySdk.CaptureException(ex);
+                        await Reporter.SendErrorAsync($"Smite2 news iteration failed:\n{ex.Message}");
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // expected when stopping
+            }
             catch (Exception ex)
             {
-                Text.WriteLine(ex.Message, ConsoleColor.Red, ConsoleColor.White);
+                // log unexpected crash
                 SentrySdk.CaptureException(ex);
-                await Reporter.SendMsgToBotLogsChannel("Smite2 News Task has crashed ;( <@171675309177831424>");
-                if (ex.Message != "Operation is not valid due to the current state of the object.")
-                {
-                    await Reporter.SendErrorAsync($"<@171675309177831424> **Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");
-                    await StopAsync();
-                    Start();
-                }
-                else
-                {
-                    await Reporter.SendErrorAsync($"# <@171675309177831424> **__You need to restart the timer!__**\n**Error:** {ex.Message}\n```csharp\n{ex.StackTrace}```");
-                }
+                await Reporter.SendErrorAsync($"Smite2 Task crashed:\n{ex}");
             }
         }
 
         public async Task StopAsync()
         {
-            if (_timerTask is null)
-            {
+            if (_cts == null)
                 return;
+
+            try
+            {
+                _cts.Cancel();
+            }
+            catch { /* ignore */ }
+
+            if (_timerTask != null)
+            {
+                try
+                {
+                    await _timerTask;
+                }
+                catch (OperationCanceledException) { /* expected */ }
+                catch (Exception ex)
+                {
+                    SentrySdk.CaptureException(ex);
+                }
             }
 
-            _cts.Cancel();
-            await _timerTask;
-            _cts.Dispose();
-            await Console.Out.WriteLineAsync("Tasker was stopped.");
-            await Reporter.SendMsgToBotLogsChannel($"Tasker was stopped.");
+            _timer?.Dispose();
+            _cts?.Dispose();
+
+            _timerTask = null;
+            _timer = null;
+            _cts = null;
+
+            await Reporter.SendMsgToBotLogsChannel("Tasker stopped.");
         }
     }
 }

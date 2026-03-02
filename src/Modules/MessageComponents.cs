@@ -1822,7 +1822,7 @@ namespace ThothBotCore.Modules
             {
                 FeedType feed = Enum.Parse<FeedType>(feedType, true);
                 var db = MongoConnection.GetFeedSettingsForGuild(feed, (ulong) Context.Interaction.GuildId);
-                var found = db.Feeds.Where(x => x.Type == feed).FirstOrDefault();
+                var found = db?.Feeds.Where(x => x.Type == feed).FirstOrDefault();
                 List<SelectMenuOptionBuilder> options = [];
                 if (found?.WebhookID != 0) // if there's a set channel and webhook exists in our DB
                 {
