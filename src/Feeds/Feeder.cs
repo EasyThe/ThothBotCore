@@ -33,7 +33,7 @@ namespace ThothBotCore.Feeds
                     // making sure we do not send some feeds two times (smite 2 news X smite 2 update notes)
                     if (feedType == FeedType.SMITE2News && 
                         feedGuilds[i].Feeds.Any(x => x.Type == FeedType.SMITE2UpdateNotes && x.ChannelID == feed.ChannelID) &&
-                        embed.Title.ToLowerInvariant().Contains("update notes"))
+                        embed.Title.ToLowerInvariant().Contains("update"))
                     {
                         // we skipppp
                         continue;
