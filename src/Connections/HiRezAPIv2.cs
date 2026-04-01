@@ -26,7 +26,11 @@ namespace ThothBotCore.Connections
 
         public HiRezAPIv2()
         {
-            HttpClientHandler httpClientHandler = new();
+            HttpClientHandler httpClientHandler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => true
+            };
+
             Client = new HttpClient(httpClientHandler)
             {
                 BaseAddress = new Uri(BaseURL),
