@@ -22,14 +22,17 @@ RUN apt-get update \
   && chmod +x /usr/local/bin/gosu \
   && gosu --version
 
-# Create group/user with predictable IDs
+# Create predictable user/group
 RUN groupadd -g ${PGID} appgroup || true \
     && useradd -u ${PUID} -g ${PGID} -m -s /usr/sbin/nologin appuser || true
 
 WORKDIR /app
 COPY --from=build /app/publish .
+
+# Copy entrypoint, convert CRLF->LF, make executable
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh \
     && mkdir -p /app/Config /app/Storage
 
 ENV METRICS_PORT=9284
