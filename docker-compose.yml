@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  thothbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: thothbotcore:latest
+    restart: unless-stopped
+    environment:
+      # Helpful to set local timezone if desired
+      - TZ=UTC
+      # Optional environment variables for your convenience. The app reads Config/Config.json;
+      # use these vars to create /edit that file before first run or manage secrets externally.
+      - BOT_TOKEN=${BOT_TOKEN}
+      - MONGODB_URL=${MONGODB_URL}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - METRICS_PORT=${METRICS_PORT:-9284}
+    ports:
+      # Map Prometheus metrics port (default 9284). Adjust left side to host port as needed.
+      - "${METRICS_PORT:-9284}:${METRICS_PORT:-9284}"
+    depends_on:
+      - mongo
+    volumes:
+      # Persist and/or provide configuration. The container expects Config/Config.json in /app/Config.
+      - ./config:/app/Config:rw
+      # Persist SQLite DB located at /app/Storage/ThothDb.db
+      - ./data:/app/Storage:rw
+
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

@@ -1,0 +1,11 @@
+# Ignore build artifacts and local files
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.log
+.git/
+.env
+Config/Config.json
+Storage/ThothDb.db
