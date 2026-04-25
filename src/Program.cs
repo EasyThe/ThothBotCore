@@ -50,7 +50,8 @@ namespace ThothBotCore
                 .AddPrometheusHttpListener(opt =>
                 {
                     opt.ScrapeEndpointPath = "/metrics";
-                    opt.UriPrefixes = [$"http://localhost:{Credentials.botConfig.MetricsPort}/"];
+                    // Bind to all interfaces so Docker port mapping works
+                    opt.UriPrefixes = [$"http://0.0.0.0:{Credentials.botConfig.MetricsPort}/"];
                 })
                 .Build();
 
