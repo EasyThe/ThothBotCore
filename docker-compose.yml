@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: thothbotcore:latest
     restart: unless-stopped
     environment:
       # Helpful to set local timezone if desired
