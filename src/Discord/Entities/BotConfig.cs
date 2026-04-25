@@ -9,32 +9,75 @@ namespace ThothBotCore.Discord.Entities
         private const string configFile = "Config.json";
 
         public static BotConfig botConfig;
+
         static Credentials()
         {
-            if (!Directory.Exists(configFolder))
+            LoadConfig();
+        }
+
+        private static void LoadConfig()
+        {
+            string path = Path.Combine(configFolder, configFile);
+
+            try
             {
-                Directory.CreateDirectory(configFolder);
+                // Ensure folder exists (safe in Docker bind mounts)
+                if (!Directory.Exists(configFolder))
+                {
+                    Directory.CreateDirectory(configFolder);
+                }
+
+                // If config does NOT exist → create default
+                if (!File.Exists(path))
+                {
+                    botConfig = new BotConfig();
+
+                    string json = JsonConvert.SerializeObject(botConfig, Formatting.Indented);
+                    File.WriteAllText(path, json);
+                    return;
+                }
+
+                // If config exists → load it
+                string existingJson = File.ReadAllText(path);
+                botConfig = JsonConvert.DeserializeObject<BotConfig>(existingJson);
+
+                // Safety fallback in case JSON is corrupted
+                if (botConfig == null)
+                {
+                    botConfig = new BotConfig();
+                }
             }
-            
-            if (!File.Exists(configFolder + "/" + configFile))
+            catch (System.Exception ex)
             {
+                // IMPORTANT: prevent container crash loop
+                // fallback to defaults instead of crashing app
                 botConfig = new BotConfig();
-                string json = JsonConvert.SerializeObject(botConfig, Formatting.Indented);
-                File.WriteAllText(configFolder + "/" + configFile, json);
-            }
-            else
-            {
-                string json = File.ReadAllText(configFolder + "/" + configFile);
-                botConfig = JsonConvert.DeserializeObject<BotConfig>(json);
-                
-                SaveConfig();
+
+                System.Console.WriteLine("[Config] Failed to load config, using defaults.");
+                System.Console.WriteLine(ex.Message);
             }
         }
 
         public static void SaveConfig()
         {
-            string json = JsonConvert.SerializeObject(botConfig, Formatting.Indented);
-            File.WriteAllText(configFolder + "/" + configFile, json);
+            try
+            {
+                string path = Path.Combine(configFolder, configFile);
+
+                if (!Directory.Exists(configFolder))
+                {
+                    Directory.CreateDirectory(configFolder);
+                }
+
+                string json = JsonConvert.SerializeObject(botConfig, Formatting.Indented);
+                File.WriteAllText(path, json);
+            }
+            catch (System.Exception ex)
+            {
+                // Prevent crash if container volume is read-only or misconfigured
+                System.Console.WriteLine("[Config] Failed to save config.");
+                System.Console.WriteLine(ex.Message);
+            }
         }
     }
 
@@ -60,6 +103,6 @@ namespace ThothBotCore.Discord.Entities
         public string GoogleAPIKey { get; set; } = "GoogleAPIKey";
         public string MetricsPort { get; set; } = "9284";
         public bool Debug { get; set; } = false;
-        public int IsDev { get; set; } = 0; // 0 = PROD, 1 = DEV
+        public int IsDev { get; set; } = 0;
     }
 }
