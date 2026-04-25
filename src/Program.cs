@@ -15,7 +15,14 @@ namespace ThothBotCore
     {
         private static void Main()
         {
-            using (SentrySdk.Init(Credentials.botConfig.Sentry))
+            // FORCE config load FIRST
+            var config = Credentials.GetConfig();
+
+            // validate Sentry safely
+            using (SentrySdk.Init(
+                !string.IsNullOrWhiteSpace(config.Sentry) && config.Sentry.StartsWith("http")
+                    ? config.Sentry
+                    : null))
             {
                 MainAsync().Wait();
             }

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 
 namespace ThothBotCore.Discord.Entities
@@ -9,6 +10,11 @@ namespace ThothBotCore.Discord.Entities
         private const string configFile = "Config.json";
 
         public static BotConfig botConfig;
+
+        public static BotConfig GetConfig()
+        {
+            return botConfig ?? throw new Exception("Config not initialized");
+        }
 
         static Credentials()
         {
@@ -41,10 +47,9 @@ namespace ThothBotCore.Discord.Entities
                 string existingJson = File.ReadAllText(path);
                 botConfig = JsonConvert.DeserializeObject<BotConfig>(existingJson);
 
-                // Safety fallback in case JSON is corrupted
                 if (botConfig == null)
                 {
-                    botConfig = new BotConfig();
+                    throw new Exception("Config failed to load and is null");
                 }
             }
             catch (System.Exception ex)
